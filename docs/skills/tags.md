@@ -14,12 +14,17 @@ agent-agnostic — works across host agents, not tied to one tool's idioms
 agent-roles — concerns agent roles, responsibilities, handoff contracts
 architecture — concerns how the product's parts fit together
 ci — concerns CI workflows and status checks
+claude-code — concerns the Claude Code host agent
+codex — concerns the OpenAI Codex host agent
 compiler — concerns the neutral-source-to-host-files compiler
 configuration — concerns where and how a project's chosen practices are declared
+copilot — concerns the GitHub Copilot host agent
 cost — concerns token spend, pricing and cost models
+cursor — concerns the Cursor host agent
 dogfooding — concerns go-getter being used on its own repo
 enforcement — concerns how a rule is made to hold (tiers, hooks, checks)
 eval — concerns promptfoo-style behavior evals
+gemini-cli — concerns the Gemini CLI host agent
 generated-files — concerns committed files produced by the compiler
 git-hooks — concerns host-independent git hooks
 governance — concerns data classes, approved models, local/cloud LLM usage policy, DLP
@@ -28,6 +33,7 @@ harness — concerns the agent harness (the 12 components around the model)
 hooks — concerns host-agent-native hooks and permissions
 host-agents — concerns which host agents are supported and how
 interview — concerns the guided setup interview
+kilo-opencode — concerns the Kilo Code / OpenCode host agents
 kms — concerns the kms knowledge system and its artifact model
 knowledge-management — concerns the fact/decision/guardrail/procedure system
 licensing — concerns license and repo visibility

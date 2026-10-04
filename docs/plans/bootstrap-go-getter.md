@@ -72,12 +72,12 @@ Done-when: lint reports no errors other than, at most, the known `go-getter:` ex
 Do: `git init -b main`, `git add -A`, commit `chore: bootstrap repo with knowledge base and plan` with `Refs:` trailers for `docs/decisions/0001-go-getter-product-scope-and-name.md` and `docs/decisions/0010-self-hosting-ratchet.md`. Only this commit goes straight to `main`.
 Done-when: `git log --oneline` shows one commit on `main`; `git status` clean; `git ls-files -s CLAUDE.md` shows mode `120000`.
 
-### 0.5 Create the GitHub repo — [ ]
+### 0.5 Create the GitHub repo — [x]
 **Outward-facing and public (0012): confirm with the owner immediately before running.** Re-read `docs/` once for anything that should not be public.
 Do: `gh repo create vivantel/go-getter --public --source=. --remote=origin --description "Set up the agent harness and SDLC practices for Claude Code, Codex, Kilo, Cursor, Gemini CLI and Copilot — quality-gated, cost-aware, zero friction" --push`; then `gh repo edit vivantel/go-getter --add-topic ai-agents --add-topic agent-harness --add-topic agents-md --add-topic developer-tools --add-topic sdlc`.
 Done-when: `gh repo view vivantel/go-getter --json visibility,licenseInfo,defaultBranchRef` shows `PUBLIC`, `MIT`, `main`; `git ls-remote origin main` equals local `HEAD`.
 
-### 0.6 Repo settings and protection — [ ]
+### 0.6 Repo settings and protection — [x]
 Context: interim workflow is PR + squash into protected `main` (0004); guardrail `no-secrets-in-public-repo` needs secret scanning + push protection.
 Do:
 - `gh api -X PATCH repos/vivantel/go-getter -F allow_squash_merge=true -F allow_merge_commit=false -F allow_rebase_merge=false -F delete_branch_on_merge=true`
@@ -91,7 +91,7 @@ Done-when: `gh api repos/vivantel/go-getter --jq '{s:.allow_squash_merge,m:.allo
 
 Context: the compiler and every harness pack depend on what each host exposes. Follow `docs/skills/adding-a-host-agent.md` step 1 exactly: vendor primary documentation only, record what could not be confirmed. Each host fact: `kind: environmental`, `governed-by: 0002-six-host-agents-from-v0-1`, sections matching that procedure's list (instruction files; skills/agents/commands; packaging & install; headless invocation; hooks & permissions; per-agent model + effort; local/custom endpoints; prompt caching & visibility; telemetry/OTel & cost reporting; DLP levers; native harness components; Node availability), plus **Not confirmed** and **Sources** (URLs with access date). First add tags `claude-code`, `codex`, `kilo-opencode`, `cursor`, `gemini-cli`, `copilot` to `docs/skills/tags.md`. Numbers are pre-assigned to avoid collisions. Update `docs/facts/INDEX.md`. Steps 1.1-1.6 and 1.9 are **‖**.
 
-- **1.1** Claude Code → `docs/facts/0003-claude-code-integration-surface.md` — [ ]
+- **1.1** Claude Code → `docs/facts/0003-claude-code-integration-surface.md` — [x]
 - **1.2** Codex → `docs/facts/0004-codex-integration-surface.md` (related kms fact: `/home/ubuntu/projects/vivantel/kms/docs/facts/0003-codex-plugin-manifest-schema.md`; re-verify) — [ ]
 - **1.3** Kilo Code CLI / OpenCode → `docs/facts/0005-kilo-opencode-integration-surface.md` (see kms facts 0008, 0009) — [ ]
 - **1.4** Cursor → `docs/facts/0006-cursor-integration-surface.md` — [ ]
