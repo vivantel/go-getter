@@ -22,7 +22,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 - **Model routing (0016)**: quality-gated cascade; eligibility by data class first; then cheapest (model, effort) tier by *expected total step cost* — cache read/write/uncached pricing, context-handoff cost, expected escalation cost; verification gates each result; bounded escalation then human. A warm-cache pricier model can beat a cold-cache cheaper one.
 - **Calibration (0017)**: quality bars = objective checks; metadata telemetry per step; `go-getter routing calibrate` proposes policy changes as kms decisions (v0.2).
 - **Governance/DLP (0018)**: data classes by path; approved-model registry (provider, region, retention/ZDR, local vs cloud); tiered DLP.
-- **Agent roles (0014)** compiled to native subagents with per-role model/effort; **self-hosting ratchet (0010)**; **Node ESM, zero runtime deps (0011)**; **public MIT repo `vivantel/go-getter` (0012)**; **3-layer verification of go-getter itself (0013)**.
+- **Agent roles (0014)** compiled to native subagents with per-role model/effort; **self-hosting ratchet (0010)**; **Node ESM, zero runtime deps, Node = oldest supported LTS (currently 22) with fail-open shims where Node is absent (0019, supersedes 0011)**; **public MIT repo `vivantel/go-getter` (0012)**; **3-layer verification of go-getter itself (0013)**.
 - **Milestones (0004)**: v0.1 = foundation + orchestration, context, cost & routing, governance/DLP, minimal verification gate and telemetry. v0.2 = calibration, observability, HITL, checkpointing. v0.3 = git workflow. v0.4 = testing/coverage/debugging, memory beyond kms.
 
 **Knowledge base conventions** (kms format): `docs/{facts,decisions}/NNNN-slug.md` (4-digit, per-directory, next free number), `docs/{guardrails,skills}/slug.md`; frontmatter `id, title, status, date, tags` (tags only from `docs/skills/tags.md`; propose additions there first); every directory has a CSV `INDEX.md` (`id,title,tags,status`) updated whenever an artifact is added. Accepted decisions are immutable once committed — change them by a new decision and mark the old `superseded` with `superseded-by`. Every guardrail carries `go-getter.enforcement`. Artifact model: `/home/ubuntu/.claude/plugins/cache/kms/kms/0.15.0/shared/artifact-model.md` (or `plugins/kms/shared/artifact-model.md` in `github.com/vivantel/kms`).
@@ -33,8 +33,6 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 ## Open questions (resolve in the named step; record answers as facts/decisions)
 
-- Node availability in each host agent's environment (1.1-1.6, 1.8). Decision 0011 holds unless this fails.
-- Minimum Node version for `engines` (2.1; oldest LTS with stable `node:test` — verify).
 - Pack file format: JSON (default) vs restricted YAML subset (4.1).
 - Runtime routing mechanism per host (1.10).
 - How far each host can enforce DLP (1.7 → 5.3).
@@ -50,7 +48,7 @@ Done in the roadmap sessions: `docs/decisions/0001-0018`, `docs/facts/0001-0002`
 ### 0.1 Preflight — [x]
 Context: `/home/ubuntu/projects/vivantel/go-getter` contains only `docs/` and is not a git repo; the GitHub repo does not exist yet.
 Do: run `git --version`, `node --version`, `gh auth status`, `gh api user/orgs --jq '.[].login'`, `gh repo view vivantel/go-getter`.
-Done-when: git and Node (≥ 20) present; `gh` logged in as `sergemso`; org list includes `vivantel`; `gh repo view vivantel/go-getter` fails with "Could not resolve to a Repository". If the repo exists, stop and ask the owner.
+Done-when: git and Node (≥ oldest supported LTS, decision 0019) present; `gh` logged in as `sergemso`; org list includes `vivantel`; `gh repo view vivantel/go-getter` fails with "Could not resolve to a Repository". If the repo exists, stop and ask the owner.
 
 ### 0.2 Root files — [x]
 Context: license, ignore rules, a short agent instruction file and README before the first commit. Keep `AGENTS.md` short (it is loaded into every session).
@@ -104,14 +102,15 @@ Done-when (each of 1.1-1.6): the file exists with every listed section; each cla
 Do: `docs/facts/0009-host-capability-matrix.md` (`kind: derived`, `governed-by: 0005-neutral-source-compiler-architecture`): rows = six hosts; columns = instruction file, skills, subagents, commands, blocking hooks, permissions/path deny, per-agent model, effort control, local endpoints, cache visibility, telemetry export, DLP levers, plugin packaging, Node available, symlink-candidate outputs, and for each of the 12 harness components the highest enforcement tier reachable (0009).
 Done-when: every cell cites one of facts 0003-0008 or says "unconfirmed"; INDEX row exists.
 
-### 1.8 Resolve the Node question — [ ]
+### 1.8 Resolve the Node question — [x]
+Result: Node is not available at runtime on Claude Code, Codex or Cursor installs; decision 0019 supersedes 0011 (Node floor = oldest supported LTS, fail-open shims), fact 0010, guardrail `node-floor-is-oldest-supported-lts`.
 Context: 0011 states Node availability per host was unverified.
 Do: read the Node column of fact 0009. If Node is unavailable where hooks or tier-3 scripts must run, write a decision superseding 0011 (set 0011 `status: superseded`, `superseded-by`, update INDEX); otherwise note confirmation in the PR.
 Done-when: no unavailable cell, or the superseding decision exists and 0011 has `status: superseded` with a valid `superseded-by`.
 
 ### 1.9 Model pricing and terms facts ‖ — [ ]
 Context: the cost model (0016) needs real prices including cache economics; the governance registry (0018) needs data-handling terms.
-Do: one fact per model provider usable from the six hosts (at least Anthropic, OpenAI, Google; add others the hosts support), e.g. `docs/facts/0010-model-pricing-anthropic.md`: per model — input, output, cache-write and cache-read prices, cache TTLs and minimum cacheable size, effort/reasoning-token pricing, context window, data retention / zero-data-retention options, regions. `kind: environmental`, `governed-by: 0016-quality-gated-cache-aware-model-routing`, `expires: 2027-01-04` (prices change; re-verify by then). Put the machine-readable table under `go-getter: { models: [...] }`. Add one fact for local-model options the hosts support (endpoint types, no per-token price).
+Do: one fact per model provider usable from the six hosts (at least Anthropic, OpenAI, Google; add others the hosts support), next free fact numbers, e.g. `docs/facts/NNNN-model-pricing-anthropic.md`: per model — input, output, cache-write and cache-read prices, cache TTLs and minimum cacheable size, effort/reasoning-token pricing, context window, data retention / zero-data-retention options, regions. `kind: environmental`, `governed-by: 0016-quality-gated-cache-aware-model-routing`, `expires: 2027-01-04` (prices change; re-verify by then). Put the machine-readable table under `go-getter: { models: [...] }`. Add one fact for local-model options the hosts support (endpoint types, no per-token price).
 Done-when: each provider fact exists with vendor pricing-page URLs and access dates, a parseable `go-getter.models` list, and an INDEX row.
 
 ### 1.10 Decide the runtime routing mechanism — [ ]
@@ -124,8 +123,8 @@ Done-when: the decision exists with an INDEX row and names, per host, the mechan
 ## Phase 2 — Compiler foundation
 
 ### 2.1 Scaffold and layout decision — [ ]
-Context: guardrails and procedures assume this layout: `src/` (neutral source: `skills/<name>/SKILL.md`, `agents/<role>.md`, `commands/<name>.md`, `rules/<name>.md`, `packs/<id>/pack.json`), `compiler/` (`bin/go-getter.mjs`, `src/`, `src/routing/`, `src/telemetry/`, `src/checks/`, `adapters/<host>.mjs`, `capabilities/<host>.json`, `schemas/`, `test/`), `vendor/kms/` + `vendor/kms.lock.json`, `evals/`, `.github/workflows/`, and npm scripts `build`, `test`, `test:routing`, `test:telemetry`, `sync:kms`, `check:generated`, `check:neutral`, `check:guardrails`, `check:tags`, `check:self-adoption`, `check:vendor`, `check:deps`, `check:packs`, `eval`.
-Do: create `package.json` (`"type":"module"`, `"private":true` until release, `engines.node` per the open question, **no `dependencies`**, the scripts as stubs that exit 0 printing "not yet implemented"), the directory skeleton, a `node:test` smoke test. Write decision `<next>-neutral-source-and-output-layout` fixing neutral-source formats and frontmatter, each host's output paths for both output kinds (distributable packaging; project-local files `init` generates — 0005), manifest schema, symlink vs copy mode. Use fact 0009.
+Context: guardrails and procedures assume this layout: `src/` (neutral source: `skills/<name>/SKILL.md`, `agents/<role>.md`, `commands/<name>.md`, `rules/<name>.md`, `packs/<id>/pack.json`), `compiler/` (`bin/go-getter.mjs`, `src/`, `src/routing/`, `src/telemetry/`, `src/checks/`, `adapters/<host>.mjs`, `capabilities/<host>.json`, `schemas/`, `test/`), `vendor/kms/` + `vendor/kms.lock.json`, `evals/`, `.github/workflows/`, and npm scripts `build`, `test`, `test:routing`, `test:telemetry`, `sync:kms`, `check:generated`, `check:neutral`, `check:guardrails`, `check:tags`, `check:node-floor`, `check:self-adoption`, `check:vendor`, `check:deps`, `check:packs`, `eval`.
+Do: create `package.json` (`"type":"module"`, `"private":true` until release, `engines.node` = `>=22` (oldest supported LTS per decision 0019 / fact 0010), **no `dependencies`**, the scripts as stubs that exit 0 printing "not yet implemented"), the directory skeleton, a `node:test` smoke test. Write decision `<next>-neutral-source-and-output-layout` fixing neutral-source formats and frontmatter, each host's output paths for both output kinds (distributable packaging; project-local files `init` generates — 0005), manifest schema, symlink vs copy mode. Use fact 0009.
 Done-when: `npm test` passes; `npm run check:deps` exits 0; the layout decision exists with an INDEX row; every path named in `docs/guardrails/*.md` and `docs/skills/adding-a-*.md` exists or is in the layout decision (fix whichever is wrong).
 
 ### 2.2 Parsing core — [ ]
@@ -141,11 +140,11 @@ Do: per `docs/skills/adding-a-host-agent.md` steps 3-4, one adapter per host in 
 Done-when (each): `node compiler/bin/go-getter.mjs build --host <h>` emits that host's files for the sample skill; its golden test passes; output matches the host fact (0003-0008).
 
 ### 2.5 Build CLI and deterministic checks — [ ]
-Do: `compiler/bin/go-getter.mjs` with `build` and the npm scripts: `build`; `check:generated` (rebuild to temp, diff against committed — guardrail `generated-host-files-not-hand-edited`); `check:neutral` (guardrail `neutral-source-has-no-host-specific-language`); `check:deps`; `check:guardrails` (guardrail `guardrails-declare-enforcement`: every `docs/guardrails/*.md` has `go-getter.enforcement`, tier 2/3 entries have `run`, tier-1-only marked advisory); `check:tags` (guardrail `tags-from-canonical-list`).
-Done-when: each of the five `check:*` scripts exits 0 on this repo and non-zero in a test with a violating fixture; generated files for the sample skill are committed.
+Do: `compiler/bin/go-getter.mjs` with `build` and the npm scripts: `build`; `check:generated` (rebuild to temp, diff against committed — guardrail `generated-host-files-not-hand-edited`); `check:neutral` (guardrail `neutral-source-has-no-host-specific-language`); `check:deps`; `check:guardrails` (guardrail `guardrails-declare-enforcement`: every `docs/guardrails/*.md` has `go-getter.enforcement`, tier 2/3 entries have `run`, tier-1-only marked advisory); `check:tags` (guardrail `tags-from-canonical-list`); `check:node-floor` (guardrail `node-floor-is-oldest-supported-lts`: fetch `https://raw.githubusercontent.com/nodejs/Release/main/schedule.json`, compare with `engines.node`).
+Done-when: each of the six `check:*` scripts exits 0 on this repo and non-zero in a test with a violating fixture; generated files for the sample skill are committed.
 
 ### 2.6 CI — [ ]
-Do: `.github/workflows/ci.yml` on `pull_request` and push to `main`: jobs `test` (`npm test`), `golden` (`npm run build && git diff --exit-code`, `npm run check:generated`), `checks` (`check:neutral`, `check:guardrails`, `check:tags`, `check:deps`). Pin actions by SHA.
+Do: `.github/workflows/ci.yml` on `pull_request` and push to `main`: jobs `test` (`npm test`), `golden` (`npm run build && git diff --exit-code`, `npm run check:generated`), `checks` (`check:neutral`, `check:guardrails`, `check:tags`, `check:deps`, `check:node-floor`). Pin actions by SHA.
 Done-when: a PR run shows all three jobs green.
 
 ### 2.7 Require CI on `main` — [ ]

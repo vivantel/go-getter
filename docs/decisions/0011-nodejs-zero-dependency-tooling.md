@@ -1,7 +1,8 @@
 ---
 id: 0011-nodejs-zero-dependency-tooling
 title: Compiler and enforcement scripts are Node.js ESM with zero runtime dependencies
-status: active
+status: superseded
+superseded-by: 0019-node-prerequisite-oldest-supported-lts
 date: 2026-10-04
 tags: [nodejs, tooling, compiler]
 track: process

@@ -10,3 +10,4 @@ id,title,tags,status
 0007-gemini-cli-integration-surface,"Gemini CLI's harness extension points","gemini-cli, host-agents, harness",active
 0008-copilot-integration-surface,"GitHub Copilot's harness extension points","copilot, host-agents, harness",active
 0009-host-capability-matrix,"Capability matrix of the six host agents","host-agents, harness, compiler, enforcement",active
+0010-nodejs-release-schedule,"Node.js LTS release schedule and the oldest supported LTS line","nodejs, tooling",active

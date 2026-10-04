@@ -11,7 +11,7 @@ id,title,tags,status
 0008-declarative-practice-packs,"Practice areas are declarative packs in two families - harness packs and SDLC packs - driven by one init skill","practice-packs, interview, architecture, harness",active
 0009-tiered-enforcement-git-ci-floor,"Rules are enforced in tiers, with host-independent git hooks and CI as the floor","enforcement, git-hooks, ci, hooks",active
 0010-self-hosting-ratchet,"go-getter dogfoods itself from commit 0 through a self-hosting ratchet","dogfooding, ci, roadmap",active
-0011-nodejs-zero-dependency-tooling,"Compiler and enforcement scripts are Node.js ESM with zero runtime dependencies","nodejs, tooling, compiler",active
+0011-nodejs-zero-dependency-tooling,"Compiler and enforcement scripts are Node.js ESM with zero runtime dependencies","nodejs, tooling, compiler",superseded
 0012-public-mit-repo,"The repo is public on GitHub as vivantel/go-getter under the MIT license","licensing, packaging, security",active
 0013-layered-verification-gate,"go-getter is verified in three layers - unit, golden output, behavior evals","verification, eval, ci",active
 0014-agent-roles-compiled-to-native-agents,"Agent roles are declared once and compiled to native host agents' subagents with a shared handoff contract","agent-roles, compiler, practice-packs, harness",active
@@ -19,3 +19,4 @@ id,title,tags,status
 0016-quality-gated-cache-aware-model-routing,"Model routing is a quality-gated cascade that minimizes expected total step cost, cache effects included","model-routing, cost, harness, verification",active
 0017-routing-calibration-from-verification-and-telemetry,"Routing quality bars and tiers are calibrated from verification signals and outcome telemetry","model-routing, observability, verification, cost",active
 0018-data-classes-constrain-routing-with-tiered-dlp,"Data classes are hard constraints on model eligibility, enforced with tiered DLP","governance, security, model-routing, harness",active
+0019-node-prerequisite-oldest-supported-lts,"go-getter tooling is zero-dependency Node.js, requiring the oldest supported LTS, degrading gracefully where Node is absent","nodejs, tooling, compiler, enforcement",active
