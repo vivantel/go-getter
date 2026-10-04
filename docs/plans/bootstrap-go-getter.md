@@ -92,7 +92,7 @@ Done-when: `gh api repos/vivantel/go-getter --jq '{s:.allow_squash_merge,m:.allo
 Context: the compiler and every harness pack depend on what each host exposes. Follow `docs/skills/adding-a-host-agent.md` step 1 exactly: vendor primary documentation only, record what could not be confirmed. Each host fact: `kind: environmental`, `governed-by: 0002-six-host-agents-from-v0-1`, sections matching that procedure's list (instruction files; skills/agents/commands; packaging & install; headless invocation; hooks & permissions; per-agent model + effort; local/custom endpoints; prompt caching & visibility; telemetry/OTel & cost reporting; DLP levers; native harness components; Node availability), plus **Not confirmed** and **Sources** (URLs with access date). First add tags `claude-code`, `codex`, `kilo-opencode`, `cursor`, `gemini-cli`, `copilot` to `docs/skills/tags.md`. Numbers are pre-assigned to avoid collisions. Update `docs/facts/INDEX.md`. Steps 1.1-1.6 and 1.9 are **‖**.
 
 - **1.1** Claude Code → `docs/facts/0003-claude-code-integration-surface.md` — [x]
-- **1.2** Codex → `docs/facts/0004-codex-integration-surface.md` (related kms fact: `/home/ubuntu/projects/vivantel/kms/docs/facts/0003-codex-plugin-manifest-schema.md`; re-verify) — [ ]
+- **1.2** Codex → `docs/facts/0004-codex-integration-surface.md` (related kms fact: `/home/ubuntu/projects/vivantel/kms/docs/facts/0003-codex-plugin-manifest-schema.md`; re-verify) — [x]
 - **1.3** Kilo Code CLI / OpenCode → `docs/facts/0005-kilo-opencode-integration-surface.md` (see kms facts 0008, 0009) — [ ]
 - **1.4** Cursor → `docs/facts/0006-cursor-integration-surface.md` — [ ]
 - **1.5** Gemini CLI → `docs/facts/0007-gemini-cli-integration-surface.md` — [ ]
