@@ -5,3 +5,4 @@ id,title,tags,status
 0002-agent-harness-and-host-agent-terminology,"Meaning of ""agent harness"" and ""host agent"" in this project","harness, host-agents, positioning",active
 0003-claude-code-integration-surface,"Claude Code's harness extension points","claude-code, host-agents, harness",active
 0004-codex-integration-surface,"Codex's harness extension points","codex, host-agents, harness",active
+0005-kilo-opencode-integration-surface,"Kilo Code CLI and OpenCode harness extension points","kilo-opencode, host-agents, harness",active
