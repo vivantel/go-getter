@@ -95,7 +95,7 @@ Context: the compiler and every harness pack depend on what each host exposes. F
 - **1.2** Codex → `docs/facts/0004-codex-integration-surface.md` (related kms fact: `/home/ubuntu/projects/vivantel/kms/docs/facts/0003-codex-plugin-manifest-schema.md`; re-verify) — [x]
 - **1.3** Kilo Code CLI / OpenCode → `docs/facts/0005-kilo-opencode-integration-surface.md` (see kms facts 0008, 0009) — [x]
 - **1.4** Cursor → `docs/facts/0006-cursor-integration-surface.md` — [x]
-- **1.5** Gemini CLI → `docs/facts/0007-gemini-cli-integration-surface.md` — [ ]
+- **1.5** Gemini CLI → `docs/facts/0007-gemini-cli-integration-surface.md` — [x]
 - **1.6** GitHub Copilot (agent mode, coding agent, custom agents, instruction files) → `docs/facts/0008-copilot-integration-surface.md` — [ ]
 
 Done-when (each of 1.1-1.6): the file exists with every listed section; each claim cites a vendor URL or sits under **Not confirmed**; its INDEX row exists.

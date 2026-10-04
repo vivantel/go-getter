@@ -7,3 +7,4 @@ id,title,tags,status
 0004-codex-integration-surface,"Codex's harness extension points","codex, host-agents, harness",active
 0005-kilo-opencode-integration-surface,"Kilo Code CLI and OpenCode harness extension points","kilo-opencode, host-agents, harness",active
 0006-cursor-integration-surface,"Cursor's harness extension points","cursor, host-agents, harness",active
+0007-gemini-cli-integration-surface,"Gemini CLI's harness extension points","gemini-cli, host-agents, harness",active
