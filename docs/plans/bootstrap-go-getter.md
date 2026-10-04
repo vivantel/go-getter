@@ -100,7 +100,7 @@ Context: the compiler and every harness pack depend on what each host exposes. F
 
 Done-when (each of 1.1-1.6): the file exists with every listed section; each claim cites a vendor URL or sits under **Not confirmed**; its INDEX row exists.
 
-### 1.7 Capability matrix — [ ]
+### 1.7 Capability matrix — [x]
 Do: `docs/facts/0009-host-capability-matrix.md` (`kind: derived`, `governed-by: 0005-neutral-source-compiler-architecture`): rows = six hosts; columns = instruction file, skills, subagents, commands, blocking hooks, permissions/path deny, per-agent model, effort control, local endpoints, cache visibility, telemetry export, DLP levers, plugin packaging, Node available, symlink-candidate outputs, and for each of the 12 harness components the highest enforcement tier reachable (0009).
 Done-when: every cell cites one of facts 0003-0008 or says "unconfirmed"; INDEX row exists.
 
