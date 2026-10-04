@@ -20,3 +20,4 @@ id,title,tags,status
 0017-routing-calibration-from-verification-and-telemetry,"Routing quality bars and tiers are calibrated from verification signals and outcome telemetry","model-routing, observability, verification, cost",active
 0018-data-classes-constrain-routing-with-tiered-dlp,"Data classes are hard constraints on model eligibility, enforced with tiered DLP","governance, security, model-routing, harness",active
 0019-node-prerequisite-oldest-supported-lts,"go-getter tooling is zero-dependency Node.js, requiring the oldest supported LTS, degrading gracefully where Node is absent","nodejs, tooling, compiler, enforcement",active
+0020-routing-runtime-mechanism,"Routing runs as compiled per-role defaults plus a delegation-time router hook, with hook-gated bounded escalation","model-routing, hooks, enforcement, cost",active

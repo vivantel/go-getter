@@ -34,7 +34,6 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 ## Open questions (resolve in the named step; record answers as facts/decisions)
 
 - Pack file format: JSON (default) vs restricted YAML subset (4.1).
-- Runtime routing mechanism per host (1.10).
 - How far each host can enforce DLP (1.7 → 5.3).
 - Eval authentication on CI: kms runs evals with zero API keys / free models (`/home/ubuntu/projects/vivantel/kms/docs/facts/0012-kilo-gateway-free-tier-access.md`, `0015-improvement-harness-zero-api-keys.md`). Reuse that or ask the owner for a secret (6.1).
 
@@ -114,7 +113,8 @@ Context: the cost model (0016) needs real prices including cache economics; the 
 Do: one fact per model provider usable from the six hosts (at least Anthropic, OpenAI, Google; add others the hosts support), next free fact numbers, e.g. `docs/facts/NNNN-model-pricing-anthropic.md`: per model — input, output, cache-write and cache-read prices, cache TTLs and minimum cacheable size, effort/reasoning-token pricing, context window, data retention / zero-data-retention options, regions. `kind: environmental`, `governed-by: 0016-quality-gated-cache-aware-model-routing`, `expires: 2027-01-04` (prices change; re-verify by then). Put the machine-readable table under `go-getter: { models: [...] }`. Add one fact for local-model options the hosts support (endpoint types, no per-token price).
 Done-when: each provider fact exists with vendor pricing-page URLs and access dates, a parseable `go-getter.models` list, and an INDEX row.
 
-### 1.10 Decide the runtime routing mechanism — [ ]
+### 1.10 Decide the runtime routing mechanism — [x]
+Result: decision 0020 (compiled per-role defaults + delegation-time router hook + hook-gated bounded escalation; tier 2 on Claude Code, Codex, Cursor, Gemini CLI; advisory on Copilot).
 Context: 0016 deferred how routing executes on each host. Inputs: fact 0009 (per-agent model, effort, hooks, delegation) and 1.9 prices.
 Do: write decision `<next>-routing-runtime-mechanism` covering per host: how a step's model/effort is selected (compiled per-agent settings, delegation rules in instructions, an optional `go-getter route --class <c> --context-tokens <n> --cache warm|cold` helper the orchestrating agent calls), how verification failure triggers escalation, how escalation count is bounded, and what is approximated or advisory where a host lacks a lever.
 Done-when: the decision exists with an INDEX row and names, per host, the mechanism and its enforcement tier.
@@ -230,8 +230,8 @@ Do: `src/packs/verification-gate/pack.json` (`family: harness`, `components: [6]
 Done-when: pack validates; adopted here (this repo's classes use `npm test`, `npm run check:*`); a test runs `verify` on a fixture with one passing and one failing check and asserts the exit codes and telemetry records.
 
 ### 5.6 Pack `cost-routing` (component 11) — [ ]
-Context: decisions 0016 and 1.10's runtime-mechanism decision; guardrails `routing-uses-total-step-cost`, `routing-escalation-bounded`, `routing-governance-before-cost`. Depends on 5.3, 5.4, 5.5 and facts from 1.9.
-Do: `compiler/src/routing/cost.mjs` (pure): expected total step cost = input tokens priced by cache state + output + handoff cost (context re-sent to the target, cold cache) + P(fail) × cost at next tier; `compiler/src/routing/policy.mjs`: eligible set (from 5.3) → cheapest tier meeting the class's bar → bounded escalation → human. `src/packs/cost-routing/pack.json` (`family: harness`, `components: [11]`): task classes and quality bars (link to 5.5 checks), default tier per class, max escalations, when to stay in-session vs delegate, spend limits per session/day where hosts allow. Outputs: policy under `go-getter: { routing }`; per-agent model/effort settings compiled into 5.1's role definitions; delegation rules (tier 1); the helper and escalation hooks per the 1.10 decision. `npm run test:routing` must include: a warm-cache larger model beating a cold-cache cheaper one; a delegation rejected because handoff cost exceeds the saving; an ineligible cheap model never chosen; escalation stopping at the bound and handing to a human.
+Context: decisions 0016 and 0020 (runtime mechanism); guardrails `routing-uses-total-step-cost`, `routing-escalation-bounded`, `routing-governance-before-cost`. Depends on 5.3, 5.4, 5.5 and facts from 1.9.
+Do: `compiler/src/routing/cost.mjs` (pure): expected total step cost = input tokens priced by cache state + output + handoff cost (context re-sent to the target, cold cache) + P(fail) × cost at next tier; `compiler/src/routing/policy.mjs`: eligible set (from 5.3) → cheapest tier meeting the class's bar → bounded escalation → human. `src/packs/cost-routing/pack.json` (`family: harness`, `components: [11]`): task classes and quality bars (link to 5.5 checks), default tier per class, max escalations, when to stay in-session vs delegate, spend limits per session/day where hosts allow. Outputs: policy under `go-getter: { routing }`; per-agent model/effort settings compiled into 5.1's role definitions; delegation rules (tier 1); the `go-getter route` helper, the pre-delegation router hook and the escalation stop hooks per decision 0020, per host as its table lists. `npm run test:routing` must include: a warm-cache larger model beating a cold-cache cheaper one; a delegation rejected because handoff cost exceeds the saving; an ineligible cheap model never chosen; escalation stopping at the bound and handing to a human.
 Done-when: pack validates; adopted here (this repo's own agents run with the policy); all listed `test:routing` cases pass; `npm run build` emits per-role model/effort for each host that supports it, and the coverage report marks the others advisory.
 
 ---
