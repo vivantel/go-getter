@@ -1,0 +1,18 @@
+---
+id: no-unenforced-guardrail
+title: A guardrail describing a shipped skill's behavior must also be stated in that skill
+status: active
+date: 2026-10-04
+tags: [knowledge-management, guardrail]
+governed-by: 0007-kms-artifacts-as-configuration-source-of-truth
+grounded-in: [0007-kms-artifacts-as-configuration-source-of-truth]
+derivation-note: Given kms artifacts are the source of truth (0007) but agents running a skill read only its body, a rule about that skill's behavior that lives only in docs/guardrails/ never reaches them.
+go-getter:
+  enforcement:
+    - tier: 1
+      check: "kms lint check 8 (unenforced guardrails)"
+---
+
+## Guardrail
+
+If a guardrail describes what a shipped skill must do, that skill's own body says it too. Advisory (tier 1 only): judged by `kms:lint`.
