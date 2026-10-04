@@ -11,3 +11,7 @@ id,title,tags,status
 0008-copilot-integration-surface,"GitHub Copilot's harness extension points","copilot, host-agents, harness",active
 0009-host-capability-matrix,"Capability matrix of the six host agents","host-agents, harness, compiler, enforcement",active
 0010-nodejs-release-schedule,"Node.js LTS release schedule and the oldest supported LTS line","nodejs, tooling",active
+0011-model-pricing-anthropic,"Anthropic Claude model pricing including cache economics","cost, model-routing, governance",active
+0012-model-pricing-openai,"OpenAI model pricing including cached input","cost, model-routing, governance",active
+0013-model-pricing-google,"Google Gemini API model pricing including context caching","cost, model-routing, governance",active
+0014-local-model-options,"Local and custom model endpoints each host agent can use","governance, model-routing, host-agents",active

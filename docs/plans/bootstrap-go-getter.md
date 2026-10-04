@@ -108,7 +108,8 @@ Context: 0011 states Node availability per host was unverified.
 Do: read the Node column of fact 0009. If Node is unavailable where hooks or tier-3 scripts must run, write a decision superseding 0011 (set 0011 `status: superseded`, `superseded-by`, update INDEX); otherwise note confirmation in the PR.
 Done-when: no unavailable cell, or the superseding decision exists and 0011 has `status: superseded` with a valid `superseded-by`.
 
-### 1.9 Model pricing and terms facts ‖ — [ ]
+### 1.9 Model pricing and terms facts ‖ — [x]
+Result: facts 0011 (Anthropic), 0012 (OpenAI), 0013 (Google; expires 2026-12-31 because Flash prices double 2027-01-01), 0014 (local endpoints per host, derived).
 Context: the cost model (0016) needs real prices including cache economics; the governance registry (0018) needs data-handling terms.
 Do: one fact per model provider usable from the six hosts (at least Anthropic, OpenAI, Google; add others the hosts support), next free fact numbers, e.g. `docs/facts/NNNN-model-pricing-anthropic.md`: per model — input, output, cache-write and cache-read prices, cache TTLs and minimum cacheable size, effort/reasoning-token pricing, context window, data retention / zero-data-retention options, regions. `kind: environmental`, `governed-by: 0016-quality-gated-cache-aware-model-routing`, `expires: 2027-01-04` (prices change; re-verify by then). Put the machine-readable table under `go-getter: { models: [...] }`. Add one fact for local-model options the hosts support (endpoint types, no per-token price).
 Done-when: each provider fact exists with vendor pricing-page URLs and access dates, a parseable `go-getter.models` list, and an INDEX row.
@@ -128,7 +129,7 @@ Do: create `package.json` (`"type":"module"`, `"private":true` until release, `e
 Done-when: `npm test` passes; `npm run check:deps` exits 0; the layout decision exists with an INDEX row; every path named in `docs/guardrails/*.md` and `docs/skills/adding-a-*.md` exists or is in the layout decision (fix whichever is wrong).
 
 ### 2.2 Parsing core — [ ]
-Do: `compiler/src/frontmatter.mjs` — zero-dep parser/serializer for the YAML subset used in `docs/` (scalars, inline and block lists, nested maps, lists of maps — needed for `go-getter.enforcement` and `go-getter.models`). `node:test` tests.
+Do: `compiler/src/frontmatter.mjs` — zero-dep parser/serializer for the YAML subset used in `docs/` (scalars, inline and block lists, nested maps, lists of maps, inline flow maps `{k: v}` — needed for `go-getter.enforcement` and the `go-getter.models` lists in facts 0011-0013). `node:test` tests.
 Done-when: `npm test` passes, including a test that parses every `docs/**/*.md` frontmatter in this repo without error.
 
 ### 2.3 Capabilities manifests — [ ]
