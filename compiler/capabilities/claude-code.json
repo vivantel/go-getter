@@ -51,7 +51,13 @@
     },
     "delegation": {
       "tool": "Agent",
-      "update": "hookSpecificOutput"
+      "update": "hookSpecificOutput",
+      "models": [
+        { "prefix": "claude-fable-", "alias": "fable" },
+        { "prefix": "claude-opus-", "alias": "opus" },
+        { "prefix": "claude-sonnet-", "alias": "sonnet" },
+        { "prefix": "claude-haiku-", "alias": "haiku" }
+      ]
     }
   },
   "telemetry": {

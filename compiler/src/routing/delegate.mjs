@@ -21,13 +21,21 @@ export function sessionEstimate(payload, ttl, now) {
   }
 }
 
+// The value the host's delegation tool accepts for a model id: the id itself, or the alias of the first manifest
+// `models` entry whose prefix it starts with (Claude Code: the family alias); null when no entry matches.
+export function delegatedModel(delegation, id) {
+  if (!delegation.models) return id;
+  return delegation.models.find((m) => id.startsWith(m.prefix))?.alias ?? null;
+}
+
 /**
  * For a tool call that delegates to a routed role: { deny, reason } when no eligible model exists (a human decides),
  * { rewrite: { input }, route, handoffTokens } with the delegated model set, { route } when staying in the session is cheaper,
+ * { advisory, route } when the host cannot take the routed model (the agent file's compiled default applies),
  * or null when the call is not a routed delegation (other tool, not adopted, unknown role, explicit model).
  */
-export function routeDelegation(project, host, payload, { now = Date.now() } = {}) {
-  const delegation = packageCapabilities()[host]?.routing.delegation;
+export function routeDelegation(project, host, payload, { now = Date.now(), capabilities = packageCapabilities() } = {}) {
+  const delegation = capabilities[host]?.routing.delegation;
   if (!delegation || payload.tool_name !== delegation.tool) return null;
   const input = payload.tool_input ?? payload.toolInput ?? payload.args;
   if (!input || typeof input !== 'object' || input.model) return null; // the delegator chose a model explicitly
@@ -48,7 +56,9 @@ export function routeDelegation(project, host, payload, { now = Date.now() } = {
   });
   if (route.action === 'human') return { deny: true, reason: `go-getter routing: ${route.reason}; a human decides which model may take this step`, route, handoffTokens };
   if (route.action === 'stay') return { route, handoffTokens };
-  return { rewrite: { input: { ...input, model: route.model } }, route, handoffTokens };
+  const model = delegatedModel(delegation, route.model);
+  if (!model) return { advisory: `go-getter routing (advisory): ${host} takes no value for ${route.model}; the agent file's model applies`, route, handoffTokens };
+  return { rewrite: { input: { ...input, model } }, route, handoffTokens };
 }
 
 // Metadata for the telemetry line of a routed delegation: model, effort, class, handoff size, expected cost; never the brief.

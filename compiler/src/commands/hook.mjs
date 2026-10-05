@@ -58,6 +58,8 @@ export default async function hookCommand({ root, args }) {
     if (routed?.deny) {
       decision.deny = true;
       decision.reason = routed.reason;
+    } else if (routed?.advisory) {
+      process.stderr.write(`${routed.advisory}\n`);
     } else if (routed?.rewrite) {
       const rewritten = respondRewrite(host, routed.rewrite);
       process.stdout.write(rewritten.stdout);

@@ -175,20 +175,31 @@ test('the guardrail declares tier 1 and a tier-2 routing entry, and coverage rea
   done(dir);
 });
 
-test('the pre-tool hook sets the delegated model on Claude Code, Codex and Cursor', () => {
+test('the pre-tool hook sets the delegated model on Claude Code (as its alias), Codex and Cursor', () => {
   const dir = project();
   const claude = hook(dir, 'claude-code', delegate('claude-code', { subagent_type: 'implementer', prompt: 'make the change' }));
   assert.equal(claude.status, 0);
   assert.deepEqual(JSON.parse(claude.stdout).hookSpecificOutput, {
     hookEventName: 'PreToolUse',
     permissionDecision: 'allow',
-    updatedInput: { subagent_type: 'implementer', prompt: 'make the change', model: 'claude-sonnet-5-5' },
+    updatedInput: { subagent_type: 'implementer', prompt: 'make the change', model: 'sonnet' }, // the Agent tool takes family aliases only
   });
   const codex = JSON.parse(hook(dir, 'codex', delegate('codex', { agent: 'explorer', prompt: 'find it' })).stdout);
   assert.equal(codex.hookSpecificOutput.updatedInput.model, 'gpt-6-luna');
   const cursor = JSON.parse(hook(dir, 'cursor', delegate('cursor', { subagent_type: 'planner', prompt: 'plan it' })).stdout);
   assert.equal(cursor.permission, 'allow');
   assert.equal(cursor.updated_input.model, 'gemini-3.1-pro-preview', 'the cheapest large model across the providers Cursor runs');
+  done(dir);
+});
+
+test('a routed model the host has no value for leaves the delegation unchanged (advisory)', () => {
+  const dir = project();
+  const caps = loadCapabilities(root);
+  const capabilities = { ...caps, 'claude-code': { ...caps['claude-code'], routing: { ...caps['claude-code'].routing, delegation: { ...caps['claude-code'].routing.delegation, models: [{ prefix: 'none-', alias: 'none' }] } } } };
+  const routed = routeDelegation(dir, 'claude-code', delegate('claude-code', { subagent_type: 'implementer', prompt: 'x' }), { capabilities });
+  assert.equal(routed.rewrite, undefined, 'the agent file\'s compiled default applies');
+  assert.equal(routed.route.action, 'delegate');
+  assert.match(routed.advisory, /advisory/);
   done(dir);
 });
 
@@ -232,12 +243,12 @@ test('a small warm session on a strong-enough model stays; the same session gone
   utimesSync(transcript, old, old);
   const cold = routeDelegation(dir, 'claude-code', payload);
   assert.equal(cold.route.action, 'delegate');
-  assert.equal(cold.rewrite.input.model, 'claude-sonnet-5-5');
+  assert.equal(cold.rewrite.input.model, 'sonnet');
   // A session on a model below the class's tier cannot take the work, however warm it is.
   utimesSync(transcript, new Date(), new Date());
   const weak = routeDelegation(dir, 'claude-code', { ...payload, tool_input: { subagent_type: 'planner', prompt: 'x' }, model: 'claude-haiku-4-5' });
   assert.equal(weak.route.action, 'delegate');
-  assert.equal(weak.rewrite.input.model, 'claude-opus-5-5');
+  assert.equal(weak.rewrite.input.model, 'opus');
   done(dir);
 });
 
