@@ -18,7 +18,7 @@ Decisions, facts, guardrails and procedures live in `docs/` in the knowledge-bas
 
 Read the guardrails in `docs/guardrails/` before changing code they govern.
 
-## Workflow (interim, until the git-workflow pack replaces it — decision 0004)
+## Workflow (interim, until the git-workflow pack replaces it — decision 0068)
 
 - Never push to `main`. Short-lived branch `type/slug` → PR → squash merge.
 - Conventional Commit titles; `Refs:` trailers to the `docs/` artifacts a change implements.
@@ -34,7 +34,7 @@ At each plan phase boundary run `go-getter:lint`; at each release run `go-getter
 
 ## Remaining work
 
-Step status lives in `docs/plans/bootstrap-go-getter.md`. Update the markers as you go.
+Step status lives in `docs/plans/v0.2-agent-core-hardening.md` (the finished v0.1 plan is in `docs/plans/archive/`). Update the markers as you go.
 
 <!-- go-getter:start -->
 ## Guardrails

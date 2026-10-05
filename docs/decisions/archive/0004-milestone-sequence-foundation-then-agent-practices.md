@@ -1,7 +1,8 @@
 ---
 id: 0004-milestone-sequence-foundation-then-agent-practices
 title: v0.1 is foundation plus the agent core incl. routing and governance; git workflow and testing follow
-status: active
+status: superseded
+superseded-by: 0068-post-v0.1-milestone-sequence
 date: 2026-10-04
 tags: [milestones, roadmap, harness]
 track: product

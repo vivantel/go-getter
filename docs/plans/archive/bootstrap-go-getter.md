@@ -1,8 +1,8 @@
 # Bootstrap go-getter — implementation plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to `docs/plans/v0.2-agent-core-hardening.md`. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains.
 
-Written 2026-10-04 by `go-getter:roadmap` interviews with the repo owner (GitHub `sergemso`, org `vivantel`). Nothing below has been executed except step 0.0.
+Written 2026-10-04 by `go-getter:roadmap` interviews with the repo owner (GitHub `sergemso`, org `vivantel`). **Archived 2026-10-05 (step 7.1):** every finished step stays here as history; the open steps (6.3, 6.4, 7.2, 7.3), the enforcement debt and the open questions moved to `docs/plans/v0.2-agent-core-hardening.md`.
 
 ## What you are building (read first)
 
@@ -31,19 +31,9 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 **Interim working rules (until v0.3 replaces them, decision 0004)**: after the bootstrap commit, never push to `main`. Every step is a short-lived branch `type/slug` → PR → squash merge. Conventional Commit titles with `Refs:` trailers to the `docs/` artifacts implemented (the `go-getter:attribute` skill writes these). One git worktree per parallel task (`git worktree add ../go-getter-wt/<slug> -b <branch>`). Steps marked **‖** may run in parallel.
 
-## Known enforcement debt (from capture, 2026-10-05)
+## Known enforcement debt and open questions
 
-- The `context` pack's cache-hygiene guardrail is tier 1 only: the hook runtime (0025) has no pre-model-switch event, so the confirm-before-switch hook of decision 0027 is not generated yet. The instruction-file cap covers `AGENTS.md` only, not non-symlinked host instruction files.
-- The `governance` pack: tool-output redaction (0018) is not implemented; the hosts rule is a tier-1 guardrail plus the prompt-logging scope; `apply` does not undo a prompt-logging setting when the decision changes; the hook runtime (0025) matches every string in a tool call against the restricted patterns, so any dotted token that ends like a key file (a property access in code, say) is blocked by the key-file pattern (false positives, seen while building this step); path-deny support on Codex and Copilot is unconfirmed (fact 0009).
-- The `verification-gate` pack: the stop hook only gates a working tree with changes and runs the `implement` checks; Copilot, Kilo and OpenCode have no blocking stop hook (tier 1); the Codex `Stop` and Cursor `followup_message` shapes are unconfirmed (fact 0023).
-- The `cost-routing` pack (fact 0025): no Gemini CLI `BeforeModel` router and no Kilo or OpenCode `task` router, so routing is advisory there (and on Copilot, which has no model ids); the Codex and Cursor rewrite shapes, the `<provider>/<model>` Kilo and OpenCode format and the Claude Code cache-lifetime keys are unconfirmed; `apply` does not undo cache-lifetime settings when the answer changes to host defaults, and writes no spend caps (`go-getter route --headless-flags` prints them); failure rates and the step shape are constants until calibration (0017); session size and warmth are estimated from the transcript file; the coverage report shows component 11 as `hook` on all hosts (manifest reach), and the verification stop hook does not re-dispatch a tier up as decision 0020 describes (fact 0025).
-- Decision 0019's PowerShell shims are not implemented; the runner is POSIX `sh` only.
-
-## Open questions (resolve in the named step; record answers as facts/decisions)
-
-- Pack file format: JSON (default) vs restricted YAML subset (4.1).
-- How far each host can enforce DLP (1.7 → 5.3).
-- Eval authentication on CI: resolved in 6.1 (decision 0065) — the cases are deterministic and need no key.
+Moved to `docs/plans/v0.2-agent-core-hardening.md` on 2026-10-05; the open questions of this plan were resolved by steps 4.1 and 6.1 (JSON pack format; keyless evals) and 1.7 (DLP reach, recorded in fact 0009).
 
 ---
 
@@ -291,12 +281,14 @@ Result: decision 0066 supersedes 0006 and 0007 (both archived, with facts 0001 a
 Context: the owner asked (2026-10-05) that go-getter not use or rely on the former upstream, which 7.2 and decision 0007 had assumed would stay the authority for the artifact format.
 Done-when: `npm test`, every `check:*` and `go-getter apply --check` pass with `vendor/` and `scripts/` absent; no active artifact or source file names the former upstream.
 
-### 6.3 Install smoke test per host — [!]
+### 6.3 Install smoke test per host — [>]
+Moved to step 0.1 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
 Postponed by the owner (2026-10-05). `INSTALLING.md` marks every install untested until this runs. Installed here: Claude Code, Kilo, OpenCode; not installed: Codex, Cursor, Gemini CLI, Copilot.
 Do: on each of the seven hosts, install from the public repo per `INSTALLING.md`, run `init` for one pack on a scratch repo, confirm artifacts and enforcement files appear. File a GitHub issue per defect.
 Done-when: a seven-row table (host / installed / init works / defects) is in the PR description with no unexplained failures.
 
-### 6.4 Tag v0.1.0 — [ ]
+### 6.4 Tag v0.1.0 — [>]
+Moved to step 0.2 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
 **Outward-facing: requires the owner's explicit go-ahead.**
 Do: first a release PR that bumps `package.json` to `0.1.0` and runs `npm run build` (every generated manifest must carry the version or `check:versions --tag` fails the release workflow), regenerates the 0.1.0 changelog section with `go-getter:changelog`, and passes a dry run of the release workflow; merge it, then tag `v0.1.0` and create the GitHub release from the changelog.
 Done-when: `check:versions --tag v0.1.0` passes; `gh release view v0.1.0 -R vivantel/go-getter` succeeds; the release workflow run for the tag is green.
@@ -305,16 +297,19 @@ Done-when: `check:versions --tag v0.1.0` passes; `gh release view v0.1.0 -R viva
 
 ## Phase 7 — Close-out
 
-### 7.1 Re-evaluate the roadmap — [ ]
+### 7.1 Re-evaluate the roadmap — [x]
+Result (2026-10-05): `go-getter:lint` found no structural error (notes: 0004's expiry condition unmet, its body still said "vendored", five decision-facts nothing cites). The owner's eight proposals were assessed against the decisions and facts; the owner chose the order in decision 0068, which supersedes 0004 (now archived; the guardrail `commit-subjects-are-conventional` was re-pointed to 0068). New decisions 0068-0074 and facts 0026-0029 record the outcome; drafts 0069, 0070, 0071 and 0074 await confirmation (v0.2 plan step 0.5). The v0.2 plan is `docs/plans/v0.2-agent-core-hardening.md`; this plan moved to `docs/plans/archive/`. Conform ran on the change set before its PR.
 Context: decision 0004 expires when v0.1.0 ships.
 Do: run `go-getter:lint` and `go-getter:conform`; review the post-v0.1 order with the owner; write `docs/plans/v0.2-calibration-observability.md` (routing calibration 0017, full observability, HITL gates, checkpointing); if the order changes, supersede 0004.
 Done-when: lint and conform report no errors; the v0.2 plan exists; 0004 is confirmed in a PR note or `superseded` with valid `superseded-by`.
 
-### 7.2 Document the `go-getter:` key as go-getter's own — [ ]
+### 7.2 Document the `go-getter:` key as go-getter's own — [>]
+Moved to step 0.3 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
 Context: decision 0066 makes the key part of go-getter's artifact format; nothing is proposed to any other project.
 Do: add a section to `src/shared/artifact-model.md` describing the `go-getter:` frontmatter key (`enforcement` with tiers, `generated-by`, `pack-answer`, pack data), so the skills that read artifacts know it; rebuild.
 Done-when: the section exists once, the lint reports no unknown-key findings for it, `npm run check:generated` exits 0.
 
-### 7.3 Consider a second dogfood repo — [ ]
+### 7.3 Consider a second dogfood repo — [>]
+Moved to step 0.4 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
 Do: ask the owner whether to adopt go-getter in another vivantel repo (0010 deferred this).
 Done-when: the answer is recorded in the 7.1 PR description; if yes, a follow-up plan exists.

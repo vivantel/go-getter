@@ -30,7 +30,7 @@ go-getter:
 ```
 
 4. Tooling never parses prose. Runtime state (telemetry, worktree claims) is not configuration and lives in the gitignored runner state directory.
-5. The knowledge base is the harness's long-term memory for decisions, facts and rules (component 5) until a dedicated memory pack exists (0004).
+5. The knowledge base is the harness's long-term memory for decisions, facts and rules (component 5) until a dedicated memory pack exists (0068).
 
 ## Why
 

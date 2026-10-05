@@ -4,9 +4,9 @@ title: Commit subjects must follow Conventional Commits
 status: active
 date: 2026-10-05
 tags: [git-hooks, ci, guardrail]
-governed-by: 0004-milestone-sequence-foundation-then-agent-practices
-grounded-in: [0004-milestone-sequence-foundation-then-agent-practices]
-derivation-note: Given the interim workflow requires Conventional Commit titles (0004) and changelogs are generated from their type prefixes, a non-conforming subject silently drops out of the changelog.
+governed-by: 0068-post-v0.1-milestone-sequence
+grounded-in: [0068-post-v0.1-milestone-sequence]
+derivation-note: Given the interim workflow requires Conventional Commit titles (0068) and changelogs are generated from their type prefixes, a non-conforming subject silently drops out of the changelog.
 go-getter:
   enforcement:
     - tier: 3

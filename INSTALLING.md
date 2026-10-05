@@ -4,7 +4,7 @@ go-getter is a plugin of skills. Install it on one host agent, then ask that age
 
 The skills run the CLI through `npx --yes github:vivantel/go-getter <command>`, which needs Node.js 22 or newer. Without Node, your choices are still recorded but enforcement stays advisory.
 
-Every install below is untested until step 6.3 of the [plan](docs/plans/bootstrap-go-getter.md) runs it on the host. Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; step 6.3 of the [plan](docs/plans/bootstrap-go-getter.md) is the install test on each host that confirms or corrects them.
+Every install below is untested until step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md) runs it on the host. Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md) is the install test on each host that confirms or corrects them.
 
 - [Claude Code](#claude-code)
 - [Codex](#codex)
