@@ -4,11 +4,12 @@ go-getter is a plugin of skills. Install it on one host agent, then ask that age
 
 The skills run the CLI through `npx --yes github:vivantel/go-getter <command>`, which needs Node.js 22 or newer. Without Node, your choices are still recorded but enforcement stays advisory.
 
-Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; step 6.3 of the [plan](docs/plans/bootstrap-go-getter.md) is the install test on each host that confirms or corrects them.
+Every install below is untested until step 6.3 of the [plan](docs/plans/bootstrap-go-getter.md) runs it on the host. Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; step 6.3 of the [plan](docs/plans/bootstrap-go-getter.md) is the install test on each host that confirms or corrects them.
 
 - [Claude Code](#claude-code)
 - [Codex](#codex)
-- [Kilo Code / OpenCode](#kilo-code--opencode)
+- [Kilo Code](#kilo-code)
+- [OpenCode](#opencode)
 - [Cursor](#cursor)
 - [Gemini CLI](#gemini-cli)
 - [GitHub Copilot](#github-copilot)
@@ -34,15 +35,19 @@ codex plugin marketplace add vivantel/go-getter
 
 Then install `go-getter` from the plugin browser. **Not confirmed:** the install step after adding the marketplace.
 
-## Kilo Code / OpenCode
+## Kilo Code
 
-There is no marketplace manifest ([fact 0005](docs/facts/0005-kilo-opencode-integration-surface.md)). Kilo can track the skills remotely; add this to your `kilo.jsonc`:
+Kilo Code CLI is a fork of OpenCode with its own config files and `.kilo/` directories; neither has a marketplace manifest ([fact 0005](docs/facts/0005-kilo-opencode-integration-surface.md)). Kilo can track the skills remotely; add this to your `kilo.jsonc`:
 
 ```json
 { "skills": { "urls": ["https://raw.githubusercontent.com/vivantel/go-getter/main/plugins/go-getter/skills"] } }
 ```
 
-The manifest is [`plugins/go-getter/skills/index.json`](plugins/go-getter/skills/index.json); Kilo re-fetches when a skill's version changes. **Not confirmed for OpenCode:** the same `skills.urls` key. Alternatively copy `plugins/go-getter/skills/` into `.opencode/skills/` (or `.agents/skills/`) in your project.
+The manifest is [`plugins/go-getter/skills/index.json`](plugins/go-getter/skills/index.json); Kilo re-fetches when a skill's version changes. Alternatively copy `plugins/go-getter/skills/` into `.agents/skills/` in your project. **Not confirmed:** that Kilo loads the skills from this manifest, and the `.kilo/` subdirectory names go-getter writes agents and hooks to (assumed to mirror OpenCode's).
+
+## OpenCode
+
+OpenCode has no marketplace manifest and no documented remote-skills manifest ([fact 0005](docs/facts/0005-kilo-opencode-integration-surface.md)). Copy `plugins/go-getter/skills/` into `.opencode/skills/` (or `.agents/skills/`) in your project. **Not confirmed:** that this loads the skills.
 
 ## Cursor
 

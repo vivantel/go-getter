@@ -46,14 +46,18 @@ export function roleBody(roster, role) {
 const tag = (roster, role) => `${AGENT_MARKER} from ${roster.decision}; do not edit. role=${role.id} task-class=${role['task-class']}`;
 const yamlList = (items) => `[${items.map((i) => JSON.stringify(i)).join(', ')}]`;
 
+// Kilo Code CLI is a fork of OpenCode and shares its agent file format (fact 0005).
+function forkAgent(r, role, route) {
+  const head = { description: role.description, mode: 'subagent', ...(route ? { model: `${route.provider}/${route.model}` } : {}) };
+  const permission = role.access === 'read-only' ? '\npermission:\n  edit: deny\n  bash: deny' : '';
+  return md(head, r, role, permission);
+}
+
 // One renderer per host: (roster, role, route) -> file content. `route` is the cost-routing default { model, provider, effort } or null.
 const RENDER = {
   'claude-code': (r, role, route) => md({ name: role.id, description: role.description, ...(route ? { model: route.model, ...(route.effort ? { effort: route.effort } : {}) } : {}), ...(role.access === 'read-only' ? { tools: READ_ONLY_TOOLS['claude-code'] } : {}) }, r, role),
-  'kilo-opencode': (r, role, route) => {
-    const head = { description: role.description, mode: 'subagent', ...(route ? { model: `${route.provider}/${route.model}` } : {}) };
-    const permission = role.access === 'read-only' ? '\npermission:\n  edit: deny\n  bash: deny' : '';
-    return md(head, r, role, permission);
-  },
+  kilo: (r, role, route) => forkAgent(r, role, route),
+  opencode: (r, role, route) => forkAgent(r, role, route),
   cursor: (r, role, route) => md({ name: role.id, description: role.description, ...(route ? { model: route.effort ? `${route.model}[effort=${route.effort}]` : route.model } : {}), ...(role.access === 'read-only' ? { readonly: true } : {}) }, r, role),
   'gemini-cli': (r, role, route) => md({ name: role.id, description: role.description, kind: 'local', ...(route ? { model: route.model } : {}) }, r, role, role.access === 'read-only' ? `\ntools: ${yamlList(READ_ONLY_TOOLS['gemini-cli'])}` : ''),
   copilot: (r, role) => md({ name: role.id, description: role.description }, r, role, role.access === 'read-only' ? `\ntools: ${yamlList(READ_ONLY_TOOLS.copilot)}` : ''),

@@ -24,7 +24,7 @@ const pack = packs['cost-routing'];
 const recommended = (p) => Object.fromEntries(p.questions.map((q) => [q.id, q.options ? q.options.find((o) => o.recommended).id : q.default]).filter(([, v]) => v !== undefined));
 const answersFor = (overrides = {}) => ({ ...recommended(pack), ...overrides });
 const FACTS = ['0011-model-pricing-anthropic', '0012-model-pricing-openai', '0013-model-pricing-google', '0024-model-tiers-and-host-providers'];
-const ALL_HOSTS = ['claude-code', 'codex', 'kilo-opencode', 'cursor', 'gemini-cli', 'copilot'];
+const ALL_HOSTS = ['claude-code', 'codex', 'kilo', 'opencode', 'cursor', 'gemini-cli', 'copilot'];
 
 function project({ governance = {}, adoptGovernance = true, routing = answersFor(), withRouting = true } = {}) {
   const dir = realpathSync(mkdtempSync(path.join(tmpdir(), 'gg-routing-')));
@@ -135,6 +135,7 @@ test('apply compiles the default model and effort into every role file that can 
   assert.match(file('.codex/agents/implementer.toml'), /^model = "gpt-6\.1-sol"$/m);
   assert.match(file('.codex/agents/implementer.toml'), /^model_reasoning_effort = "medium"$/m);
   assert.match(file('.opencode/agents/explorer.md'), /^model: "?openai\/gpt-6-luna"?$/m);
+  assert.match(file('.kilo/agents/explorer.md'), /^model: "?openai\/gpt-6-luna"?$/m);
   assert.match(file('.cursor/agents/explorer.md'), /^model: "gpt-6-luna\[effort=low\]"$/m);
   assert.match(file('.gemini/agents/implementer.md'), /^model: "?gemini-3\.8-flash"?$/m);
   assert.doesNotMatch(file('.gemini/agents/implementer.md'), /effort/);

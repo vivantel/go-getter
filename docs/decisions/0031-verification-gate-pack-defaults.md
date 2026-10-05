@@ -14,7 +14,7 @@ The `verification-gate` harness pack (component 6) recommends:
 
 1. Implement and debug steps pass **the detected test, lint and typecheck commands** (confirmed and editable as text answers; alternatives tests only, affected tests only).
 2. Review steps pass **a reviewer-agent verdict** (alternatives verdict + conform check, none).
-3. Gate strength: **block "done" until checks pass** via stop hooks, bounded by the escalation limit (0032); advisory on hosts without a blocking stop hook (Copilot, Kilo/OpenCode).
+3. Gate strength: **block "done" until checks pass** via stop hooks, bounded by the escalation limit (0032); advisory on hosts without a blocking stop hook (Copilot, Kilo, OpenCode).
 
 ## Why
 

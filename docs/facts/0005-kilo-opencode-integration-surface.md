@@ -3,7 +3,7 @@ id: 0005-kilo-opencode-integration-surface
 title: Kilo Code CLI and OpenCode harness extension points
 status: active
 date: 2026-10-04
-tags: [kilo-opencode, host-agents, harness]
+tags: [kilo, opencode, host-agents, harness]
 kind: environmental
 governed-by: 0002-six-host-agents-from-v0-1
 ---

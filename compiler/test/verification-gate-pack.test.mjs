@@ -254,7 +254,7 @@ test('a malformed payload or an unknown project never traps the session', () => 
 test('apply installs the stop hook only on hosts that can block a stop, and only with the gate', () => {
   const dir = project();
   adopt(dir);
-  const hosts = ['claude-code', 'codex', 'gemini-cli', 'cursor', 'copilot', 'kilo-opencode'];
+  const hosts = ['claude-code', 'codex', 'gemini-cli', 'cursor', 'copilot', 'kilo', 'opencode'];
   const plan = planApply(dir, { hosts });
   const out = (rel) => JSON.parse(plan.outputs[rel].content);
   assert.ok(out('.claude/settings.json').hooks.Stop[0].hooks[0].command.endsWith('hook stop --host claude-code'));

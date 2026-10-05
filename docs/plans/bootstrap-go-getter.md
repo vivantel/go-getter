@@ -6,9 +6,9 @@ Written 2026-10-04 by `kms:roadmap` interviews with the repo owner (GitHub `serg
 
 ## What you are building (read first)
 
-**Terminology (fact `docs/facts/0002-agent-harness-and-host-agent-terminology.md`)**: Agent = Model + **Harness**. The harness is the 12-component layer around a model: (1) orchestration loop, (2) tool registry, (3) execution sandbox, (4) context management, (5) short/long-term memory, (6) verification & self-correction, (7) guardrails & safety incl. security/DLP/governance, (8) human-in-the-loop gates, (9) state & checkpointing, (10) multi-agent orchestration, (11) token & cost management incl. model routing, (12) observability. **Host agents** are the products that ship a partial harness: Claude Code, Codex, Kilo Code/OpenCode, Cursor, Gemini CLI, GitHub Copilot. Never call a host agent a "harness".
+**Terminology (fact `docs/facts/0002-agent-harness-and-host-agent-terminology.md`)**: Agent = Model + **Harness**. The harness is the 12-component layer around a model: (1) orchestration loop, (2) tool registry, (3) execution sandbox, (4) context management, (5) short/long-term memory, (6) verification & self-correction, (7) guardrails & safety incl. security/DLP/governance, (8) human-in-the-loop gates, (9) state & checkpointing, (10) multi-agent orchestration, (11) token & cost management incl. model routing, (12) observability. **Host agents** are the products that ship a partial harness: Claude Code, Codex, Kilo Code, OpenCode, Cursor, Gemini CLI, GitHub Copilot. Never call a host agent a "harness".
 
-**go-getter** (the name means "one who gets things done" — nothing to do with the Go language) is a set of skills, commands, agents and plugins that, with minimal effort, sets up (a) the agent harness and (b) the SDLC practices (branching, workflow, worktrees, parallelization, testing, coverage, debugging, commit/PR rules, agent roles, release...) for a project, on all six host agents. Its goal is the required quality at minimal token spend. It is dogfooded from commit 0.
+**go-getter** (the name means "one who gets things done" — nothing to do with the Go language) is a set of skills, commands, agents and plugins that, with minimal effort, sets up (a) the agent harness and (b) the SDLC practices (branching, workflow, worktrees, parallelization, testing, coverage, debugging, commit/PR rules, agent roles, release...) for a project, on all seven host agents. Its goal is the required quality at minimal token spend. It is dogfooded from commit 0.
 
 Core design — all in `docs/decisions/`; read them before coding, they hold rationale and rejected alternatives:
 
@@ -35,8 +35,8 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 - The `context` pack's cache-hygiene guardrail is tier 1 only: the hook runtime (0025) has no pre-model-switch event, so the confirm-before-switch hook of decision 0027 is not generated yet. The instruction-file cap covers `AGENTS.md` only, not non-symlinked host instruction files.
 - The `governance` pack: tool-output redaction (0018) is not implemented; the hosts rule is a tier-1 guardrail plus the prompt-logging scope; `apply` does not undo a prompt-logging setting when the decision changes; the hook runtime (0025) matches every string in a tool call against the restricted patterns, so any dotted token that ends like a key file (a property access in code, say) is blocked by the key-file pattern (false positives, seen while building this step); path-deny support on Codex and Copilot is unconfirmed (fact 0009).
-- The `verification-gate` pack: the stop hook only gates a working tree with changes and runs the `implement` checks; Copilot and Kilo/OpenCode have no blocking stop hook (tier 1); the Codex `Stop` and Cursor `followup_message` shapes are unconfirmed (fact 0023).
-- The `cost-routing` pack (fact 0025): no Gemini CLI `BeforeModel` router and no Kilo/OpenCode `task` router, so routing is advisory there (and on Copilot, which has no model ids); the Codex and Cursor rewrite shapes, the `<provider>/<model>` Kilo/OpenCode format and the Claude Code cache-lifetime keys are unconfirmed; `apply` does not undo cache-lifetime settings when the answer changes to host defaults, and writes no spend caps (`go-getter route --headless-flags` prints them); failure rates and the step shape are constants until calibration (0017); session size and warmth are estimated from the transcript file; the coverage report shows component 11 as `hook` on all hosts (manifest reach), and the verification stop hook does not re-dispatch a tier up as decision 0020 describes (fact 0025).
+- The `verification-gate` pack: the stop hook only gates a working tree with changes and runs the `implement` checks; Copilot, Kilo and OpenCode have no blocking stop hook (tier 1); the Codex `Stop` and Cursor `followup_message` shapes are unconfirmed (fact 0023).
+- The `cost-routing` pack (fact 0025): no Gemini CLI `BeforeModel` router and no Kilo or OpenCode `task` router, so routing is advisory there (and on Copilot, which has no model ids); the Codex and Cursor rewrite shapes, the `<provider>/<model>` Kilo and OpenCode format and the Claude Code cache-lifetime keys are unconfirmed; `apply` does not undo cache-lifetime settings when the answer changes to host defaults, and writes no spend caps (`go-getter route --headless-flags` prints them); failure rates and the step shape are constants until calibration (0017); session size and warmth are estimated from the transcript file; the coverage report shows component 11 as `hook` on all hosts (manifest reach), and the verification stop hook does not re-dispatch a tier up as decision 0020 describes (fact 0025).
 - Decision 0019's PowerShell shims are not implemented; the runner is POSIX `sh` only.
 
 ## Open questions (resolve in the named step; record answers as facts/decisions)
@@ -93,6 +93,8 @@ Done-when: `gh api repos/vivantel/go-getter --jq '{s:.allow_squash_merge,m:.allo
 ---
 
 ## Phase 1 — Host-agent and model facts (research; no code)
+
+**Host split (2026-10-05):** Kilo Code CLI and OpenCode were one host (`kilo-opencode`) when the steps below were done; they are now two hosts, `kilo` and `opencode` (decision 0002 and the artifacts it governs were corrected in place; the research stays in fact 0005). Step results below that say "six hosts", "six manifests", "six adapters" or `kilo-opencode` describe the original grouping.
 
 Context: the compiler and every harness pack depend on what each host exposes. Follow `docs/skills/adding-a-host-agent.md` step 1 exactly: vendor primary documentation only, record what could not be confirmed. Each host fact: `kind: environmental`, `governed-by: 0002-six-host-agents-from-v0-1`, sections matching that procedure's list (instruction files; skills/agents/commands; packaging & install; headless invocation; hooks & permissions; per-agent model + effort; local/custom endpoints; prompt caching & visibility; telemetry/OTel & cost reporting; DLP levers; native harness components; Node availability), plus **Not confirmed** and **Sources** (URLs with access date). First add tags `claude-code`, `codex`, `kilo-opencode`, `cursor`, `gemini-cli`, `copilot` to `docs/skills/tags.md`. Numbers are pre-assigned to avoid collisions. Update `docs/facts/INDEX.md`. Steps 1.1-1.6 and 1.9 are **‖**.
 
@@ -278,7 +280,7 @@ Done-when: generic conditions; `npm run test:routing` includes: a warm-cache lar
 ## Phase 6 — Evals and release
 
 ### 6.1 Behavior evals — [x]
-Result: decision 0065 (scripted, keyless; resolves the auth question). `evals/promptfooconfig.yaml` has 12 cases (init per fixture and per pack, all six hosts, routing on vs off) driven by `evals/providers/init-runner.mjs`; `npm run eval` passes locally (`go-getter eval`), `promptfoo` 0.123.1 is a devDependency, `.github/workflows/eval.yml` exists. The `eval` workflow was dispatched on `main` and passed (run 37376182080). Model-driven cases on a host are deferred (0065).
+Result: decision 0065 (scripted, keyless; resolves the auth question). `evals/promptfooconfig.yaml` has 12 cases (init per fixture and per pack, all seven hosts, routing on vs off) driven by `evals/providers/init-runner.mjs`; `npm run eval` passes locally (`go-getter eval`), `promptfoo` 0.123.1 is a devDependency, `.github/workflows/eval.yml` exists. The `eval` workflow was dispatched on `main` and passed (run 37376182080). Model-driven cases on a host are deferred (0065).
 Context: 0013 layer 3; kms's `evals/` and `evals/providers/kilo-runner.sh` are the model.
 Do: `evals/` with fixture repos (Node, Python, empty, one with sensitive paths) and promptfoo cases per pack running `init` with scripted answers, asserting artifacts exist, frontmatter valid, INDEX rows updated, no host-specific text in neutral output. Add one routing case comparing total cost on a fixed fixture task with `cost-routing` on vs off at equal verification pass rate. `npm run eval`; `.github/workflows/eval.yml` (manual dispatch + called by release). Resolve the auth open question first; if a secret is needed, stop and ask the owner. `promptfoo` only in `devDependencies`.
 Done-when: `npm run eval` passes locally on at least one host; the `eval` workflow is green on GitHub; `npm run check:deps` exits 0.
@@ -289,8 +291,8 @@ Do: `.github/workflows/release.yml` with `needs: [test, golden, eval]` (guardrai
 Done-when: a dry run of the release workflow on a branch passes all gate jobs; `INSTALLING.md` has one section per host; every generated manifest version equals `package.json`'s.
 
 ### 6.3 Install smoke test per host — [ ]
-Do: on each of the six hosts, install from the public repo per `INSTALLING.md`, run `init` for one pack on a scratch repo, confirm artifacts and enforcement files appear. File a GitHub issue per defect.
-Done-when: a six-row table (host / installed / init works / defects) is in the PR description with no unexplained failures.
+Do: on each of the seven hosts, install from the public repo per `INSTALLING.md`, run `init` for one pack on a scratch repo, confirm artifacts and enforcement files appear. File a GitHub issue per defect.
+Done-when: a seven-row table (host / installed / init works / defects) is in the PR description with no unexplained failures.
 
 ### 6.4 Tag v0.1.0 — [ ]
 **Outward-facing: requires the owner's explicit go-ahead.**

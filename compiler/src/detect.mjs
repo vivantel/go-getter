@@ -133,7 +133,8 @@ export function detect(root) {
   const hostSignals = {
     'claude-code': ['CLAUDE.md', '.claude'],
     codex: ['.codex'],
-    'kilo-opencode': ['.opencode', 'opencode.json', 'opencode.jsonc', '.kilo', 'kilo.json', 'kilo.jsonc'],
+    kilo: ['.kilo', 'kilo.json', 'kilo.jsonc'],
+    opencode: ['.opencode', 'opencode.json', 'opencode.jsonc'],
     cursor: ['.cursor', '.cursorrules', '.cursorignore'],
     'gemini-cli': ['GEMINI.md', '.gemini'],
     copilot: ['.github/copilot-instructions.md', '.github/agents', '.github/instructions'],

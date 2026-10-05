@@ -5,11 +5,11 @@ id,title,tags,status
 0002-agent-harness-and-host-agent-terminology,"Meaning of ""agent harness"" and ""host agent"" in this project","harness, host-agents, positioning",active
 0003-claude-code-integration-surface,"Claude Code's harness extension points","claude-code, host-agents, harness",active
 0004-codex-integration-surface,"Codex's harness extension points","codex, host-agents, harness",active
-0005-kilo-opencode-integration-surface,"Kilo Code CLI and OpenCode harness extension points","kilo-opencode, host-agents, harness",active
+0005-kilo-opencode-integration-surface,"Kilo Code CLI and OpenCode harness extension points","kilo, opencode, host-agents, harness",active
 0006-cursor-integration-surface,"Cursor's harness extension points","cursor, host-agents, harness",active
 0007-gemini-cli-integration-surface,"Gemini CLI's harness extension points","gemini-cli, host-agents, harness",active
 0008-copilot-integration-surface,"GitHub Copilot's harness extension points","copilot, host-agents, harness",active
-0009-host-capability-matrix,"Capability matrix of the six host agents","host-agents, harness, compiler, enforcement",active
+0009-host-capability-matrix,"Capability matrix of the seven host agents","host-agents, harness, compiler, enforcement",active
 0010-nodejs-release-schedule,"Node.js LTS release schedule and the oldest supported LTS line","nodejs, tooling",active
 0011-model-pricing-anthropic,"Anthropic Claude model pricing including cache economics","cost, model-routing, governance",active
 0012-model-pricing-openai,"OpenAI model pricing including cached input","cost, model-routing, governance",active

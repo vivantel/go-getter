@@ -18,7 +18,7 @@ Model-driven cases (an agent following the interview on a host) are deferred unt
 
 ## Why
 
-The compiler and renderer are the part that breaks silently across six hosts, and they are deterministic, so a model adds cost and flakiness without adding signal. This also resolves the plan's open question on eval authentication without asking for a secret.
+The compiler and renderer are the part that breaks silently across seven hosts, and they are deterministic, so a model adds cost and flakiness without adding signal. This also resolves the plan's open question on eval authentication without asking for a secret.
 
 ## Tradeoffs considered
 

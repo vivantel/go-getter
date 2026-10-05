@@ -17,7 +17,7 @@ go-getter does not run its own agent loop, model-API client or routing proxy. Wh
 
 ## Why
 
-Riding host agents is what makes setup zero-friction on all six (0002); users keep the tool they already use and gain a production-grade harness around it.
+Riding host agents is what makes setup zero-friction on all seven (0002); users keep the tool they already use and gain a production-grade harness around it.
 
 ## Tradeoffs considered
 

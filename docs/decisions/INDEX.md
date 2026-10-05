@@ -2,7 +2,7 @@
 
 id,title,tags,status
 0001-go-getter-product-scope-and-name,"go-getter sets up the agent harness and SDLC practices for AI-driven development with minimal effort","positioning, harness, roadmap",active
-0002-six-host-agents-from-v0-1,"v0.1 supports six host agents - Claude Code, Codex, Kilo/OpenCode, Cursor, Gemini CLI, GitHub Copilot","host-agents, agent-agnostic, packaging",active
+0002-six-host-agents-from-v0-1,"v0.1 supports seven host agents - Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, GitHub Copilot","host-agents, agent-agnostic, packaging",active
 0003-guided-interview-only-setup,"Project setup is a guided interview with recommended defaults, not auto-applied presets","interview, positioning, configuration",active
 0004-milestone-sequence-foundation-then-agent-practices,"v0.1 is foundation plus the agent core incl. routing and governance; git workflow and testing follow","milestones, roadmap, harness",active
 0005-neutral-source-compiler-architecture,"Author content once in a neutral source and compile it to each host agent's native files","architecture, compiler, generated-files, agent-agnostic",active

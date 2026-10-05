@@ -11,7 +11,7 @@ expires: v0.1.0 is released
 
 ## Decision
 
-- **v0.1**: foundation (repo, compiler for six host agents, vendored kms, interview engine, pack schema) plus the agent core harness packs: orchestration (agent roles 0014, parallelization incl. git worktrees), context management, cost & model routing (0016, static default policy), governance/DLP (0018), and the minimal verification gate and metadata telemetry that routing needs.
+- **v0.1**: foundation (repo, compiler for seven host agents, vendored kms, interview engine, pack schema) plus the agent core harness packs: orchestration (agent roles 0014, parallelization incl. git worktrees), context management, cost & model routing (0016, static default policy), governance/DLP (0018), and the minimal verification gate and metadata telemetry that routing needs.
 - **v0.2**: routing calibration loop (0017), full observability, human-in-the-loop gates, state & checkpointing.
 - **v0.3**: SDLC git workflow — branching strategy, commit and PR rules; replaces this repo's interim workflow.
 - **v0.4**: testing, coverage, debugging; memory beyond kms.

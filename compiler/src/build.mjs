@@ -7,7 +7,8 @@ import { HOSTS, loadCapabilities } from './capabilities.mjs';
 import { PLUGIN_DIR } from './emit.mjs';
 import claudeCode from '../adapters/claude-code.mjs';
 import codex from '../adapters/codex.mjs';
-import kiloOpencode from '../adapters/kilo-opencode.mjs';
+import kilo from '../adapters/kilo.mjs';
+import opencode from '../adapters/opencode.mjs';
 import cursor from '../adapters/cursor.mjs';
 import copilot from '../adapters/copilot.mjs';
 import geminiCli from '../adapters/gemini-cli.mjs';
@@ -15,7 +16,7 @@ import geminiCli from '../adapters/gemini-cli.mjs';
 export { PLUGIN_DIR };
 
 // One emitter per host in compiler/adapters/<host>.mjs; identical shared entries are merged.
-export const ADAPTERS = { 'claude-code': claudeCode, codex, 'kilo-opencode': kiloOpencode, cursor, copilot, 'gemini-cli': geminiCli };
+export const ADAPTERS = { 'claude-code': claudeCode, codex, kilo, opencode, cursor, copilot, 'gemini-cli': geminiCli };
 
 // Plugin-root directories that skills reference relatively (kms skills use ../../shared and ../../templates).
 export const SUPPORT_DIRS = ['shared', 'templates'];

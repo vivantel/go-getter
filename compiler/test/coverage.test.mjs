@@ -57,8 +57,9 @@ test('coverage maps components to adopted packs and per-host tiers', () => {
   assert.deepEqual(new Set(Object.values(byNum[4].tiers)), new Set([3]));
   assert.deepEqual(byNum[7].packs, ['guard@0.1.0']);
   assert.deepEqual(new Set(Object.values(byNum[7].tiers)), new Set([2]));
-  // Kilo/OpenCode has no sandbox lever (capability tier 0), so the tier-2 rule is advisory there.
-  assert.equal(byNum[3].tiers['kilo-opencode'], 1);
+  // Kilo and OpenCode have no sandbox lever (capability tier 0), so the tier-2 rule is advisory there.
+  assert.equal(byNum[3].tiers.kilo, 1);
+  assert.equal(byNum[3].tiers.opencode, 1);
   assert.equal(byNum[3].tiers['claude-code'], 2);
   assert.deepEqual(byNum[1].packs, []);
   assert.equal(byNum[1].tiers['claude-code'], null);

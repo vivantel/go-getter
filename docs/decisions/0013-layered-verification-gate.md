@@ -18,7 +18,7 @@ Layers 1 and 2 are deterministic and gate every PR; layer 3 gates releases. This
 
 ## Why
 
-Configuration that behaves differently across six host agents breaks silently; deterministic layers catch compiler regressions cheaply, and evals catch agent-behavior regressions.
+Configuration that behaves differently across seven host agents breaks silently; deterministic layers catch compiler regressions cheaply, and evals catch agent-behavior regressions.
 
 ## Tradeoffs considered
 

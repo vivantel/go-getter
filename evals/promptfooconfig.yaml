@@ -54,8 +54,8 @@ tests:
           if (!r.detected.sensitivePaths.length) return { pass: false, score: 0, reason: 'fixture has no detected sensitive paths' };
           return r.uncoveredSensitivePaths.length === 0 || { pass: false, score: 0, reason: `not in the restricted-paths guardrail: ${r.uncoveredSensitivePaths}` };
 
-  - description: "init for all six hosts"
-    vars: { label: init-all-hosts, fixture: node, packs: all, hosts: "claude-code,codex,kilo-opencode,cursor,gemini-cli,copilot" }
+  - description: "init for all seven hosts"
+    vars: { label: init-all-hosts, fixture: node, packs: all, hosts: "claude-code,codex,kilo,opencode,cursor,gemini-cli,copilot" }
     assert:
       - *init-ok
 

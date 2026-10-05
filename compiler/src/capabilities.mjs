@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { validate } from './schema.mjs';
 
-export const HOSTS = ['claude-code', 'codex', 'kilo-opencode', 'cursor', 'gemini-cli', 'copilot'];
+export const HOSTS = ['claude-code', 'codex', 'kilo', 'opencode', 'cursor', 'gemini-cli', 'copilot'];
 
 export function loadSchema(root) {
   return JSON.parse(readFileSync(path.join(root, 'compiler/schemas/capabilities.schema.json'), 'utf8'));

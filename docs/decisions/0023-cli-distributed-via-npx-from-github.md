@@ -14,7 +14,7 @@ Skills run the CLI as `npx --yes github:vivantel/go-getter <command>` (pinned to
 
 ## Why
 
-Distributable packaging carries skills only (fact 0015), so adopting projects need another way to run `detect`, `render-pack`, `apply` and `check`. Node is already a prerequisite (0019) and npx works identically on all six hosts.
+Distributable packaging carries skills only (fact 0015), so adopting projects need another way to run `detect`, `render-pack`, `apply` and `check`. Node is already a prerequisite (0019) and npx works identically on all seven hosts.
 
 ## Tradeoffs considered
 

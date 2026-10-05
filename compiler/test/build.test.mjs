@@ -40,7 +40,7 @@ test('every host has an adapter and emits its own manifest', () => {
   const expectations = {
     'claude-code': 'plugins/go-getter/.claude-plugin/plugin.json',
     codex: 'plugins/go-getter/.codex-plugin/plugin.json',
-    'kilo-opencode': 'plugins/go-getter/skills/index.json',
+    kilo: 'plugins/go-getter/skills/index.json',
     cursor: 'plugins/go-getter/plugin.json',
     copilot: 'plugins/go-getter/plugin.json',
     'gemini-cli': 'gemini-extension.json',

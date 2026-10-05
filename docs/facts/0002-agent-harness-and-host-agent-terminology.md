@@ -23,6 +23,6 @@ governed-by: 0015-configure-host-agent-harness-not-own-runtime
 11. Token & cost management (incl. model routing)
 12. Observability, logging & tracing
 
-**Host agent**: Claude Code, Codex, Kilo/OpenCode, Cursor, Gemini CLI, GitHub Copilot — products that ship a partial harness and expose extension points. go-getter configures their harness.
+**Host agent**: Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, GitHub Copilot — products that ship a partial harness and expose extension points. go-getter configures their harness.
 
 "Harness" never means a host agent in this project's docs or code.

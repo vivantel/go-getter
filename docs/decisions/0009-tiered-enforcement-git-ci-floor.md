@@ -14,7 +14,7 @@ Every guardrail declares the tiers that enforce it (`go-getter.enforcement`, 000
 
 1. **Instruction** in the agent file or rules — advisory.
 2. **Host hook / permission** where the host agent supports it — early, rich feedback, can block an action before it happens.
-3. **Git hook + generated CI check** — identical on all six host agents and for human contributors.
+3. **Git hook + generated CI check** — identical on all seven host agents and for human contributors.
 
 Tier 3 is the portable floor. The compiler selects the strongest tier each host supports from its capabilities manifest. A guardrail with only tier 1 must state that it is advisory. A harness component a host cannot enforce at all (e.g. a blocking DLP rule) is reported as advisory on that host.
 

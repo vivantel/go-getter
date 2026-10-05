@@ -8,7 +8,7 @@ import { validate } from '../src/schema.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-test('all six host manifests exist and validate', () => {
+test('all seven host manifests exist and validate', () => {
   const caps = loadCapabilities(root);
   assert.deepEqual(Object.keys(caps).sort(), [...HOSTS].sort());
 });
@@ -25,7 +25,10 @@ test('manifests reflect key facts from 0009', () => {
   assert.equal(caps['gemini-cli'].telemetry.logsPromptsByDefault, true);
   assert.equal(caps['gemini-cli'].nodeAtRuntime, true);
   assert.equal(caps.copilot.hooks.blockStop, false);
-  assert.equal(caps['kilo-opencode'].tiers['3'], 0);
+  assert.equal(caps.kilo.tiers['3'], 0);
+  assert.equal(caps.opencode.tiers['3'], 0);
+  assert.equal(caps.kilo.agents.dir, '.kilo/agents');
+  assert.equal(caps.opencode.agents.dir, '.opencode/agents');
   for (const cap of Object.values(caps)) assert.equal(cap.agents.model, true, `${cap.host} supports per-agent model`);
 });
 

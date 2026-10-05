@@ -6,7 +6,7 @@
   "required": ["host", "fact", "instructions", "skills", "agents", "commands", "hooks", "permissions", "routing", "telemetry", "sandbox", "checkpointing", "nodeAtRuntime", "tiers"],
   "properties": {
     "$schema": { "type": "string" },
-    "host": { "enum": ["claude-code", "codex", "kilo-opencode", "cursor", "gemini-cli", "copilot"] },
+    "host": { "enum": ["claude-code", "codex", "kilo", "opencode", "cursor", "gemini-cli", "copilot"] },
     "fact": { "type": "string", "pattern": "^\\d{4}-" },
     "instructions": {
       "type": "object",

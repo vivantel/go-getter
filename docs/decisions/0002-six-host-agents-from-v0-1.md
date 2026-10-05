@@ -1,6 +1,6 @@
 ---
 id: 0002-six-host-agents-from-v0-1
-title: v0.1 supports six host agents - Claude Code, Codex, Kilo/OpenCode, Cursor, Gemini CLI, GitHub Copilot
+title: v0.1 supports seven host agents - Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, GitHub Copilot
 status: active
 date: 2026-10-04
 tags: [host-agents, agent-agnostic, packaging]
@@ -10,7 +10,7 @@ accepted-by: sergemso
 
 ## Decision
 
-From v0.1, go-getter configures the harness of six host agents: Claude Code, Codex, Kilo Code/OpenCode, Cursor, Gemini CLI and GitHub Copilot (agent mode / coding agent). Adding a host agent later follows `docs/skills/adding-a-host-agent.md`.
+From v0.1, go-getter configures the harness of seven host agents: Claude Code, Codex, Kilo Code, OpenCode, Cursor, Gemini CLI and GitHub Copilot (agent mode / coding agent). Adding a host agent later follows `docs/skills/adding-a-host-agent.md`.
 
 ## Why
 

@@ -118,8 +118,8 @@ test('restricted-hosts scope follows the hosts rule', () => {
   const caps = loadCapabilities(root);
   const dir = project();
   adopt(dir, answersFor({ 'prompt-logging': 'disable-restricted-hosts', 'restricted-hosts': 'sandbox-hosts' }));
-  assert.ok(!restrictedDataHosts(dir, caps).includes('kilo-opencode'), 'no OS sandbox lever there');
-  assert.deepEqual(promptLoggingTargets(dir, caps, ['gemini-cli', 'kilo-opencode']), ['gemini-cli']);
+  assert.ok(!restrictedDataHosts(dir, caps).includes('kilo') && !restrictedDataHosts(dir, caps).includes('opencode'), 'no OS sandbox lever there');
+  assert.deepEqual(promptLoggingTargets(dir, caps, ['gemini-cli', 'kilo', 'opencode']), ['gemini-cli']);
   rmSync(dir, { recursive: true, force: true });
   const other = project();
   adopt(other, answersFor({ 'prompt-logging': 'disable-restricted-hosts' }));

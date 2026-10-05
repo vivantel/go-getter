@@ -1,6 +1,6 @@
 {
   "$schema": "../schemas/capabilities.schema.json",
-  "host": "kilo-opencode",
+  "host": "kilo",
   "fact": "0005-kilo-opencode-integration-surface",
   "instructions": {
     "file": "AGENTS.md",
@@ -15,7 +15,7 @@
   },
   "agents": {
     "format": "markdown",
-    "dir": ".opencode/agents",
+    "dir": ".kilo/agents",
     "extension": ".md",
     "model": true,
     "effort": true,
@@ -23,11 +23,11 @@
   },
   "commands": {
     "native": true,
-    "dir": ".opencode/commands",
+    "dir": ".kilo/commands",
     "format": "markdown"
   },
   "hooks": {
-    "config": ".opencode/plugins/go-getter.js",
+    "config": ".kilo/plugins/go-getter.js",
     "blockPreTool": true,
     "rewriteToolInput": false,
     "blockStop": false,
@@ -36,7 +36,7 @@
   },
   "permissions": {
     "pathReadDeny": true,
-    "config": "opencode.json"
+    "config": "kilo.json"
   },
   "routing": {
     "localEndpoints": true,
@@ -61,8 +61,9 @@
     "12": 1
   },
   "notes": [
-    "Kilo uses kilo.json[c] and .kilo/ instead of opencode.json and .opencode/ (subdirectory names assumed to mirror; unconfirmed).",
+    "Kilo Code CLI is a fork of OpenCode that uses kilo.json[c] and .kilo/ instead of opencode.json and .opencode/ (fact 0005); the subdirectory names under .kilo/ are assumed to mirror OpenCode's and are unconfirmed.",
     "Plugins run under Bun; argument mutation for routing unconfirmed.",
-    "Effort via model variants."
+    "Effort via model variants.",
+    "Remote skills: skills.urls serving plugins/go-getter/skills/index.json."
   ]
 }

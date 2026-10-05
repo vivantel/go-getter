@@ -14,9 +14,10 @@ Derived from facts 0003–0008. Local endpoints have no per-token price; their c
 |-|-|-|
 | Claude Code | `ANTHROPIC_BASE_URL` gateway, Bedrock / Google / Foundry, model pins | Endpoint must speak the Anthropic Messages API |
 | Codex | `model_providers.<id>` (`base_url`, `env_key`), `--oss` with `oss_provider` | Provider keys user-level only |
-| Kilo / OpenCode | `provider.<id>.options.baseURL` (OpenAI-compatible: Ollama, LM Studio) | Kilo project config can't interpolate env secrets |
+| Kilo | `provider.<id>.options.baseURL` (OpenAI-compatible: Ollama, LM Studio) | Project config can't interpolate env secrets |
+| OpenCode | `provider.<id>.options.baseURL` (OpenAI-compatible: Ollama, LM Studio) | — |
 | Cursor | not documented | — |
 | Gemini CLI | none for inference (local Gemma only for routing decisions) | Gemini API / Vertex / OAuth only |
 | Copilot | not documented | — |
 
-Consequence: restricted data classes that require local-only inference can be served on Codex and Kilo/OpenCode; on Claude Code only through an Anthropic-API-compatible gateway; on Cursor, Gemini CLI and Copilot not at all (as documented).
+Consequence: restricted data classes that require local-only inference can be served on Codex, Kilo and OpenCode; on Claude Code only through an Anthropic-API-compatible gateway; on Cursor, Gemini CLI and Copilot not at all (as documented).
