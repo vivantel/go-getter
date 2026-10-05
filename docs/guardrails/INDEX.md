@@ -35,3 +35,4 @@ restricted-paths-denied,"Agents must not touch restricted paths and none may be 
 prompt-logging-disabled,"Host prompt logging must stay disabled","practice-packs, governance, guardrail",active
 restricted-data-hosts-rule,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, guardrail",active
 verification-gate-blocks-done,"A step is not done while its verification checks fail","practice-packs, verification, guardrail",active
+delegations-are-routed,"Delegations to a role are routed by expected total step cost","practice-packs, model-routing, guardrail",active

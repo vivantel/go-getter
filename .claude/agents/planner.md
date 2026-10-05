@@ -1,6 +1,8 @@
 ---
 name: planner
 description: "Turns a brief into an ordered plan with a done-when check per step."
+model: claude-opus-5-5
+effort: medium
 tools: Read, Grep, Glob
 ---
 

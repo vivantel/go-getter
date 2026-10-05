@@ -59,3 +59,8 @@ id,title,tags,status
 0057-verification-typecheck-command,"The verification typecheck command is """"","practice-packs, verification, harness",active
 0058-verification-review-bar,"Review steps pass a reviewer-agent verdict","practice-packs, verification, harness",active
 0059-verification-gate,"""Done"" is blocked while the verification checks fail","practice-packs, verification, harness",active
+0060-routing-classes,"Routing distinguishes explore, plan, implement, review and debug","practice-packs, model-routing, cost",active
+0061-routing-start-tiers,"Classes start at balanced tiers and the lowest effort they allow","practice-packs, model-routing, cost",active
+0062-routing-max-escalations,"A failed step escalates at most 2 times, then a human decides","practice-packs, model-routing, cost",active
+0063-routing-spend-cap,"Headless runs are capped at 5 USD where the host has a cap","practice-packs, model-routing, cost",active
+0064-routing-cache-ttl,"The prompt cache lives one hour in the main session and five minutes in subagents","practice-packs, model-routing, cost",active

@@ -1,6 +1,8 @@
 ---
 name: explorer
 description: "Searches and reads the codebase to answer questions, with file and line references."
+model: claude-haiku-4-5
+effort: low
 tools: Read, Grep, Glob
 ---
 

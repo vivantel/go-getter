@@ -1,6 +1,8 @@
 ---
 name: reviewer
 description: "Reviews a change against the brief, decisions and guardrails and reports findings by severity."
+model: claude-opus-5-5
+effort: medium
 tools: Read, Grep, Glob
 ---
 

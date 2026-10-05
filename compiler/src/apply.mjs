@@ -9,6 +9,7 @@ import { detect } from './detect.mjs';
 import { HOSTS } from './capabilities.mjs';
 import { agentOutputs, staleAgentFiles } from './agents.mjs';
 import { packageCapabilities, promptLoggingTargets, setPath } from './governance.mjs';
+import { loadPolicy } from './routing/policy.mjs';
 
 export const RUNNER = '.go-getter/bin/go-getter';
 const MARK_START = '<!-- go-getter:start -->';
@@ -253,6 +254,17 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
     const { file, key } = caps[host].telemetry.promptLogOff;
     const base = outputs[file] ? JSON.parse(outputs[file].content) : readJson(project, file);
     outputs[file] = json(setPath(base, key, false));
+  }
+  // Cost routing: prompt-cache lifetimes where the host has settings for them (decision 0032).
+  const ttl = loadPolicy(project)?.cacheTtl;
+  for (const host of ttl ? targetHosts : []) {
+    const target = caps[host]?.routing.cacheTtl;
+    if (!target) continue;
+    let base = outputs[target.file] ? JSON.parse(outputs[target.file].content) : readJson(project, target.file);
+    for (const [kind, value] of [['main', ttl.main], ['subagent', ttl.subagent]]) {
+      if (value) for (const key of target[kind]) base = setPath(base, [key], value);
+    }
+    outputs[target.file] = json(base);
   }
   if (tier3) {
     outputs['.githooks/pre-push'] = { content: prePush, mode: 0o755 };

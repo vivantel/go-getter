@@ -39,7 +39,20 @@
   "routing": {
     "localEndpoints": true,
     "spendCap": "headless",
-    "cacheTokensVisible": true
+    "cacheTokensVisible": true,
+    "cacheTtl": {
+      "file": ".claude/settings.json",
+      "main": [
+        "promptCacheTtl"
+      ],
+      "subagent": [
+        "subagentPromptCacheTtl"
+      ]
+    },
+    "delegation": {
+      "tool": "Agent",
+      "update": "hookSpecificOutput"
+    }
   },
   "telemetry": {
     "otel": true,

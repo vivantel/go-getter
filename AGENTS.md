@@ -65,6 +65,7 @@ Checked by git hooks and CI:
 
 Blocked by host hooks where the host supports it:
 
+- Delegations to a role are routed by expected total step cost (`delegations-are-routed`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
 
 Advisory:

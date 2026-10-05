@@ -1,6 +1,8 @@
 ---
 name: implementer
 description: "Makes the change a brief describes and runs the project checks."
+model: claude-sonnet-5-5
+effort: medium
 ---
 
 Make the change the brief describes, nothing more. Run the project's checks before you report.

@@ -37,7 +37,11 @@
   "routing": {
     "localEndpoints": true,
     "spendCap": "none",
-    "cacheTokensVisible": true
+    "cacheTokensVisible": true,
+    "delegation": {
+      "tool": "spawn_agent",
+      "update": "hookSpecificOutput"
+    }
   },
   "telemetry": {
     "otel": true,

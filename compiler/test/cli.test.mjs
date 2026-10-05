@@ -14,7 +14,7 @@ test('CLI prints usage', () => {
 });
 
 test('unimplemented commands report and exit 0', () => {
-  const out = execFileSync(process.execPath, [cli, 'route'], { encoding: 'utf8' });
+  const out = execFileSync(process.execPath, [cli, 'eval'], { encoding: 'utf8' });
   assert.match(out, /not yet implemented/);
 });
 

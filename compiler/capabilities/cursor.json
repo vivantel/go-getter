@@ -41,7 +41,11 @@
   "routing": {
     "localEndpoints": false,
     "spendCap": "none",
-    "cacheTokensVisible": false
+    "cacheTokensVisible": false,
+    "delegation": {
+      "tool": "Task",
+      "update": "updated_input"
+    }
   },
   "telemetry": {
     "otel": false,

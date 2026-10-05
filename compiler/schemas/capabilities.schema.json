@@ -70,7 +70,23 @@
       "properties": {
         "localEndpoints": { "type": "boolean" },
         "spendCap": { "enum": ["none", "headless", "autopilot"] },
-        "cacheTokensVisible": { "type": "boolean" }
+        "cacheTokensVisible": { "type": "boolean" },
+        "cacheTtl": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "main", "subagent"],
+          "properties": {
+            "file": { "type": "string" },
+            "main": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "subagent": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          }
+        },
+        "delegation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tool", "update"],
+          "properties": { "tool": { "type": "string" }, "update": { "enum": ["hookSpecificOutput", "updated_input"] } }
+        }
       }
     },
     "telemetry": {

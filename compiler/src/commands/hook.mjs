@@ -1,11 +1,13 @@
 // go-getter hook pre-tool --host <id> [--project <dir>]: tier-2 runtime called by host hooks; reads the tool call on stdin.
 // go-getter hook session-start --host <id>: prints the vendored kms capture/lint nudges (never blocks).
+// pre-tool also routes delegations to a role (cost-routing pack): it sets the delegated model, or denies when no model is eligible.
 // go-getter hook stop --host <id>: verification gate; blocks "done" while the adopted checks fail (bounded, then a human).
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { evaluatePreTool, respond, sessionNudges, hookRecord } from '../hook.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
+import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
 
 export default async function hookCommand({ root, args }) {
   const [event, ...rest] = args;
@@ -45,6 +47,23 @@ export default async function hookCommand({ root, args }) {
   }
   const decision = evaluatePreTool(dir, payload);
   recordQuietly(dir, hookRecord('pre-tool', host, payload, decision));
+  if (!decision.deny) {
+    let routed = null;
+    try {
+      routed = routeDelegation(dir, host, payload);
+    } catch {
+      // routing is an optimisation: a failure leaves the delegation as it was
+    }
+    if (routed?.route) recordQuietly(dir, routeRecord(host, routed.route, routed.handoffTokens));
+    if (routed?.deny) {
+      decision.deny = true;
+      decision.reason = routed.reason;
+    } else if (routed?.rewrite) {
+      const rewritten = respondRewrite(host, routed.rewrite);
+      process.stdout.write(rewritten.stdout);
+      return rewritten.code;
+    }
+  }
   const out = respond(host, decision);
   if (out.stdout) process.stdout.write(out.stdout);
   if (out.stderr) process.stderr.write(`${out.stderr}\n`);
