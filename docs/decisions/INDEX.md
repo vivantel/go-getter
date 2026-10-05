@@ -37,3 +37,10 @@ id,title,tags,status
 0035-noisy-work-placement,"Noisy work is delegated only when the cost model says the handoff is cheaper","practice-packs, harness, cost",active
 0036-cache-hygiene,"No mid-task model, effort or instruction-file change; switches are confirmed","practice-packs, harness, cost",active
 0037-compaction-timing,"Context is compacted at task boundaries","practice-packs, harness, cost",active
+0038-agent-roster,"Work is delegated to planner, explorer, implementer, reviewer and tester agents","practice-packs, agent-roles, harness",active
+0039-reviewer-access,"The reviewer reports findings and changes nothing","practice-packs, agent-roles, harness",active
+0040-parallel-isolation,"Each parallel task runs in its own git worktree","practice-packs, agent-roles, harness",active
+0041-worktree-location,"Task worktrees live next to the repository","practice-packs, agent-roles, harness",active
+0042-max-concurrent-agents,"At most 3 agents run at once","practice-packs, agent-roles, harness",active
+0043-human-escalation,"Agents hand over to a human when blocked, before irreversible or outward-facing actions, and on a guardrail denial","practice-packs, agent-roles, harness",active
+0044-handoff-contract,"Handoffs are a brief in, then a result and evidence out","practice-packs, agent-roles, harness",active

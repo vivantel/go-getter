@@ -1,12 +1,13 @@
 // `go-getter apply` (plan 4.4): materializes guardrail enforcement into project-local files (decision 0021, output kind B).
 // Outputs are planned first ({path: {content, mode?} | {symlink}}) so the same plan drives writing and drift checking.
-import { existsSync, readFileSync, lstatSync, readlinkSync, mkdirSync, writeFileSync, symlinkSync, chmodSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, lstatSync, readlinkSync, mkdirSync, writeFileSync, symlinkSync, chmodSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { collectEnforcement } from './enforce.mjs';
 import { detect } from './detect.mjs';
 import { HOSTS } from './capabilities.mjs';
+import { agentOutputs, staleAgentFiles } from './agents.mjs';
 
 export const RUNNER = '.go-getter/bin/go-getter';
 const MARK_START = '<!-- go-getter:start -->';
@@ -229,7 +230,9 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   }
   const withSkills = skills ?? targetHosts.includes('kilo-opencode');
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
-  return { hosts: targetHosts, outputs, tier2, tier3, skills: withSkills };
+  Object.assign(outputs, agentOutputs(project, targetHosts));
+  const stale = staleAgentFiles(project, targetHosts, outputs);
+  return { hosts: targetHosts, outputs, stale, tier2, tier3, skills: withSkills };
 }
 
 export function diffApply(project, plan) {
@@ -247,6 +250,7 @@ export function diffApply(project, plan) {
       if (!stat.isSymbolicLink() || readlinkSync(file) !== o.symlink) problems.push(`differs: ${rel}`);
     } else if (stat.isSymbolicLink() || readFileSync(file, 'utf8') !== o.content) problems.push(`differs: ${rel}`);
   }
+  for (const rel of plan.stale ?? []) problems.push(`stale: ${rel}`);
   return problems.sort();
 }
 
@@ -261,6 +265,7 @@ export function writeApply(project, plan) {
     writeFileSync(file, o.content);
     if (o.mode) chmodSync(file, o.mode);
   }
+  for (const rel of plan.stale ?? []) rmSync(path.join(project, rel), { force: true });
   if (plan.tier3) {
     try {
       execFileSync('git', ['config', 'core.hooksPath', '.githooks'], { cwd: project, stdio: 'ignore' });

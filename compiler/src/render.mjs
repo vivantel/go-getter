@@ -123,7 +123,9 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {},
           }
           if (kind === 'decisions') vars[`id.decision.${q.id}`] ??= id;
           const rendered = substitute(tpl, vars);
-          const data = { id, title: rendered.title, status: 'active', date, tags: rendered.tags, ...(rendered.frontmatter ?? {}) };
+          // A template's own `go-getter` data (e.g. roles, access) merges with the keys the renderer owns.
+          const { 'go-getter': own = {}, ...extra } = rendered.frontmatter ?? {};
+          const data = { id, title: rendered.title, status: 'active', date, tags: rendered.tags, ...extra };
           if (kind === 'decisions') {
             if (!data.track) throw new Error(`decision template "${tpl.slug}" needs frontmatter.track`);
             if (!acceptedBy) throw new Error('acceptedBy is required to render active decisions');
@@ -134,6 +136,7 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {},
             for (const f of ['governed-by', 'grounded-in', 'derivation-note']) if (!data[f]) throw new Error(`guardrail template "${tpl.slug}" needs frontmatter.${f}`);
           }
           data['go-getter'] = {
+            ...own,
             ...(rendered.enforcement ? { enforcement: rendered.enforcement } : {}),
             'generated-by': generatedBy,
             'pack-answer': q.id,

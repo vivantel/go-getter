@@ -65,11 +65,16 @@ Advisory:
 
 - No mid-task model, effort or instruction-file change; switches are confirmed (`cache-hygiene-rule`)
 - Context is compacted at task boundaries (`compaction-timing-rule`)
+- Handoffs must carry a brief, a result and evidence (`handoff-has-brief-result-evidence`)
+- Agents must hand over to a human when blocked, before irreversible actions and on a guardrail denial (`human-escalation-rule`)
+- No more than 3 agents run at once (`max-concurrent-agents-rule`)
 - A guardrail scoped to one skill's own procedure belongs in that skill (`no-redundant-guardrails`)
 - A guardrail describing a shipped skill's behavior must also be stated in that skill (`no-unenforced-guardrail`)
 - Noisy work is delegated only when the cost model says the handoff is cheaper (`noisy-work-rule`)
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
+- Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
+- The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
 
 <!-- go-getter:end -->
