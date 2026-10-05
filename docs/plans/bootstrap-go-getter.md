@@ -182,7 +182,8 @@ Result: decision 0022; `compiler/schemas/pack.schema.json`; `compiler/src/packs.
 Do: decision `<next>-pack-schema-and-enforcement-run-grammar` fixing (a) file format (JSON unless the open question decides otherwise); (b) fields: `id, version, family (harness|sdlc), components[] (harness: 1-12 per fact 0002), requires[], title, summary, questions[{id, prompt, detect?, options[{id, label, tradeoff, recommended?}], multi?, when?}], outputs{<question-id>:{<option-id>:{decisions[], guardrails[], procedures[], facts[], files[]}}}`; templates are Markdown with `{{placeholders}}` and kms frontmatter; emitted artifacts carry `go-getter.generated-by` and `go-getter.pack-answer` (0007, 0008); (c) the grammar of `go-getter.enforcement[].run`: `builtin:<check-id> k=v ...` or a literal command. Then `compiler/schemas/pack.schema.json`, validator, `npm run check:packs`, a valid example at `compiler/test/fixtures/packs/example/pack.json` and invalid fixtures.
 Done-when: decision + INDEX row exist; `npm run check:packs` passes the example; `npm test` shows each invalid fixture rejected naming the offending field.
 
-### 4.2 Detection probes — [ ]
+### 4.2 Detection probes — [x]
+Result: `compiler/src/detect.mjs` + `go-getter detect [dir]`: languages, package managers, test frameworks, linters, typecheckers, CI, monorepo, host agents, agent files, kms, sensitive paths, git default branch/remote host; fixture tests for empty, Node/TS and Python repos.
 Do: `compiler/src/detect.mjs` + `go-getter detect` → JSON: languages, package manager, test framework, linters/typecheckers, CI provider, default branch, remote host, monorepo layout, existing host-agent files (`AGENTS.md`, `CLAUDE.md`, `.cursor/`, `GEMINI.md`, `.github/copilot-instructions.md`...), existing kms `docs/`, likely-sensitive paths (for data-class prefill: `.env*`, `secrets/`, keys, customer data dirs).
 Done-when: tests over at least three fixture dirs (Node, Python, empty) assert exact JSON.
 
