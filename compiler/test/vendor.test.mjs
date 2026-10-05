@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { syncKms, diffVendor, readLock } from '../src/vendor.mjs';
+import { syncKms, diffVendor, readLock, cleanGitEnv } from '../src/vendor.mjs';
 
 function upstreamRepo() {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-upstream-'));
@@ -55,4 +55,9 @@ test('vendor check catches hand edits, additions and deletions', () => {
 
 test('sync refuses to run without a ref', () => {
   assert.throws(() => syncKms(mkdtempSync(path.join(tmpdir(), 'gg-root-')), {}), /needs a ref/);
+});
+
+test('git commands for the upstream clone never inherit the hooked repository from a git hook', () => {
+  const env = cleanGitEnv({ PATH: '/bin', GIT_DIR: '/x/.git', GIT_WORK_TREE: '/x', GIT_INDEX_FILE: '/x/.git/index', GIT_SSH_COMMAND: 'ssh -i k' });
+  assert.deepEqual(env, { PATH: '/bin', GIT_SSH_COMMAND: 'ssh -i k' });
 });

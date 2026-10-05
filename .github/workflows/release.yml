@@ -1,0 +1,77 @@
+# Release gate (decision 0013, guardrail release-requires-passing-gate): the release job needs the unit, golden and
+# behavior-eval jobs. A pushed vX.Y.Z tag publishes a GitHub release from CHANGELOG.md; a manual dispatch runs every
+# gate and stops before publishing (a dry run).
+name: release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22 # oldest supported LTS (decision 0019)
+      - run: npm test
+
+  golden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - name: Regenerated output matches the committed files
+        run: |
+          npm run build
+          test -z "$(git status --porcelain)"
+      - run: npm run check:generated
+      - name: Generated manifests carry package.json's version (and the tag's, on a tag)
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = tag ]; then npm run check:versions -- --tag "${GITHUB_REF_NAME}"; else npm run check:versions; fi
+
+  eval:
+    uses: ./.github/workflows/eval.yml
+
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - run: npm run check:neutral
+      - run: npm run check:guardrails
+      - run: npm run check:tags
+      - run: npm run check:deps
+      - run: npm run check:node-floor
+      - run: npm run check:vendor
+      - run: npm run check:packs
+      - run: npm run check:self-adoption
+
+  release:
+    needs: [test, golden, eval, checks]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Dry run
+        if: github.ref_type != 'tag'
+        run: echo "All gates passed; not a tag, so nothing is published."
+      - name: Publish the GitHub release from the changelog
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '$0 ~ "^## \\[" v "\\]" {p=1; next} /^## \[/ {p=0} p' CHANGELOG.md > release-notes.md
+          test -s release-notes.md || { echo "CHANGELOG.md has no entry for ${version}" >&2; exit 1; }
+          gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md

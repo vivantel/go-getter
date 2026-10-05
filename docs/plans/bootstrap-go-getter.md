@@ -283,7 +283,8 @@ Context: 0013 layer 3; kms's `evals/` and `evals/providers/kilo-runner.sh` are t
 Do: `evals/` with fixture repos (Node, Python, empty, one with sensitive paths) and promptfoo cases per pack running `init` with scripted answers, asserting artifacts exist, frontmatter valid, INDEX rows updated, no host-specific text in neutral output. Add one routing case comparing total cost on a fixed fixture task with `cost-routing` on vs off at equal verification pass rate. `npm run eval`; `.github/workflows/eval.yml` (manual dispatch + called by release). Resolve the auth open question first; if a secret is needed, stop and ask the owner. `promptfoo` only in `devDependencies`.
 Done-when: `npm run eval` passes locally on at least one host; the `eval` workflow is green on GitHub; `npm run check:deps` exits 0.
 
-### 6.2 Release machinery — [ ]
+### 6.2 Release machinery — [~]
+Result: `.github/workflows/release.yml` (jobs `test`, `golden`, `eval`, `checks`; `release` needs all four and publishes only on a `vX.Y.Z` tag, a manual dispatch is a dry run); `check:versions` (every generated manifest and the tag equal `package.json`'s version; also in CI); `INSTALLING.md` (one section per host, unconfirmed steps marked for 6.3); fuller `README.md` with the harness coverage table; `CHANGELOG.md` entry 0.1.0. Left: a dry run of the release workflow on a branch (needs a push and dispatch).
 Do: `.github/workflows/release.yml` with `needs: [test, golden, eval]` (guardrail `release-requires-passing-gate`) plus `npm run check:self-adoption`; version sync so every generated manifest takes its version from `package.json`; `CHANGELOG.md` via `kms:changelog`; `INSTALLING.md` per host (from phase 1 facts); fuller `README.md` including the harness coverage table.
 Done-when: a dry run of the release workflow on a branch passes all gate jobs; `INSTALLING.md` has one section per host; every generated manifest version equals `package.json`'s.
 

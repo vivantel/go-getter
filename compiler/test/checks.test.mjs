@@ -86,3 +86,22 @@ test('node floor picks the oldest LTS line not past end of life', () => {
   assert.equal(floorFromEngines('>=22.0.0'), 22);
   assert.equal(floorFromEngines('^22'), null);
 });
+
+test('check versions passes on this repo and reports a drifted manifest, a missing one and a wrong tag', async () => {
+  const { versionProblems } = await import('../src/checks/versions.mjs');
+  assert.equal(run('check', 'versions').code, 0);
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-versions-'));
+  try {
+    mkdirSync(path.join(dir, 'plugins/go-getter/.claude-plugin'), { recursive: true });
+    writeFileSync(path.join(dir, 'package.json'), '{"version":"1.2.3"}');
+    writeFileSync(path.join(dir, 'gemini-extension.json'), '{"version":"1.2.2"}');
+    writeFileSync(path.join(dir, 'plugins/go-getter/plugin.json'), '{"version":"1.2.3"}');
+    const problems = versionProblems({ root: dir, tag: 'v1.2.4' });
+    assert.ok(problems.some((p) => p.startsWith('tag v1.2.4')));
+    assert.ok(problems.some((p) => p.startsWith('gemini-extension.json: version 1.2.2')));
+    assert.ok(problems.some((p) => p === 'skills/index.json: missing'));
+    assert.ok(!problems.some((p) => p.startsWith('plugins/go-getter/plugin.json')));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
