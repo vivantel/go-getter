@@ -10,7 +10,12 @@ function matchesType(value, type) {
   return types.some((t) => t === actual || (t === 'number' && actual === 'integer'));
 }
 
-export function validate(schema, value, path = '$') {
+export function validate(schema, value, path = '$', rootSchema = schema) {
+  if (schema.$ref) {
+    const m = /^#\/\$defs\/(.+)$/.exec(schema.$ref);
+    if (!m || !rootSchema.$defs?.[m[1]]) throw new Error(`unsupported $ref ${schema.$ref}`);
+    return validate(rootSchema.$defs[m[1]], value, path, rootSchema);
+  }
   const errors = [];
   if (schema.type && !matchesType(value, schema.type)) {
     return [`${path}: expected ${[].concat(schema.type).join('|')}, got ${typeOf(value)}`];
@@ -26,7 +31,7 @@ export function validate(schema, value, path = '$') {
   }
   if (Array.isArray(value)) {
     if (schema.minItems !== undefined && value.length < schema.minItems) errors.push(`${path}: needs >= ${schema.minItems} items`);
-    if (schema.items) value.forEach((item, i) => errors.push(...validate(schema.items, item, `${path}[${i}]`)));
+    if (schema.items) value.forEach((item, i) => errors.push(...validate(schema.items, item, `${path}[${i}]`, rootSchema)));
   }
   if (typeOf(value) === 'object') {
     for (const key of schema.required ?? []) if (!(key in value)) errors.push(`${path}: missing required "${key}"`);
@@ -34,9 +39,9 @@ export function validate(schema, value, path = '$') {
       const sub =
         schema.properties?.[key] ??
         Object.entries(schema.patternProperties ?? {}).find(([re]) => new RegExp(re).test(key))?.[1];
-      if (sub) errors.push(...validate(sub, v, `${path}.${key}`));
+      if (sub) errors.push(...validate(sub, v, `${path}.${key}`, rootSchema));
       else if (schema.additionalProperties === false) errors.push(`${path}: unknown property "${key}"`);
-      else if (typeof schema.additionalProperties === 'object') errors.push(...validate(schema.additionalProperties, v, `${path}.${key}`));
+      else if (typeof schema.additionalProperties === 'object') errors.push(...validate(schema.additionalProperties, v, `${path}.${key}`, rootSchema));
     }
   }
   return errors;

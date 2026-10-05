@@ -154,7 +154,7 @@ Result: `.github/workflows/ci.yml` (jobs `test`, `golden`, `checks`; Node 22; ac
 Do: `.github/workflows/ci.yml` on `pull_request` and push to `main`: jobs `test` (`npm test`), `golden` (`npm run build && git diff --exit-code`, `npm run check:generated`), `checks` (`check:neutral`, `check:guardrails`, `check:tags`, `check:deps`, `check:node-floor`). Pin actions by SHA.
 Done-when: a PR run shows all three jobs green.
 
-### 2.7 Require CI on `main` — [ ]
+### 2.7 Require CI on `main` — [x]
 Done-when: `gh api repos/vivantel/go-getter/branches/main/protection --jq .required_status_checks.contexts` lists `test`, `golden`, `checks` (strict).
 
 ---
@@ -177,7 +177,8 @@ Done-when: a test walks every relative reference in every compiled kms `SKILL.md
 
 ## Phase 4 — Pack schema and interview engine
 
-### 4.1 Pack schema — [ ]
+### 4.1 Pack schema — [x]
+Result: decision 0022; `compiler/schemas/pack.schema.json`; `compiler/src/packs.mjs` (schema + semantic validation, `parseRun`); `check:packs` (also `--file`, in CI); example fixture `compiler/test/fixtures/packs/example/pack.json`; validator gained `$ref`.
 Do: decision `<next>-pack-schema-and-enforcement-run-grammar` fixing (a) file format (JSON unless the open question decides otherwise); (b) fields: `id, version, family (harness|sdlc), components[] (harness: 1-12 per fact 0002), requires[], title, summary, questions[{id, prompt, detect?, options[{id, label, tradeoff, recommended?}], multi?, when?}], outputs{<question-id>:{<option-id>:{decisions[], guardrails[], procedures[], facts[], files[]}}}`; templates are Markdown with `{{placeholders}}` and kms frontmatter; emitted artifacts carry `go-getter.generated-by` and `go-getter.pack-answer` (0007, 0008); (c) the grammar of `go-getter.enforcement[].run`: `builtin:<check-id> k=v ...` or a literal command. Then `compiler/schemas/pack.schema.json`, validator, `npm run check:packs`, a valid example at `compiler/test/fixtures/packs/example/pack.json` and invalid fixtures.
 Done-when: decision + INDEX row exist; `npm run check:packs` passes the example; `npm test` shows each invalid fixture rejected naming the offending field.
 

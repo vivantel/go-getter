@@ -1,0 +1,68 @@
+{
+  "$schema": "../../../../schemas/pack.schema.json",
+  "id": "example",
+  "version": "0.1.0",
+  "family": "harness",
+  "components": [4],
+  "title": "Example context pack",
+  "summary": "Fixture pack for schema and renderer tests: caps the always-loaded instruction file.",
+  "questions": [
+    {
+      "id": "instruction-cap",
+      "prompt": "How large may the always-loaded instruction file be?",
+      "options": [
+        { "id": "strict", "label": "200 lines", "tradeoff": "Cheapest every turn; forces detail into skills.", "recommended": true },
+        { "id": "relaxed", "label": "500 lines", "tradeoff": "More room for rules; costs tokens on every turn." }
+      ]
+    },
+    {
+      "id": "enforce-cap",
+      "prompt": "Should CI fail when the cap is exceeded?",
+      "when": { "question": "instruction-cap", "in": ["strict", "relaxed"] },
+      "options": [
+        { "id": "yes", "label": "Fail CI", "tradeoff": "Hard guarantee; occasional friction.", "recommended": true },
+        { "id": "no", "label": "Advisory only", "tradeoff": "No friction; the cap will drift." }
+      ]
+    }
+  ],
+  "outputs": {
+    "instruction-cap": {
+      "strict": {
+        "decisions": [
+          {
+            "slug": "instruction-file-cap",
+            "title": "The always-loaded instruction file is capped at {{label.instruction-cap}}",
+            "tags": ["configuration"],
+            "frontmatter": { "track": "process" },
+            "body": "## Decision\n\nCap `AGENTS.md` at {{label.instruction-cap}} (pack {{pack.id}}@{{pack.version}}).\n"
+          }
+        ]
+      },
+      "relaxed": {
+        "decisions": [
+          {
+            "slug": "instruction-file-cap",
+            "title": "The always-loaded instruction file is capped at {{label.instruction-cap}}",
+            "tags": ["configuration"],
+            "frontmatter": { "track": "process" },
+            "body": "## Decision\n\nCap `AGENTS.md` at {{label.instruction-cap}}.\n"
+          }
+        ]
+      }
+    },
+    "enforce-cap": {
+      "yes": {
+        "guardrails": [
+          {
+            "slug": "instruction-file-within-cap",
+            "title": "AGENTS.md must stay within its line cap",
+            "tags": ["configuration", "guardrail"],
+            "frontmatter": { "governed-by": "{{id.decision.instruction-cap}}", "grounded-in": ["{{id.decision.instruction-cap}}"], "derivation-note": "Given the cap decision, a longer file costs tokens every turn." },
+            "enforcement": [{ "tier": 3, "check": "AGENTS.md line count within cap", "run": "builtin:file-max-lines path=AGENTS.md max=200" }],
+            "body": "## Guardrail\n\nKeep `AGENTS.md` within the cap.\n"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -22,3 +22,4 @@ id,title,tags,status
 0019-node-prerequisite-oldest-supported-lts,"go-getter tooling is zero-dependency Node.js, requiring the oldest supported LTS, degrading gracefully where Node is absent","nodejs, tooling, compiler, enforcement",active
 0020-routing-runtime-mechanism,"Routing runs as compiled per-role defaults plus a delegation-time router hook, with hook-gated bounded escalation","model-routing, hooks, enforcement, cost",active
 0021-neutral-source-and-output-layout,"Neutral source, compiler and per-host output layout","architecture, compiler, generated-files, packaging",active
+0022-pack-schema-and-enforcement-run-grammar,"Practice packs are JSON files with questions, options and per-answer artifact templates; enforcement runs use a builtin-or-command grammar","practice-packs, interview, enforcement, configuration",active
