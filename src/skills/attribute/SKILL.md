@@ -9,8 +9,11 @@ This skill only runs when explicitly invoked. Never apply its conventions to a p
 
 ## Writing a commit message
 
-1. Inspect the staged diff with `git diff --staged`.
-2. Propose candidate knowledge artifacts based on what the diff touches, then confirm the list with the user before committing — never guess silently; they may add, remove, or reject any.
+1. Inspect the staged diff with `git diff --staged`, then run `go-getter refs --staged` (add `--json` to parse it). It prints candidate artifacts in two groups, each with a one-line reason:
+   - **Must-have** — artifacts added or changed in the diff, the plan step it completes, decisions whose pack output it regenerates, decisions and guardrails whose checks or restricted paths name a changed file, and decisions it supersedes.
+   - **Nice-to-have** — one hop from the must-haves: the decisions they are governed by or grounded in, related facts expiring within 30 days, and active siblings sharing a non-umbrella tag.
+   If the command is unavailable, propose candidates from what the diff touches.
+2. Show both groups to the user and confirm the list before committing — never guess silently; they may add, remove, or reject any. Propose the must-haves by default and the nice-to-haves only where the user agrees they apply.
 3. Draft the message:
    - Summary line: `type: summary`, where `type` is one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
    - Blank line.
@@ -21,7 +24,7 @@ This skill only runs when explicitly invoked. Never apply its conventions to a p
 ## Writing a PR description
 
 1. Determine the branch's base (e.g. `main`) and run `git log <base>..HEAD`.
-2. Build the `Refs` section by collecting the union of `Refs:` trailers already present on those commits. Do not re-inspect the full branch diff or re-ask the user — the commits are the source of truth.
+2. Build the `Refs` section by collecting the union of `Refs:` trailers already present on those commits — the commits are the source of truth. Then run `go-getter refs --base <base>` and show the user any must-have it lists that no commit carries, with its reason; add one only when the user confirms.
 3. Render three sections:
    - `Intent` — drawn from the commits' body paragraphs.
    - `What changed` — a brief factual summary.
