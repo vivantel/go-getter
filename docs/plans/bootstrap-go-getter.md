@@ -215,7 +215,8 @@ Result: `compiler/src/reconfigure.mjs` + `go-getter reconfigure <pack> --answers
 Do: `go-getter reconfigure <pack-id>`: re-ask the pack's questions with current answers (read via `go-getter.generated-by` / `go-getter.pack-answer`) as defaults; for each changed answer write a new decision, mark the old `superseded` with `superseded-by`, regenerate dependent guardrails, update INDEX files. Add the step to the `init` skill.
 Done-when: a test changes one answer and asserts the old decision is `superseded` with valid `superseded-by`, the new one exists, INDEX rows match files.
 
-### 4.6 Harness coverage report — [ ]
+### 4.6 Harness coverage report — [x]
+Result: `compiler/src/coverage.mjs` + `go-getter coverage [--json]`: per component, adopted packs and per-host tier (`ci` / `hook` / `advisory`; tier-2 rules capped by the host capabilities manifest). This repo shows every component as `none` until Phase 5 adopts packs. `go-getter-init` reports it after `apply`.
 Context: fitness function of 0008.
 Do: `go-getter coverage` prints, for this project, each of the 12 harness components with the packs covering it and the strongest tier achieved per host (from capabilities manifests).
 Done-when: a test on a fixture with two packs asserts the exact report; running it on this repo lists every component (uncovered ones explicitly as "none").

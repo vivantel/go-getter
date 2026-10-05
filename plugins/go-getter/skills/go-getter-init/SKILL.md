@@ -40,7 +40,7 @@ Never write or edit the generated decisions, guardrails, procedures or INDEX row
 
 ## 5. Enforce and report
 
-Run `gg apply` to generate the instruction section, host hooks and permissions, git hooks and CI checks for the host agents in use, then `gg check`. Report what was configured per pack, and for each host agent which rules are enforced and which are advisory there.
+Run `gg apply` to generate the instruction section, host hooks and permissions, git hooks and CI checks for the host agents in use, then `gg check`. Report what was configured per pack, then run `gg coverage` and show, for each harness component and host agent, whether rules are enforced in CI, blocked by host hooks, advisory, or not covered yet.
 
 ## Reconfigure an adopted pack
 
