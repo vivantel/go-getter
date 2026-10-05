@@ -30,6 +30,28 @@ Decision — add `track: product | process` (required, exactly one — never `bo
 
 Procedure — optionally add `operationalizes: [<guardrail-id>, ...]` when this procedure is a runbook/playbook for a guardrail's required behavior, not general reference material. Many-to-many: a procedure may list several guardrails, and more than one procedure may list the same guardrail. Most procedures won't carry this field at all.
 
+## The `go-getter:` key
+
+Optional frontmatter key on any artifact; the only place go-getter tooling reads structured data from (it never parses prose). It is go-getter's own format, not a general knowledge-base field. Fields:
+
+- `enforcement` (guardrails): list of `{tier, check, run}`. `tier` is `1` instruction, `2` host hook or permission, `3` git hook or CI; `check` is a one-line description; `run` is a built-in check id with params (`builtin:<id> key=value`) or a command, required for tiers 2 and 3.
+- `generated-by: <pack-id>@<version>` — set on pack-emitted artifacts.
+- `pack-answer: <question-id>` — the pack question the artifact answers.
+- `pack-option: <option-id>` — the chosen option (a list for multi-answer questions).
+- Pack data — pack-specific structured data (routing policy, data classes, model registry), under keys the pack defines.
+
+```yaml
+go-getter:
+  enforcement:
+    - tier: 1
+      check: Where no hook routes the delegation, run `go-getter route --class <class>` and use the model it returns
+    - tier: 2
+      check: Pre-delegation hook sets the delegated model from the router, or denies when no model is eligible
+      run: builtin:route-delegation
+  generated-by: cost-routing@0.1.0
+  pack-answer: tiers
+```
+
 **Derivation recipe**: `Decision (why) + Fact (what is) → Guardrail (ought)`. The `derivation-note` states that step in one sentence; if either source changes, re-apply and propose updated guardrail text.
 
 **Economy**: a fact, guardrail, or procedure stub (decisions and plans exempt) uses the shortest phrasing that preserves meaning. Before considering a newly-drafted one done, re-read it once specifically for restatement (a point already made earlier in this file, or in a sibling artifact from the same drafting pass) and length — tighten before finishing, not after, the same way a shipped `SKILL.md` edit gets one full re-read before being considered done.
