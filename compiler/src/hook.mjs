@@ -10,9 +10,61 @@ import { patternsOf } from './checks/builtin/deny-path.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
-// Strings a tool call could use to reach a path: tool input values, split into shell-ish tokens.
+// Prose fields of the tools go-getter knows, by kind: they carry text for a model or a file body, never a path to reach.
+// Every other field of a known tool is still scanned, so an unexpected field only adds false positives.
+const PROSE = {
+  file: ['content', 'contents', 'file_text', 'old_string', 'new_string', 'oldString', 'newString', 'old_str', 'new_str', 'edits'],
+  shell: ['description'],
+  search: ['pattern'],
+  fetch: ['prompt'],
+  websearch: ['query'],
+  delegate: ['prompt', 'description', 'message'],
+  todo: ['todos'],
+  memory: ['fact'],
+};
+// Tool names (lowercased) of every host the shared runtime serves, mapped to their kind. A name not listed is unknown:
+// all of its input is scanned. Shell commands stay tokenised whole, so a restricted name anywhere in one is denied.
+const TOOLS = {
+  // file read, write and edit tools
+  read: 'file', write: 'file', edit: 'file', multiedit: 'file', notebookedit: 'file', read_file: 'file', write_file: 'file',
+  replace: 'file', read_many_files: 'file', view: 'file', create: 'file', str_replace_editor: 'file', delete: 'file',
+  // shell tools
+  bash: 'shell', shell: 'shell', run_shell_command: 'shell',
+  // content search: the pattern is a regex over file bodies; the path, glob and include fields are scanned
+  grep: 'search', search_file_content: 'search', grep_search: 'search',
+  // web fetch and web search
+  webfetch: 'fetch', web_fetch: 'fetch', websearch: 'websearch', google_web_search: 'websearch', web_search: 'websearch',
+  // delegation to another agent
+  agent: 'delegate', task: 'delegate', spawn_agent: 'delegate',
+  todowrite: 'todo', write_todos: 'todo', save_memory: 'memory',
+};
+
+const toolName = (payload) => {
+  const name = payload.tool_name ?? payload.toolName;
+  return typeof name === 'string' ? name : undefined;
+};
+
+// The tool input: the host's input field (Copilot sends `toolArgs` as JSON text), else the payload without metadata.
+function toolInput(payload) {
+  const input = payload.tool_input ?? payload.toolInput ?? payload.args ?? payload.toolArgs;
+  if (typeof input === 'string') {
+    try {
+      return JSON.parse(input);
+    } catch {
+      return input;
+    }
+  }
+  return input ?? Object.fromEntries(Object.entries(payload).filter(([k]) => !METADATA.has(k)));
+}
+
+// Strings a tool call could use to reach a path: the input values of the tool, minus the prose fields of a known tool,
+// split into shell-ish tokens. An unknown tool has every input value scanned.
 export function candidatePaths(payload, project) {
-  const source = payload.tool_input ?? payload.toolInput ?? payload.args ?? Object.fromEntries(Object.entries(payload).filter(([k]) => !METADATA.has(k)));
+  let source = toolInput(payload);
+  const kind = TOOLS[toolName(payload)?.toLowerCase()];
+  if (kind && source && typeof source === 'object' && !Array.isArray(source)) {
+    source = Object.fromEntries(Object.entries(source).filter(([k]) => !PROSE[kind].includes(k)));
+  }
   const strings = [];
   const walk = (v) => {
     if (typeof v === 'string') strings.push(v);
@@ -37,7 +89,7 @@ export function evaluatePreTool(project, payload) {
     if (e.parsed.id === 'deny-path') {
       const patterns = patternsOf(e.parsed.args);
       const hit = candidatePaths(payload, project).find((p) => matchesAny(p, patterns));
-      if (hit) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${hit}" is a denied path` };
+      if (hit) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${toolName(payload) ?? 'tool call'} names "${hit}", a denied path` };
     }
   }
   return { deny: false };
