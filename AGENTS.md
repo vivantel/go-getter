@@ -53,7 +53,9 @@ Checked by git hooks and CI:
 - The Node.js floor must be the oldest LTS line still supported (`node-floor-is-oldest-supported-lts`)
 - Every choice question in a pack must name exactly one recommended option (`pack-questions-have-a-recommended-default`)
 - A practice pack must not ship before this repo has adopted it (`practice-ships-only-after-self-adoption`)
+- Host prompt logging must stay disabled (`prompt-logging-disabled`)
 - A release requires all three verification layers to pass (`release-requires-passing-gate`)
+- Agents must not touch restricted paths and none may be committed (`restricted-paths-denied`)
 - Routing escalation must be bounded and end at a human (`routing-escalation-bounded`)
 - Routing must restrict candidates to governance-eligible models before comparing cost (`routing-governance-before-cost`)
 - Routing must compare expected total step cost, never per-token list price (`routing-uses-total-step-cost`)
@@ -74,6 +76,7 @@ Advisory:
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
 - Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
+- Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
 - The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
 

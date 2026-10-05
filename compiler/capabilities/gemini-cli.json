@@ -47,7 +47,14 @@
   "telemetry": {
     "otel": true,
     "cost": false,
-    "logsPromptsByDefault": true
+    "logsPromptsByDefault": true,
+    "promptLogOff": {
+      "file": ".gemini/settings.json",
+      "key": [
+        "telemetry",
+        "logPrompts"
+      ]
+    }
   },
   "sandbox": true,
   "checkpointing": true,

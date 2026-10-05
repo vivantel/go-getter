@@ -39,7 +39,11 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
         return [h, Math.max(...entries.map((e) => (e.tier === 3 ? 3 : e.tier === 2 ? (reach >= 2 ? 2 : 1) : 1)))];
       }),
     );
-    return { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers };
+    // In-host enforcement apart from CI: a host that cannot reach tier 2 is advisory there.
+    const inHost = Object.fromEntries(
+      hosts.map((h) => [h, entries.some((e) => e.tier === 2) && (caps[h]?.tiers?.[String(c)] ?? 2) >= 2 ? 2 : null]),
+    );
+    return { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers, inHost };
   });
 }
 
@@ -47,7 +51,9 @@ const LABEL = { 3: 'ci', 2: 'hook', 1: 'advisory' };
 
 export function formatCoverage(rows, hosts = HOSTS) {
   const header = ['component', 'packs', ...hosts];
-  const body = rows.map((r) => [`${r.component} ${r.name}`, r.packs.length ? r.packs.join(', ') : 'none', ...hosts.map((h) => (r.tiers[h] ? LABEL[r.tiers[h]] : '-'))]);
+  // A host that blocks in-host and is also checked in CI reads "hook+ci".
+  const cell = (r, h) => (r.tiers[h] === 3 && r.inHost?.[h] === 2 ? 'hook+ci' : r.tiers[h] ? LABEL[r.tiers[h]] : '-');
+  const body = rows.map((r) => [`${r.component} ${r.name}`, r.packs.length ? r.packs.join(', ') : 'none', ...hosts.map((h) => cell(r, h))]);
   const widths = header.map((_, i) => Math.max(...[header, ...body].map((row) => row[i].length)));
   return [header, ...body].map((row) => row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd()).join('\n');
 }

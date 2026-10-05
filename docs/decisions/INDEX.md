@@ -44,3 +44,9 @@ id,title,tags,status
 0042-max-concurrent-agents,"At most 3 agents run at once","practice-packs, agent-roles, harness",active
 0043-human-escalation,"Agents hand over to a human when blocked, before irreversible or outward-facing actions, and on a guardrail denial","practice-packs, agent-roles, harness",active
 0044-handoff-contract,"Handoffs are a brief in, then a result and evidence out","practice-packs, agent-roles, harness",active
+0045-restricted-paths,"Restricted data lives at a declared list of paths","practice-packs, governance, security",active
+0046-restricted-paths-enforcement,"Restricted paths are blocked in the host and never committed","practice-packs, governance, enforcement",active
+0047-internal-data-routing,"Internal data goes only to approved cloud providers on paid no-training terms","practice-packs, governance, model-routing",active
+0048-confidential-data-routing,"Confidential data may go wherever internal data may","practice-packs, governance, security",active
+0049-prompt-logging,"Host prompt logging is disabled on every host","practice-packs, governance, observability",active
+0050-restricted-data-hosts,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, security",active

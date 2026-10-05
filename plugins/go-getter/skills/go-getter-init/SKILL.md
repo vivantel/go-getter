@@ -21,7 +21,7 @@ For each pack, run `gg pack <id>` and walk its `questions` in order:
 
 - Skip a question whose `when` condition is not met by earlier answers.
 - If the question has a `detect` key (a dotted path into the `gg detect` result, e.g. `commands.test`) and the detection result covers it, propose that value and ask for confirmation.
-- A question of `type: text` or `type: list` has no options: ask it with the prefilled value (the detected value, else the question's `default`) and let the user accept or edit it. Check the answer against the question's `pattern` (each item, for a list) and re-ask on a mismatch. A list answer is an array of strings.
+- A question of `type: text` or `type: list` has no options: ask it with the prefilled value (the detected value, else the question's `default`; a list question with both prefills the detected items followed by the default items not already in it) and let the user accept or edit it. Check the answer against the question's `pattern` (each item, for a list) and re-ask on a mismatch. A list answer is an array of strings.
 - Ask a choice question exactly one at a time. Show every option with its `tradeoff`, list the recommended option first and mark it "(Recommended)". Never invent options; the pack's options are the full list, plus the user's free-text answer if none fits — in that case explain that a free-text answer cannot be rendered and ask them to pick the closest option or stop.
 - After the first question of a pack, offer "accept the recommended defaults for the rest of this pack" (recommended option for choice questions, the prefilled value for text and list questions).
 

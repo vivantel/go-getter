@@ -8,6 +8,7 @@ import { collectEnforcement } from './enforce.mjs';
 import { detect } from './detect.mjs';
 import { HOSTS } from './capabilities.mjs';
 import { agentOutputs, staleAgentFiles } from './agents.mjs';
+import { packageCapabilities, promptLoggingTargets, setPath } from './governance.mjs';
 
 export const RUNNER = '.go-getter/bin/go-getter';
 const MARK_START = '<!-- go-getter:start -->';
@@ -221,6 +222,13 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
       const merged = { ...JSON.parse(o.content), context: JSON.parse(outputs[p].content).context };
       outputs[p] = json(merged);
     } else outputs[p] = o;
+  }
+  // Governance: switch off host prompt logging where the adopted decision requires it.
+  const caps = packageCapabilities(packageRoot);
+  for (const host of promptLoggingTargets(project, caps, targetHosts)) {
+    const { file, key } = caps[host].telemetry.promptLogOff;
+    const base = outputs[file] ? JSON.parse(outputs[file].content) : readJson(project, file);
+    outputs[file] = json(setPath(base, key, false));
   }
   if (tier3) {
     outputs['.githooks/pre-push'] = { content: prePush, mode: 0o755 };

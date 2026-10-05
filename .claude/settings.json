@@ -9,6 +9,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .go-getter/bin/go-getter hook pre-tool --host claude-code"
+          }
+        ]
+      }
     ]
   }
 }
