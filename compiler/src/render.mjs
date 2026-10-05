@@ -3,10 +3,35 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, append
 import path from 'node:path';
 import { stringifyFrontmatter } from './frontmatter.mjs';
 import { readTagVocabulary } from './artifacts.mjs';
+import { ANY_ANSWER } from './packs.mjs';
 
 const KIND_DIR = { decisions: 'decisions', facts: 'facts', guardrails: 'guardrails', procedures: 'skills' };
 const NUMBERED = new Set(['decisions', 'facts']);
 const INDEX_HEADER = { decisions: 'Decisions', facts: 'Facts', guardrails: 'Guardrails', skills: 'Skills' };
+
+// Flattens detection results into {{detect.a.b}} variables; unknown (null) values stay undefined so a template that needs them fails loudly.
+function addDetectVars(vars, prefix, value) {
+  if (value === null || value === undefined) return;
+  if (Array.isArray(value)) vars[prefix] = value.join(', ');
+  else if (typeof value === 'object') for (const [k, v] of Object.entries(value)) addDetectVars(vars, `${prefix}.${k}`, v);
+  else vars[prefix] = String(value);
+}
+
+function checkAnswer(q, a) {
+  const type = q.type ?? 'choice';
+  if (type === 'choice') {
+    for (const opt of [].concat(a)) if (!q.options.some((o) => o.id === opt)) throw new Error(`answer "${opt}" is not an option of "${q.id}"`);
+    if (!q.multi && Array.isArray(a)) throw new Error(`question "${q.id}" takes one answer`);
+    return;
+  }
+  if (type === 'text' ? typeof a !== 'string' : !Array.isArray(a) || a.some((x) => typeof x !== 'string')) {
+    throw new Error(`question "${q.id}" takes ${type === 'text' ? 'a string' : 'an array of strings'}`);
+  }
+  if (q.pattern) {
+    const re = new RegExp(q.pattern);
+    for (const item of [].concat(a)) if (!re.test(item)) throw new Error(`answer "${item}" does not match the pattern of "${q.id}" (${q.pattern})`);
+  }
+}
 
 export function activeQuestions(pack, answers) {
   return pack.questions.filter((q) => {
@@ -64,16 +89,15 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {},
   for (const q of questions) {
     const a = answers[q.id];
     if (a === undefined) throw new Error(`no answer for question "${q.id}"`);
-    for (const opt of [].concat(a)) if (!q.options.some((o) => o.id === opt)) throw new Error(`answer "${opt}" is not an option of "${q.id}"`);
-    if (!q.multi && Array.isArray(a)) throw new Error(`question "${q.id}" takes one answer`);
+    checkAnswer(q, a);
   }
   const vars = { 'pack.id': pack.id, 'pack.version': pack.version };
   for (const q of questions) {
     const chosen = [].concat(answers[q.id]);
     vars[`answer.${q.id}`] = chosen.join(', ');
-    vars[`label.${q.id}`] = chosen.map((c) => q.options.find((o) => o.id === c).label).join(', ');
+    if (q.options) vars[`label.${q.id}`] = chosen.map((c) => q.options.find((o) => o.id === c).label).join(', ');
   }
-  for (const [k, v] of Object.entries(detect)) vars[`detect.${k}`] = Array.isArray(v) ? v.join(', ') : String(v);
+  addDetectVars(vars, 'detect', detect);
 
   const counters = {};
   const artifacts = [];
@@ -82,7 +106,7 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {},
   const generatedBy = `${pack.id}@${pack.version}`;
 
   for (const q of questions) {
-    for (const option of [].concat(answers[q.id])) {
+    for (const option of q.options ? [].concat(answers[q.id]) : [ANY_ANSWER]) {
       const out = pack.outputs[q.id]?.[option] ?? {};
       // Decisions first so later templates in the same answer can reference {{id.decision.<q>}}.
       for (const kind of ['decisions', 'facts', 'guardrails', 'procedures']) {

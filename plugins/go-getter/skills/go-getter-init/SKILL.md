@@ -20,9 +20,10 @@ Run `gg packs`. Present the packs grouped by family (harness, sdlc) and ask whic
 For each pack, run `gg pack <id>` and walk its `questions` in order:
 
 - Skip a question whose `when` condition is not met by earlier answers.
-- If the question has a `detect` key and the detection result covers it, propose that value and ask for confirmation.
-- Otherwise ask exactly one question at a time. Show every option with its `tradeoff`, list the recommended option first and mark it "(Recommended)". Never invent options; the pack's options are the full list, plus the user's free-text answer if none fits — in that case explain that a free-text answer cannot be rendered and ask them to pick the closest option or stop.
-- After the first question of a pack, offer "accept the recommended defaults for the rest of this pack".
+- If the question has a `detect` key (a dotted path into the `gg detect` result, e.g. `commands.test`) and the detection result covers it, propose that value and ask for confirmation.
+- A question of `type: text` or `type: list` has no options: ask it with the prefilled value (the detected value, else the question's `default`) and let the user accept or edit it. Check the answer against the question's `pattern` (each item, for a list) and re-ask on a mismatch. A list answer is an array of strings.
+- Ask a choice question exactly one at a time. Show every option with its `tradeoff`, list the recommended option first and mark it "(Recommended)". Never invent options; the pack's options are the full list, plus the user's free-text answer if none fits — in that case explain that a free-text answer cannot be rendered and ask them to pick the closest option or stop.
+- After the first question of a pack, offer "accept the recommended defaults for the rest of this pack" (recommended option for choice questions, the prefilled value for text and list questions).
 
 Ask once, before rendering, who is accountable for these decisions (their name for `accepted-by`).
 
@@ -31,7 +32,7 @@ Ask once, before rendering, who is accountable for these decisions (their name f
 For each pack, write its answers to `.go-getter/state/init/<pack-id>.answers.json`:
 
 ```json
-{ "answers": { "<question-id>": "<option-id>" }, "acceptedBy": "<name>", "detect": { } }
+{ "answers": { "<choice-id>": "<option-id>", "<text-id>": "<text>", "<list-id>": ["<item>"] }, "acceptedBy": "<name>", "detect": { } }
 ```
 
 Run `gg render-pack <pack-id> --answers <file> --dry-run` for every pack and show the user the combined list of files that will be created, including any tags that will be added to `docs/skills/tags.md`. Get one explicit go-ahead. Then run the same commands without `--dry-run`.

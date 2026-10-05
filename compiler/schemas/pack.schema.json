@@ -19,12 +19,15 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "prompt", "options"],
+        "required": ["id", "prompt"],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
           "prompt": { "type": "string" },
+          "type": { "enum": ["choice", "text", "list"] },
           "multi": { "type": "boolean" },
           "detect": { "type": "string" },
+          "pattern": { "type": "string" },
+          "default": { "type": ["string", "array"], "items": { "type": "string" } },
           "when": {
             "type": "object",
             "additionalProperties": false,

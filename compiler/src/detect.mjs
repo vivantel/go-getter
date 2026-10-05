@@ -45,6 +45,39 @@ function git(root, args) {
   }
 }
 
+// Commands inferred from conventions; null when unknown.
+function detectCommands(root, { pkg, pyproject, packageManagers, languages }) {
+  const commands = { test: null, lint: null, typecheck: null };
+  if (pkg) {
+    const manager = ['pnpm', 'yarn', 'bun'].find((m) => packageManagers.has(m)) ?? 'npm';
+    const run = (name) => (name === 'test' ? `${manager} test` : manager === 'npm' ? `npm run ${name}` : `${manager} run ${name}`);
+    const scripts = pkg.scripts ?? {};
+    // A stock `npm init` placeholder is not a test command.
+    if (scripts.test && !/no test specified/.test(scripts.test)) commands.test = run('test');
+    if (scripts.lint) commands.lint = run('lint');
+    for (const name of ['typecheck', 'type-check', 'tsc']) if (scripts[name] && !commands.typecheck) commands.typecheck = run(name);
+  }
+  const make = readText(root, 'Makefile');
+  const target = (name) => new RegExp(`^${name}:`, 'm').test(make);
+  for (const name of ['test', 'lint', 'typecheck']) if (!commands[name] && target(name)) commands[name] = `make ${name}`;
+  if (languages.has('python')) {
+    if (!commands.test && (/pytest/.test(pyproject) || has(root, 'pytest.ini'))) commands.test = 'pytest';
+    if (!commands.lint && (/\[tool\.ruff/.test(pyproject) || has(root, 'ruff.toml'))) commands.lint = 'ruff check .';
+    if (!commands.typecheck && (/\[tool\.mypy/.test(pyproject) || has(root, 'mypy.ini'))) commands.typecheck = 'mypy .';
+  }
+  if (languages.has('go')) {
+    commands.test ??= 'go test ./...';
+    commands.lint ??= has(root, '.golangci.yml') || has(root, '.golangci.yaml') ? 'golangci-lint run' : 'go vet ./...';
+    commands.typecheck ??= 'go build ./...';
+  }
+  if (languages.has('rust')) {
+    commands.test ??= 'cargo test';
+    commands.lint ??= 'cargo clippy';
+    commands.typecheck ??= 'cargo check';
+  }
+  return commands;
+}
+
 export function detect(root) {
   const pkg = readJson(root, 'package.json');
   const deps = { ...(pkg?.dependencies ?? {}), ...(pkg?.devDependencies ?? {}) };
@@ -83,6 +116,8 @@ export function detect(root) {
   if (/\[tool\.ruff/.test(pyproject) || has(root, 'ruff.toml')) linters.add('ruff');
   if (has(root, 'tsconfig.json')) typecheckers.add('tsc');
   if (/\[tool\.mypy/.test(pyproject) || has(root, 'mypy.ini')) typecheckers.add('mypy');
+
+  const commands = detectCommands(root, { pkg, pyproject, packageManagers, languages });
 
   const ci = new Set();
   if (has(root, '.github/workflows')) ci.add('github-actions');
@@ -125,6 +160,7 @@ export function detect(root) {
     testFrameworks: sorted(testFrameworks),
     linters: sorted(linters),
     typecheckers: sorted(typecheckers),
+    commands,
     ci: sorted(ci),
     monorepo: sorted(monorepo),
     hostAgents,

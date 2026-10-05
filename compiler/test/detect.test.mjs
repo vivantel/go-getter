@@ -16,7 +16,7 @@ function fixture(files) {
 }
 
 const empty = {
-  languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], ci: [], monorepo: [],
+  languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], commands: { test: null, lint: null, typecheck: null }, ci: [], monorepo: [],
   hostAgents: [], agentFiles: [], kms: false, sensitivePaths: [], git: { defaultBranch: null, remoteHost: null },
 };
 
@@ -50,6 +50,7 @@ test('node/typescript repo with host agent files and secrets', () => {
     testFrameworks: ['vitest'],
     linters: ['eslint'],
     typecheckers: ['tsc'],
+    commands: { test: 'npm test', lint: null, typecheck: null },
     ci: ['github-actions'],
     monorepo: ['npm-workspaces'],
     hostAgents: ['claude-code', 'cursor', 'copilot'],
@@ -74,9 +75,25 @@ test('python repo', () => {
     testFrameworks: ['pytest'],
     linters: ['ruff'],
     typecheckers: ['mypy'],
+    commands: { test: 'pytest', lint: 'ruff check .', typecheck: 'mypy .' },
     ci: ['gitlab-ci'],
     hostAgents: ['gemini-cli'],
     agentFiles: ['GEMINI.md'],
   });
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('commands come from scripts, Makefile targets and language conventions', () => {
+  const cases = [
+    [{ 'package.json': JSON.stringify({ scripts: { test: 'vitest', lint: 'eslint .', 'type-check': 'tsc' } }), 'pnpm-lock.yaml': '' }, { test: 'pnpm test', lint: 'pnpm run lint', typecheck: 'pnpm run type-check' }],
+    [{ 'package.json': JSON.stringify({ scripts: { test: 'echo "Error: no test specified" && exit 1' } }) }, { test: null, lint: null, typecheck: null }],
+    [{ Makefile: 'test:\n\tgo test\nlint:\n\ttrue\n' }, { test: 'make test', lint: 'make lint', typecheck: null }],
+    [{ 'go.mod': 'module x', '.golangci.yml': '' }, { test: 'go test ./...', lint: 'golangci-lint run', typecheck: 'go build ./...' }],
+    [{ 'Cargo.toml': '' }, { test: 'cargo test', lint: 'cargo clippy', typecheck: 'cargo check' }],
+  ];
+  for (const [files, expected] of cases) {
+    const dir = fixture(files);
+    assert.deepEqual(detect(dir).commands, expected);
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

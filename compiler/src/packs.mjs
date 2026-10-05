@@ -3,6 +3,8 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { validate } from './schema.mjs';
 
+// Outputs of a text/list question sit under this key and apply whatever the answer is.
+export const ANY_ANSWER = '*';
 const PLACEHOLDER = /\{\{\s*([a-z]+)((?:\.[A-Za-z0-9_-]+)*)\s*\}\}/g;
 
 export function loadPackSchema(root) {
@@ -54,13 +56,35 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
   pack.questions.forEach((q, i) => {
     const at = `$.questions[${i}]`;
     if (questions.has(q.id)) errors.push(`${at}.id: duplicate question "${q.id}"`);
-    const optionIds = q.options.map((o) => o.id);
-    if (new Set(optionIds).size !== optionIds.length) errors.push(`${at}.options: duplicate option ids`);
-    if (q.options.filter((o) => o.recommended).length > 1) errors.push(`${at}.options: at most one option may be recommended`);
+    const type = q.type ?? 'choice';
+    if (type === 'choice') {
+      if (!q.options) errors.push(`${at}.options: choice questions need options`);
+      else {
+        const optionIds = q.options.map((o) => o.id);
+        if (new Set(optionIds).size !== optionIds.length) errors.push(`${at}.options: duplicate option ids`);
+        if (q.options.filter((o) => o.recommended).length !== 1) errors.push(`${at}.options: exactly one option must be recommended`);
+      }
+      for (const k of ['pattern', 'default']) if (q[k] !== undefined) errors.push(`${at}.${k}: only text and list questions take "${k}"`);
+    } else {
+      if (q.options) errors.push(`${at}.options: ${type} questions take no options`);
+      if (q.default === undefined && !q.detect) errors.push(`${at}: ${type} questions need a default or a detect key`);
+      if (type === 'text' && Array.isArray(q.default)) errors.push(`${at}.default: text questions take a string default`);
+      if (type === 'list' && q.default !== undefined && !Array.isArray(q.default)) errors.push(`${at}.default: list questions take an array default`);
+      if (q.pattern) {
+        try {
+          const re = new RegExp(q.pattern);
+          for (const d of [].concat(q.default ?? [])) if (!re.test(d)) errors.push(`${at}.default: "${d}" does not match pattern`);
+        } catch {
+          errors.push(`${at}.pattern: not a valid regular expression`);
+        }
+      }
+    }
     if (q.when) {
       const prior = questions.get(q.when.question);
       if (!prior) errors.push(`${at}.when.question: "${q.when.question}" must be an earlier question`);
-      else for (const o of q.when.in) if (!prior.options.some((p) => p.id === o)) errors.push(`${at}.when.in: "${o}" is not an option of "${q.when.question}"`);
+      else if (prior.options) {
+        for (const o of q.when.in) if (!prior.options.some((p) => p.id === o)) errors.push(`${at}.when.in: "${o}" is not an option of "${q.when.question}"`);
+      }
     }
     questions.set(q.id, q);
   });
@@ -73,7 +97,9 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
     }
     for (const [oid, out] of Object.entries(byOption)) {
       const at = `$.outputs.${qid}.${oid}`;
-      if (!q.options.some((o) => o.id === oid)) errors.push(`${at}: "${oid}" is not an option of "${qid}"`);
+      if (q.options ? !q.options.some((o) => o.id === oid) : oid !== ANY_ANSWER) {
+        errors.push(q.options ? `${at}: "${oid}" is not an option of "${qid}"` : `${at}: ${q.type} questions use the key "${ANY_ANSWER}"`);
+      }
       (out.guardrails ?? []).forEach((g, i) => {
         if (!g.enforcement?.length) errors.push(`${at}.guardrails[${i}]: guardrails need enforcement entries`);
         (g.enforcement ?? []).forEach((e, j) => {
@@ -93,6 +119,7 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
   for (const { ns, parts } of placeholdersIn(pack.outputs)) {
     const label = `{{${[ns, ...parts].join('.')}}}`;
     if ((ns === 'answer' || ns === 'label') && !questions.has(parts[0])) errors.push(`placeholder ${label}: unknown question`);
+    else if (ns === 'label' && !questions.get(parts[0]).options) errors.push(`placeholder ${label}: only choice questions have labels`);
     else if (ns === 'id' && (parts[0] !== 'decision' || !questions.has(parts[1]))) errors.push(`placeholder ${label}: expected {{id.decision.<question>}}`);
     else if (ns === 'pack' && !['id', 'version'].includes(parts[0])) errors.push(`placeholder ${label}: expected pack.id or pack.version`);
     else if (!['answer', 'label', 'id', 'pack', 'detect'].includes(ns)) errors.push(`placeholder ${label}: unknown namespace`);

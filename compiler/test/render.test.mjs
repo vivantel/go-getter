@@ -87,3 +87,43 @@ test('render-pack CLI supports dry runs and writes nothing then', () => {
   assert.equal(existsSync(path.join(dir, 'docs/decisions')), false);
   rmSync(dir, { recursive: true, force: true });
 });
+
+function typedPack() {
+  const p = structuredClone(pack);
+  p.questions.push(
+    { id: 'check', type: 'text', prompt: 'Which command verifies the project?', detect: 'commands.test', pattern: '^\\S+' },
+    { id: 'paths', type: 'list', prompt: 'Which paths are restricted?', default: ['secrets/'], pattern: '/$' },
+  );
+  p.outputs.check = {
+    '*': { facts: [{ slug: 'verify-command', title: 'Verification runs {{answer.check}}', tags: ['configuration'], frontmatter: { kind: 'convention' }, body: 'Run `{{answer.check}}` ({{detect.commands.test}}); restricted: {{answer.paths}}.\n' }] },
+  };
+  return p;
+}
+const typedAnswers = { ...answers, check: 'npm test', paths: ['secrets/', 'keys/'] };
+
+test('text answers render as given and list answers comma-joined, with detected values', () => {
+  const dir = project();
+  const plan = planRender({ root: dir, pack: typedPack(), answers: typedAnswers, acceptedBy: 't', date: '2026-10-05', detect: { commands: { test: 'npm test', lint: null } } });
+  const fact = plan.artifacts.find((a) => a.kind === 'facts');
+  assert.equal(fact.title, 'Verification runs npm test');
+  assert.match(fact.content, /Run `npm test` \(npm test\); restricted: secrets\/, keys\/\./);
+  assert.deepEqual(parseFrontmatter(fact.content).data['go-getter'], { 'generated-by': 'example@0.1.0', 'pack-answer': 'check', 'pack-option': 'npm test' });
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('a text answer that fails its pattern is rejected, as is a list item', () => {
+  const dir = project();
+  const base = { root: dir, pack: typedPack(), acceptedBy: 't', date: '2026-10-05', detect: { commands: { test: 'x' } } };
+  assert.throws(() => planRender({ ...base, answers: { ...typedAnswers, check: ' leading space' } }), /does not match the pattern of "check"/);
+  assert.throws(() => planRender({ ...base, answers: { ...typedAnswers, paths: ['secrets/', 'keys'] } }), /does not match the pattern of "paths"/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('answer types are enforced and an undetected value fails loudly', () => {
+  const dir = project();
+  const base = { root: dir, pack: typedPack(), acceptedBy: 't', date: '2026-10-05', detect: { commands: { test: null } } };
+  assert.throws(() => planRender({ ...base, answers: { ...typedAnswers, paths: 'secrets/' } }), /takes an array of strings/);
+  assert.throws(() => planRender({ ...base, answers: { ...typedAnswers, check: ['npm test'] } }), /takes a string/);
+  assert.throws(() => planRender({ ...base, answers: typedAnswers }), /placeholder \{\{detect.commands.test\}\} has no value/);
+  rmSync(dir, { recursive: true, force: true });
+});
