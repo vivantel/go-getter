@@ -257,10 +257,10 @@ test('apply installs the stop hook only on hosts that can block a stop, and only
   const hosts = ['claude-code', 'codex', 'gemini-cli', 'cursor', 'copilot', 'kilo', 'opencode'];
   const plan = planApply(dir, { hosts });
   const out = (rel) => JSON.parse(plan.outputs[rel].content);
-  assert.ok(out('.claude/settings.json').hooks.Stop[0].hooks[0].command.endsWith('hook stop --host claude-code --project "$d"'));
-  assert.ok(out('.codex/hooks.json').hooks.Stop[0].hooks[0].command.endsWith('hook stop --host codex --project "$d"'));
-  assert.ok(out('.gemini/settings.json').hooks.AfterAgent[0].hooks[0].command.endsWith('hook stop --host gemini-cli --project "$d"'));
-  assert.ok(out('.cursor/hooks.json').hooks.stop[0].command.endsWith('hook stop --host cursor --project "$d"'));
+  assert.ok(out('.claude/settings.json').hooks.Stop[0].hooks[0].command.endsWith('hook stop --host claude-code --project "$d"\''));
+  assert.ok(out('.codex/hooks.json').hooks.Stop[0].hooks[0].command.endsWith('hook stop --host codex --project "$d"\''));
+  assert.ok(out('.gemini/settings.json').hooks.AfterAgent[0].hooks[0].command.endsWith('hook stop --host gemini-cli --project "$d"\''));
+  assert.ok(out('.cursor/hooks.json').hooks.stop[0].command.endsWith('hook stop --host cursor --project "$d"\''));
   assert.ok(!Object.keys(out('.github/hooks/go-getter.json').hooks).some((e) => /stop/i.test(e)), 'Copilot cannot block a stop: advisory');
   assert.equal(plan.outputs['.opencode/plugins/go-getter.js'], undefined, 'no path guardrail, no pre-tool plugin');
   assert.equal(out('.claude/settings.json').hooks.PreToolUse, undefined, 'the gate alone installs no pre-tool hook');

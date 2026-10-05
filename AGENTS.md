@@ -13,7 +13,7 @@ Decisions, facts, guardrails and procedures live in `docs/` in the knowledge-bas
 - `docs/{facts,decisions}/NNNN-slug.md` (next free number), `docs/{guardrails,skills}/slug.md`.
 - Frontmatter `id, title, status, date, tags`; tags only from `docs/skills/tags.md`.
 - Add a row to the directory's `INDEX.md` for every new artifact.
-- Committed decisions are immutable: supersede, don't edit.
+- Committed decisions are immutable: supersede to change what they commit to; wording and factual corrections may edit in place (0067).
 - Machine-readable data goes under the `go-getter:` frontmatter key; every guardrail has `go-getter.enforcement`.
 
 Read the guardrails in `docs/guardrails/` before changing code they govern.

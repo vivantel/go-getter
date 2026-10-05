@@ -34,7 +34,6 @@ hooks — concerns host-agent-native hooks and permissions
 host-agents — concerns which host agents are supported and how
 interview — concerns the guided setup interview
 kilo — concerns the Kilo Code CLI host agent
-opencode — concerns the OpenCode host agent
 knowledge-base — concerns the knowledge base: its artifacts, tooling and artifact model
 knowledge-management — concerns the fact/decision/guardrail/procedure system
 licensing — concerns license and repo visibility
@@ -42,6 +41,7 @@ milestones — concerns release sequencing and scope slicing
 model-routing — concerns choosing a model/effort tier per step
 nodejs — concerns the Node.js implementation stack
 observability — concerns telemetry, logging and tracing of agent work
+opencode — concerns the OpenCode host agent
 packaging — concerns plugin manifests and install/distribution
 positioning — concerns what the product is for and who it serves
 practice-packs — concerns declarative practice-pack data and schema

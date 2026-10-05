@@ -47,7 +47,7 @@ test('apply for all hosts installs hooks, keeps user settings and is idempotent'
   assert.equal(cc.model, 'x');
   assert.equal(cc.hooks.PreToolUse.length, 2);
   assert.equal(cc.hooks.PreToolUse[0].hooks[0].command, 'user-hook.sh');
-  assert.match(cc.hooks.PreToolUse[1].hooks[0].command, /exec sh "\$d\/\.go-getter\/bin\/go-getter" hook pre-tool --host claude-code --project "\$d"$/);
+  assert.match(cc.hooks.PreToolUse[1].hooks[0].command, /exec sh "\$d\/\.go-getter\/bin\/go-getter" hook pre-tool --host claude-code --project "\$d"'$/);
   for (const f of ['.codex/hooks.json', '.cursor/hooks.json', '.github/hooks/go-getter.json', '.opencode/plugins/go-getter.js', '.githooks/pre-push', '.go-getter/bin/go-getter']) {
     assert.ok(lstatSync(path.join(dir, f)).isFile(), f);
   }
@@ -87,6 +87,9 @@ test('section and hook-list helpers', () => {
   const walkUp = { command: 'exec sh "$d/.go-getter/bin/go-getter" hook pre-tool --host claude-code --project "$d"' };
   assert.deepEqual(upsert([{ a: 1 }, { command: 'sh .go-getter/bin/go-getter hook pre-tool --host claude-code' }], walkUp), [{ a: 1 }, walkUp]);
   assert.deepEqual(upsert([{ a: 1 }, walkUp], null), [{ a: 1 }]);
+  // The same holds for the earlier walk-up shape that was not wrapped in `sh -c`.
+  const wrapped = { command: `sh -c '${walkUp.command}'` };
+  assert.deepEqual(upsert([{ a: 1 }, walkUp], wrapped), [{ a: 1 }, wrapped]);
 });
 
 test('hook runtime blocks denied paths in each host format', () => {

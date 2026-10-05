@@ -116,3 +116,57 @@ test('with no runner above the working directory a hook warns and lets the call 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// Minimal POSIX-style word splitting (single quotes, double quotes, backslash), as a host without a shell would do.
+function splitArgv(line) {
+  const words = [];
+  let word = '';
+  let inWord = false;
+  let quote = null;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote === "'") {
+      if (c === "'") quote = null;
+      else word += c;
+    } else if (quote === '"') {
+      if (c === '"') quote = null;
+      else if (c === '\\' && /["\\$`]/.test(line[i + 1])) word += line[++i];
+      else word += c;
+    } else if (c === "'" || c === '"') {
+      quote = c;
+      inWord = true;
+    } else if (c === '\\') {
+      word += line[++i];
+      inWord = true;
+    } else if (/\s/.test(c)) {
+      if (inWord) words.push(word);
+      word = '';
+      inWord = false;
+    } else {
+      word += c;
+      inWord = true;
+    }
+  }
+  if (inWord) words.push(word);
+  return words;
+}
+
+test('hook commands also work when a host executes them without a shell', () => {
+  const dir = project();
+  const out = path.join(dir, 'stub.out');
+  try {
+    writeApply(dir, planApply(dir, { hosts: HOSTS }));
+    stubRunner(dir);
+    const sub = nested(dir);
+    for (const { command, host } of hookCommands(dir)) {
+      rmSync(out, { force: true });
+      const [file, ...args] = splitArgv(command);
+      const run = spawnSync(file, args, { cwd: sub, env: { ...process.env, STUB_OUT: out }, input: '{}', encoding: 'utf8' });
+      assert.equal(run.status, 0, `${host}: ${run.error?.message ?? run.stderr}`);
+      assert.ok(existsSync(out), `${host}: the runner was not reached without a shell`);
+      assert.deepEqual(readFileSync(out, 'utf8').trim().split('\n').slice(0, 4), ['hook', 'pre-tool', '--host', host]);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

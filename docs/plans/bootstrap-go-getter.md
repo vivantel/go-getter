@@ -298,8 +298,8 @@ Done-when: a seven-row table (host / installed / init works / defects) is in the
 
 ### 6.4 Tag v0.1.0 — [ ]
 **Outward-facing: requires the owner's explicit go-ahead.**
-Do: merge the release PR, tag `v0.1.0`, create the GitHub release from the changelog.
-Done-when: `gh release view v0.1.0 -R vivantel/go-getter` succeeds; the release workflow run for the tag is green.
+Do: first a release PR that bumps `package.json` to `0.1.0` and runs `npm run build` (every generated manifest must carry the version or `check:versions --tag` fails the release workflow), regenerates the 0.1.0 changelog section with `go-getter:changelog`, and passes a dry run of the release workflow; merge it, then tag `v0.1.0` and create the GitHub release from the changelog.
+Done-when: `check:versions --tag v0.1.0` passes; `gh release view v0.1.0 -R vivantel/go-getter` succeeds; the release workflow run for the tag is green.
 
 ---
 

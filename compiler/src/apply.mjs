@@ -125,10 +125,13 @@ const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 export function hostHookOutputs(project, hosts, enabled, session = false, stop = false) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the
   // runtime as --project. Without a runner the hook warns and lets the call through (fail open, decision 0019).
+  // The script is wrapped in `sh -c '...'` so it also works for a host that executes the command without a shell;
+  // it therefore uses double quotes only.
   const cmd = (host, event = 'pre-tool') =>
+    `sh -c '` +
     `d=$PWD; while [ ! -f "$d/${RUNNER}" ] && [ "$d" != / ]; do d=$(dirname "$d"); done; ` +
     `[ -f "$d/${RUNNER}" ] || { echo "go-getter: runner not found; hook skipped" >&2; exit 0; }; ` +
-    `exec sh "$d/${RUNNER}" hook ${event} --host ${host} --project "$d"`;
+    `exec sh "$d/${RUNNER}" hook ${event} --host ${host} --project "$d"'`;
   const out = {};
   // Hosts whose stop event can keep the agent working (capability hooks.blockStop) get the gate; the rest stay advisory.
   const caps = packageCapabilities();

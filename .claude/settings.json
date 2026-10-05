@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook session-start --host claude-code --project \"$d\""
+            "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook session-start --host claude-code --project \"$d\"'"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook pre-tool --host claude-code --project \"$d\""
+            "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook pre-tool --host claude-code --project \"$d\"'"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "d=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook stop --host claude-code --project \"$d\""
+            "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook stop --host claude-code --project \"$d\"'"
           }
         ]
       }
