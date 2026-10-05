@@ -25,3 +25,10 @@ id,title,tags,status
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",active
 0024-dogfood-workflow-with-own-plugin,"This repo runs its kms workflow through its own go-getter plugin, with capture, conform and attribute on every PR","dogfooding, knowledge-management, git-hooks",active
 0025-shared-tier-2-hook-runtime,"Every host's hooks call one shared go-getter hook runtime instead of host-specific rule logic","enforcement, hooks, architecture",active
+0026-typed-pack-answers-and-detect-values,"Pack questions can take typed free-text and list answers, and templates can use detected values","practice-packs, interview, configuration",active
+0027-context-pack-defaults,"The context pack recommends a 150-line instruction cap, skills on demand, cost-model delegation, cache hygiene and compaction at task boundaries","practice-packs, harness, cost",active
+0028-orchestration-pack-defaults,"The orchestration pack recommends five roles, a read-only reviewer, worktree isolation without path claims, and a brief-result-evidence handoff","practice-packs, agent-roles, harness",active
+0029-governance-pack-defaults,"The governance pack recommends blocking restricted paths, paid no-training cloud providers, optional ZDR and no prompt logging","practice-packs, governance, security",active
+0030-telemetry-pack-defaults,"The telemetry pack recommends a local metadata log kept 30 days with no export","practice-packs, observability, governance",active
+0031-verification-gate-pack-defaults,"The verification-gate pack recommends detected test, lint and typecheck checks, a reviewer verdict, and blocking completion","practice-packs, verification, harness",active
+0032-cost-routing-pack-defaults,"The cost-routing pack recommends five task classes, balanced tiers, two escalations, a $5 headless cap and 1h main-session cache","practice-packs, model-routing, cost",active

@@ -50,6 +50,7 @@ Checked by git hooks and CI:
 - go-getter must have no runtime dependencies (`no-runtime-dependencies`)
 - No credentials or non-public information may be committed (`no-secrets-in-public-repo`)
 - The Node.js floor must be the oldest LTS line still supported (`node-floor-is-oldest-supported-lts`)
+- Every choice question in a pack must name exactly one recommended option (`pack-questions-have-a-recommended-default`)
 - A practice pack must not ship before this repo has adopted it (`practice-ships-only-after-self-adoption`)
 - A release requires all three verification layers to pass (`release-requires-passing-gate`)
 - Routing escalation must be bounded and end at a human (`routing-escalation-bounded`)

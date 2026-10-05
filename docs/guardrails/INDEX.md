@@ -11,6 +11,7 @@ no-secrets-in-public-repo,"No credentials or non-public information may be commi
 no-unenforced-guardrail,"A guardrail describing a shipped skill's behavior must also be stated in that skill","knowledge-management, guardrail",active
 node-floor-is-oldest-supported-lts,"The Node.js floor must be the oldest LTS line still supported","nodejs, tooling, guardrail",active
 one-statement-one-job,"A fact, guardrail or derivation-note states one thing","knowledge-management, guardrail",active
+pack-questions-have-a-recommended-default,"Every choice question in a pack must name exactly one recommended option","practice-packs, interview, guardrail",active
 practice-ships-only-after-self-adoption,"A practice pack must not ship before this repo has adopted it","dogfooding, ci, guardrail",active
 release-requires-passing-gate,"A release requires all three verification layers to pass","verification, eval, ci, guardrail",active
 routing-escalation-bounded,"Routing escalation must be bounded and end at a human","model-routing, cost, guardrail",active
