@@ -12,7 +12,7 @@ go-getter:
     - tier: 3
       check: Host settings files that exist have prompt logging switched off
       run: builtin:prompt-logging-off
-  generated-by: governance@0.1.0
+  generated-by: governance@0.2.0
   pack-answer: prompt-logging
   pack-option: disable-everywhere
 ---

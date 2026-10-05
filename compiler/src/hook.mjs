@@ -7,6 +7,7 @@ import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
 import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
+import { adoptedData } from './governance.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -83,12 +84,55 @@ export function candidatePaths(payload, project) {
   return [...tokens];
 }
 
+// Access modes of restricted patterns (decision 0072) from `go-getter.restricted-modes` ("use:<pattern>, sink:<pattern>").
+// A pattern not listed, or listed under both modes, is `deny`.
+export function restrictedModes(project) {
+  const modes = new Map();
+  for (const entry of String(adoptedData(project, 'restricted-modes') ?? '').split(',')) {
+    const m = /^(use|sink):(\S+)$/.exec(entry.trim());
+    if (m) modes.set(m[2], modes.has(m[2]) && modes.get(m[2]) !== m[1] ? 'deny' : m[1]);
+  }
+  return modes;
+}
+
+// A path's mode: `deny` if a restricted pattern it matches is `deny` or its patterns disagree.
+function modeOf(file, patterns, modes) {
+  const found = new Set(patterns.filter((p) => matchesAny(file, [p])).map((p) => modes.get(p) ?? 'deny'));
+  return found.size === 1 ? [...found][0] : 'deny';
+}
+
+// `run` or `put` when the call is a shell command that is exactly `go-getter secret run|put <args>`: one simple command
+// of plain words (no quoting, expansion, chaining or redirection), so nothing else runs in it. Never a substring match.
+const SECRET_MODE = { run: 'use', put: 'sink' };
+const WORD = '[A-Za-z0-9_./=:@%+,-]+';
+export function secretSubcommand(payload) {
+  if (TOOLS[toolName(payload)?.toLowerCase()] !== 'shell') return undefined;
+  const command = toolInput(payload)?.command;
+  if (typeof command !== 'string' || !new RegExp(`^${WORD}( ${WORD})*$`).test(command)) return undefined;
+  const [bin, group, sub] = command.split(' ');
+  return bin === 'go-getter' && group === 'secret' && Object.hasOwn(SECRET_MODE, sub) ? sub : undefined;
+}
+
+// What a `go-getter secret run|put` call may name: paths of its mode in its command. Null for any other call.
+function exemption(project, payload) {
+  const sub = secretSubcommand(payload);
+  if (!sub) return null;
+  const command = toolInput(payload).command;
+  return { mode: SECRET_MODE[sub], modes: restrictedModes(project), names: new Set(candidatePaths({ tool_name: 'bash', tool_input: { command } }, project)) };
+}
+
+// `use` and `sink` stay inactive until `go-getter secret run|put` exist (decision 0072): their paths are denied like
+// `deny` paths, except a `use` path in the command of `go-getter secret run` and a `sink` path in `go-getter secret put`.
 export function evaluatePreTool(project, payload) {
+  let exempt;
   for (const e of collectEnforcement(project)) {
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin') continue;
     if (e.parsed.id === 'deny-path') {
       const patterns = patternsOf(e.parsed.args);
-      const hit = candidatePaths(payload, project).find((p) => matchesAny(p, patterns));
+      const hits = candidatePaths(payload, project).filter((p) => matchesAny(p, patterns));
+      if (hits.length && exempt === undefined) exempt = exemption(project, payload);
+      const allowed = (p) => exempt && exempt.names.has(p) && modeOf(p, patterns, exempt.modes) === exempt.mode;
+      const hit = hits.find((p) => !allowed(p));
       if (hit) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${toolName(payload) ?? 'tool call'} names "${hit}", a denied path` };
     }
   }

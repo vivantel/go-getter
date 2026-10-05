@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "governance",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     7
@@ -23,6 +23,13 @@
         "id_rsa",
         "id_ed25519"
       ]
+    },
+    {
+      "id": "restricted-modes",
+      "type": "list",
+      "prompt": "Which restricted path patterns get a mode other than deny? use:<pattern> lets a go-getter tool pass the content to a process without the agent reading it; sink:<pattern> lets a go-getter tool write it from a declared source without reading it back. Until go-getter secret run and put exist, both stay denied like deny.",
+      "pattern": "^(use|sink):[^\\s\",]+$",
+      "default": []
     },
     {
       "id": "enforcement",
@@ -167,6 +174,28 @@
               }
             },
             "body": "## Decision\n\nThe restricted data class is the paths {{answer.restricted-paths}} (pack {{pack.id}}@{{pack.version}}). Agents do not read or write them, and only a local model may receive their content.\n\n## Why\n\nDLP needs a declared list that hooks and CI can enforce (decision 0018).\n"
+          }
+        ]
+      }
+    },
+    "restricted-modes": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "restricted-path-modes",
+            "title": "Restricted paths have an access mode, deny unless listed",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "restricted-modes": "{{answer.restricted-modes}}"
+              }
+            },
+            "body": "## Decision\n\nA restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack {{pack.id}}@{{pack.version}}). Until `go-getter secret run` and `go-getter secret put` exist, `use` and `sink` paths are denied like `deny` paths, except to a call that is exactly `go-getter secret run` (for `use`) or `go-getter secret put` (for `sink`).\n\n## Why\n\nAgents need secrets they can use or fill without reading them, and no other go-getter command may be the exemption, since one that runs a user-supplied command would leak the content (decision 0072).\n"
           }
         ]
       }

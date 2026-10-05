@@ -15,7 +15,7 @@ go-getter:
     - tier: 3
       check: No tracked file matches a restricted path
       run: builtin:deny-path paths=".env, .env.*, *.pem, *.key, id_rsa, id_ed25519, .go-getter/state/"
-  generated-by: governance@0.1.0
+  generated-by: governance@0.2.0
   pack-answer: enforcement
   pack-option: hook-and-never-committed
 ---

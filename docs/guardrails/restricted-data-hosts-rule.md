@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction; the coverage report shows the tier per host
-  generated-by: governance@0.1.0
+  generated-by: governance@0.2.0
   pack-answer: restricted-hosts
   pack-option: hook-hosts
 ---

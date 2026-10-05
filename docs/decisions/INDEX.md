@@ -71,3 +71,4 @@ id,title,tags,status
 0072-restricted-paths-have-access-modes,"Restricted paths have access modes deny, use and sink, enforced in layers that state where they stop","governance, security, enforcement, hooks",active
 0075-spec-tools-are-detected-and-tolerated,"Spec and change tools such as OpenSpec are detected and tolerated, not wrapped by a pack","roadmap, tooling, practice-packs",active
 0076-watcher-noise,"Watchers are quiet","practice-packs, harness, cost",active
+0077-restricted-path-modes,"Restricted paths have an access mode, deny unless listed","practice-packs, governance, security",active

@@ -9,7 +9,7 @@ import { loadPack, loadPackSchema, validatePack } from '../src/packs.mjs';
 import { planRender, applyRender } from '../src/render.mjs';
 import { runTier3, collectEnforcement } from '../src/enforce.mjs';
 import { planApply, writeApply, diffApply } from '../src/apply.mjs';
-import { evaluatePreTool } from '../src/hook.mjs';
+import { evaluatePreTool, restrictedModes } from '../src/hook.mjs';
 import { loadCapabilities } from '../src/capabilities.mjs';
 import { coverage, formatCoverage } from '../src/coverage.mjs';
 import { loadRegistry } from '../src/routing/registry.mjs';
@@ -21,6 +21,7 @@ const pack = loadPack(path.join(root, 'src/packs/governance/pack.json'));
 const answersFor = (overrides = {}) => ({
   ...Object.fromEntries(pack.questions.filter((q) => q.options).map((q) => [q.id, q.options.find((o) => o.recommended).id])),
   'restricted-paths': ['.env', '.env.*', '*.pem', 'secrets/'],
+  'restricted-modes': [],
   ...overrides,
 });
 
@@ -146,9 +147,78 @@ test('coverage shows the DLP tier per host', () => {
   adopt(dir);
   const rows = coverage(dir, { governance: pack }, loadCapabilities(root));
   const dlp = rows.find((r) => r.component === 7);
-  assert.deepEqual(dlp.packs, ['governance@0.1.0']);
+  assert.deepEqual(dlp.packs, [`governance@${pack.version}`]);
   assert.ok(Object.values(dlp.tiers).every((t) => t === 3));
   assert.ok(Object.values(dlp.inHost).every((t) => t === 2));
-  assert.match(formatCoverage(rows), /^7 Guardrails & DLP\s+governance@0\.1\.0\s+hook\+ci\s+hook\+ci/m);
+  assert.match(formatCoverage(rows), new RegExp(`^7 Guardrails & DLP\\s+governance@${pack.version.replace(/\./g, '\\.')}\\s+hook\\+ci\\s+hook\\+ci`, 'm'));
+  rmSync(dir, { recursive: true, force: true });
+});
+
+// Access modes (decision 0072). Test paths avoid this repo's own restricted patterns.
+const modeProject = (modes) => {
+  const dir = project();
+  adopt(dir, answersFor({ 'restricted-paths': ['vault/', 'inbox/', 'keys/'], 'restricted-modes': modes }));
+  return dir;
+};
+const call = (dir, tool_name, tool_input) => evaluatePreTool(dir, { tool_name, tool_input }).deny;
+const FILES = { use: 'vault/db.txt', sink: 'inbox/token.txt', deny: 'keys/id.txt' };
+
+test('the restricted-modes answer is recorded as decision data; a pattern under both modes is deny', () => {
+  const dir = modeProject(['use:vault/', 'sink:inbox/', 'use:keys/', 'sink:keys/']);
+  assert.deepEqual(Object.fromEntries(restrictedModes(dir)), { 'vault/': 'use', 'inbox/': 'sink', 'keys/': 'deny' });
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('every mode is denied to reads, writes and go-getter commands other than secret run and put', () => {
+  const dir = modeProject(['use:vault/', 'sink:inbox/']);
+  for (const [mode, file] of Object.entries(FILES)) {
+    assert.equal(call(dir, 'Read', { file_path: path.join(dir, file) }), true, `${mode}: read`);
+    assert.equal(call(dir, 'Write', { file_path: path.join(dir, file), content: 'x' }), true, `${mode}: write`);
+    assert.equal(call(dir, 'Bash', { command: `go-getter watch -- cat ${file}` }), true, `${mode}: watch`);
+    assert.equal(call(dir, 'Bash', { command: `go-getter --version; cat ${file}` }), true, `${mode}: chained`);
+    assert.equal(call(dir, 'Bash', { command: `go-getter verify -- cat ${file}` }), true, `${mode}: verify`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('only a call that is exactly go-getter secret run (use) or put (sink) is exempt', () => {
+  const dir = modeProject(['use:vault/', 'sink:inbox/']);
+  const shell = (command) => call(dir, 'Bash', { command });
+  assert.equal(shell(`go-getter secret run ${FILES.use}`), false);
+  assert.equal(shell(`go-getter secret run --file ${path.join(dir, FILES.use)} -- node app.js`), false);
+  assert.equal(shell(`go-getter secret put ${FILES.sink}`), false);
+  // the wrong mode, a deny path, or a deny path beside an exempt one
+  assert.equal(shell(`go-getter secret put ${FILES.use}`), true);
+  assert.equal(shell(`go-getter secret run ${FILES.sink}`), true);
+  assert.equal(shell(`go-getter secret run ${FILES.deny}`), true);
+  assert.equal(shell(`go-getter secret run ${FILES.use} ${FILES.deny}`), true);
+  // anything but one plain go-getter secret run|put command
+  const f = FILES.use;
+  for (const command of [
+    `go-getter secret run ${f}; cat ${f}`, `go-getter secret run ${f} && cat ${f}`, `go-getter secret run ${f} | tee out`,
+    `go-getter secret run ${f} > out`, `go-getter secret run ${f}\ncat ${f}`, `go-getter secret run "${f}"`,
+    `go-getter secret run $(cat ${f})`, `go-getter secret run \`cat ${f}\``, ` go-getter secret run ${f}`,
+    `npx go-getter secret run ${f}`, `echo go-getter secret run ${f}`, `go-getter secret runner ${f}`,
+    `go-getter watch -- go-getter secret run ${f}`, `X=1 go-getter secret run ${f}`, `go-getter  secret run ${f}`,
+  ]) assert.equal(shell(command), true, command);
+  // only a shell tool, and only paths in its command
+  assert.equal(call(dir, 'Read', { file_path: f, command: `go-getter secret run ${f}` }), true);
+  assert.equal(call(dir, 'Bash', { command: `go-getter secret run ${f}`, cwd: FILES.deny }), true);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('without modes, secret run and put are denied too; the tier-3 check rejects every mode', async () => {
+  let dir = modeProject([]);
+  assert.equal(call(dir, 'Bash', { command: `go-getter secret run ${FILES.use}` }), true);
+  rmSync(dir, { recursive: true, force: true });
+  dir = modeProject(['use:vault/', 'sink:inbox/']);
+  for (const file of Object.values(FILES)) {
+    mkdirSync(path.join(dir, path.dirname(file)), { recursive: true });
+    writeFileSync(path.join(dir, file), 'x\n');
+  }
+  execFileSync('git', ['add', '-f', ...Object.values(FILES)], { cwd: dir });
+  const result = (await runTier3(dir, { onlyGuardrail: 'restricted-paths-denied' }))[0];
+  assert.equal(result.ok, false);
+  for (const file of Object.values(FILES)) assert.match(result.message, new RegExp(file.replace(/\./g, '\\.')));
   rmSync(dir, { recursive: true, force: true });
 });
