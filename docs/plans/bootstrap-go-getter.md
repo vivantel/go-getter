@@ -34,7 +34,6 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 ## Known enforcement debt (from capture, 2026-10-05)
 
 - `routing-*` guardrails run `npm run test:routing` and `telemetry-records-metadata-only` runs `npm run test:telemetry`; both pass vacuously until steps 5.4/5.6 add the tests.
-- `practice-ships-only-after-self-adoption` runs `check:self-adoption`, a stub until step 5.0.
 - Decision 0019's PowerShell shims are not implemented; the runner is POSIX `sh` only.
 
 ## Open questions (resolve in the named step; record answers as facts/decisions)
@@ -228,7 +227,8 @@ Done-when: a test on a fixture with two packs asserts the exact report; running 
 
 Each pack follows `docs/skills/adding-a-practice-pack.md` and is done only when: it validates (`npm run check:packs`); an eval fixture exists; `init` was run for it on this repo and the artifacts are committed with `go-getter.generated-by: <pack>@0.1.0`; `npm run check:self-adoption` passes (guardrail `practice-ships-only-after-self-adoption`). Order: 5.0 first; 5.1, 5.2, 5.3 **‖**; 5.4 and 5.5 after 5.3; 5.6 last.
 
-### 5.0 Self-adoption check — [ ]
+### 5.0 Self-adoption check — [x]
+Result: `compiler/src/checks/self-adoption.mjs` (exact `<id>@<version>`, active artifacts only).
 Do: implement `npm run check:self-adoption`: every pack under `src/packs/` has at least one artifact in `docs/` whose `go-getter.generated-by` equals `<pack-id>@<version>`.
 Done-when: exits 0 when `src/packs/` is empty or every pack is adopted; non-zero in a test where a pack lacks a matching artifact.
 
