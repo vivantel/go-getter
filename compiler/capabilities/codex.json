@@ -1,0 +1,66 @@
+{
+  "$schema": "../schemas/capabilities.schema.json",
+  "host": "codex",
+  "fact": "0004-codex-integration-surface",
+  "instructions": {
+    "file": "AGENTS.md",
+    "readsAgentsMd": true,
+    "agentsMdVia": "native"
+  },
+  "skills": {
+    "dirs": [
+      ".agents/skills"
+    ]
+  },
+  "agents": {
+    "format": "toml",
+    "dir": ".codex/agents",
+    "extension": ".toml",
+    "model": true,
+    "effort": true,
+    "tools": false
+  },
+  "commands": {
+    "native": false
+  },
+  "hooks": {
+    "config": ".codex/hooks.json",
+    "blockPreTool": true,
+    "rewriteToolInput": true,
+    "blockStop": true,
+    "modelSwap": false,
+    "runtime": "command"
+  },
+  "permissions": {
+    "pathReadDeny": false
+  },
+  "routing": {
+    "localEndpoints": true,
+    "spendCap": "none",
+    "cacheTokensVisible": true
+  },
+  "telemetry": {
+    "otel": true,
+    "cost": false,
+    "logsPromptsByDefault": false
+  },
+  "sandbox": true,
+  "checkpointing": false,
+  "nodeAtRuntime": false,
+  "tiers": {
+    "3": 2,
+    "6": 2,
+    "7": 2,
+    "8": 2,
+    "9": 1,
+    "10": 2,
+    "11": 2,
+    "12": 2
+  },
+  "notes": [
+    "Hooks gated by features.hooks.",
+    "Model providers and otel are user-level config only.",
+    "No per-path read deny documented; DLP via PreToolUse hooks and sandbox.",
+    "Checkpointing unconfirmed."
+  ]
+}

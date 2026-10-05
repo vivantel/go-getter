@@ -134,7 +134,8 @@ Result: `compiler/src/frontmatter.mjs` (`parseFrontmatter`, `parseYaml`, `string
 Do: `compiler/src/frontmatter.mjs` — zero-dep parser/serializer for the YAML subset used in `docs/` (scalars, inline and block lists, nested maps, lists of maps, inline flow maps `{k: v}` — needed for `go-getter.enforcement` and the `go-getter.models` lists in facts 0011-0013). `node:test` tests.
 Done-when: `npm test` passes, including a test that parses every `docs/**/*.md` frontmatter in this repo without error.
 
-### 2.3 Capabilities manifests — [ ]
+### 2.3 Capabilities manifests — [x]
+Result: six manifests in `compiler/capabilities/`, `compiler/schemas/capabilities.schema.json`, zero-dep validator `compiler/src/schema.mjs` (reused for the pack schema in 4.1), loader `compiler/src/capabilities.mjs`.
 Do: `compiler/capabilities/<host>.json` ×6, `compiler/schemas/capabilities.schema.json` and a validator, populated strictly from fact 0009 (unconfirmed → `false` with a `note`).
 Done-when: six manifests validate in `npm test`; each cites its fact id.
 
