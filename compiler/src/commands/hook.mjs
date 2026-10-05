@@ -1,11 +1,13 @@
 // go-getter hook pre-tool --host <id> [--project <dir>]: tier-2 runtime called by host hooks; reads the tool call on stdin.
 // go-getter hook session-start --host <id>: prints the vendored kms capture/lint nudges (never blocks).
+// go-getter hook stop --host <id>: verification gate; blocks "done" while the adopted checks fail (bounded, then a human).
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { evaluatePreTool, respond, sessionNudges, hookRecord } from '../hook.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
+import { evaluateStop, respondStop } from '../verify.mjs';
 
-export default function hookCommand({ root, args }) {
+export default async function hookCommand({ root, args }) {
   const [event, ...rest] = args;
   let host;
   let project = process.cwd();
@@ -19,8 +21,8 @@ export default function hookCommand({ root, args }) {
     if (text) process.stdout.write(`${text}\n`);
     return 0;
   }
-  if (event !== 'pre-tool' || !host) {
-    console.error('usage: go-getter hook pre-tool --host <id>');
+  if (!['pre-tool', 'stop'].includes(event) || !host) {
+    console.error('usage: go-getter hook <pre-tool|stop|session-start> --host <id>');
     return 0; // never block on a misconfigured hook
   }
   let payload = {};
@@ -30,6 +32,17 @@ export default function hookCommand({ root, args }) {
     return 0;
   }
   const dir = payload.cwd ? path.resolve(payload.cwd) : project;
+  if (event === 'stop') {
+    let out;
+    try {
+      out = respondStop(host, await evaluateStop(dir, payload, { host }));
+    } catch {
+      return 0; // a broken gate must never trap a session
+    }
+    if (out.stdout) process.stdout.write(out.stdout);
+    if (out.stderr) process.stderr.write(`${out.stderr}\n`);
+    return out.code;
+  }
   const decision = evaluatePreTool(dir, payload);
   recordQuietly(dir, hookRecord('pre-tool', host, payload, decision));
   const out = respond(host, decision);

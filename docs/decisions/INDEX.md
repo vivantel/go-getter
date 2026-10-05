@@ -53,3 +53,9 @@ id,title,tags,status
 0051-telemetry-recording,"Each routed step is recorded as one metadata JSON line in the local state directory","practice-packs, observability, harness",active
 0052-telemetry-retention,"The metadata log keeps 30 days","practice-packs, observability, harness",active
 0053-telemetry-export,"Telemetry is not exported","practice-packs, observability, harness",active
+0054-verification-checks,"Implement and debug steps pass the project's test, lint and typecheck commands","practice-packs, verification, harness",active
+0055-verification-test-command,"The verification test command is ""npm test""","practice-packs, verification, harness",active
+0056-verification-lint-command,"The verification lint command is """"","practice-packs, verification, harness",active
+0057-verification-typecheck-command,"The verification typecheck command is """"","practice-packs, verification, harness",active
+0058-verification-review-bar,"Review steps pass a reviewer-agent verdict","practice-packs, verification, harness",active
+0059-verification-gate,"""Done"" is blocked while the verification checks fail","practice-packs, verification, harness",active

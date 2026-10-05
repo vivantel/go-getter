@@ -63,6 +63,10 @@ Checked by git hooks and CI:
 - Telemetry must record metadata only, never prompt or file content (`telemetry-records-metadata-only`)
 - Vendored kms files change only through the sync script (`vendored-kms-changes-only-via-sync`)
 
+Blocked by host hooks where the host supports it:
+
+- A step is not done while its verification checks fail (`verification-gate-blocks-done`)
+
 Advisory:
 
 - No mid-task model, effort or instruction-file change; switches are confirmed (`cache-hygiene-rule`)

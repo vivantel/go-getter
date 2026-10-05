@@ -34,3 +34,4 @@ handoff-has-brief-result-evidence,"Handoffs must carry a brief, a result and evi
 restricted-paths-denied,"Agents must not touch restricted paths and none may be committed","practice-packs, governance, guardrail",active
 prompt-logging-disabled,"Host prompt logging must stay disabled","practice-packs, governance, guardrail",active
 restricted-data-hosts-rule,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, guardrail",active
+verification-gate-blocks-done,"A step is not done while its verification checks fail","practice-packs, verification, guardrail",active

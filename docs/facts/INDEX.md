@@ -23,3 +23,4 @@ id,title,tags,status
 0020-agent-role-compilation,"Project agent roles come from adopted decisions and are compiled by apply; four host tool mappings are unconfirmed","agent-roles, compiler, host-agents",active
 0021-governance-data-and-eligibility,"Governance decisions carry the registry and class policy that eligibility reads; the single-provider answer adds a provider question","governance, model-routing, practice-packs",active
 0022-telemetry-record-and-recorder,"Telemetry records allow only short-identifier and numeric metadata fields; hook events record host, model, effort and outcome only","observability, practice-packs, compiler",active
+0023-verification-gate-runtime,"The verification gate runs adopted check commands by task class and blocks a stop through the shared hook runtime; four hosts can block, the stop answer shapes of Codex and Cursor are unconfirmed","verification, practice-packs, compiler, hooks",active

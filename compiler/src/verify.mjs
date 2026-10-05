@@ -1,0 +1,137 @@
+// Verification gate (plan 5.5, decision 0031): runs the adopted checks of a task class and gates "done" on them.
+// Configuration comes from adopted decisions (`go-getter.verify-scope`, `verify-<check>-command`, `verify-review-bar`, `verify-gate`);
+// every check is recorded as one metadata line (event `verify:<check>`, never its output).
+import path from 'node:path';
+import { spawnSync, execFileSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { adoptedData } from './governance.mjs';
+import { runTier3 } from './enforce.mjs';
+import { recordQuietly, STATE_DIR } from './telemetry/record.mjs';
+
+export const CLASSES = ['explore', 'plan', 'implement', 'review', 'debug'];
+// Classes whose result is code: they run the project's own commands. Review has its own bar.
+const CODE_CLASSES = new Set(['implement', 'debug']);
+const DEFAULT_MAX_ESCALATIONS = 2;
+const TIMEOUT_MS = 10 * 60 * 1000;
+const TAIL_LINES = 15;
+
+// The test command of the "affected tests" scope takes the place of the test command.
+export function verifyConfig(project) {
+  const scope = adoptedData(project, 'verify-scope') ?? null;
+  const command = (key) => String(adoptedData(project, key) ?? '').trim();
+  let commands = { test: command('verify-test-command'), lint: command('verify-lint-command'), typecheck: command('verify-typecheck-command') };
+  if (scope === 'tests-only') commands = { test: commands.test };
+  if (scope === 'affected-tests') commands = { test: command('verify-affected-command') };
+  const escalations = Number.parseInt(adoptedData(project, 'max-escalations'), 10);
+  return {
+    adopted: scope !== null,
+    scope,
+    commands: Object.fromEntries(Object.entries(commands).filter(([, v]) => v)),
+    reviewBar: adoptedData(project, 'verify-review-bar') ?? 'none',
+    gate: adoptedData(project, 'verify-gate') ?? 'report',
+    maxEscalations: Number.isInteger(escalations) && escalations >= 0 ? escalations : DEFAULT_MAX_ESCALATIONS,
+  };
+}
+
+// The checks a class must pass: [{name, command}] (command) or [{name, guardrails: true}] (conform bar).
+export function checksFor(config, taskClass) {
+  if (CODE_CLASSES.has(taskClass)) return Object.entries(config.commands).map(([name, command]) => ({ name, command }));
+  if (taskClass === 'review' && config.reviewBar === 'verdict-conform') return [{ name: 'guardrails', guardrails: true }];
+  return [];
+}
+
+const tail = (text) => text.trim().split('\n').slice(-TAIL_LINES).join('\n');
+
+async function runCheck(project, check) {
+  if (check.guardrails) {
+    const failed = (await runTier3(project)).filter((r) => !r.ok);
+    return { ok: failed.length === 0, output: failed.map((f) => `${f.guardrail}: ${f.message ?? f.check}`).join('\n') };
+  }
+  const res = spawnSync(check.command, { cwd: project, shell: true, encoding: 'utf8', timeout: TIMEOUT_MS });
+  const ok = res.status === 0;
+  return { ok, output: ok ? '' : tail(`${res.stdout ?? ''}\n${res.stderr ?? ''}${res.error ? `\n${res.error.message}` : ''}`) };
+}
+
+// Runs every check of the class and records one telemetry line per check. Returns {ok, results: [{name, ok, output}]}.
+export async function verify(project, taskClass, { host } = {}) {
+  const config = verifyConfig(project);
+  const results = [];
+  for (const check of checksFor(config, taskClass)) {
+    const { ok, output } = await runCheck(project, check);
+    results.push({ name: check.name, ok, output });
+    recordQuietly(project, { event: `verify:${check.name}`, ...(host ? { host } : {}), taskClass, outcome: ok ? 'pass' : 'fail' });
+  }
+  return { ok: results.every((r) => r.ok), results };
+}
+
+// --- Stop gate -------------------------------------------------------------------------------------------------
+
+const BLOCKS = path.join(STATE_DIR, 'verify-blocks.json');
+const DAY = 86400000;
+
+function readBlocks(project) {
+  try {
+    return JSON.parse(readFileSync(path.join(project, BLOCKS), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function writeBlocks(project, blocks, now) {
+  const live = Object.fromEntries(Object.entries(blocks).filter(([, v]) => now - v.ts < DAY));
+  try {
+    mkdirSync(path.join(project, STATE_DIR), { recursive: true });
+    writeFileSync(path.join(project, BLOCKS), `${JSON.stringify(live)}\n`);
+  } catch {
+    // state is best effort: without it the gate degrades to blocking at most once per stop
+  }
+}
+
+// "Done" only needs gating when the working tree holds changes to check; a question-and-answer session is not gated.
+function hasChanges(project) {
+  try {
+    const out = execFileSync('git', ['status', '--porcelain', '--', '.', `:(exclude)${STATE_DIR}`], { cwd: project, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    return out.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
+const sessionKey = (payload) => String(payload.session_id ?? payload.conversation_id ?? 'default').slice(0, 64);
+
+// Decision for a host's stop event: {block, reason} or {block: false, escalated?: true, reason?}.
+// Blocks while the class `implement` checks fail, at most `maxEscalations` times per session, then hands over to a human.
+export async function evaluateStop(project, payload, { host, now = Date.now() } = {}) {
+  const config = verifyConfig(project);
+  if (config.gate !== 'block' || !hasChanges(project)) return { block: false };
+  const key = sessionKey(payload);
+  const blocks = readBlocks(project);
+  const { ok, results } = await verify(project, 'implement', { host });
+  if (ok) {
+    delete blocks[key];
+    writeBlocks(project, blocks, now);
+    return { block: false };
+  }
+  const failed = results.filter((r) => !r.ok);
+  const detail = failed.map((f) => `${f.name} failed:\n${f.output}`).join('\n\n');
+  const count = blocks[key]?.count ?? 0;
+  if (count >= config.maxEscalations) {
+    delete blocks[key];
+    writeBlocks(project, blocks, now);
+    recordQuietly(project, { event: 'verify:gate', ...(host ? { host } : {}), taskClass: 'implement', outcome: 'escalated', escalations: count });
+    return { block: false, escalated: true, reason: `go-getter verification gate: checks still fail after ${count} attempts; handing over to a human.\n${detail}` };
+  }
+  blocks[key] = { count: count + 1, ts: now };
+  writeBlocks(project, blocks, now);
+  recordQuietly(project, { event: 'verify:gate', ...(host ? { host } : {}), taskClass: 'implement', outcome: 'blocked', escalations: count });
+  return { block: true, reason: `go-getter verification gate: not done yet, fix the failing checks (attempt ${count + 1} of ${config.maxEscalations}).\n${detail}` };
+}
+
+// Host answer to a stop event. Cursor continues the agent through a follow-up message; the others read exit 2.
+export function respondStop(host, decision) {
+  if (decision.block) {
+    if (host === 'cursor') return { code: 0, stdout: JSON.stringify({ followup_message: decision.reason }), stderr: '' };
+    return { code: 2, stdout: '', stderr: decision.reason };
+  }
+  return { code: 0, stdout: '', stderr: decision.escalated ? decision.reason : '' };
+}

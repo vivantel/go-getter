@@ -117,28 +117,49 @@ function setEvent(obj, keys, entry) {
 
 const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 
-// Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook pre-tool --host <id>`.
-// `enabled`: tier-2 guardrails exist (pre-tool hook). `session`: kms knowledge base present (session-start nudges).
-export function hostHookOutputs(project, hosts, enabled, session = false) {
+// Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook <event> --host <id>`.
+// `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: kms knowledge base present (session-start nudges).
+// `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
+export function hostHookOutputs(project, hosts, enabled, session = false, stop = false) {
   const cmd = (host, event = 'pre-tool') => `sh ${RUNNER} hook ${event} --host ${host}`;
   const out = {};
+  // Hosts whose stop event can keep the agent working (capability hooks.blockStop) get the gate; the rest stay advisory.
+  const caps = packageCapabilities();
+  const canStop = (host) => stop && caps[host]?.hooks.blockStop === true;
   // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
-  const wanted = (rel) => enabled || session || existsSync(path.join(project, rel));
+  const wanted = (rel) => enabled || session || stop || existsSync(path.join(project, rel));
   const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
-  const both = (obj, preKeys, sessionKeys, pre, start) => setEvent(setEvent(obj, preKeys, enabled ? pre : null), sessionKeys, session ? start : null);
+  const plain = (host, event) => ({ hooks: [{ type: 'command', command: cmd(host, event) }] });
+  // Sets or removes each of go-getter's events: [keys, entry-or-null].
+  const events = (obj, list) => list.reduce((acc, [keys, entry]) => setEvent(acc, keys, entry), obj);
   for (const host of hosts) {
     if (host === 'claude-code' && wanted('.claude/settings.json')) {
-      out['.claude/settings.json'] = json(both(readJson(project, '.claude/settings.json'), ['hooks', 'PreToolUse'], ['hooks', 'SessionStart'], ccLike(host), { hooks: [{ type: 'command', command: cmd(host, 'session-start') }] }));
+      out['.claude/settings.json'] = json(events(readJson(project, '.claude/settings.json'), [
+        [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
+        [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
+        [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
+      ]));
     }
     if (host === 'codex' && wanted('.codex/hooks.json')) {
-      out['.codex/hooks.json'] = json(both(readJson(project, '.codex/hooks.json'), ['hooks', 'PreToolUse'], ['hooks', 'SessionStart'], ccLike(host), { hooks: [{ type: 'command', command: cmd(host, 'session-start') }] }));
+      out['.codex/hooks.json'] = json(events(readJson(project, '.codex/hooks.json'), [
+        [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
+        [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
+        [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
+      ]));
     }
     if (host === 'gemini-cli' && wanted('.gemini/settings.json')) {
-      out['.gemini/settings.json'] = json(both(readJson(project, '.gemini/settings.json'), ['hooks', 'BeforeTool'], ['hooks', 'SessionStart'], ccLike(host), { hooks: [{ type: 'command', command: cmd(host, 'session-start') }] }));
+      out['.gemini/settings.json'] = json(events(readJson(project, '.gemini/settings.json'), [
+        [['hooks', 'BeforeTool'], enabled ? ccLike(host) : null],
+        [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
+        [['hooks', 'AfterAgent'], canStop(host) ? plain(host, 'stop') : null],
+      ]));
     }
     if (host === 'cursor' && wanted('.cursor/hooks.json')) {
-      const base = readJson(project, '.cursor/hooks.json');
-      out['.cursor/hooks.json'] = json({ version: 1, ...both(base, ['hooks', 'preToolUse'], ['hooks', 'sessionStart'], { command: cmd(host) }, { command: cmd(host, 'session-start') }) });
+      out['.cursor/hooks.json'] = json({ version: 1, ...events(readJson(project, '.cursor/hooks.json'), [
+        [['hooks', 'preToolUse'], enabled ? { command: cmd(host) } : null],
+        [['hooks', 'sessionStart'], session ? { command: cmd(host, 'session-start') } : null],
+        [['hooks', 'stop'], canStop(host) ? { command: cmd(host, 'stop') } : null],
+      ]) });
     }
     if (host === 'copilot' && (enabled || session)) {
       const hooks = {};
@@ -199,6 +220,9 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   for (const h of targetHosts) if (!HOSTS.includes(h)) throw new Error(`unknown host "${h}"`);
   const entries = collectEnforcement(project);
   const tier2 = entries.some((e) => e.tier === 2);
+  const isGate = (e) => e.parsed?.kind === 'builtin' && e.parsed.id === 'verify-gate';
+  const preTool = entries.some((e) => e.tier === 2 && !isGate(e));
+  const stop = entries.some((e) => e.tier === 2 && isGate(e));
   const tier3 = entries.some((e) => e.tier === 3);
   const outputs = { [RUNNER]: { content: runnerScript, mode: 0o755 } };
 
@@ -215,7 +239,7 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
     names.add('AGENTS.md');
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
-  const hookOutputs = hostHookOutputs(project, targetHosts, tier2, detected.kms);
+  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.kms, stop);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {
       // Merge the hook change into the context.fileName change for the same file.
