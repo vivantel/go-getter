@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { parsePlan, readPlan, planFiles, nextSteps, planStatus } from '../src/plan.mjs';
+import { readLog } from '../src/telemetry/record.mjs';
+import { cleanGitEnv } from '../src/git-env.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'compiler/bin/go-getter.mjs');
@@ -149,4 +151,90 @@ test('CLI: plan next and check plans on a fixture project', (t) => {
   assert.match(run('plan', 'next').stderr, /several plans in docs\/plans; name one/);
   assert.match(run('plan', 'next', 'docs/plans/second.md').stdout, /^1\. 1 One \(implement\)$/m);
   assert.equal(run('plan', 'bogus').status, 2);
+});
+
+const LIFECYCLE = `# Lifecycle
+
+### 1 Done — [x]
+Needs: none
+
+### 2 Passes — [ ]
+Class: review · Needs: 1 · Check: \`node -e "process.exit(0)"\`
+Done-when: passes.
+
+### 3 Fails — [ ] ‖
+Class: debug · Check: \`node -e "console.log('boom'); process.exit(3)"\`
+
+### 4 Waits — [ ]
+Needs: 3
+
+### 5 No check — [ ]
+
+### 6 Moved — [>]
+`;
+
+function lifecycleProject(t) {
+  const parent = mkdtempSync(path.join(tmpdir(), 'gg-plan-life-'));
+  t.after(() => rmSync(parent, { recursive: true, force: true }));
+  const dir = path.join(parent, 'proj');
+  mkdirSync(path.join(dir, 'docs/plans'), { recursive: true });
+  mkdirSync(path.join(dir, 'docs/decisions'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/plans/life.md'), LIFECYCLE);
+  writeFileSync(
+    path.join(dir, 'docs/decisions/0001-telemetry.md'),
+    '---\nid: 0001-telemetry\ntitle: Telemetry\nstatus: active\ndate: 2026-10-05\ntags: [x]\ngo-getter:\n  telemetry-recording: metadata-log\n---\n\nx\n',
+  );
+  const env = cleanGitEnv(process.env);
+  const git = (...args) => execFileSync('git', args, { cwd: dir, env, stdio: 'ignore' });
+  git('init', '-q', '-b', 'main');
+  git('-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-q', '--allow-empty', '-m', 'init');
+  git('add', '-A');
+  git('-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-q', '-m', 'plan');
+  const run = (...args) => spawnSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', env });
+  const read = () => readFileSync(path.join(dir, 'docs/plans/life.md'), 'utf8');
+  const log = () => readLog(dir).filter((r) => r.event === 'plan:done').map((r) => `${r.taskClass}:${r.outcome}`);
+  return { parent, dir, run, read, log };
+}
+
+test('plan done sets [x] only when the check passes and records one telemetry line', (t) => {
+  const { run, read, log } = lifecycleProject(t);
+  const fail = run('plan', 'done', '3');
+  assert.equal(fail.status, 1);
+  assert.match(fail.stderr, /3: check failed .*; marker unchanged\n[\s\S]*boom/);
+  assert.equal(read(), LIFECYCLE, 'a failing check leaves the plan byte-for-byte unchanged');
+  assert.deepEqual(log(), ['debug:fail']);
+
+  const pass = run('plan', 'done', '2');
+  assert.equal(pass.status, 0, pass.stderr);
+  assert.equal(read(), LIFECYCLE.replace('### 2 Passes — [ ]', '### 2 Passes — [x]'));
+  assert.deepEqual(log(), ['debug:fail', 'review:pass']);
+  assert.match(run('plan', 'done', '2').stdout, /already done/);
+
+  assert.match(run('plan', 'done', '5').stderr, /step 5 has no Check/);
+  assert.match(run('plan', 'done', '6').stderr, /step 6 is moved/);
+  assert.match(run('plan', 'done', '9').stderr, /no step 9/);
+  assert.equal(log().length, 2);
+});
+
+test('plan start sets [~] once Needs are done, and refuses done, moved or waiting steps', (t) => {
+  const { run, read } = lifecycleProject(t);
+  const start = run('plan', 'start', '3');
+  assert.equal(start.status, 0, start.stderr);
+  assert.equal(read(), LIFECYCLE.replace('### 3 Fails — [ ] ‖', '### 3 Fails — [~] ‖'));
+  assert.match(run('plan', 'start', '3').stdout, /already in progress/);
+  assert.match(run('plan', 'start', '4').stderr, /step 4 needs 3, not done yet/);
+  assert.match(run('plan', 'start', '1').stderr, /step 1 is done/);
+  assert.match(run('plan', 'start', '6').stderr, /step 6 is moved/);
+  assert.equal(run('plan', 'start').status, 2);
+  assert.equal(run('plan', 'start', '2', '--worktree').status, 2);
+});
+
+test('plan start --worktree creates the worktree and sets the marker in its copy of the plan', (t) => {
+  const { parent, run, read } = lifecycleProject(t);
+  const start = run('plan', 'start', '5', '--worktree', 'step-five');
+  assert.equal(start.status, 0, start.stderr);
+  const copy = path.join(parent, 'proj-wt', 'step-five', 'docs/plans/life.md');
+  assert.match(start.stdout, /proj-wt\/step-five \(feat\/step-five\)/);
+  assert.equal(readFileSync(copy, 'utf8'), LIFECYCLE.replace('### 5 No check — [ ]', '### 5 No check — [~]'));
+  assert.equal(read(), LIFECYCLE, 'the current checkout is untouched');
 });
