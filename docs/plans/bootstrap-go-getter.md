@@ -149,7 +149,8 @@ Result: `check:neutral`, `check:guardrails`, `check:tags`, `check:node-floor` (l
 Do: `compiler/bin/go-getter.mjs` with `build` and the npm scripts: `build`; `check:generated` (rebuild to temp, diff against committed — guardrail `generated-host-files-not-hand-edited`); `check:neutral` (guardrail `neutral-source-has-no-host-specific-language`); `check:deps`; `check:guardrails` (guardrail `guardrails-declare-enforcement`: every `docs/guardrails/*.md` has `go-getter.enforcement`, tier 2/3 entries have `run`, tier-1-only marked advisory); `check:tags` (guardrail `tags-from-canonical-list`); `check:node-floor` (guardrail `node-floor-is-oldest-supported-lts`: fetch `https://raw.githubusercontent.com/nodejs/Release/main/schedule.json`, compare with `engines.node`).
 Done-when: each of the six `check:*` scripts exits 0 on this repo and non-zero in a test with a violating fixture; generated files for the sample skill are committed.
 
-### 2.6 CI — [ ]
+### 2.6 CI — [x]
+Result: `.github/workflows/ci.yml` (jobs `test`, `golden`, `checks`; Node 22; actions pinned by SHA); green on PR #16.
 Do: `.github/workflows/ci.yml` on `pull_request` and push to `main`: jobs `test` (`npm test`), `golden` (`npm run build && git diff --exit-code`, `npm run check:generated`), `checks` (`check:neutral`, `check:guardrails`, `check:tags`, `check:deps`, `check:node-floor`). Pin actions by SHA.
 Done-when: a PR run shows all three jobs green.
 
