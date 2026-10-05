@@ -144,7 +144,8 @@ Result: all six adapters in `compiler/src/build.mjs` (`ADAPTERS`), shipped as on
 Do: per `docs/skills/adding-a-host-agent.md` steps 3-4, one adapter per host in `compiler/adapters/<host>.mjs`: emit native files from `src/` for both output kinds, symlinks for byte-identical outputs (`--copy` fallback), fall back down the tiers and mark outputs advisory where a feature is missing. Split 2.4a Claude Code, 2.4b Codex, 2.4c Kilo/OpenCode, 2.4d Cursor, 2.4e Gemini CLI, 2.4f Copilot — each its own branch/PR. Seed `src/skills/hello/SKILL.md` so output is non-empty.
 Done-when (each): `node compiler/bin/go-getter.mjs build --host <h>` emits that host's files for the sample skill; its golden test passes; output matches the host fact (0003-0008).
 
-### 2.5 Build CLI and deterministic checks — [ ]
+### 2.5 Build CLI and deterministic checks — [x]
+Result: `check:neutral`, `check:guardrails`, `check:tags`, `check:node-floor` (live Node schedule; `GO_GETTER_OFFLINE=1` skips) plus earlier `check:deps`, `check:generated`; shared artifact reader `compiler/src/artifacts.mjs`; 29 tests.
 Do: `compiler/bin/go-getter.mjs` with `build` and the npm scripts: `build`; `check:generated` (rebuild to temp, diff against committed — guardrail `generated-host-files-not-hand-edited`); `check:neutral` (guardrail `neutral-source-has-no-host-specific-language`); `check:deps`; `check:guardrails` (guardrail `guardrails-declare-enforcement`: every `docs/guardrails/*.md` has `go-getter.enforcement`, tier 2/3 entries have `run`, tier-1-only marked advisory); `check:tags` (guardrail `tags-from-canonical-list`); `check:node-floor` (guardrail `node-floor-is-oldest-supported-lts`: fetch `https://raw.githubusercontent.com/nodejs/Release/main/schedule.json`, compare with `engines.node`).
 Done-when: each of the six `check:*` scripts exits 0 on this repo and non-zero in a test with a violating fixture; generated files for the sample skill are committed.
 
