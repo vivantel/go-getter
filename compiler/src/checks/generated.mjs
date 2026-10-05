@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, readlinkSync, lstatSync, readdirSync, rmSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { compile, writeOutputs, GENERATED_ROOTS } from '../build.mjs';
+import { planApply, diffApply, RUNNER } from '../apply.mjs';
 
 function snapshot(root) {
   const entries = {};
@@ -47,6 +48,8 @@ export default function checkGenerated({ root, args }) {
     return 1;
   }
   const problems = diffGenerated(root, { copy });
+  // Self-hosting (decision 0010): this repo's own apply outputs (AGENTS.md section, hooks, CI) must be current.
+  if (existsSync(path.join(root, RUNNER))) problems.push(...diffApply(root, planApply(root)).map((p) => `apply ${p}`));
   if (problems.length) {
     console.error(`check generated: ${problems.length} problem(s); run "npm run build" and never hand-edit generated files`);
     for (const p of problems) console.error(`  ${p}`);

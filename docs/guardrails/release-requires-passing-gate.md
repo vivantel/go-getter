@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 3
       check: "The release workflow depends on the unit, golden/drift and behavior-eval jobs succeeding"
-      run: ".github/workflows/release.yml (needs: test, golden, eval)"
+      run: "builtin:workflow-needs file=.github/workflows/release.yml job=release needs=test,golden,eval"
 ---
 
 ## Guardrail

@@ -27,10 +27,7 @@ async function main() {
       return 0;
     case 'check': {
       const [name, ...rest] = args;
-      if (!name) {
-        console.error('usage: go-getter check <name>');
-        return 2;
-      }
+      if (!name || name.startsWith('--')) return run('compiler/src/commands/check.mjs', 'check', args);
       return run(`compiler/src/checks/${name}.mjs`, `check ${name}`, rest);
     }
     default:
