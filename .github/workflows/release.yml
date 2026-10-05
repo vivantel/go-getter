@@ -53,6 +53,7 @@ jobs:
       - run: npm run check:deps
       - run: npm run check:node-floor
       - run: npm run check:packs
+      - run: npm run check:plans
       - run: npm run check:self-adoption
 
   release:
