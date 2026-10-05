@@ -1,13 +1,13 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "context",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     4
   ],
   "title": "Context management",
-  "summary": "Keeps the always-loaded context small and the prompt cache stable: instruction-file cap, procedure delivery, noisy-work placement, cache hygiene and compaction timing.",
+  "summary": "Keeps the always-loaded context small and the prompt cache stable: instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing and watcher noise.",
   "questions": [
     {
       "id": "instruction-cap",
@@ -116,6 +116,28 @@
           "id": "fresh-session",
           "label": "Fresh session per task",
           "tradeoff": "Cleanest context; pays the cold start every task."
+        }
+      ]
+    },
+    {
+      "id": "watcher-noise",
+      "prompt": "How many notifications may a watcher (a script that syncs on a CI run, a long command or a log) send?",
+      "options": [
+        {
+          "id": "quiet",
+          "label": "Quiet: state changes and a summary, at most 6 an hour",
+          "tradeoff": "Fewest woken turns; can hide a line you wanted.",
+          "recommended": true
+        },
+        {
+          "id": "normal",
+          "label": "Normal: changes, at most 30 an hour",
+          "tradeoff": "More detail; each notification can wake a turn that re-reads the context."
+        },
+        {
+          "id": "verbose",
+          "label": "Verbose: every line except repeats",
+          "tradeoff": "Nothing hidden; a busy watch wakes many turns."
         }
       ]
     }
@@ -634,6 +656,143 @@
               }
             ],
             "body": "## Guardrail\n\nStart a fresh session for each task.\nAdvisory (tier 1 only).\n"
+          }
+        ]
+      }
+    },
+    "watcher-noise": {
+      "quiet": {
+        "decisions": [
+          {
+            "slug": "watcher-noise",
+            "title": "Watchers are quiet",
+            "tags": [
+              "practice-packs",
+              "harness",
+              "cost"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "watcher-noise": "quiet"
+              }
+            },
+            "body": "## Decision\n\nWatchers started through `go-getter watch` report state changes and a final summary, collapse duplicates and bursts (60 s window) and stop after 6 notifications an hour with one notice; `--until done` prints one result. (pack {{pack.id}}@{{pack.version}}.)\n\n## Why\n\nEach watcher line can wake a model turn that re-reads the whole context from cache, and hosts offer no throttle.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "watches-use-the-wrapper",
+            "title": "Watches start through go-getter watch, --until done for CI runs and long commands",
+            "tags": [
+              "practice-packs",
+              "harness",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.watcher-noise}}",
+              "grounded-in": [
+                "{{id.decision.watcher-noise}}"
+              ],
+              "derivation-note": "Given the noise decision, a watch started outside the wrapper is not throttled."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction only; no host hook rewrites watch calls yet"
+              }
+            ],
+            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands.\nAdvisory (tier 1 only).\n"
+          }
+        ]
+      },
+      "normal": {
+        "decisions": [
+          {
+            "slug": "watcher-noise",
+            "title": "Watchers are normal",
+            "tags": [
+              "practice-packs",
+              "harness",
+              "cost"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "watcher-noise": "normal"
+              }
+            },
+            "body": "## Decision\n\nWatchers started through `go-getter watch` report changes, collapse bursts (10 s window) and stop after 30 notifications an hour with one notice; `--until done` prints one result. (pack {{pack.id}}@{{pack.version}}.)\n\n## Why\n\nEach watcher line can wake a model turn that re-reads the whole context from cache, and hosts offer no throttle.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "watches-use-the-wrapper",
+            "title": "Watches start through go-getter watch, --until done for CI runs and long commands",
+            "tags": [
+              "practice-packs",
+              "harness",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.watcher-noise}}",
+              "grounded-in": [
+                "{{id.decision.watcher-noise}}"
+              ],
+              "derivation-note": "Given the noise decision, a watch started outside the wrapper is not throttled."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction only; no host hook rewrites watch calls yet"
+              }
+            ],
+            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands.\nAdvisory (tier 1 only).\n"
+          }
+        ]
+      },
+      "verbose": {
+        "decisions": [
+          {
+            "slug": "watcher-noise",
+            "title": "Watchers are verbose",
+            "tags": [
+              "practice-packs",
+              "harness",
+              "cost"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "watcher-noise": "verbose"
+              }
+            },
+            "body": "## Decision\n\nWatchers started through `go-getter watch` report every line except repeats; `--until done` prints one result. (pack {{pack.id}}@{{pack.version}}.)\n\n## Why\n\nEach watcher line can wake a model turn that re-reads the whole context from cache, and hosts offer no throttle.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "watches-use-the-wrapper",
+            "title": "Watches start through go-getter watch, --until done for CI runs and long commands",
+            "tags": [
+              "practice-packs",
+              "harness",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.watcher-noise}}",
+              "grounded-in": [
+                "{{id.decision.watcher-noise}}"
+              ],
+              "derivation-note": "Given the noise decision, a watch started outside the wrapper is not throttled."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction only; no host hook rewrites watch calls yet"
+              }
+            ],
+            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands.\nAdvisory (tier 1 only).\n"
           }
         ]
       }

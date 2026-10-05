@@ -104,6 +104,14 @@ export function respond(host, decision) {
 
 // Session start: run vendored nudge scripts (POSIX sh, plain-text output) in the project; failures are silent.
 export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh'];
+// Nudge output enters context on every session start (decision 0070), so it has a fixed line budget.
+export const NUDGE_LINE_BUDGET = 20;
+
+export function capLines(text, budget = NUDGE_LINE_BUDGET) {
+  const lines = text ? text.split('\n') : [];
+  if (lines.length <= budget) return text;
+  return [...lines.slice(0, budget - 1), `… ${lines.length - budget + 1} more nudge lines cut`].join('\n');
+}
 
 export function sessionNudges(packageRoot, project) {
   const lines = [];
@@ -117,7 +125,7 @@ export function sessionNudges(packageRoot, project) {
       // a nudge must never block a session
     }
   }
-  return lines.join('\n');
+  return capLines(lines.join('\n'));
 }
 
 // Telemetry record for a hook event: metadata the host's payload carries (model, effort), never tool input or output.

@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { loadPack, loadPackSchema, validatePack } from '../src/packs.mjs';
 import { planRender, applyRender } from '../src/render.mjs';
 import { runTier3 } from '../src/enforce.mjs';
+import { planReconfigure, applyReconfigure } from '../src/reconfigure.mjs';
+import { resolveLevel } from '../src/watch.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const pack = loadPack(path.join(root, 'src/packs/context/pack.json'));
@@ -63,4 +65,26 @@ test('tier-3 commands run without the hooked repository pinned by git hook varia
     else process.env.GIT_DIR = before;
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('each watcher-noise answer sets the level go-getter watch reads', () => {
+  for (const level of ['quiet', 'normal', 'verbose']) {
+    const dir = project();
+    applyRender({ root: dir, plan: planRender({ root: dir, pack, answers: { ...recommended, 'watcher-noise': level }, acceptedBy: 't', date: '2026-10-05' }) });
+    assert.equal(resolveLevel(dir), level);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('adding the watcher-noise answer to an adopted pack takes the next free decision number', () => {
+  const dir = project();
+  const { 'watcher-noise': _, ...before } = recommended;
+  const v1 = { ...pack, version: '0.1.0', questions: pack.questions.filter((q) => q.id !== 'watcher-noise') };
+  applyRender({ root: dir, plan: planRender({ root: dir, pack: v1, answers: before, acceptedBy: 't', date: '2026-10-05' }) });
+  const result = planReconfigure({ project: dir, pack, answers: recommended, acceptedBy: 't', date: '2026-10-05' });
+  assert.deepEqual(result.changed, ['watcher-noise']);
+  assert.ok(result.plan.artifacts.some((a) => a.path === 'docs/decisions/0006-watcher-noise.md'), result.plan.artifacts.map((a) => a.path).join(', '));
+  applyReconfigure({ project: dir, result });
+  assert.equal(resolveLevel(dir), 'quiet');
+  rmSync(dir, { recursive: true, force: true });
 });

@@ -112,14 +112,14 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {},
       for (const kind of ['decisions', 'facts', 'guardrails', 'procedures']) {
         for (const tpl of out[kind] ?? []) {
           const dir = KIND_DIR[kind];
+          if (kind === 'decisions' && keep.has(q.id)) {
+            vars[`id.decision.${q.id}`] ??= existing.decisionIds[q.id];
+            continue;
+          }
           let id = tpl.slug;
           if (NUMBERED.has(kind)) {
             counters[dir] ??= nextNumber(path.join(root, 'docs', dir));
             id = `${String(counters[dir]++).padStart(4, '0')}-${tpl.slug}`;
-          }
-          if (kind === 'decisions' && keep.has(q.id)) {
-            vars[`id.decision.${q.id}`] ??= existing.decisionIds[q.id];
-            continue;
           }
           if (kind === 'decisions') vars[`id.decision.${q.id}`] ??= id;
           const rendered = substitute(tpl, vars);

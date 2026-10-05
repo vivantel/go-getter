@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { planApply, writeApply } from '../src/apply.mjs';
 import { HOSTS } from '../src/capabilities.mjs';
+import { capLines, NUDGE_LINE_BUDGET } from '../src/hook.mjs';
 
 // A host may run its hook commands from a subdirectory of the project, so a command must find the runner itself
 // and hand the project root to it instead of relying on the working directory.
@@ -169,4 +170,14 @@ test('hook commands also work when a host executes them without a shell', () => 
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('session nudges stay within a fixed line budget', () => {
+  const short = 'a\nb';
+  assert.equal(capLines(short), short);
+  assert.equal(capLines(''), '');
+  const long = Array.from({ length: 50 }, (_, i) => `nudge ${i}`).join('\n');
+  const capped = capLines(long).split('\n');
+  assert.equal(capped.length, NUDGE_LINE_BUDGET);
+  assert.equal(capped.at(-1), `… ${50 - NUDGE_LINE_BUDGET + 1} more nudge lines cut`);
 });

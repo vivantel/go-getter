@@ -35,3 +35,4 @@ prompt-logging-disabled,"Host prompt logging must stay disabled","practice-packs
 restricted-data-hosts-rule,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, guardrail",active
 verification-gate-blocks-done,"A step is not done while its verification checks fail","practice-packs, verification, guardrail",active
 delegations-are-routed,"Delegations to a role are routed by expected total step cost","practice-packs, model-routing, guardrail",active
+watches-use-the-wrapper,"Watches start through go-getter watch, --until done for CI runs and long commands","practice-packs, harness, guardrail",active

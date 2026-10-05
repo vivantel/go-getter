@@ -18,7 +18,7 @@ Six harness packs, each a short guided interview with a recommended default per 
 
 | Pack | Component | What you choose |
 |---|---|---|
-| `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing |
+| `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
 | `verification-gate` | 6 Verification loops | which checks mean "done", the review bar, whether failing checks block completion |
 | `governance` | 7 Guardrails & DLP | restricted paths and their enforcement, which providers may see internal and confidential data, prompt logging |
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |

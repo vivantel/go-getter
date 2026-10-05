@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Compaction follows the timing decision; reviewed in PRs
-  generated-by: context@0.1.0
+  generated-by: context@0.2.0
   pack-answer: compaction
   pack-option: task-boundaries
 ---
