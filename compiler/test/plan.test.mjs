@@ -238,3 +238,10 @@ test('plan start --worktree creates the worktree and sets the marker in its copy
   assert.equal(readFileSync(copy, 'utf8'), LIFECYCLE.replace('### 5 No check — [ ]', '### 5 No check — [~]'));
   assert.equal(read(), LIFECYCLE, 'the current checkout is untouched');
 });
+
+test('the roadmap and refactor-plan skills emit the step fields and end with plan next', () => {
+  for (const skill of ['roadmap', 'refactor-plan']) {
+    const text = readFileSync(path.join(root, 'src/skills', skill, 'SKILL.md'), 'utf8');
+    for (const want of ['Class:', 'Needs:', 'Check:', 'Done-when:', 'go-getter plan next']) assert.ok(text.includes(want), `${skill} names ${want}`);
+  }
+});

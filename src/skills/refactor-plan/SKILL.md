@@ -20,11 +20,17 @@ Ordered phases, each with:
 - **Verification checkpoint** — how to confirm this phase succeeded before starting the next.
 - **Rollback strategy** — how to undo this phase specifically, not just "revert everything."
 
+Write each step in the plan step format `roadmap` uses, so the plan can be saved under `docs/plans/` and read by `go-getter plan`: `### <id> <title> — [ ]`, then ``Class: <explore|plan|implement|review|debug> · Needs: <step ids, or none> · Check: `<command>` ``, then `Do:` and `Done-when:` (the verification checkpoint) and `Rollback:`. Add `Effort:`, `Tier:` or `Data:` only where `roadmap` says to; never name a model.
+
 **Guardrail conflicts**: if a planned step would violate a guardrail found in Phase 1, don't silently work around it or drop it — flag it explicitly, cite the guardrail, and ask the user to confirm before including it.
 
 ## Phase 4: recommend post-refactor updates
 
 List facts or decisions that will be stale once the refactor lands, and recommend they be updated via `roadmap` or `capture` — not by this skill directly.
+
+## End of session
+
+If the project has a plan in `docs/plans/`, run `go-getter plan next` and end with its numbered options (at most 4), noting where the refactor's phases would fit among them.
 
 ## Out of scope
 

@@ -69,7 +69,21 @@ Before writing any artifact, search existing artifacts (by title, topic, frontma
 
 ## The changeset implementation plan
 
-Alongside the four knowledge artifacts, produce one more file: a changeset implementation plan for the change the interview was about. This file must be self-sufficient for a **completely fresh session with zero prior context** — not just a resumed one. Every step spells out the full context a cold agent would need: exact file paths, what to do, why it matters, and what "done" looks like — never a reference like "as discussed above." Each step carries a status marker (e.g. done / pending / blocked) updated in place as work progresses, so re-reading the file alone tells any session — the same one, a resumed one, or a brand new one — exactly what remains.
+Alongside the four knowledge artifacts, produce one more file: a changeset implementation plan for the change the interview was about. This file must be self-sufficient for a **completely fresh session with zero prior context** — not just a resumed one. Every step spells out the full context a cold agent would need: exact file paths, what to do, why it matters, and what "done" looks like — never a reference like "as discussed above." Each step carries a status marker updated in place as work progresses, so re-reading the file alone tells any session — the same one, a resumed one, or a brand new one — exactly what remains.
+
+Write each step in the format `go-getter plan` reads:
+
+```
+### <id> <title> — [ ]
+Class: <class> · Needs: <step ids, or none> · Check: `<command that proves Done-when>`
+Context: …
+Do: …
+Done-when: …
+```
+
+- Ids are dotted alphanumerics (`1.2`, `A.3`, `2.1a`). Markers: `[ ]` pending, `[~]` in progress, `[x]` done, `[!]` blocked, `[>]` moved to another plan. Put `‖` after the marker on steps that can run in parallel.
+- `Class` is explore, plan, implement, review or debug (default implement). Add `Effort:` (low, medium, high) or `Tier:` (small, medium, large) only when a step is harder or easier than its class, and `Data:` (confidential or restricted) when it handles data above internal. Never name a model: the router picks one per step.
+- `Needs` lists only ids in the same plan, with no cycles.
 
 A plan is not a 5th artifact type: it carries no `track`, no `status` from the enum above, and no `expires` — only its own per-step done/pending/blocked legend. The test for which bucket content belongs in: a procedure doesn't name the specific objects it acts on — those are supplied at invocation. A plan does — it names concrete files, decisions, and steps for one occasion. If a candidate procedure hardcodes the files/decisions it acts on, it's actually a plan.
 
@@ -78,6 +92,10 @@ Before finalizing this file, verify each step's Done-when against each named fil
 After writing any fact, decision, guardrail, or procedure to disk, add or update its row in that type's `INDEX.md` — format defined in `../../shared/artifact-model.md` — if one exists.
 
 Follow the same structure-detection rule for this file: reuse an existing plans/tasks directory convention if the project has one; otherwise default to `docs/plans/<slug>.md`.
+
+## End of session
+
+After writing the plan, run `go-getter plan next <plan path>`. If it reports that the plan does not parse (unknown field value, unknown `Needs` id, dependency cycle), fix the plan and rerun. End the session with its numbered options (at most 4), so the user can pick the next step by number or id. If the command is unavailable, list the first ready steps the same way.
 
 ## Before writing anything
 
