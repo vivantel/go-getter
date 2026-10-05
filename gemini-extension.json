@@ -1,0 +1,5 @@
+{
+  "name": "go-getter",
+  "version": "0.0.0",
+  "description": "Set up the agent harness and SDLC practices for Claude Code, Codex, Kilo/OpenCode, Cursor, Gemini CLI and Copilot"
+}

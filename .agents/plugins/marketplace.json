@@ -1,0 +1,20 @@
+{
+  "name": "go-getter",
+  "interface": {
+    "displayName": "go-getter"
+  },
+  "plugins": [
+    {
+      "name": "go-getter",
+      "source": {
+        "source": "local",
+        "path": "./plugins/go-getter"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -139,7 +139,8 @@ Result: six manifests in `compiler/capabilities/`, `compiler/schemas/capabilitie
 Do: `compiler/capabilities/<host>.json` ×6, `compiler/schemas/capabilities.schema.json` and a validator, populated strictly from fact 0009 (unconfirmed → `false` with a `note`).
 Done-when: six manifests validate in `npm test`; each cites its fact id.
 
-### 2.4 Adapters ‖ — [ ]
+### 2.4 Adapters ‖ — [x]
+Result: all six adapters in `compiler/src/build.mjs` (`ADAPTERS`), shipped as one PR rather than six because they share one emitter and golden test; distributable packaging ships skills + manifests only — agents/hooks are project-local (`apply`, 4.4). Fixture repo `compiler/test/fixtures/repo` + golden `compiler/test/golden/build.json` (`UPDATE_GOLDEN=1` to refresh). `check:generated` implemented early. Resolutions recorded in fact 0015; `claude plugin validate --strict` passes.
 Do: per `docs/skills/adding-a-host-agent.md` steps 3-4, one adapter per host in `compiler/adapters/<host>.mjs`: emit native files from `src/` for both output kinds, symlinks for byte-identical outputs (`--copy` fallback), fall back down the tiers and mark outputs advisory where a feature is missing. Split 2.4a Claude Code, 2.4b Codex, 2.4c Kilo/OpenCode, 2.4d Cursor, 2.4e Gemini CLI, 2.4f Copilot — each its own branch/PR. Seed `src/skills/hello/SKILL.md` so output is non-empty.
 Done-when (each): `node compiler/bin/go-getter.mjs build --host <h>` emits that host's files for the sample skill; its golden test passes; output matches the host fact (0003-0008).
 

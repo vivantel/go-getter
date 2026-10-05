@@ -1,0 +1,7 @@
+{
+  "name": "go-getter",
+  "version": "9.9.9",
+  "description": "Fixture package for golden tests",
+  "license": "MIT",
+  "type": "module"
+}

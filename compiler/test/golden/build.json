@@ -1,0 +1,14 @@
+{
+  ".agents/plugins/marketplace.json": "{\n  \"name\": \"go-getter\",\n  \"interface\": {\n    \"displayName\": \"go-getter\"\n  },\n  \"plugins\": [\n    {\n      \"name\": \"go-getter\",\n      \"source\": {\n        \"source\": \"local\",\n        \"path\": \"./plugins/go-getter\"\n      },\n      \"policy\": {\n        \"installation\": \"AVAILABLE\",\n        \"authentication\": \"ON_INSTALL\"\n      },\n      \"category\": \"Developer Tools\"\n    }\n  ]\n}\n",
+  ".claude-plugin/marketplace.json": "{\n  \"name\": \"go-getter\",\n  \"owner\": {\n    \"name\": \"vivantel\"\n  },\n  \"description\": \"Fixture package for golden tests\",\n  \"plugins\": [\n    {\n      \"name\": \"go-getter\",\n      \"description\": \"Fixture package for golden tests\",\n      \"source\": \"./plugins/go-getter\"\n    }\n  ]\n}\n",
+  "gemini-extension.json": "{\n  \"name\": \"go-getter\",\n  \"version\": \"9.9.9\",\n  \"description\": \"Fixture package for golden tests\"\n}\n",
+  "plugins/go-getter/.claude-plugin/plugin.json": "{\n  \"name\": \"go-getter\",\n  \"version\": \"9.9.9\",\n  \"description\": \"Fixture package for golden tests\",\n  \"author\": {\n    \"name\": \"vivantel\"\n  },\n  \"homepage\": \"https://github.com/vivantel/go-getter\",\n  \"repository\": \"https://github.com/vivantel/go-getter\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"agent-harness\",\n    \"sdlc\",\n    \"model-routing\",\n    \"guardrails\"\n  ],\n  \"displayName\": \"go-getter\"\n}\n",
+  "plugins/go-getter/.codex-plugin/plugin.json": "{\n  \"name\": \"go-getter\",\n  \"version\": \"9.9.9\",\n  \"description\": \"Fixture package for golden tests\",\n  \"skills\": \"./skills\"\n}\n",
+  "plugins/go-getter/plugin.json": "{\n  \"$schema\": \"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json\",\n  \"name\": \"go-getter\",\n  \"version\": \"9.9.9\",\n  \"description\": \"Fixture package for golden tests\",\n  \"author\": {\n    \"name\": \"vivantel\"\n  },\n  \"homepage\": \"https://github.com/vivantel/go-getter\",\n  \"repository\": \"https://github.com/vivantel/go-getter\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"agent-harness\",\n    \"sdlc\",\n    \"model-routing\",\n    \"guardrails\"\n  ]\n}\n",
+  "plugins/go-getter/skills/hello/SKILL.md": "---\nname: hello\ndescription: Fixture skill used by the compiler's golden tests. Greets the user.\n---\n\nSay hello to the user and name the current working directory.\n",
+  "plugins/go-getter/skills/hello/reference.md": "Extra reference file for the hello fixture.\n",
+  "plugins/go-getter/skills/index.json": "{\n  \"skills\": [\n    {\n      \"name\": \"hello\",\n      \"version\": \"9.9.9\",\n      \"files\": [\n        \"SKILL.md\",\n        \"reference.md\"\n      ]\n    }\n  ]\n}\n",
+  "skills": {
+    "symlink": "plugins/go-getter/skills"
+  }
+}

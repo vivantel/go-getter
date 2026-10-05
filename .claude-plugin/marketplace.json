@@ -1,0 +1,14 @@
+{
+  "name": "go-getter",
+  "owner": {
+    "name": "vivantel"
+  },
+  "description": "Set up the agent harness and SDLC practices for Claude Code, Codex, Kilo/OpenCode, Cursor, Gemini CLI and Copilot",
+  "plugins": [
+    {
+      "name": "go-getter",
+      "description": "Set up the agent harness and SDLC practices for Claude Code, Codex, Kilo/OpenCode, Cursor, Gemini CLI and Copilot",
+      "source": "./plugins/go-getter"
+    }
+  ]
+}

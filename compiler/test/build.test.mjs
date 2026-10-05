@@ -1,0 +1,95 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, lstatSync, readlinkSync, existsSync, rmSync, mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { compile, writeOutputs, readSkills, ADAPTERS } from '../src/build.mjs';
+import { diffGenerated } from '../src/checks/generated.mjs';
+import { HOSTS } from '../src/capabilities.mjs';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const fixture = path.join(here, 'fixtures/repo');
+const goldenFile = path.join(here, 'golden/build.json');
+
+function serialize(outputs) {
+  return Object.fromEntries(
+    Object.keys(outputs)
+      .sort()
+      .map((p) => [p, 'symlink' in outputs[p] ? { symlink: outputs[p].symlink } : Buffer.from(outputs[p].content).toString('utf8')]),
+  );
+}
+
+function tempRepo() {
+  const dir = mkdtempSync(path.join(tmpdir(), 'go-getter-build-'));
+  cpSync(fixture, dir, { recursive: true, dereference: true });
+  return dir;
+}
+
+test('golden: full build of the fixture repo', () => {
+  const actual = serialize(compile({ root: fixture }));
+  if (process.env.UPDATE_GOLDEN) {
+    mkdirSync(path.dirname(goldenFile), { recursive: true });
+    writeFileSync(goldenFile, `${JSON.stringify(actual, null, 2)}\n`);
+  }
+  assert.deepEqual(actual, JSON.parse(readFileSync(goldenFile, 'utf8')));
+});
+
+test('every host has an adapter and emits its own manifest', () => {
+  assert.deepEqual(Object.keys(ADAPTERS).sort(), [...HOSTS].sort());
+  const expectations = {
+    'claude-code': 'plugins/go-getter/.claude-plugin/plugin.json',
+    codex: 'plugins/go-getter/.codex-plugin/plugin.json',
+    'kilo-opencode': 'plugins/go-getter/skills/index.json',
+    cursor: 'plugins/go-getter/plugin.json',
+    copilot: 'plugins/go-getter/plugin.json',
+    'gemini-cli': 'gemini-extension.json',
+  };
+  for (const [host, file] of Object.entries(expectations)) {
+    const out = compile({ root: fixture, hosts: [host] });
+    assert.ok(out[file], `${host} emits ${file}`);
+    assert.ok(out['plugins/go-getter/skills/hello/SKILL.md'], `${host} ships shared skills`);
+  }
+  assert.equal(compile({ root: fixture, hosts: ['codex'] })['gemini-extension.json'], undefined);
+});
+
+test('symlink mode links skills/ to the shared skills; copy mode copies', () => {
+  const linkRepo = tempRepo();
+  writeOutputs(linkRepo, compile({ root: linkRepo }), { copy: false });
+  assert.ok(lstatSync(path.join(linkRepo, 'skills')).isSymbolicLink());
+  assert.equal(readlinkSync(path.join(linkRepo, 'skills')), path.join('plugins', 'go-getter', 'skills'));
+
+  const copyRepo = tempRepo();
+  writeOutputs(copyRepo, compile({ root: copyRepo }), { copy: true });
+  assert.ok(lstatSync(path.join(copyRepo, 'skills')).isDirectory());
+  assert.ok(existsSync(path.join(copyRepo, 'skills/hello/SKILL.md')));
+  rmSync(linkRepo, { recursive: true, force: true });
+  rmSync(copyRepo, { recursive: true, force: true });
+});
+
+test('drift check passes after build and catches edits, stray and missing files', () => {
+  const repo = tempRepo();
+  writeOutputs(repo, compile({ root: repo }), { copy: false });
+  assert.deepEqual(diffGenerated(repo, { copy: false }), []);
+
+  writeFileSync(path.join(repo, 'plugins/go-getter/skills/hello/SKILL.md'), 'hand edit\n');
+  writeFileSync(path.join(repo, 'plugins/go-getter/stray.txt'), 'x');
+  rmSync(path.join(repo, 'gemini-extension.json'));
+  const problems = diffGenerated(repo, { copy: false });
+  assert.ok(problems.includes('differs: plugins/go-getter/skills/hello/SKILL.md'));
+  assert.ok(problems.includes('not generated (stale or hand-added): plugins/go-getter/stray.txt'));
+  assert.ok(problems.includes('missing: gemini-extension.json'));
+  rmSync(repo, { recursive: true, force: true });
+});
+
+test('skill validation rejects bad names, missing descriptions and non-standard fields', () => {
+  const repo = tempRepo();
+  const skill = path.join(repo, 'src/skills/hello/SKILL.md');
+  writeFileSync(skill, '---\nname: other\ndescription: x\n---\n');
+  assert.throws(() => readSkills(path.join(repo, 'src')), /must equal the directory name/);
+  writeFileSync(skill, '---\nname: hello\n---\n');
+  assert.throws(() => readSkills(path.join(repo, 'src')), /description is required/);
+  writeFileSync(skill, '---\nname: hello\ndescription: x\nmodel: big\n---\n');
+  assert.throws(() => readSkills(path.join(repo, 'src')), /non-standard frontmatter model/);
+  rmSync(repo, { recursive: true, force: true });
+});

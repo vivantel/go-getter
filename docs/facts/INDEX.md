@@ -15,3 +15,4 @@ id,title,tags,status
 0012-model-pricing-openai,"OpenAI model pricing including cached input","cost, model-routing, governance",active
 0013-model-pricing-google,"Google Gemini API model pricing including context caching","cost, model-routing, governance",active
 0014-local-model-options,"Local and custom model endpoints each host agent can use","governance, model-routing, host-agents",active
+0015-distributable-packaging-resolutions,"How the adapters resolved decision 0021's open packaging points","packaging, compiler, generated-files",active
