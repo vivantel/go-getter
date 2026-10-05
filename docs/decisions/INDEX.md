@@ -32,3 +32,8 @@ id,title,tags,status
 0030-telemetry-pack-defaults,"The telemetry pack recommends a local metadata log kept 30 days with no export","practice-packs, observability, governance",active
 0031-verification-gate-pack-defaults,"The verification-gate pack recommends detected test, lint and typecheck checks, a reviewer verdict, and blocking completion","practice-packs, verification, harness",active
 0032-cost-routing-pack-defaults,"The cost-routing pack recommends five task classes, balanced tiers, two escalations, a $5 headless cap and 1h main-session cache","practice-packs, model-routing, cost",active
+0033-instruction-file-cap,"The always-loaded instruction file is capped at 150 lines","practice-packs, harness, cost",active
+0034-procedure-delivery,"Detailed procedures live in skills loaded on demand","practice-packs, harness, cost",active
+0035-noisy-work-placement,"Noisy work is delegated only when the cost model says the handoff is cheaper","practice-packs, harness, cost",active
+0036-cache-hygiene,"No mid-task model, effort or instruction-file change; switches are confirmed","practice-packs, harness, cost",active
+0037-compaction-timing,"Context is compacted at task boundaries","practice-packs, harness, cost",active

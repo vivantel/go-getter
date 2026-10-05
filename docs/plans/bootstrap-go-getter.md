@@ -34,6 +34,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 ## Known enforcement debt (from capture, 2026-10-05)
 
 - `routing-*` guardrails run `npm run test:routing` and `telemetry-records-metadata-only` runs `npm run test:telemetry`; both pass vacuously until steps 5.4/5.6 add the tests.
+- The `context` pack's cache-hygiene guardrail is tier 1 only: the hook runtime (0025) has no pre-model-switch event, so the confirm-before-switch hook of decision 0027 is not generated yet. The instruction-file cap covers `AGENTS.md` only, not non-symlinked host instruction files.
 - Decision 0019's PowerShell shims are not implemented; the runner is POSIX `sh` only.
 
 ## Open questions (resolve in the named step; record answers as facts/decisions)
@@ -232,14 +233,15 @@ Result: `compiler/src/checks/self-adoption.mjs` (exact `<id>@<version>`, active 
 Do: implement `npm run check:self-adoption`: every pack under `src/packs/` has at least one artifact in `docs/` whose `go-getter.generated-by` equals `<pack-id>@<version>`.
 Done-when: exits 0 when `src/packs/` is empty or every pack is adopted; non-zero in a test where a pack lacks a matching artifact.
 
-### 5.0b Typed answers, detected commands and the recommended-default rule — [~]
+### 5.0b Typed answers, detected commands and the recommended-default rule — [x]
 Context: decision 0026 extends the pack format (0022): questions get `type: choice | text | list` (text/list: no options, optional `pattern`, `default`, `detect`); `{{answer.<q>}}` substitutes text as-is and lists comma-joined; templates may use `{{detect.<key>}}`. Guardrail `pack-questions-have-a-recommended-default` requires exactly one recommended option per choice question and a `default` or `detect` key on text/list questions — `check:packs` does not enforce "exactly one" yet (it checks "at most one").
 Do: extend `compiler/schemas/pack.schema.json` (`type`, `pattern`, `default`; options required only for `choice`), `compiler/src/packs.mjs` (exactly-one rule; text/list need `default` or `detect`; `when` may reference text questions only via `in` against their value), `compiler/src/render.mjs` (validate text answers against `pattern`; list answers as arrays), `compiler/src/detect.mjs` (add `commands: {test, lint, typecheck}` inferred from package.json scripts, pyproject/Makefile conventions, go/cargo), and the `go-getter-init` skill (ask text/list questions with the prefilled value). Add tests for each rule and update `compiler/test/fixtures/packs/example/pack.json` if needed.
 Done-when: `npm test` passes with new cases (text answer rejected by pattern; list rendered comma-joined; a choice question with zero recommended options rejected); `go-getter detect` on this repo reports `commands.test` = `npm test`; `npm run check:neutral` passes.
 
 Every pack below is done only when: it validates (`npm run check:packs`); this repo has adopted it via `render-pack` and committed the generated artifacts (carrying `go-getter.generated-by: <pack>@0.1.0`; the answers file under `.go-getter/state/` stays uncommitted); `npm run check:self-adoption` passes; `go-getter apply` has been re-run and its outputs committed; and the PR followed the AGENTS.md checklist (capture, conform, attribute). Build order: 5.1 and 5.2 ‖, then 5.3, then 5.4 and 5.5 ‖, then 5.6.
 
-### 5.1 Pack `context` (component 4) — [ ]
+### 5.1 Pack `context` (component 4) — [x]
+Result: `src/packs/context/pack.json`, adopted here as decisions 0033–0037; confirm-before-switch hook deferred (see enforcement debt).
 Context: decision 0027. Questions (recommended first): (1) instruction-file cap — 150 lines / 300 / none → guardrail tier 3 `builtin:file-max-lines path=AGENTS.md max=<n>` (also the host's own instruction file when it is not a symlink); (2) procedures — skills on demand / always-on rules / one-line pointers → decision + tier-1 instruction; (3) noisy work — delegate when the cost model says so / always / inline → decision + tier-1 instruction referencing the cost-routing pack; (4) cache hygiene — advisory + confirm-before-switch hook / advisory / none → tier-1 instruction, tier 2 where a host has a pre-model-switch hook (fact 0003: `PreModelSwitch`); (5) compaction — at task boundaries / host automatic / fresh session per task → tier-1 instruction.
 Do: write `src/packs/context/pack.json` (`family: harness`, `components: [4]`), adopt it here with the recommended answers, re-run `apply`.
 Done-when: the generic conditions above; `go-getter check` fails in a test where `AGENTS.md` exceeds the cap.

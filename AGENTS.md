@@ -46,6 +46,7 @@ Checked by git hooks and CI:
 - Commit subjects must follow Conventional Commits (`commit-subjects-are-conventional`)
 - Generated host-agent files must never be hand-edited (`generated-host-files-not-hand-edited`)
 - Every guardrail must declare how it is enforced (`guardrails-declare-enforcement`)
+- The instruction file must stay within 150 lines (`instruction-file-within-cap`)
 - Neutral source must not name a host agent or its tools (`neutral-source-has-no-host-specific-language`)
 - go-getter must have no runtime dependencies (`no-runtime-dependencies`)
 - No credentials or non-public information may be committed (`no-secrets-in-public-repo`)
@@ -62,9 +63,13 @@ Checked by git hooks and CI:
 
 Advisory:
 
+- No mid-task model, effort or instruction-file change; switches are confirmed (`cache-hygiene-rule`)
+- Context is compacted at task boundaries (`compaction-timing-rule`)
 - A guardrail scoped to one skill's own procedure belongs in that skill (`no-redundant-guardrails`)
 - A guardrail describing a shipped skill's behavior must also be stated in that skill (`no-unenforced-guardrail`)
+- Noisy work is delegated only when the cost model says the handoff is cheaper (`noisy-work-rule`)
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
+- Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
 
 <!-- go-getter:end -->
