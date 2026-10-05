@@ -20,6 +20,8 @@ src/                         neutral source (authored)
   commands/<name>.md         neutral commands (compiled to skills where a host has no commands)
   rules/<name>.md            instruction fragments for AGENTS.md generated sections
   packs/<id>/pack.json       practice packs (0008)
+  shared/, templates/        support files the skills reference relatively (artifact model, guardrail templates)
+  hooks/                     session-start nudge scripts run by the hook runtime
 compiler/
   bin/go-getter.mjs          CLI entry (build, check, detect, render-pack, apply, route, verify, ...)
   src/                       parsing, rendering, checks/, routing/, telemetry/
@@ -27,8 +29,6 @@ compiler/
   capabilities/<host>.json   per-host capabilities (from fact 0009)
   schemas/                   JSON Schemas (capabilities, pack)
   test/                      node:test suites and fixtures
-vendor/kms/ + vendor/kms.lock.json   vendored knowledge-base tooling (0006)
-scripts/                     repo maintenance scripts (sync-kms.mjs)
 evals/                       behavior evals (0013)
 ```
 

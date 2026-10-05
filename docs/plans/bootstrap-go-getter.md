@@ -17,7 +17,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 - **Guided interview only (0003)**: one question at a time, recommended default per question, repo detection to prefill. No presets.
 - **Practice packs (0008)**: declarative `src/packs/<id>/pack.json`, two families — harness packs (declare `components`) and SDLC packs (declare `requires`) — driven by one `init` skill.
 - **Knowledge-base artifacts are the source of truth (0007)**: chosen practices live only as knowledge-base artifacts in `docs/`; machine-readable data sits under one frontmatter key `go-getter:` (`enforcement`, `generated-by`, `pack-answer`, routing policy, data classes, model registry). Runtime state lives in gitignored `.go-getter/state/`.
-- **Knowledge-base tooling vendored (0006)** in `vendor/kms/`, synced from upstream at a pinned ref; never hand-edited.
+- **Knowledge-base tooling owned (0066)**: the skills, templates, shared artifact model and nudge scripts are go-getter's own source under `src/`; nothing is vendored or synced (0066 supersedes the earlier vendoring decision 0006).
 - **Tiered enforcement (0009)**: tier 1 instruction, tier 2 host hook/permission, tier 3 git hook + CI (portable floor).
 - **Model routing (0016)**: quality-gated cascade; eligibility by data class first; then cheapest (model, effort) tier by *expected total step cost* — cache read/write/uncached pricing, context-handoff cost, expected escalation cost; verification gates each result; bounded escalation then human. A warm-cache pricier model can beat a cold-cache cheaper one.
 - **Calibration (0017)**: quality bars = objective checks; metadata telemetry per step; `go-getter routing calibrate` proposes policy changes as knowledge-base decisions (v0.2).
@@ -27,7 +27,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 **Knowledge base conventions** (knowledge-base format): `docs/{facts,decisions}/NNNN-slug.md` (4-digit, per-directory, next free number), `docs/{guardrails,skills}/slug.md`; frontmatter `id, title, status, date, tags` (tags only from `docs/skills/tags.md`; propose additions there first); every directory has a CSV `INDEX.md` (`id,title,tags,status`) updated whenever an artifact is added. Accepted decisions are immutable once committed — change them by a new decision and mark the old `superseded` with `superseded-by`. Every guardrail carries `go-getter.enforcement`. Artifact model: `plugins/go-getter/shared/artifact-model.md`.
 
-**Reference implementation of similar packaging**: `/home/ubuntu/projects/vivantel/kms` (local) = `github.com/vivantel/kms`: `.claude-plugin/marketplace.json`, `plugins/kms/.claude-plugin/plugin.json`, `plugins/kms/.codex-plugin/plugin.json`, `kilo.jsonc`, `plugins/kms/skills/index.json`, `.github/workflows/`, `evals/`, `AGENTS.md`, `docs/skills/adding-agent-support.md`. Confirm formats from vendor docs (phase 1); do not copy blindly.
+**Packaging formats**: take them from the vendor documentation recorded in facts 0003–0008 (phase 1); confirm each, do not copy blindly.
 
 **Interim working rules (until v0.3 replaces them, decision 0004)**: after the bootstrap commit, never push to `main`. Every step is a short-lived branch `type/slug` → PR → squash merge. Conventional Commit titles with `Refs:` trailers to the `docs/` artifacts implemented (the `go-getter:attribute` skill writes these). One git worktree per parallel task (`git worktree add ../go-getter-wt/<slug> -b <branch>`). Steps marked **‖** may run in parallel.
 
@@ -60,7 +60,7 @@ Done-when: git and Node (≥ oldest supported LTS, decision 0019) present; `gh` 
 ### 0.2 Root files — [x]
 Context: license, ignore rules, a short agent instruction file and README before the first commit. Keep `AGENTS.md` short (it is loaded into every session).
 Do: create
-- `LICENSE` — MIT, `Copyright (c) 2026 vivantel` (same text as `/home/ubuntu/projects/vivantel/kms/LICENSE`).
+- `LICENSE` — MIT, `Copyright (c) 2026 vivantel`.
 - `.gitignore` — `node_modules/`, `.env`, `.env.*`, `.go-getter/state/`, `evals/scratch/`.
 - `AGENTS.md` — what this repo is (2 sentences, terminology "harness" vs "host agent", pointer to `docs/decisions/0001-go-getter-product-scope-and-name.md`); knowledge-base conventions; the interim working rules above; "Remaining work and step status live in `docs/plans/bootstrap-go-getter.md` — update markers as you go."
 - `CLAUDE.md` — symlink to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`), like the other host files.
@@ -70,7 +70,7 @@ Done-when: all five exist; `ls -l CLAUDE.md` shows `CLAUDE.md -> AGENTS.md`; `LI
 ### 0.3 Lint the knowledge base — [x]
 Result: no structural violations; the 5 baseline guardrail templates were missing (check 12) and were adopted as project-owned guardrails with `go-getter.enforcement`.
 Context: confirm seeded artifacts are structurally valid. The `go-getter:` frontmatter key is a go-getter extension (0007); the lint may flag it as unknown.
-Do: run `go-getter:lint`. Fix real problems. If only the `go-getter:` key is flagged, leave it and note it for step 7.2.
+Do: run `go-getter:lint`. Fix real problems. If only the `go-getter:` key is flagged, leave it: it is part of go-getter's own artifact format (0066); step 7.2 documents it.
 Done-when: lint reports no errors other than, at most, the known `go-getter:` extension; every `docs/*/INDEX.md` row matches an existing file.
 
 ### 0.4 Initial commit — [x]
@@ -135,12 +135,12 @@ Done-when: the decision exists with an INDEX row and names, per host, the mechan
 
 ### 2.1 Scaffold and layout decision — [x]
 Result: decision 0021 (layout; host ids `claude-code`, `codex`, `kilo-opencode`, `cursor`, `gemini-cli`, `copilot`); `package.json`, CLI dispatcher `compiler/bin/go-getter.mjs` (commands in `compiler/src/commands/`, checks in `compiler/src/checks/`), `check:deps` implemented, smoke tests.
-Context: guardrails and procedures assume this layout: `src/` (neutral source: `skills/<name>/SKILL.md`, `agents/<role>.md`, `commands/<name>.md`, `rules/<name>.md`, `packs/<id>/pack.json`), `compiler/` (`bin/go-getter.mjs`, `src/`, `src/routing/`, `src/telemetry/`, `src/checks/`, `adapters/<host>.mjs`, `capabilities/<host>.json`, `schemas/`, `test/`), `vendor/kms/` + `vendor/kms.lock.json`, `evals/`, `.github/workflows/`, and npm scripts `build`, `test`, `test:routing`, `test:telemetry`, `sync:kms`, `check:generated`, `check:neutral`, `check:guardrails`, `check:tags`, `check:node-floor`, `check:self-adoption`, `check:vendor`, `check:deps`, `check:packs`, `eval`.
+Context: guardrails and procedures assume this layout: `src/` (neutral source: `skills/<name>/SKILL.md`, `agents/<role>.md`, `commands/<name>.md`, `rules/<name>.md`, `packs/<id>/pack.json`), `compiler/` (`bin/go-getter.mjs`, `src/`, `src/routing/`, `src/telemetry/`, `src/checks/`, `adapters/<host>.mjs`, `capabilities/<host>.json`, `schemas/`, `test/`), `evals/`, `.github/workflows/`, and npm scripts `build`, `test`, `test:routing`, `test:telemetry`, `check:generated`, `check:neutral`, `check:guardrails`, `check:tags`, `check:node-floor`, `check:self-adoption`, `check:deps`, `check:packs`, `eval`.
 Do: create `package.json` (`"type":"module"`, `"private":true` until release, `engines.node` = `>=22` (oldest supported LTS per decision 0019 / fact 0010), **no `dependencies`**, the scripts as stubs that exit 0 printing "not yet implemented"), the directory skeleton, a `node:test` smoke test. Write decision `<next>-neutral-source-and-output-layout` fixing neutral-source formats and frontmatter, each host's output paths for both output kinds (distributable packaging; project-local files `init` generates — 0005), manifest schema, symlink vs copy mode. Use fact 0009.
 Done-when: `npm test` passes; `npm run check:deps` exits 0; the layout decision exists with an INDEX row; every path named in `docs/guardrails/*.md` and `docs/skills/adding-a-*.md` exists or is in the layout decision (fix whichever is wrong).
 
 ### 2.2 Parsing core — [x]
-Result: `compiler/src/frontmatter.mjs` (`parseFrontmatter`, `parseYaml`, `stringifyYaml`, `stringifyFrontmatter`); 13 tests; also verified identical to PyYAML on all 163 frontmatter files of vivantel/kms.
+Result: `compiler/src/frontmatter.mjs` (`parseFrontmatter`, `parseYaml`, `stringifyYaml`, `stringifyFrontmatter`); 13 tests; also verified identical to PyYAML on the 163 frontmatter files of an existing knowledge base.
 Do: `compiler/src/frontmatter.mjs` — zero-dep parser/serializer for the YAML subset used in `docs/` (scalars, inline and block lists, nested maps, lists of maps, inline flow maps `{k: v}` — needed for `go-getter.enforcement` and the `go-getter.models` lists in facts 0011-0013). `node:test` tests.
 Done-when: `npm test` passes, including a test that parses every `docs/**/*.md` frontmatter in this repo without error.
 
@@ -169,19 +169,15 @@ Done-when: `gh api repos/vivantel/go-getter/branches/main/protection --jq .requi
 
 ---
 
-## Phase 3 — Vendored knowledge-base tooling
+## Phase 3 — Vendored knowledge-base tooling (superseded by 6.2a)
+
+Decision 0066 (2026-10-05) made this tooling go-getter's own source; the sync script, pin, lockfile and `check:vendor` built here were removed in step 6.2a. The steps keep their markers as history.
 
 ### 3.1 Sync script and pin — [x]
-Result: `scripts/sync-kms.mjs`, `compiler/src/vendor.mjs`, `check:vendor` (also in CI); pinned upstream 0.15.0 @ 4cdd5bb8; lockfile supports `excludeSkills`.
-Context: decision 0006, `docs/skills/syncing-vendored-kms.md`.
-Do: `scripts/sync-kms.mjs` (zero-dep, `git` via `child_process`): shallow-clone `vivantel/kms` at a release tag (latest from `git ls-remote --tags https://github.com/vivantel/kms`), replace `vendor/kms/` wholesale, write `vendor/kms.lock.json` `{repo, ref, sha}`; `npm run sync:kms -- <ref>`; `check:vendor` (re-fetch the pin, diff — guardrail `vendored-kms-changes-only-via-sync`).
-Done-when: `npm run sync:kms -- <tag>` populates `vendor/kms/` and the lockfile; `npm run check:vendor` exits 0, and non-zero after a test edit to a vendored file (revert it).
+Built a sync script, a pinned upstream tag with a lockfile and a vendor drift check (decision 0006). Removed in 6.2a.
 
 ### 3.2 Compile the vendored skills to the host agents — [x]
-Result: 14 knowledge-base skills + `shared/` + `templates/` compiled for all hosts; reference-resolution test passes for plugin root and Gemini repo root; Kilo remote-index limitation and unshipped the vendored hooks recorded in fact 0019.
-Context: a plugin root has `skills/`, `hooks/`, `shared/`, `templates/`; skill bodies reference `../../shared/artifact-model.md` (fact 0001); the vendored tooling has a Claude Code hook (`capture-nudge.sh`).
-Do: adapters include `vendor/kms/` skills with relative layout preserved; map the vendored hooks only where fact 0009 allows; keep upstream skill names.
-Done-when: a test walks every relative reference in every compiled vendored `SKILL.md` per host and finds an existing file; `npm run check:generated` exits 0.
+Result: 14 skills + `shared/` + `templates/` compiled for all hosts with a reference-resolution test; the remote-index limitation for Kilo is recorded in the (now archived) fact 0019 and handled by project-local skills (`apply --skills`). In 6.2a the compiler reads them from `src/`.
 
 ---
 
@@ -290,7 +286,13 @@ Result: `.github/workflows/release.yml` (jobs `test`, `golden`, `eval`, `checks`
 Do: `.github/workflows/release.yml` with `needs: [test, golden, eval]` (guardrail `release-requires-passing-gate`) plus `npm run check:self-adoption`; version sync so every generated manifest takes its version from `package.json`; `CHANGELOG.md` via `go-getter:changelog`; `INSTALLING.md` per host (from phase 1 facts); fuller `README.md` including the harness coverage table.
 Done-when: a dry run of the release workflow on a branch passes all gate jobs; `INSTALLING.md` has one section per host; every generated manifest version equals `package.json`'s.
 
-### 6.3 Install smoke test per host — [ ]
+### 6.2a Own the knowledge-base tooling — [x]
+Result: decision 0066 supersedes 0006 and 0007 (both archived, with facts 0001 and 0019, the vendor guardrail and the sync procedure); the 14 skills, templates, shared artifact model and two nudge scripts moved from `vendor/` to `src/{skills,templates,shared,hooks}`; the compiler reads them there and the generated output is unchanged; the sync script, lockfile, `check:vendor`, `sync:kms`, the vendor guardrail's check and its CI steps are gone; the old tag became `knowledge-base`; `go-getter detect` reports `knowledgeBase`; skills and templates were rewritten in go-getter's terms (markers `seeded`, `template-version`, `bootstrap-generated`, `<!-- knowledge-base:start -->`).
+Context: the owner asked (2026-10-05) that go-getter not use or rely on the former upstream, which 7.2 and decision 0007 had assumed would stay the authority for the artifact format.
+Done-when: `npm test`, every `check:*` and `go-getter apply --check` pass with `vendor/` and `scripts/` absent; no active artifact or source file names the former upstream.
+
+### 6.3 Install smoke test per host — [!]
+Postponed by the owner (2026-10-05). `INSTALLING.md` marks every install untested until this runs. Installed here: Claude Code, Kilo, OpenCode; not installed: Codex, Cursor, Gemini CLI, Copilot.
 Do: on each of the seven hosts, install from the public repo per `INSTALLING.md`, run `init` for one pack on a scratch repo, confirm artifacts and enforcement files appear. File a GitHub issue per defect.
 Done-when: a seven-row table (host / installed / init works / defects) is in the PR description with no unexplained failures.
 
@@ -308,10 +310,10 @@ Context: decision 0004 expires when v0.1.0 ships.
 Do: run `go-getter:lint` and `go-getter:conform`; review the post-v0.1 order with the owner; write `docs/plans/v0.2-calibration-observability.md` (routing calibration 0017, full observability, HITL gates, checkpointing); if the order changes, supersede 0004.
 Done-when: lint and conform report no errors; the v0.2 plan exists; 0004 is confirmed in a PR note or `superseded` with valid `superseded-by`.
 
-### 7.2 Propose the `go-getter:` key upstream — [ ]
-**Outward-facing: confirm with the owner first.**
-Do: open an issue in `vivantel/kms` proposing tolerance of (or a standard for) tool-namespaced frontmatter, citing decision 0007.
-Done-when: the issue URL is recorded in the 7.1 PR description.
+### 7.2 Document the `go-getter:` key as go-getter's own — [ ]
+Context: decision 0066 makes the key part of go-getter's artifact format; nothing is proposed to any other project.
+Do: add a section to `src/shared/artifact-model.md` describing the `go-getter:` frontmatter key (`enforcement` with tiers, `generated-by`, `pack-answer`, pack data), so the skills that read artifacts know it; rebuild.
+Done-when: the section exists once, the lint reports no unknown-key findings for it, `npm run check:generated` exits 0.
 
 ### 7.3 Consider a second dogfood repo — [ ]
 Do: ask the owner whether to adopt go-getter in another vivantel repo (0010 deferred this).

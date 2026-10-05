@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readArtifacts } from './artifacts.mjs';
 import { parseRun } from './packs.mjs';
-import { cleanGitEnv } from './vendor.mjs';
+import { cleanGitEnv } from './git-env.mjs';
 
 const BUILTIN_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'checks', 'builtin');
 

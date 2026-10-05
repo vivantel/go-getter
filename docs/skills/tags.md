@@ -35,7 +35,7 @@ host-agents — concerns which host agents are supported and how
 interview — concerns the guided setup interview
 kilo — concerns the Kilo Code CLI host agent
 opencode — concerns the OpenCode host agent
-kms — concerns the knowledge system and its artifact model
+knowledge-base — concerns the knowledge base: its artifacts, tooling and artifact model
 knowledge-management — concerns the fact/decision/guardrail/procedure system
 licensing — concerns license and repo visibility
 milestones — concerns release sequencing and scope slicing

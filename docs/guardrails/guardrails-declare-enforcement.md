@@ -5,8 +5,8 @@ status: active
 date: 2026-10-04
 tags: [enforcement, guardrail, configuration]
 governed-by: 0009-tiered-enforcement-git-ci-floor
-grounded-in: [0009-tiered-enforcement-git-ci-floor, 0007-kms-artifacts-as-configuration-source-of-truth]
-derivation-note: Given tiered enforcement (0009) read only from frontmatter (0007), a guardrail without a `go-getter.enforcement` entry is unenforceable and must be flagged.
+grounded-in: [0009-tiered-enforcement-git-ci-floor, 0066-own-the-knowledge-base-tooling]
+derivation-note: Given tiered enforcement (0009) read only from frontmatter (0066), a guardrail without a `go-getter.enforcement` entry is unenforceable and must be flagged.
 go-getter:
   enforcement:
     - tier: 3

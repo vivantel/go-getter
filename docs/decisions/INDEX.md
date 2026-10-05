@@ -6,8 +6,6 @@ id,title,tags,status
 0003-guided-interview-only-setup,"Project setup is a guided interview with recommended defaults, not auto-applied presets","interview, positioning, configuration",active
 0004-milestone-sequence-foundation-then-agent-practices,"v0.1 is foundation plus the agent core incl. routing and governance; git workflow and testing follow","milestones, roadmap, harness",active
 0005-neutral-source-compiler-architecture,"Author content once in a neutral source and compile it to each host agent's native files","architecture, compiler, generated-files, agent-agnostic",active
-0006-vendor-kms-as-builtin-pack,"kms is vendored into go-getter as a built-in pack, synced from upstream","kms, vendoring, packaging",active
-0007-kms-artifacts-as-configuration-source-of-truth,"A project's chosen practices live only as knowledge-base artifacts, with machine-readable data under a go-getter frontmatter key","kms, configuration, enforcement",active
 0008-declarative-practice-packs,"Practice areas are declarative packs in two families - harness packs and SDLC packs - driven by one init skill","practice-packs, interview, architecture, harness",active
 0009-tiered-enforcement-git-ci-floor,"Rules are enforced in tiers, with host-independent git hooks and CI as the floor","enforcement, git-hooks, ci, hooks",active
 0010-self-hosting-ratchet,"go-getter dogfoods itself from commit 0 through a self-hosting ratchet","dogfooding, ci, roadmap",active
@@ -65,3 +63,4 @@ id,title,tags,status
 0063-routing-spend-cap,"Headless runs are capped at 5 USD where the host has a cap","practice-packs, model-routing, cost",active
 0064-routing-cache-ttl,"The prompt cache lives one hour in the main session and five minutes in subagents","practice-packs, model-routing, cost",active
 0065-behavior-evals-are-scripted-and-keyless,"The first behavior evals run init with scripted answers, with no model and no API key","verification, eval, ci",active
+0066-own-the-knowledge-base-tooling,"go-getter owns its knowledge-base tooling and artifact format; nothing is vendored or synced","knowledge-base, configuration, vendoring, packaging",active

@@ -17,7 +17,7 @@ function fixture(files) {
 
 const empty = {
   languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], commands: { test: null, lint: null, typecheck: null }, ci: [], monorepo: [],
-  hostAgents: [], agentFiles: [], kms: false, sensitivePaths: [], git: { defaultBranch: null, remoteHost: null },
+  hostAgents: [], agentFiles: [], knowledgeBase: false, sensitivePaths: [], git: { defaultBranch: null, remoteHost: null },
 };
 
 test('empty directory', () => {
@@ -55,7 +55,7 @@ test('node/typescript repo with host agent files and secrets', () => {
     monorepo: ['npm-workspaces'],
     hostAgents: ['claude-code', 'cursor', 'copilot'],
     agentFiles: ['AGENTS.md', 'CLAUDE.md', '.github/copilot-instructions.md'],
-    kms: true,
+    knowledgeBase: true,
     sensitivePaths: ['.env', 'certs/server.key', 'config/secrets/'],
   });
   rmSync(dir, { recursive: true, force: true });

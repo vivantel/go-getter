@@ -42,7 +42,7 @@ function listFiles(dir, base = dir) {
     });
 }
 
-// Reads skills from <baseDir>/skills/<name>/ (src/ or a vendored plugin root).
+// Reads skills from <baseDir>/skills/<name>/ (src/).
 export function readSkills(baseDir, { exclude = [] } = {}) {
   const skillsDir = path.join(baseDir, 'skills');
   if (!existsSync(skillsDir)) return [];
@@ -64,6 +64,16 @@ export function readSkills(baseDir, { exclude = [] } = {}) {
     });
 }
 
+// The plugin-root support directories the skills reference relatively (src/shared, src/templates).
+export function readSupportDirs(root) {
+  const base = path.join(root, 'src');
+  return SUPPORT_DIRS.filter((d) => existsSync(path.join(base, d))).map((dir) => ({
+    dir,
+    files: listFiles(path.join(base, dir)),
+    read: (f) => readFileSync(path.join(base, dir, f)),
+  }));
+}
+
 export function packageMeta(pkg) {
   return {
     name: 'go-getter',
@@ -77,20 +87,6 @@ export function packageMeta(pkg) {
   };
 }
 
-// Vendored knowledge-base tooling (decision 0006): its skills plus the plugin-root support dirs they reference.
-export function readVendored(root) {
-  const lockFile = path.join(root, 'vendor/kms.lock.json');
-  if (!existsSync(lockFile)) return { skills: [], supportDirs: [] };
-  const lock = JSON.parse(readFileSync(lockFile, 'utf8'));
-  const base = path.join(root, 'vendor/kms');
-  const skills = readSkills(base, { exclude: lock.excludeSkills ?? [] });
-  const supportDirs = SUPPORT_DIRS.filter((d) => existsSync(path.join(base, d))).map((dir) => ({
-    dir,
-    files: listFiles(path.join(base, dir)),
-    read: (f) => readFileSync(path.join(base, dir, f)),
-  }));
-  return { skills, supportDirs };
-}
 
 function sameEntry(a, b) {
   if ('symlink' in a || 'symlink' in b) return a.symlink === b.symlink;
@@ -101,11 +97,8 @@ export function compile({ root, hosts = HOSTS }) {
   const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
   const caps = loadCapabilities(root);
   const own = readSkills(path.join(root, 'src'));
-  const vendored = readVendored(root);
-  const clash = own.filter((s) => vendored.skills.some((v) => v.name === s.name)).map((s) => s.name);
-  if (clash.length) throw new Error(`skill names clash with vendored knowledge-base tooling: ${clash.join(', ')}`);
-  const skills = [...own, ...vendored.skills].sort((a, b) => a.name.localeCompare(b.name));
-  const ctx = { pkg, meta: packageMeta(pkg), skills, supportDirs: vendored.supportDirs, caps };
+  const skills = [...own].sort((a, b) => a.name.localeCompare(b.name));
+  const ctx = { pkg, meta: packageMeta(pkg), skills, supportDirs: readSupportDirs(root), caps };
   const outputs = {};
   for (const host of hosts) {
     const adapter = ADAPTERS[host];

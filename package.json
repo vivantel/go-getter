@@ -16,7 +16,6 @@
     "test": "node --test \"compiler/test/**/*.test.mjs\"",
     "test:routing": "node --test \"compiler/test/routing/**/*.test.mjs\"",
     "test:telemetry": "node --test \"compiler/test/telemetry/**/*.test.mjs\"",
-    "sync:kms": "node scripts/sync-kms.mjs",
     "check:generated": "node compiler/bin/go-getter.mjs check generated",
     "check:neutral": "node compiler/bin/go-getter.mjs check neutral",
     "check:guardrails": "node compiler/bin/go-getter.mjs check guardrails",
@@ -24,7 +23,6 @@
     "check:node-floor": "node compiler/bin/go-getter.mjs check node-floor",
     "check:self-adoption": "node compiler/bin/go-getter.mjs check self-adoption",
     "check:versions": "node compiler/bin/go-getter.mjs check versions",
-    "check:vendor": "node compiler/bin/go-getter.mjs check vendor",
     "check:deps": "node compiler/bin/go-getter.mjs check deps",
     "check:packs": "node compiler/bin/go-getter.mjs check packs",
     "eval": "node compiler/bin/go-getter.mjs eval"

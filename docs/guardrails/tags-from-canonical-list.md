@@ -4,9 +4,9 @@ title: Artifact tags must come from docs/skills/tags.md
 status: active
 date: 2026-10-04
 tags: [knowledge-management, guardrail]
-governed-by: 0007-kms-artifacts-as-configuration-source-of-truth
-grounded-in: [0007-kms-artifacts-as-configuration-source-of-truth]
-derivation-note: Given tooling reads artifacts mechanically (0007), near-duplicate tags split one concept into several and break tag-based lookup.
+governed-by: 0066-own-the-knowledge-base-tooling
+grounded-in: [0066-own-the-knowledge-base-tooling]
+derivation-note: Given tooling reads artifacts mechanically (0066), near-duplicate tags split one concept into several and break tag-based lookup.
 go-getter:
   enforcement:
     - tier: 3

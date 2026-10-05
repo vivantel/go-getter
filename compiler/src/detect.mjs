@@ -166,7 +166,7 @@ export function detect(root) {
     monorepo: sorted(monorepo),
     hostAgents,
     agentFiles,
-    kms: has(root, 'docs/decisions') || has(root, 'docs/facts'),
+    knowledgeBase: has(root, 'docs/decisions') || has(root, 'docs/facts'),
     sensitivePaths: sorted(sensitivePaths),
     git: { defaultBranch, remoteHost },
   };

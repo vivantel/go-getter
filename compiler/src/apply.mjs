@@ -259,7 +259,7 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
     names.add('AGENTS.md');
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
-  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.kms, stop);
+  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {
       // Merge the hook change into the context.fileName change for the same file.

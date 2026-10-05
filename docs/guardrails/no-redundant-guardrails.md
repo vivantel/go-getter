@@ -4,9 +4,9 @@ title: A guardrail scoped to one skill's own procedure belongs in that skill
 status: active
 date: 2026-10-04
 tags: [knowledge-management, guardrail]
-governed-by: 0007-kms-artifacts-as-configuration-source-of-truth
-grounded-in: [0007-kms-artifacts-as-configuration-source-of-truth]
-derivation-note: Given knowledge-base artifacts are this project's source of truth (0007), a guardrail that only restates one skill's procedure duplicates that skill and drifts from it.
+governed-by: 0066-own-the-knowledge-base-tooling
+grounded-in: [0066-own-the-knowledge-base-tooling]
+derivation-note: Given knowledge-base artifacts are this project's source of truth (0066), a guardrail that only restates one skill's procedure duplicates that skill and drifts from it.
 go-getter:
   enforcement:
     - tier: 1

@@ -56,7 +56,7 @@ export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh'];
 export function sessionNudges(packageRoot, project) {
   const lines = [];
   for (const script of NUDGES) {
-    const file = path.join(packageRoot, 'vendor/kms/hooks', script);
+    const file = path.join(packageRoot, 'src/hooks', script);
     if (!existsSync(file)) continue;
     try {
       const out = execFileSync('sh', [file], { cwd: project, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10000 }).trim();

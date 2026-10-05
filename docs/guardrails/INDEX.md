@@ -20,7 +20,6 @@ routing-uses-total-step-cost,"Routing must compare expected total step cost, nev
 tags-from-canonical-list,"Artifact tags must come from docs/skills/tags.md","knowledge-management, guardrail",active
 telemetry-records-metadata-only,"Telemetry must record metadata only, never prompt or file content","observability, governance, security, guardrail",active
 token-economy,"Facts, guardrails and procedures use the shortest phrasing that preserves meaning","knowledge-management, cost, guardrail",active
-vendored-kms-changes-only-via-sync,"Vendored kms files change only through the sync script","vendoring, kms, guardrail",active
 instruction-file-within-cap,"The instruction file must stay within 150 lines","practice-packs, harness, guardrail",active
 procedure-delivery-rule,"Detailed procedures live in skills loaded on demand","practice-packs, harness, guardrail",active
 noisy-work-rule,"Noisy work is delegated only when the cost model says the handoff is cheaper","practice-packs, harness, guardrail",active

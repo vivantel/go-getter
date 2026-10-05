@@ -61,7 +61,6 @@ Checked by git hooks and CI:
 - Routing must compare expected total step cost, never per-token list price (`routing-uses-total-step-cost`)
 - Artifact tags must come from docs/skills/tags.md (`tags-from-canonical-list`)
 - Telemetry must record metadata only, never prompt or file content (`telemetry-records-metadata-only`)
-- Vendored kms files change only through the sync script (`vendored-kms-changes-only-via-sync`)
 
 Blocked by host hooks where the host supports it:
 

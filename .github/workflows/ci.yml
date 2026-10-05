@@ -45,6 +45,5 @@ jobs:
       - run: npm run check:tags
       - run: npm run check:deps
       - run: npm run check:node-floor
-      - run: npm run check:vendor
       - run: npm run check:packs
       - run: npm run check:versions

@@ -4,9 +4,9 @@ title: A guardrail describing a shipped skill's behavior must also be stated in 
 status: active
 date: 2026-10-04
 tags: [knowledge-management, guardrail]
-governed-by: 0007-kms-artifacts-as-configuration-source-of-truth
-grounded-in: [0007-kms-artifacts-as-configuration-source-of-truth]
-derivation-note: Given knowledge-base artifacts are the source of truth (0007) but agents running a skill read only its body, a rule about that skill's behavior that lives only in docs/guardrails/ never reaches them.
+governed-by: 0066-own-the-knowledge-base-tooling
+grounded-in: [0066-own-the-knowledge-base-tooling]
+derivation-note: Given knowledge-base artifacts are the source of truth (0066) but agents running a skill read only its body, a rule about that skill's behavior that lives only in docs/guardrails/ never reaches them.
 go-getter:
   enforcement:
     - tier: 1
