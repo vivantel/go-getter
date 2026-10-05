@@ -29,7 +29,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 **Reference implementation of similar packaging**: `/home/ubuntu/projects/vivantel/kms` (local) = `github.com/vivantel/kms`: `.claude-plugin/marketplace.json`, `plugins/kms/.claude-plugin/plugin.json`, `plugins/kms/.codex-plugin/plugin.json`, `kilo.jsonc`, `plugins/kms/skills/index.json`, `.github/workflows/`, `evals/`, `AGENTS.md`, `docs/skills/adding-agent-support.md`. Confirm formats from vendor docs (phase 1); do not copy blindly.
 
-**Interim working rules (until v0.3 replaces them, decision 0004)**: after the bootstrap commit, never push to `main`. Every step is a short-lived branch `type/slug` → PR → squash merge. Conventional Commit titles with `Refs:` trailers to the `docs/` artifacts implemented (the `kms:attribute` skill writes these). One git worktree per parallel task (`git worktree add ../go-getter-wt/<slug> -b <branch>`). Steps marked **‖** may run in parallel. Append whatever commit/PR attribution lines your session instructions require.
+**Interim working rules (until v0.3 replaces them, decision 0004)**: after the bootstrap commit, never push to `main`. Every step is a short-lived branch `type/slug` → PR → squash merge. Conventional Commit titles with `Refs:` trailers to the `docs/` artifacts implemented (the `kms:attribute` skill writes these). One git worktree per parallel task (`git worktree add ../go-getter-wt/<slug> -b <branch>`). Steps marked **‖** may run in parallel.
 
 ## Open questions (resolve in the named step; record answers as facts/decisions)
 
