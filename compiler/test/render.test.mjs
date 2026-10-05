@@ -49,7 +49,7 @@ test('rendered artifacts carry kms fields and go-getter provenance', () => {
   const d = parseFrontmatter(decision.content).data;
   assert.equal(d.title, 'The always-loaded instruction file is capped at 200 lines');
   assert.equal(d['accepted-by'], 'tester');
-  assert.deepEqual(d['go-getter'], { 'generated-by': 'example@0.1.0', 'pack-answer': 'instruction-cap' });
+  assert.deepEqual(d['go-getter'], { 'generated-by': 'example@0.1.0', 'pack-answer': 'instruction-cap', 'pack-option': 'strict' });
   const g = parseFrontmatter(guardrail.content).data;
   assert.equal(g['governed-by'], '0001-instruction-file-cap');
   assert.deepEqual(g['grounded-in'], ['0001-instruction-file-cap']);

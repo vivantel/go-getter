@@ -36,8 +36,30 @@ function nextNumber(dir) {
 
 const csv = (s) => `"${String(s).replace(/"/g, '""')}"`;
 
+// Replaces the INDEX.md row for `id`, or appends it.
+export function setIndexRow(indexFile, id, row) {
+  const lines = readFileSync(indexFile, 'utf8').replace(/\n*$/, '').split('\n');
+  const at = lines.findIndex((l) => l.startsWith(`${id},`));
+  if (at >= 0) lines[at] = row;
+  else lines.push(row);
+  writeFileSync(indexFile, `${lines.join('\n')}\n`);
+}
+
+// Changes the status column of an existing INDEX.md row.
+export function setIndexStatus(indexFile, id, status) {
+  if (!existsSync(indexFile)) return;
+  const lines = readFileSync(indexFile, 'utf8').replace(/\n*$/, '').split('\n');
+  const at = lines.findIndex((l) => l.startsWith(`${id},`));
+  if (at >= 0) lines[at] = lines[at].replace(/,[a-z]+$/, `,${status}`);
+  writeFileSync(indexFile, `${lines.join('\n')}\n`);
+}
+
 // Returns { artifacts: [{kind, id, path, content}], files: [{path, content}], newTags: [] } without touching disk.
-export function planRender({ root, pack, answers, acceptedBy, date, detect = {} }) {
+// `existing` (reconfigure): keepDecisionsFor = questions whose decisions stay (with their ids in decisionIds);
+// overwritable = paths of previously generated non-decision artifacts that may be re-rendered in place.
+export function planRender({ root, pack, answers, acceptedBy, date, detect = {}, existing = {} }) {
+  const keep = existing.keepDecisionsFor ?? new Set();
+  const overwritable = existing.overwritable ?? new Set();
   const questions = activeQuestions(pack, answers);
   for (const q of questions) {
     const a = answers[q.id];
@@ -71,6 +93,10 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {} 
             counters[dir] ??= nextNumber(path.join(root, 'docs', dir));
             id = `${String(counters[dir]++).padStart(4, '0')}-${tpl.slug}`;
           }
+          if (kind === 'decisions' && keep.has(q.id)) {
+            vars[`id.decision.${q.id}`] ??= existing.decisionIds[q.id];
+            continue;
+          }
           if (kind === 'decisions') vars[`id.decision.${q.id}`] ??= id;
           const rendered = substitute(tpl, vars);
           const data = { id, title: rendered.title, status: 'active', date, tags: rendered.tags, ...(rendered.frontmatter ?? {}) };
@@ -87,11 +113,13 @@ export function planRender({ root, pack, answers, acceptedBy, date, detect = {} 
             ...(rendered.enforcement ? { enforcement: rendered.enforcement } : {}),
             'generated-by': generatedBy,
             'pack-answer': q.id,
+            'pack-option': q.multi ? [].concat(answers[q.id]) : answers[q.id],
           };
           rendered.tags.forEach((t) => usedTags.add(t));
           const rel = `docs/${dir}/${id}.md`;
-          if (existsSync(path.join(root, rel))) throw new Error(`${rel} already exists (use reconfigure to change an adopted pack)`);
-          artifacts.push({ kind: dir, id, title: rendered.title, tags: rendered.tags, path: rel, content: stringifyFrontmatter(data, `\n${rendered.body.trimEnd()}\n`) });
+          const replaces = existsSync(path.join(root, rel));
+          if (replaces && !overwritable.has(rel)) throw new Error(`${rel} already exists (use reconfigure to change an adopted pack)`);
+          artifacts.push({ kind: dir, id, title: rendered.title, tags: rendered.tags, path: rel, replaces, questionId: q.id, content: stringifyFrontmatter(data, `\n${rendered.body.trimEnd()}\n`) });
         }
       }
       for (const f of out.files ?? []) {
@@ -112,8 +140,7 @@ export function applyRender({ root, plan }) {
     writeFileSync(path.join(root, a.path), a.content);
     const index = path.join(root, 'docs', a.kind, 'INDEX.md');
     if (!existsSync(index)) writeFileSync(index, `# ${INDEX_HEADER[a.kind]} index (CSV)\n\nid,title,tags,status\n`);
-    const body = readFileSync(index, 'utf8');
-    appendFileSync(index, `${body.endsWith('\n') ? '' : '\n'}${a.id},${csv(a.title)},${csv(a.tags.join(', '))},active\n`);
+    setIndexRow(index, a.id, `${a.id},${csv(a.title)},${csv(a.tags.join(', '))},active`);
   }
   if (plan.newTags.length) {
     const tagsFile = path.join(root, 'docs/skills/tags.md');

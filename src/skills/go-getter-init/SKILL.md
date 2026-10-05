@@ -42,4 +42,6 @@ Never write or edit the generated decisions, guardrails, procedures or INDEX row
 
 Run `gg apply` to generate the instruction section, host hooks and permissions, git hooks and CI checks for the host agents in use, then `gg check`. Report what was configured per pack, and for each host agent which rules are enforced and which are advisory there.
 
-To change an adopted pack later, use `gg reconfigure <pack-id>`; never edit generated decisions in place.
+## Reconfigure an adopted pack
+
+Run `gg reconfigure <pack-id> --current` to get the recorded answers and use them as the defaults while re-asking the pack's questions as in step 3. Write the new answers file, run `gg reconfigure <pack-id> --answers <file> --dry-run`, show which decisions will be superseded, which artifacts re-rendered and which deprecated, get one go-ahead, run it without `--dry-run`, then `gg apply`. Never edit generated decisions in place.
