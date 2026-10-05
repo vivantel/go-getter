@@ -129,7 +129,8 @@ Context: guardrails and procedures assume this layout: `src/` (neutral source: `
 Do: create `package.json` (`"type":"module"`, `"private":true` until release, `engines.node` = `>=22` (oldest supported LTS per decision 0019 / fact 0010), **no `dependencies`**, the scripts as stubs that exit 0 printing "not yet implemented"), the directory skeleton, a `node:test` smoke test. Write decision `<next>-neutral-source-and-output-layout` fixing neutral-source formats and frontmatter, each host's output paths for both output kinds (distributable packaging; project-local files `init` generates — 0005), manifest schema, symlink vs copy mode. Use fact 0009.
 Done-when: `npm test` passes; `npm run check:deps` exits 0; the layout decision exists with an INDEX row; every path named in `docs/guardrails/*.md` and `docs/skills/adding-a-*.md` exists or is in the layout decision (fix whichever is wrong).
 
-### 2.2 Parsing core — [ ]
+### 2.2 Parsing core — [x]
+Result: `compiler/src/frontmatter.mjs` (`parseFrontmatter`, `parseYaml`, `stringifyYaml`, `stringifyFrontmatter`); 13 tests; also verified identical to PyYAML on all 163 frontmatter files of vivantel/kms.
 Do: `compiler/src/frontmatter.mjs` — zero-dep parser/serializer for the YAML subset used in `docs/` (scalars, inline and block lists, nested maps, lists of maps, inline flow maps `{k: v}` — needed for `go-getter.enforcement` and the `go-getter.models` lists in facts 0011-0013). `node:test` tests.
 Done-when: `npm test` passes, including a test that parses every `docs/**/*.md` frontmatter in this repo without error.
 
