@@ -277,14 +277,14 @@ Done-when: generic conditions; `npm run test:routing` includes: a warm-cache lar
 
 ## Phase 6 — Evals and release
 
-### 6.1 Behavior evals — [~]
-Result: decision 0065 (scripted, keyless; resolves the auth question). `evals/promptfooconfig.yaml` has 12 cases (init per fixture and per pack, all six hosts, routing on vs off) driven by `evals/providers/init-runner.mjs`; `npm run eval` passes locally (`go-getter eval`), `promptfoo` 0.123.1 is a devDependency, `.github/workflows/eval.yml` exists. Left: the `eval` workflow green on GitHub (dispatch after merge); model-driven cases on a host are deferred (0065).
+### 6.1 Behavior evals — [x]
+Result: decision 0065 (scripted, keyless; resolves the auth question). `evals/promptfooconfig.yaml` has 12 cases (init per fixture and per pack, all six hosts, routing on vs off) driven by `evals/providers/init-runner.mjs`; `npm run eval` passes locally (`go-getter eval`), `promptfoo` 0.123.1 is a devDependency, `.github/workflows/eval.yml` exists. The `eval` workflow was dispatched on `main` and passed (run 37376182080). Model-driven cases on a host are deferred (0065).
 Context: 0013 layer 3; kms's `evals/` and `evals/providers/kilo-runner.sh` are the model.
 Do: `evals/` with fixture repos (Node, Python, empty, one with sensitive paths) and promptfoo cases per pack running `init` with scripted answers, asserting artifacts exist, frontmatter valid, INDEX rows updated, no host-specific text in neutral output. Add one routing case comparing total cost on a fixed fixture task with `cost-routing` on vs off at equal verification pass rate. `npm run eval`; `.github/workflows/eval.yml` (manual dispatch + called by release). Resolve the auth open question first; if a secret is needed, stop and ask the owner. `promptfoo` only in `devDependencies`.
 Done-when: `npm run eval` passes locally on at least one host; the `eval` workflow is green on GitHub; `npm run check:deps` exits 0.
 
-### 6.2 Release machinery — [~]
-Result: `.github/workflows/release.yml` (jobs `test`, `golden`, `eval`, `checks`; `release` needs all four and publishes only on a `vX.Y.Z` tag, a manual dispatch is a dry run); `check:versions` (every generated manifest and the tag equal `package.json`'s version; also in CI); `INSTALLING.md` (one section per host, unconfirmed steps marked for 6.3); fuller `README.md` with the harness coverage table; `CHANGELOG.md` entry 0.1.0. Left: a dry run of the release workflow on a branch (needs a push and dispatch).
+### 6.2 Release machinery — [x]
+Result: `.github/workflows/release.yml` (jobs `test`, `golden`, `eval`, `checks`; `release` needs all four and publishes only on a `vX.Y.Z` tag, a manual dispatch is a dry run); `check:versions` (every generated manifest and the tag equal `package.json`'s version; also in CI); `INSTALLING.md` (one section per host, unconfirmed steps marked for 6.3); fuller `README.md` with the harness coverage table; `CHANGELOG.md` entry 0.1.0. The `release` workflow was dispatched on `main` as a dry run: `test`, `golden`, `eval`, `checks` and `release` all passed and nothing was published (run 37376186100).
 Do: `.github/workflows/release.yml` with `needs: [test, golden, eval]` (guardrail `release-requires-passing-gate`) plus `npm run check:self-adoption`; version sync so every generated manifest takes its version from `package.json`; `CHANGELOG.md` via `kms:changelog`; `INSTALLING.md` per host (from phase 1 facts); fuller `README.md` including the harness coverage table.
 Done-when: a dry run of the release workflow on a branch passes all gate jobs; `INSTALLING.md` has one section per host; every generated manifest version equals `package.json`'s.
 
