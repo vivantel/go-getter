@@ -10,9 +10,9 @@ derivation-note: Given artifacts are read into agent context (0007) and go-gette
 go-getter:
   enforcement:
     - tier: 1
-      check: "kms lint check 10 (verbose artifacts)"
+      check: "knowledge-base lint check 10 (verbose artifacts)"
 ---
 
 ## Guardrail
 
-Facts, guardrails and procedures (decisions and plans exempt) use the shortest unambiguous phrasing. Advisory (tier 1 only): judged by `kms:lint`.
+Facts, guardrails and procedures (decisions and plans exempt) use the shortest unambiguous phrasing. Advisory (tier 1 only): judged by `go-getter:lint`.

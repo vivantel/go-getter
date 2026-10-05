@@ -17,7 +17,7 @@ fitness-functions:
 **Fields**: `id` (kebab-case, equals the directory), `version` (semver), `family` (`harness | sdlc`), `components` (harness component numbers 1–12 from fact 0002; required and non-empty for harness packs), `requires` (other pack ids), `title`, `summary`, `questions`, `outputs`.
 
 - A **question** has `id`, `prompt`, `options` (≥2; each `id`, `label`, `tradeoff`, optional `recommended: true` — at most one per question), optional `multi`, optional `detect` (a detection-probe key whose value prefills the answer) and optional `when` (`{question, in: [option ids]}`, referring to an earlier question).
-- **Outputs** are keyed `outputs[questionId][optionId]` and hold lists of templates: `decisions`, `guardrails`, `procedures`, `facts`, `files`. An artifact template has `slug`, `title`, `tags`, `body` and optional `frontmatter` (extra kms fields, e.g. `track`, `governed-by`) and, for guardrails, `enforcement`. A file template has `path` and `content`.
+- **Outputs** are keyed `outputs[questionId][optionId]` and hold lists of templates: `decisions`, `guardrails`, `procedures`, `facts`, `files`. An artifact template has `slug`, `title`, `tags`, `body` and optional `frontmatter` (extra knowledge-base fields, e.g. `track`, `governed-by`) and, for guardrails, `enforcement`. A file template has `path` and `content`.
 - **Placeholders** in titles, bodies, frontmatter values and file content: `{{answer.<q>}}`, `{{label.<q>}}`, `{{detect.<key>}}`, `{{id.decision.<q>}}` (id of the decision emitted for question `q`), `{{pack.id}}`, `{{pack.version}}`.
 - Every emitted artifact also receives `go-getter.generated-by: <id>@<version>` and `go-getter.pack-answer: <questionId>` (0008).
 
@@ -25,7 +25,7 @@ fitness-functions:
 
 ## Why
 
-Packs must be uniform, testable data (0008) that a deterministic renderer can turn into kms artifacts, so that numbering, frontmatter and INDEX rows never depend on the agent.
+Packs must be uniform, testable data (0008) that a deterministic renderer can turn into knowledge-base artifacts, so that numbering, frontmatter and INDEX rows never depend on the agent.
 
 ## Tradeoffs considered
 

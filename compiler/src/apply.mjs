@@ -120,7 +120,7 @@ function setEvent(obj, keys, entry) {
 const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 
 // Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook <event> --host <id>`.
-// `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: kms knowledge base present (session-start nudges).
+// `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: knowledge base present (session-start nudges).
 // `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
 export function hostHookOutputs(project, hosts, enabled, session = false, stop = false) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the

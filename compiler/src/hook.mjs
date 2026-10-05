@@ -50,7 +50,7 @@ export function respond(host, decision) {
   return { code: 2, stdout: '', stderr: decision.reason };
 }
 
-// Session start: run vendored kms nudge scripts (POSIX sh, plain-text output) in the project; failures are silent.
+// Session start: run vendored nudge scripts (POSIX sh, plain-text output) in the project; failures are silent.
 export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh'];
 
 export function sessionNudges(packageRoot, project) {

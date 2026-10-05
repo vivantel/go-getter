@@ -22,5 +22,5 @@ The compiler and renderer are the part that breaks silently across seven hosts, 
 
 ## Tradeoffs considered
 
-- **Model-driven cases first** (the kms approach, free Kilo gateway models): tests interview-following, but slow, flaky and dependent on an unconfirmed free tier.
+- **Model-driven cases first** (free Kilo gateway models): tests interview-following, but slow, flaky and dependent on an unconfirmed free tier.
 - **Cost accepted**: nothing yet checks that a host agent asks the questions as written; the routing case measures expected cost from the cost model, not measured spend.

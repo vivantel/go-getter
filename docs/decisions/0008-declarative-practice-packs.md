@@ -13,7 +13,7 @@ fitness-functions:
 
 ## Decision
 
-A practice area is a pack: a data file declaring its questions, each option's tradeoffs and recommended default, repo-detection probes, and the outputs each answer produces — kms artifact templates, enforcement entries per tier (0009), and compiled host outputs. One generic `init` skill interprets any pack. Packs are validated against a schema and loaded one at a time.
+A practice area is a pack: a data file declaring its questions, each option's tradeoffs and recommended default, repo-detection probes, and the outputs each answer produces — knowledge-base artifact templates, enforcement entries per tier (0009), and compiled host outputs. One generic `init` skill interprets any pack. Packs are validated against a schema and loaded one at a time.
 
 Packs come in two families sharing one schema:
 

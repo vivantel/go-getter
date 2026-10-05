@@ -18,7 +18,7 @@ export { PLUGIN_DIR };
 // One emitter per host in compiler/adapters/<host>.mjs; identical shared entries are merged.
 export const ADAPTERS = { 'claude-code': claudeCode, codex, kilo, opencode, cursor, copilot, 'gemini-cli': geminiCli };
 
-// Plugin-root directories that skills reference relatively (kms skills use ../../shared and ../../templates).
+// Plugin-root directories that skills reference relatively (knowledge-base skills use ../../shared and ../../templates).
 export const SUPPORT_DIRS = ['shared', 'templates'];
 // Paths the build owns completely; anything else in the repo is left alone.
 export const GENERATED_ROOTS = [
@@ -77,7 +77,7 @@ export function packageMeta(pkg) {
   };
 }
 
-// Vendored kms (decision 0006): its skills plus the plugin-root support dirs they reference.
+// Vendored knowledge-base tooling (decision 0006): its skills plus the plugin-root support dirs they reference.
 export function readVendored(root) {
   const lockFile = path.join(root, 'vendor/kms.lock.json');
   if (!existsSync(lockFile)) return { skills: [], supportDirs: [] };
@@ -103,7 +103,7 @@ export function compile({ root, hosts = HOSTS }) {
   const own = readSkills(path.join(root, 'src'));
   const vendored = readVendored(root);
   const clash = own.filter((s) => vendored.skills.some((v) => v.name === s.name)).map((s) => s.name);
-  if (clash.length) throw new Error(`skill names clash with vendored kms: ${clash.join(', ')}`);
+  if (clash.length) throw new Error(`skill names clash with vendored knowledge-base tooling: ${clash.join(', ')}`);
   const skills = [...own, ...vendored.skills].sort((a, b) => a.name.localeCompare(b.name));
   const ctx = { pkg, meta: packageMeta(pkg), skills, supportDirs: vendored.supportDirs, caps };
   const outputs = {};

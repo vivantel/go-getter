@@ -10,9 +10,9 @@ derivation-note: Given artifacts are governed, verified and superseded individua
 go-getter:
   enforcement:
     - tier: 1
-      check: "kms lint check 11 (unsplit statements)"
+      check: "knowledge-base lint check 11 (unsplit statements)"
 ---
 
 ## Guardrail
 
-A fact, guardrail or derivation-note doing two distinct things is split into two files. Advisory (tier 1 only): judged by `kms:lint`.
+A fact, guardrail or derivation-note doing two distinct things is split into two files. Advisory (tier 1 only): judged by `go-getter:lint`.

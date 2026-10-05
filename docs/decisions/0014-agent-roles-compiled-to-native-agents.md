@@ -10,7 +10,7 @@ accepted-by: sergemso
 
 ## Decision
 
-Agent roles & responsibilities are declared once in the orchestration harness pack (multi-agent orchestration, component 10): each role has a scope, allowed tools/paths, forbidden actions, a default routing task class (0016), and a shared handoff and escalation contract. The compiler (0005) emits native subagent/agent definitions — including per-agent model and effort settings from the routing policy — where a host has them, and an equivalent rules section where it does not. The roster chosen by a project is recorded as kms decisions (0007).
+Agent roles & responsibilities are declared once in the orchestration harness pack (multi-agent orchestration, component 10): each role has a scope, allowed tools/paths, forbidden actions, a default routing task class (0016), and a shared handoff and escalation contract. The compiler (0005) emits native subagent/agent definitions — including per-agent model and effort settings from the routing policy — where a host has them, and an equivalent rules section where it does not. The roster chosen by a project is recorded as knowledge-base decisions (0007).
 
 ## Why
 

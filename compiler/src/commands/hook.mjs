@@ -1,5 +1,5 @@
 // go-getter hook pre-tool --host <id> [--project <dir>]: tier-2 runtime called by host hooks; reads the tool call on stdin.
-// go-getter hook session-start --host <id>: prints the vendored kms capture/lint nudges (never blocks).
+// go-getter hook session-start --host <id>: prints the vendored capture/lint nudges (never blocks).
 // pre-tool also routes delegations to a role (cost-routing pack): it sets the delegated model, or denies when no model is eligible.
 // go-getter hook stop --host <id>: verification gate; blocks "done" while the adopted checks fail (bounded, then a human).
 import path from 'node:path';

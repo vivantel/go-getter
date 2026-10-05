@@ -7,7 +7,7 @@ id,title,tags,status
 0004-milestone-sequence-foundation-then-agent-practices,"v0.1 is foundation plus the agent core incl. routing and governance; git workflow and testing follow","milestones, roadmap, harness",active
 0005-neutral-source-compiler-architecture,"Author content once in a neutral source and compile it to each host agent's native files","architecture, compiler, generated-files, agent-agnostic",active
 0006-vendor-kms-as-builtin-pack,"kms is vendored into go-getter as a built-in pack, synced from upstream","kms, vendoring, packaging",active
-0007-kms-artifacts-as-configuration-source-of-truth,"A project's chosen practices live only as kms artifacts, with machine-readable data under a go-getter frontmatter key","kms, configuration, enforcement",active
+0007-kms-artifacts-as-configuration-source-of-truth,"A project's chosen practices live only as knowledge-base artifacts, with machine-readable data under a go-getter frontmatter key","kms, configuration, enforcement",active
 0008-declarative-practice-packs,"Practice areas are declarative packs in two families - harness packs and SDLC packs - driven by one init skill","practice-packs, interview, architecture, harness",active
 0009-tiered-enforcement-git-ci-floor,"Rules are enforced in tiers, with host-independent git hooks and CI as the floor","enforcement, git-hooks, ci, hooks",active
 0010-self-hosting-ratchet,"go-getter dogfoods itself from commit 0 through a self-hosting ratchet","dogfooding, ci, roadmap",active
@@ -23,7 +23,7 @@ id,title,tags,status
 0021-neutral-source-and-output-layout,"Neutral source, compiler and per-host output layout","architecture, compiler, generated-files, packaging",active
 0022-pack-schema-and-enforcement-run-grammar,"Practice packs are JSON files with questions, options and per-answer artifact templates; enforcement runs use a builtin-or-command grammar","practice-packs, interview, enforcement, configuration",active
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",active
-0024-dogfood-workflow-with-own-plugin,"This repo runs its kms workflow through its own go-getter plugin, with capture, conform and attribute on every PR","dogfooding, knowledge-management, git-hooks",active
+0024-dogfood-workflow-with-own-plugin,"This repo runs its knowledge-base workflow through its own go-getter plugin, with capture, conform and attribute on every PR","dogfooding, knowledge-management, git-hooks",active
 0025-shared-tier-2-hook-runtime,"Every host's hooks call one shared go-getter hook runtime instead of host-specific rule logic","enforcement, hooks, architecture",active
 0026-typed-pack-answers-and-detect-values,"Pack questions can take typed free-text and list answers, and templates can use detected values","practice-packs, interview, configuration",active
 0027-context-pack-defaults,"The context pack recommends a 150-line instruction cap, skills on demand, cost-model delegation, cache hygiene and compaction at task boundaries","practice-packs, harness, cost",active

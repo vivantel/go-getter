@@ -17,7 +17,7 @@ The governance harness pack (guardrails & safety, component 7) provides:
 - **Eligibility before cost**: routing (0016) filters to models the step's data class allows before any cost comparison; with no eligible model, the step goes to a human.
 - **Tiered DLP** (0009): tier 2 host hooks/permissions block restricted paths and secrets from reaching ineligible models, with tool-output redaction where supported; tier 3 secret scanning in git hooks and CI; an audit trail via metadata-only telemetry.
 
-Classes and registry are kms artifacts with data under `go-getter:` (0007).
+Classes and registry are knowledge-base artifacts with data under `go-getter:` (0007).
 
 ## Why
 

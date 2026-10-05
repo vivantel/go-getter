@@ -1,6 +1,6 @@
 ---
 name: go-getter-init
-description: Set up this project's agent harness and SDLC practices through a guided interview, one question at a time with a recommended default for each, then record every choice as kms decisions and guardrails and generate their enforcement. Use when the user wants to set up, configure or reconfigure go-getter, e.g. "set up the agent harness here", "configure model routing and guardrails".
+description: Set up this project's agent harness and SDLC practices through a guided interview, one question at a time with a recommended default for each, then record every choice as knowledge-base decisions and guardrails and generate their enforcement. Use when the user wants to set up, configure or reconfigure go-getter, e.g. "set up the agent harness here", "configure model routing and guardrails".
 ---
 
 # go-getter init

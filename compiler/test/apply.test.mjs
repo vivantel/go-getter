@@ -124,7 +124,7 @@ test('go-getter check runs tier-3 guardrails and fails on a violation', async ()
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a kms knowledge base adds session-start nudge hooks on every host that has one', () => {
+test('a knowledge base adds session-start nudge hooks on every host that has one', () => {
   const dir = project({ tier2: false });
   mkdirSync(path.join(dir, 'docs/decisions'), { recursive: true });
   writeApply(dir, planApply(dir, { hosts: HOSTS }));
@@ -139,7 +139,7 @@ test('a kms knowledge base adds session-start nudge hooks on every host that has
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('session-start runs the vendored kms nudges and never fails', () => {
+test('session-start runs the vendored nudges and never fails', () => {
   const dir = project({ tier2: false });
   execFileSync('git', ['-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'chore: x'], { cwd: dir });
   const res = spawnSync(process.execPath, [cli, 'hook', 'session-start', '--host', 'claude-code', '--project', dir], { encoding: 'utf8' });

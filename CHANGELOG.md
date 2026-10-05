@@ -20,7 +20,7 @@
 - Rendering of pack answers into decisions and guardrails, and the `go-getter-init` skill that drives the one-question-at-a-time interview.
 - Repository detection to prefill the interview instead of asking what can be looked up.
 - Practice-pack schema and validator, so every pack is uniform data a deterministic renderer can turn into artifacts.
-- Vendored kms 0.15.0 shipped to every host in a single install, with a check that the tree is never hand-edited.
+- Vendored knowledge-base tooling 0.15.0 shipped to every host in a single install, with a check that the tree is never hand-edited.
 - Mechanical enforcement of neutrality, guardrail declarations, tags and the Node floor, in place of review.
 - Per-host adapters, the build command and the drift check, so every supported host installs from this repo and generated files cannot silently diverge.
 - Validated per-host capabilities manifests, so adapters and enforcement pick each host's strongest tier mechanically.
@@ -29,7 +29,7 @@
 
 ### Changed
 
-- The kms workflow now runs through go-getter's own plugin, with a per-PR capture, conform and attribute checklist and Conventional Commit subjects enforced in pre-push and CI.
+- The knowledge-base workflow now runs through go-getter's own plugin, with a per-PR capture, conform and attribute checklist and Conventional Commit subjects enforced in pre-push and CI.
 - Unit, golden and deterministic checks run on every PR, as decision 0013 makes layers 1 and 2 a gate on every change.
 - Repository bootstrapped with go-getter's own knowledge base and plan, so every later change is checked against recorded intent from commit 0.
 

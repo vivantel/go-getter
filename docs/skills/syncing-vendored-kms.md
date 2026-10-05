@@ -1,6 +1,6 @@
 ---
 id: syncing-vendored-kms
-title: Procedure for syncing the vendored kms pack from upstream
+title: Procedure for syncing the vendored pack from upstream
 status: active
 date: 2026-10-04
 tags: [vendoring, kms, procedural]

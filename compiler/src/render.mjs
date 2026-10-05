@@ -1,4 +1,4 @@
-// Deterministic pack renderer (plan 4.3, decision 0022): pack + answers -> kms artifacts, INDEX rows, files.
+// Deterministic pack renderer (plan 4.3, decision 0022): pack + answers -> knowledge-base artifacts, INDEX rows, files.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { stringifyFrontmatter } from './frontmatter.mjs';

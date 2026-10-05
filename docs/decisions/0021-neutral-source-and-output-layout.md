@@ -27,7 +27,7 @@ compiler/
   capabilities/<host>.json   per-host capabilities (from fact 0009)
   schemas/                   JSON Schemas (capabilities, pack)
   test/                      node:test suites and fixtures
-vendor/kms/ + vendor/kms.lock.json   vendored kms (0006)
+vendor/kms/ + vendor/kms.lock.json   vendored knowledge-base tooling (0006)
 scripts/                     repo maintenance scripts (sync-kms.mjs)
 evals/                       behavior evals (0013)
 ```
@@ -41,7 +41,7 @@ Hosts: `claude-code`, `codex`, `kilo`, `opencode`, `cursor`, `gemini-cli`, `copi
 | Claude Code | `.claude-plugin/marketplace.json` → `plugins/go-getter/.claude-plugin/plugin.json` (component paths into `skills/`, `hosts/claude-code/`) |
 | Codex | `.agents/plugins/marketplace.json` → `plugins/go-getter/.codex-plugin/plugin.json` (skills, hooks; Codex plugins carry no agents) |
 | Cursor, Copilot | `plugins/go-getter/plugin.json` in Agent Plugins 1.0 format, host specifics under `extensions` / `hosts/<host>/` |
-| Kilo | `plugins/go-getter/skills/index.json` (remote-skills manifest, as kms) |
+| Kilo | `plugins/go-getter/skills/index.json` (remote-skills manifest) |
 | OpenCode | the shared `plugins/go-getter/skills/` only (no remote-skills manifest documented) |
 | Gemini CLI | `gemini-extension.json` at repo root (installed by GitHub URL), pointing into `plugins/go-getter/` |
 

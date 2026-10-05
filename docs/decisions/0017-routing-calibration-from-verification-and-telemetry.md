@@ -12,7 +12,7 @@ accepted-by: sergemso
 
 - A task class's quality bar is a set of objective checks: tests pass, lint/typecheck clean, reviewer-agent verdict, no human rework.
 - go-getter ships sensible default tiers per class. Every routed step records metadata — model, effort, tokens by cache state, cost, verification outcome, escalations — in `.go-getter/state/` (metadata only, per 0018).
-- `go-getter routing calibrate` reruns the cost model (0016) on that data and proposes policy changes as kms decisions. It never applies changes silently.
+- `go-getter routing calibrate` reruns the cost model (0016) on that data and proposes policy changes as knowledge-base decisions. It never applies changes silently.
 
 The default policy and verification gate ship in v0.1; the calibration loop ships in v0.2 (0004).
 

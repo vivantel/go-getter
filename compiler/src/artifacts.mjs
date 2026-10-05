@@ -1,4 +1,4 @@
-// Reads kms artifacts (facts, decisions, guardrails, skills) under docs/.
+// Reads knowledge-base artifacts (facts, decisions, guardrails, skills) under docs/.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter } from './frontmatter.mjs';

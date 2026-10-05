@@ -1,7 +1,7 @@
 // Routing policy (decisions 0016, 0020, 0032): which (model, effort) a step goes to, and what happens when it fails.
 // Order is fixed by guardrails: governance eligibility first (routing-governance-before-cost), then the cheapest sufficient
 // tier by expected total step cost (routing-uses-total-step-cost), then bounded escalation that ends at a human
-// (routing-escalation-bounded). `chooseRoute` and `escalate` are pure; the loaders read adopted kms artifacts.
+// (routing-escalation-bounded). `chooseRoute` and `escalate` are pure; the loaders read adopted knowledge-base artifacts.
 import { readArtifacts } from '../artifacts.mjs';
 import { adoptedData } from '../governance.mjs';
 import { eligibleModels } from './eligibility.mjs';

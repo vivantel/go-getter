@@ -7,13 +7,13 @@ tags: [dogfooding, ci, roadmap]
 track: process
 accepted-by: sergemso
 fitness-functions:
-  - CI regenerates this repo's own host files from its own kms artifacts and fails on drift
+  - CI regenerates this repo's own host files from its own knowledge-base artifacts and fails on drift
   - A release is blocked unless every shipped pack has been adopted by this repo
 ---
 
 ## Decision
 
-Commit 0 uses the already-installed kms to seed `docs/` plus a hand-written `AGENTS.md`. From then on, every pack go-getter ships must first be adopted by this repo through its own `init`; CI regenerates the repo's own host files from its own artifacts and fails on drift. This repo is the first fixture and eval for every pack — including routing, governance and telemetry, which run on this repo's own agent work.
+Commit 0 uses the already-installed knowledge-base tooling to seed `docs/` plus a hand-written `AGENTS.md`. From then on, every pack go-getter ships must first be adopted by this repo through its own `init`; CI regenerates the repo's own host files from its own artifacts and fails on drift. This repo is the first fixture and eval for every pack — including routing, governance and telemetry, which run on this repo's own agent work.
 
 ## Why
 

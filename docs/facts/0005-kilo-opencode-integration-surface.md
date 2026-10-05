@@ -32,7 +32,7 @@ No marketplace manifest. Distribution means: config `plugin` (npm packages), loc
 Global `model`, `small_model`; per agent and per command `model`; `/models` in session. Variants: Anthropic thinking budgets (`high`, `max`), OpenAI `reasoningEffort` (`none … xhigh`), custom variants in config.
 
 ## Local or custom endpoints
-75+ providers via AI SDK / Models.dev; `provider.<id>.options.baseURL` for OpenAI-compatible endpoints (Ollama, LM Studio). Kilo: project-scope config rejects `{env:VAR}` credential interpolation (kms fact 0009, tested); pass secrets via `KILO_CONFIG_CONTENT`.
+75+ providers via AI SDK / Models.dev; `provider.<id>.options.baseURL` for OpenAI-compatible endpoints (Ollama, LM Studio). Kilo: project-scope config rejects `{env:VAR}` credential interpolation (observed in an earlier test, not re-verified here); pass secrets via `KILO_CONFIG_CONTENT`.
 
 ## Prompt caching
 Not documented by OpenCode or Kilo; depends on the provider.
@@ -56,4 +56,4 @@ OpenCode plugins run under Bun. Kilo installs from npm (`@kilocode/cli`), so Nod
 - Prompt-cache behavior, telemetry and spend caps.
 
 ## Sources (accessed 2026-10-04)
-https://opencode.ai/docs/agents/ · https://opencode.ai/docs/permissions/ · https://opencode.ai/docs/plugins/ · https://opencode.ai/docs/config/ · https://opencode.ai/docs/commands/ · https://opencode.ai/docs/rules/ · https://opencode.ai/docs/skills/ · https://opencode.ai/docs/models/ · https://kilo.ai/docs/cli · kms facts `0008-kilo-code-skills-spec`, `0009-kilo-code-cli-headless-execution` (github.com/vivantel/kms)
+https://opencode.ai/docs/agents/ · https://opencode.ai/docs/permissions/ · https://opencode.ai/docs/plugins/ · https://opencode.ai/docs/config/ · https://opencode.ai/docs/commands/ · https://opencode.ai/docs/rules/ · https://opencode.ai/docs/skills/ · https://opencode.ai/docs/models/ · https://kilo.ai/docs/cli

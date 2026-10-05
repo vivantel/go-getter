@@ -1,4 +1,4 @@
-// Builds the governance inputs of eligibility.mjs from a project's kms artifacts:
+// Builds the governance inputs of eligibility.mjs from a project's knowledge-base artifacts:
 // models from facts carrying `go-getter.models` (price facts, local-model facts), policy from governance decisions.
 import { readArtifacts } from '../artifacts.mjs';
 

@@ -8,7 +8,7 @@ go-getter sets up the **agent harness** (the 12 components around a model: orche
 
 ## Knowledge base
 
-Decisions, facts, guardrails and procedures live in `docs/` in kms format:
+Decisions, facts, guardrails and procedures live in `docs/` in the knowledge-base format:
 
 - `docs/{facts,decisions}/NNNN-slug.md` (next free number), `docs/{guardrails,skills}/slug.md`.
 - Frontmatter `id, title, status, date, tags`; tags only from `docs/skills/tags.md`.

@@ -14,7 +14,7 @@ The only way to configure a project is a guided interview: one question at a tim
 
 ## Why
 
-The user prefers tailored, deliberate configuration over opaque presets: every practice is a visible, rationale-bearing choice, which also feeds the kms artifacts (0007).
+The user prefers tailored, deliberate configuration over opaque presets: every practice is a visible, rationale-bearing choice, which also feeds the knowledge-base artifacts (0007).
 
 ## Tradeoffs considered
 

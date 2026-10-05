@@ -1,6 +1,6 @@
 ---
 id: 0019-vendored-kms-packaging
-title: How vendored kms 0.15.0 is packaged and where it falls short
+title: How vendored knowledge-base tooling 0.15.0 is packaged and where it falls short
 status: active
 date: 2026-10-05
 tags: [kms, vendoring, packaging]

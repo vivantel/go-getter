@@ -1,6 +1,6 @@
 ---
 id: 0007-kms-artifacts-as-configuration-source-of-truth
-title: A project's chosen practices live only as kms artifacts, with machine-readable data under a go-getter frontmatter key
+title: A project's chosen practices live only as knowledge-base artifacts, with machine-readable data under a go-getter frontmatter key
 status: active
 date: 2026-10-04
 tags: [kms, configuration, enforcement]

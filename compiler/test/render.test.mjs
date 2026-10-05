@@ -41,7 +41,7 @@ test('golden: rendering the example pack', () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('rendered artifacts carry kms fields and go-getter provenance', () => {
+test('rendered artifacts carry knowledge-base fields and go-getter provenance', () => {
   const dir = project();
   const plan = planRender({ root: dir, pack, answers, acceptedBy: 'tester', date: '2026-10-05' });
   const [decision, guardrail] = plan.artifacts;
