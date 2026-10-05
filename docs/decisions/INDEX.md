@@ -50,3 +50,6 @@ id,title,tags,status
 0048-confidential-data-routing,"Confidential data may go wherever internal data may","practice-packs, governance, security",active
 0049-prompt-logging,"Host prompt logging is disabled on every host","practice-packs, governance, observability",active
 0050-restricted-data-hosts,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, security",active
+0051-telemetry-recording,"Each routed step is recorded as one metadata JSON line in the local state directory","practice-packs, observability, harness",active
+0052-telemetry-retention,"The metadata log keeps 30 days","practice-packs, observability, harness",active
+0053-telemetry-export,"Telemetry is not exported","practice-packs, observability, harness",active

@@ -33,7 +33,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 ## Known enforcement debt (from capture, 2026-10-05)
 
-- `routing-uses-total-step-cost` and `routing-escalation-bounded` run `npm run test:routing`, and `telemetry-records-metadata-only` runs `npm run test:telemetry`; they pass vacuously until steps 5.4/5.6 add their tests (5.3 added only the eligibility tests, which back `routing-governance-before-cost`).
+- `routing-uses-total-step-cost` and `routing-escalation-bounded` run `npm run test:routing`, and `telemetry-records-metadata-only` runs `npm run test:telemetry`; the two routing checks pass vacuously until step 5.6 adds their tests (5.3 added the eligibility tests, 5.4 the telemetry tests).
 - The `context` pack's cache-hygiene guardrail is tier 1 only: the hook runtime (0025) has no pre-model-switch event, so the confirm-before-switch hook of decision 0027 is not generated yet. The instruction-file cap covers `AGENTS.md` only, not non-symlinked host instruction files.
 - The `governance` pack: tool-output redaction (0018) is not implemented; the hosts rule is a tier-1 guardrail plus the prompt-logging scope; `apply` does not undo a prompt-logging setting when the decision changes; the hook runtime (0025) matches every string in a tool call against the restricted patterns, so any dotted token that ends like a key file (a property access in code, say) is blocked by the key-file pattern (false positives, seen while building this step); path-deny support on Codex and Copilot is unconfirmed (fact 0009).
 - Decision 0019's PowerShell shims are not implemented; the runner is POSIX `sh` only.
@@ -259,7 +259,8 @@ Context: decisions 0018, 0029; guardrail `routing-governance-before-cost`. Quest
 Do: write the pack, eligibility module and tests, `apply` support for (5); adopt it here (this repo's restricted paths: `.env*`, `.go-getter/state/`).
 Done-when: generic conditions; `npm run test:routing` contains eligibility tests (ineligible model never returned; empty set → human); the deny-path hook blocks a read of `.env` in a hook-runtime test; coverage shows per-host DLP tier.
 
-### 5.4 Pack `telemetry` (component 12) — [ ]
+### 5.4 Pack `telemetry` (component 12) — [x]
+Result: `src/packs/telemetry/pack.json`, adopted here as decisions 0051–0053 (retention and endpoint are conditional text questions); `compiler/src/telemetry/{schema,record}.mjs`, `go-getter telemetry summary`, and `go-getter hook` records session-start and pre-tool events (fact 0022). Not done: `apply` does not write host OpenTelemetry settings for the host-otel and OTLP answers; token and cost fields wait for the route and verify helpers (5.5, 5.6).
 Context: decisions 0017, 0030; guardrail `telemetry-records-metadata-only`. Questions: (1) recording — metadata log / host OTel only / off; (2) retention days — text, `pattern: ^[1-9][0-9]*$`, default 30; (3) export — none / OTLP endpoint (text). Implement `compiler/src/telemetry/schema.mjs` (allowed fields only), a recorder used by `go-getter hook` events and the route/verify helpers, pruning on write, `go-getter telemetry summary`.
 Done-when: generic conditions; `npm run test:telemetry` rejects a record carrying a content field and prunes lines older than the retention.
 

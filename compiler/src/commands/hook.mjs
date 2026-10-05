@@ -2,7 +2,8 @@
 // go-getter hook session-start --host <id>: prints the vendored kms capture/lint nudges (never blocks).
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { evaluatePreTool, respond, sessionNudges } from '../hook.mjs';
+import { evaluatePreTool, respond, sessionNudges, hookRecord } from '../hook.mjs';
+import { recordQuietly } from '../telemetry/record.mjs';
 
 export default function hookCommand({ root, args }) {
   const [event, ...rest] = args;
@@ -13,6 +14,7 @@ export default function hookCommand({ root, args }) {
     else if (rest[i] === '--project') project = path.resolve(rest[++i]);
   }
   if (event === 'session-start') {
+    recordQuietly(project, hookRecord('session-start', host, {}));
     const text = sessionNudges(root, project);
     if (text) process.stdout.write(`${text}\n`);
     return 0;
@@ -27,7 +29,10 @@ export default function hookCommand({ root, args }) {
   } catch {
     return 0;
   }
-  const out = respond(host, evaluatePreTool(payload.cwd ? path.resolve(payload.cwd) : project, payload));
+  const dir = payload.cwd ? path.resolve(payload.cwd) : project;
+  const decision = evaluatePreTool(dir, payload);
+  recordQuietly(dir, hookRecord('pre-tool', host, payload, decision));
+  const out = respond(host, decision);
   if (out.stdout) process.stdout.write(out.stdout);
   if (out.stderr) process.stderr.write(`${out.stderr}\n`);
   return out.code;

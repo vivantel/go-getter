@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
+import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
@@ -65,4 +66,15 @@ export function sessionNudges(packageRoot, project) {
     }
   }
   return lines.join('\n');
+}
+
+// Telemetry record for a hook event: metadata the host's payload carries (model, effort), never tool input or output.
+export function hookRecord(event, host, payload, decision) {
+  const rec = { event };
+  if (host) rec.host = host;
+  const model = typeof payload.model === 'string' ? payload.model : payload.model?.id;
+  if (FIELDS.model(model)) rec.model = model;
+  if (FIELDS.effort(payload.effort)) rec.effort = payload.effort;
+  if (decision) rec.outcome = decision.deny ? 'denied' : 'allowed';
+  return rec;
 }

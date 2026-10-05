@@ -22,3 +22,4 @@ id,title,tags,status
 0019-vendored-kms-packaging,"How vendored kms 0.15.0 is packaged and where it falls short","kms, vendoring, packaging",active
 0020-agent-role-compilation,"Project agent roles come from adopted decisions and are compiled by apply; four host tool mappings are unconfirmed","agent-roles, compiler, host-agents",active
 0021-governance-data-and-eligibility,"Governance decisions carry the registry and class policy that eligibility reads; the single-provider answer adds a provider question","governance, model-routing, practice-packs",active
+0022-telemetry-record-and-recorder,"Telemetry records allow only short-identifier and numeric metadata fields; hook events record host, model, effort and outcome only","observability, practice-packs, compiler",active
