@@ -43,7 +43,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 - Pack file format: JSON (default) vs restricted YAML subset (4.1).
 - How far each host can enforce DLP (1.7 → 5.3).
-- Eval authentication on CI: kms runs evals with zero API keys / free models (`/home/ubuntu/projects/vivantel/kms/docs/facts/0012-kilo-gateway-free-tier-access.md`, `0015-improvement-harness-zero-api-keys.md`). Reuse that or ask the owner for a secret (6.1).
+- Eval authentication on CI: resolved in 6.1 (decision 0065) — the cases are deterministic and need no key.
 
 ---
 
@@ -277,7 +277,8 @@ Done-when: generic conditions; `npm run test:routing` includes: a warm-cache lar
 
 ## Phase 6 — Evals and release
 
-### 6.1 Behavior evals — [ ]
+### 6.1 Behavior evals — [~]
+Result: decision 0065 (scripted, keyless; resolves the auth question). `evals/promptfooconfig.yaml` has 12 cases (init per fixture and per pack, all six hosts, routing on vs off) driven by `evals/providers/init-runner.mjs`; `npm run eval` passes locally (`go-getter eval`), `promptfoo` 0.123.1 is a devDependency, `.github/workflows/eval.yml` exists. Left: the `eval` workflow green on GitHub (dispatch after merge); model-driven cases on a host are deferred (0065).
 Context: 0013 layer 3; kms's `evals/` and `evals/providers/kilo-runner.sh` are the model.
 Do: `evals/` with fixture repos (Node, Python, empty, one with sensitive paths) and promptfoo cases per pack running `init` with scripted answers, asserting artifacts exist, frontmatter valid, INDEX rows updated, no host-specific text in neutral output. Add one routing case comparing total cost on a fixed fixture task with `cost-routing` on vs off at equal verification pass rate. `npm run eval`; `.github/workflows/eval.yml` (manual dispatch + called by release). Resolve the auth open question first; if a secret is needed, stop and ask the owner. `promptfoo` only in `devDependencies`.
 Done-when: `npm run eval` passes locally on at least one host; the `eval` workflow is green on GitHub; `npm run check:deps` exits 0.

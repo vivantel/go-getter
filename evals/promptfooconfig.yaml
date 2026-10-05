@@ -1,0 +1,105 @@
+# Behavior evals (decision 0013 layer 3). Deterministic: `init` runs with scripted answers (the recommended
+# defaults) against fixture repos, so no model and no API key are needed. Run: npm run eval
+description: "go-getter init and routing against fixture repos"
+
+prompts:
+  - "{{label}}"
+
+providers:
+  - id: "exec:providers/init-runner.mjs"
+
+defaultTest:
+  assert:
+    # Every case: the runner itself did not fail.
+    - type: javascript
+      value: "!JSON.parse(output).error"
+
+tests:
+  # --- init, all harness packs, per fixture -------------------------------------------------------------------
+  - description: "init on a Node repo"
+    vars: { label: init-node, fixture: node, packs: all, hosts: claude-code }
+    assert:
+      - &init-ok
+        type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const bad = r.rendered.filter((x) => x.code !== 0);
+          if (bad.length) return { pass: false, score: 0, reason: `render failed: ${JSON.stringify(bad)}` };
+          if (r.apply.code !== 0) return { pass: false, score: 0, reason: `apply failed: ${r.apply.out}` };
+          if (r.applyCheck.code !== 0) return { pass: false, score: 0, reason: 'apply output is not stable (apply --check)' };
+          if (r.check.code !== 0) return { pass: false, score: 0, reason: `tier-3 checks failed: ${r.check.out}` };
+          if (r.knowledgeBaseProblems.length) return { pass: false, score: 0, reason: r.knowledgeBaseProblems.join('; ') };
+          if (r.hostLeaks.length) return { pass: false, score: 0, reason: `host-specific text in neutral artifacts: ${r.hostLeaks.join(', ')}` };
+          return true;
+      - type: javascript
+        value: "JSON.parse(output).created.includes('AGENTS.md') && JSON.parse(output).created.includes('.claude/settings.json')"
+
+  - description: "init on a Python repo"
+    vars: { label: init-python, fixture: python, packs: all, hosts: claude-code }
+    assert:
+      - *init-ok
+
+  - description: "init on an empty repo"
+    vars: { label: init-empty, fixture: empty, packs: all, hosts: claude-code }
+    assert:
+      - *init-ok
+
+  - description: "init on a repo with sensitive paths covers every detected path"
+    vars: { label: init-sensitive, fixture: sensitive, packs: all, hosts: claude-code }
+    assert:
+      - *init-ok
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          if (!r.detected.sensitivePaths.length) return { pass: false, score: 0, reason: 'fixture has no detected sensitive paths' };
+          return r.uncoveredSensitivePaths.length === 0 || { pass: false, score: 0, reason: `not in the restricted-paths guardrail: ${r.uncoveredSensitivePaths}` };
+
+  - description: "init for all six hosts"
+    vars: { label: init-all-hosts, fixture: node, packs: all, hosts: "claude-code,codex,kilo-opencode,cursor,gemini-cli,copilot" }
+    assert:
+      - *init-ok
+
+  # --- one case per pack ---------------------------------------------------------------------------------------
+  - description: "pack context"
+    vars: { label: pack-context, fixture: node, packs: context, hosts: claude-code }
+    assert: [*init-ok]
+  - description: "pack orchestration"
+    vars: { label: pack-orchestration, fixture: node, packs: orchestration, hosts: claude-code }
+    assert:
+      - *init-ok
+      - type: javascript
+        value: "JSON.parse(output).created.some((f) => f.startsWith('.claude/agents/'))"
+  - description: "pack governance"
+    vars: { label: pack-governance, fixture: sensitive, packs: governance, hosts: claude-code }
+    assert:
+      - *init-ok
+      - type: javascript
+        value: "JSON.parse(output).uncoveredSensitivePaths.length === 0"
+  - description: "pack telemetry"
+    vars: { label: pack-telemetry, fixture: node, packs: telemetry, hosts: claude-code }
+    assert: [*init-ok]
+  - description: "pack verification-gate"
+    vars: { label: pack-verification-gate, fixture: node, packs: verification-gate, hosts: claude-code }
+    assert: [*init-ok]
+  - description: "pack cost-routing"
+    vars: { label: pack-cost-routing, fixture: node, packs: cost-routing, hosts: claude-code }
+    assert: [*init-ok]
+
+  # --- routing: total expected cost, routing on vs off, same verification gate ----------------------------------
+  - description: "cost-routing lowers total expected step cost on a fixed task set"
+    vars:
+      label: routing-cost
+      mode: routing
+      fixture: node
+      host: claude-code
+      sessionModel: claude-opus-5-5
+      tasks: '[{"class":"explore","contextTokens":60000,"cache":"warm"},{"class":"plan","contextTokens":60000,"cache":"warm"},{"class":"implement","contextTokens":60000,"cache":"cold"},{"class":"review","contextTokens":60000,"cache":"warm"}]'
+    assert:
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          if (!(r.total.on > 0 && r.total.off > 0)) return { pass: false, score: 0, reason: `no totals: ${JSON.stringify(r.total)}` };
+          return r.total.on < r.total.off || { pass: false, score: 0, reason: `routing on ${r.total.on} is not below routing off ${r.total.off}` };
+      # No single step may cost more with routing on: staying in the session is itself one of the router's options.
+      - type: javascript
+        value: "JSON.parse(output).tasks.every((t) => t.on.expectedCost <= t.off.expectedCost)"

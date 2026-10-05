@@ -27,5 +27,8 @@
     "check:deps": "node compiler/bin/go-getter.mjs check deps",
     "check:packs": "node compiler/bin/go-getter.mjs check packs",
     "eval": "node compiler/bin/go-getter.mjs eval"
+  },
+  "devDependencies": {
+    "promptfoo": "0.123.1"
   }
 }
