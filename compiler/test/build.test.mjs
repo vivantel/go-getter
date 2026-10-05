@@ -82,6 +82,29 @@ test('drift check passes after build and catches edits, stray and missing files'
   rmSync(repo, { recursive: true, force: true });
 });
 
+test('vendored kms skills are compiled and every relative reference resolves on each install root', () => {
+  const repoRoot = path.resolve(here, '..', '..');
+  const outputs = compile({ root: repoRoot });
+  const kmsSkills = Object.keys(outputs).filter((p) => /^plugins\/go-getter\/skills\/[^/]+\/SKILL\.md$/.test(p));
+  assert.ok(kmsSkills.length >= 14, `expected vendored kms skills, got ${kmsSkills.length}`);
+  const tmp = mkdtempSync(path.join(tmpdir(), 'go-getter-refs-'));
+  writeOutputs(tmp, outputs, { copy: false });
+  let checked = 0;
+  // Plugin root (Claude Code, Codex, Cursor, Copilot) and repo root via symlinks (Gemini CLI).
+  for (const base of ['plugins/go-getter/skills', 'skills']) {
+    for (const p of kmsSkills) {
+      const skillDir = path.join(tmp, base, path.basename(path.dirname(p)));
+      const text = readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
+      for (const [ref] of text.matchAll(/\.\.\/[A-Za-z0-9_./-]+/g)) {
+        assert.ok(existsSync(path.join(skillDir, ref)), `${base}/${path.basename(skillDir)} -> ${ref}`);
+        checked++;
+      }
+    }
+  }
+  assert.ok(checked > 0);
+  rmSync(tmp, { recursive: true, force: true });
+});
+
 test('skill validation rejects bad names, missing descriptions and non-standard fields', () => {
   const repo = tempRepo();
   const skill = path.join(repo, 'src/skills/hello/SKILL.md');

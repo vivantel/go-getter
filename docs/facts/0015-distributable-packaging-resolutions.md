@@ -13,3 +13,5 @@ governed-by: 0021-neutral-source-and-output-layout
 - **Codex marketplace** entry shape (`source: {source: local, path}`, `policy: {installation: AVAILABLE, authentication: ON_INSTALL}`, `category`) comes from third-party descriptions only; verify in plan step 6.3.
 - **Distributable packaging ships skills only.** Agent definitions, hooks and permissions depend on each project's pack answers, so they are project-local output written by `apply` (output kind B).
 - Claude Code's `claude plugin validate --strict` passes on the generated plugin and marketplace.
+- **Vendored kms** (0.15.0) ships its skills plus `shared/` and `templates/` at the plugin root (and as repo-root symlinks for Gemini CLI) so `../../shared/...` references resolve. kms hooks are not shipped: they are Claude-Code-only `SessionStart` scripts and include kms's internal improvement runner.
+- **Kilo remote skills** (`skills/index.json`) carry only each skill's own files, so kms references to `../../shared/` and `../../templates/` do not resolve for remote installs; Kilo users get full kms behaviour through project-local `.agents/skills` (output kind B).

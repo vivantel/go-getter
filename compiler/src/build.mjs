@@ -6,8 +6,17 @@ import { parseFrontmatter } from './frontmatter.mjs';
 import { HOSTS, loadCapabilities } from './capabilities.mjs';
 
 export const PLUGIN_DIR = 'plugins/go-getter';
+// Plugin-root directories that skills reference relatively (kms skills use ../../shared and ../../templates).
+export const SUPPORT_DIRS = ['shared', 'templates'];
 // Paths the build owns completely; anything else in the repo is left alone.
-export const GENERATED_ROOTS = [PLUGIN_DIR, '.claude-plugin/marketplace.json', '.agents/plugins/marketplace.json', 'gemini-extension.json', 'skills'];
+export const GENERATED_ROOTS = [
+  PLUGIN_DIR,
+  '.claude-plugin/marketplace.json',
+  '.agents/plugins/marketplace.json',
+  'gemini-extension.json',
+  'skills',
+  ...SUPPORT_DIRS,
+];
 
 const SKILL_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SPEC_FIELDS = new Set(['name', 'description', 'license', 'compatibility', 'metadata', 'allowed-tools']);
@@ -21,11 +30,12 @@ function listFiles(dir, base = dir) {
     });
 }
 
-export function readSkills(srcDir) {
-  const skillsDir = path.join(srcDir, 'skills');
+// Reads skills from <baseDir>/skills/<name>/ (src/ or a vendored plugin root).
+export function readSkills(baseDir, { exclude = [] } = {}) {
+  const skillsDir = path.join(baseDir, 'skills');
   if (!existsSync(skillsDir)) return [];
   return readdirSync(skillsDir)
-    .filter((n) => statSync(path.join(skillsDir, n)).isDirectory())
+    .filter((n) => statSync(path.join(skillsDir, n)).isDirectory() && !exclude.includes(n))
     .sort()
     .map((dirName) => {
       const dir = path.join(skillsDir, dirName);
@@ -63,6 +73,9 @@ const sharedSkills = (ctx) => {
   const out = {};
   for (const skill of ctx.skills) {
     for (const f of skill.files) out[`${PLUGIN_DIR}/skills/${skill.name}/${f}`] = { content: skill.read(f) };
+  }
+  for (const { dir, files, read } of ctx.supportDirs) {
+    for (const f of files) out[`${PLUGIN_DIR}/${dir}/${f}`] = { content: read(f) };
   }
   return out;
 };
@@ -113,13 +126,30 @@ export const ADAPTERS = {
   }),
   cursor: (ctx) => ({ ...sharedSkills(ctx), ...agentPluginsManifest(ctx) }),
   copilot: (ctx) => ({ ...sharedSkills(ctx), ...agentPluginsManifest(ctx) }),
-  // Gemini installs a whole repo and needs gemini-extension.json and skills/ in the same root.
+  // Gemini installs a whole repo and needs gemini-extension.json and skills/ in the same root;
+  // support dirs are linked too so skills' ../../shared references resolve from the repo root.
   'gemini-cli': (ctx) => ({
     ...sharedSkills(ctx),
     'gemini-extension.json': json({ name: ctx.meta.name, version: ctx.meta.version, description: ctx.meta.description }),
     skills: { symlink: `${PLUGIN_DIR}/skills` },
+    ...Object.fromEntries(ctx.supportDirs.map(({ dir }) => [dir, { symlink: `${PLUGIN_DIR}/${dir}` }])),
   }),
 };
+
+// Vendored kms (decision 0006): its skills plus the plugin-root support dirs they reference.
+export function readVendored(root) {
+  const lockFile = path.join(root, 'vendor/kms.lock.json');
+  if (!existsSync(lockFile)) return { skills: [], supportDirs: [] };
+  const lock = JSON.parse(readFileSync(lockFile, 'utf8'));
+  const base = path.join(root, 'vendor/kms');
+  const skills = readSkills(base, { exclude: lock.excludeSkills ?? [] });
+  const supportDirs = SUPPORT_DIRS.filter((d) => existsSync(path.join(base, d))).map((dir) => ({
+    dir,
+    files: listFiles(path.join(base, dir)),
+    read: (f) => readFileSync(path.join(base, dir, f)),
+  }));
+  return { skills, supportDirs };
+}
 
 function sameEntry(a, b) {
   if ('symlink' in a || 'symlink' in b) return a.symlink === b.symlink;
@@ -129,7 +159,12 @@ function sameEntry(a, b) {
 export function compile({ root, hosts = HOSTS }) {
   const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
   const caps = loadCapabilities(root);
-  const ctx = { pkg, meta: packageMeta(pkg), skills: readSkills(path.join(root, 'src')), caps };
+  const own = readSkills(path.join(root, 'src'));
+  const vendored = readVendored(root);
+  const clash = own.filter((s) => vendored.skills.some((v) => v.name === s.name)).map((s) => s.name);
+  if (clash.length) throw new Error(`skill names clash with vendored kms: ${clash.join(', ')}`);
+  const skills = [...own, ...vendored.skills].sort((a, b) => a.name.localeCompare(b.name));
+  const ctx = { pkg, meta: packageMeta(pkg), skills, supportDirs: vendored.supportDirs, caps };
   const outputs = {};
   for (const host of hosts) {
     const adapter = ADAPTERS[host];

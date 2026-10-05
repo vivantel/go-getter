@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/vivantel/kms",
+  "ref": "0.15.0",
+  "sha": "4cdd5bb8e7b3c792a86f6b48a266c5da4af585a0",
+  "path": "plugins/kms",
+  "excludeSkills": []
+}

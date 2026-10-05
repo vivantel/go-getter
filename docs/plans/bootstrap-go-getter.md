@@ -161,12 +161,14 @@ Done-when: `gh api repos/vivantel/go-getter/branches/main/protection --jq .requi
 
 ## Phase 3 — Vendored kms
 
-### 3.1 Sync script and pin — [ ]
+### 3.1 Sync script and pin — [x]
+Result: `scripts/sync-kms.mjs`, `compiler/src/vendor.mjs`, `check:vendor` (also in CI); pinned kms 0.15.0 @ 4cdd5bb8; lockfile supports `excludeSkills`.
 Context: decision 0006, `docs/skills/syncing-vendored-kms.md`.
 Do: `scripts/sync-kms.mjs` (zero-dep, `git` via `child_process`): shallow-clone `vivantel/kms` at a release tag (latest from `git ls-remote --tags https://github.com/vivantel/kms`), replace `vendor/kms/` wholesale, write `vendor/kms.lock.json` `{repo, ref, sha}`; `npm run sync:kms -- <ref>`; `check:vendor` (re-fetch the pin, diff — guardrail `vendored-kms-changes-only-via-sync`).
 Done-when: `npm run sync:kms -- <tag>` populates `vendor/kms/` and the lockfile; `npm run check:vendor` exits 0, and non-zero after a test edit to a vendored file (revert it).
 
-### 3.2 Compile kms to six host agents — [ ]
+### 3.2 Compile kms to six host agents — [x]
+Result: 14 kms skills + `shared/` + `templates/` compiled for all hosts; reference-resolution test passes for plugin root and Gemini repo root; Kilo remote-index limitation and unshipped kms hooks recorded in fact 0015.
 Context: a kms plugin root has `skills/`, `hooks/`, `shared/`, `templates/`; skill bodies reference `../../shared/artifact-model.md` (fact 0001); kms has a Claude Code hook (`capture-nudge.sh`).
 Do: adapters include `vendor/kms/` skills with relative layout preserved; map kms hooks only where fact 0009 allows; keep upstream skill names.
 Done-when: a test walks every relative reference in every compiled kms `SKILL.md` per host and finds an existing file; `npm run check:generated` exits 0.
