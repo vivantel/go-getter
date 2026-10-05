@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, lstatSync, readlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, lstatSync, readlinkSync, readdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -157,5 +157,32 @@ test('commit-message builtin ignores merge commits and flags bad subjects', asyn
   const r = commitMessage({ project: dir, args: { pattern, base: 'base' } });
   assert.equal(r.ok, false);
   assert.match(r.message, /Bad subject/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('kilo-opencode gets project-local skills whose shared references resolve; apply --check covers them', () => {
+  const dir = project({ tier2: false });
+  const plan = planApply(dir, { hosts: ['kilo-opencode', 'claude-code'] });
+  assert.equal(plan.skills, true);
+  writeApply(dir, plan);
+  const skillsDir = path.join(dir, '.agents/skills');
+  const skills = readdirSync(skillsDir);
+  assert.ok(skills.includes('capture') && skills.includes('go-getter-init'));
+  assert.ok(!skills.includes('index.json'));
+  let refs = 0;
+  for (const base of ['.agents/skills', '.claude/skills']) {
+    for (const s of skills) {
+      const text = readFileSync(path.join(dir, base, s, 'SKILL.md'), 'utf8');
+      for (const [ref] of text.matchAll(/\.\.\/[A-Za-z0-9_./-]+/g)) {
+        assert.ok(existsSync(path.join(dir, base, s, ref)), `${base}/${s} -> ${ref}`);
+        refs++;
+      }
+    }
+  }
+  assert.ok(refs > 0);
+  assert.deepEqual(diffApply(dir, planApply(dir, { hosts: ['kilo-opencode', 'claude-code'] })), []);
+  writeFileSync(path.join(dir, '.agents/skills/capture/SKILL.md'), 'edited');
+  assert.ok(diffApply(dir, planApply(dir, { hosts: ['kilo-opencode', 'claude-code'] })).includes('differs: .agents/skills/capture/SKILL.md'));
+  assert.equal(planApply(dir, { hosts: ['claude-code'] }).skills, false);
   rmSync(dir, { recursive: true, force: true });
 });

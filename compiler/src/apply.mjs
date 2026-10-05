@@ -1,6 +1,7 @@
 // `go-getter apply` (plan 4.4): materializes guardrail enforcement into project-local files (decision 0021, output kind B).
 // Outputs are planned first ({path: {content, mode?} | {symlink}}) so the same plan drives writing and drift checking.
-import { existsSync, readFileSync, lstatSync, readlinkSync, mkdirSync, writeFileSync, symlinkSync, chmodSync } from 'node:fs';
+import { existsSync, readFileSync, lstatSync, readlinkSync, mkdirSync, writeFileSync, symlinkSync, chmodSync, readdirSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { collectEnforcement } from './enforce.mjs';
@@ -164,7 +165,33 @@ export const GoGetter = async () => ({
   return out;
 }
 
-export function planApply(project, { hosts } = {}) {
+const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+function filesUnder(dir, base = dir) {
+  return readdirSync(dir).sort().flatMap((n) => {
+    const p = path.join(dir, n);
+    return statSync(p).isDirectory() ? filesUnder(p, base) : [path.relative(base, p).split(path.sep).join('/')];
+  });
+}
+
+// Project-local skills (plan 4.4b): the package's compiled skills and the support dirs they reference,
+// for hosts without a plugin install that keeps them together (remote skill indexes carry no shared files).
+export function projectSkillOutputs(packageRoot, hosts) {
+  const plugin = path.join(packageRoot, 'plugins/go-getter');
+  const out = {};
+  for (const dir of ['skills', 'shared', 'templates']) {
+    const src = path.join(plugin, dir);
+    if (!existsSync(src)) continue;
+    for (const f of filesUnder(src)) {
+      if (dir === 'skills' && (f === 'index.json' || f === '.gitkeep')) continue;
+      out[`.agents/${dir}/${f}`] = { content: readFileSync(path.join(src, f), 'utf8') };
+    }
+    if (hosts.includes('claude-code')) out[`.claude/${dir}`] = { symlink: `../.agents/${dir}` };
+  }
+  return out;
+}
+
+export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT } = {}) {
   const detected = detect(project);
   const targetHosts = hosts?.length ? hosts : detected.hostAgents;
   for (const h of targetHosts) if (!HOSTS.includes(h)) throw new Error(`unknown host "${h}"`);
@@ -200,7 +227,9 @@ export function planApply(project, { hosts } = {}) {
       outputs['.github/workflows/go-getter-checks.yml'] = { content: ciWorkflow };
     }
   }
-  return { hosts: targetHosts, outputs, tier2, tier3 };
+  const withSkills = skills ?? targetHosts.includes('kilo-opencode');
+  if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
+  return { hosts: targetHosts, outputs, tier2, tier3, skills: withSkills };
 }
 
 export function diffApply(project, plan) {
