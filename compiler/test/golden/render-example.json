@@ -1,0 +1,7 @@
+{
+  "docs/decisions/0003-instruction-file-cap.md": "---\nid: 0003-instruction-file-cap\ntitle: The always-loaded instruction file is capped at 200 lines\nstatus: active\ndate: 2026-10-05\ntags: [configuration]\ntrack: process\naccepted-by: tester\ngo-getter:\n  generated-by: example@0.1.0\n  pack-answer: instruction-cap\n---\n\n## Decision\n\nCap `AGENTS.md` at 200 lines (pack example@0.1.0).\n",
+  "docs/decisions/INDEX.md": "# Decisions index (CSV)\n\nid,title,tags,status\n0003-instruction-file-cap,\"The always-loaded instruction file is capped at 200 lines\",\"configuration\",active\n",
+  "docs/guardrails/INDEX.md": "# Guardrails index (CSV)\n\nid,title,tags,status\ninstruction-file-within-cap,\"AGENTS.md must stay within its line cap\",\"configuration, guardrail\",active\n",
+  "docs/guardrails/instruction-file-within-cap.md": "---\nid: instruction-file-within-cap\ntitle: AGENTS.md must stay within its line cap\nstatus: active\ndate: 2026-10-05\ntags: [configuration, guardrail]\ngoverned-by: 0003-instruction-file-cap\ngrounded-in: [0003-instruction-file-cap]\nderivation-note: Given the cap decision, a longer file costs tokens every turn.\ngo-getter:\n  enforcement:\n    - tier: 3\n      check: AGENTS.md line count within cap\n      run: builtin:file-max-lines path=AGENTS.md max=200\n  generated-by: example@0.1.0\n  pack-answer: enforce-cap\n---\n\n## Guardrail\n\nKeep `AGENTS.md` within the cap.\n",
+  "docs/skills/tags.md": "# Tags\n\nguardrail — a guardrail\nconfiguration — introduced by go-getter pack example@0.1.0\n"
+}

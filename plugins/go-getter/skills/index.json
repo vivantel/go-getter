@@ -64,6 +64,14 @@
       ]
     },
     {
+      "name": "go-getter-init",
+      "version": "0.0.0",
+      "files": [
+        "SKILL.md",
+        "examples.md"
+      ]
+    },
+    {
       "name": "lint",
       "version": "0.0.0",
       "files": [
