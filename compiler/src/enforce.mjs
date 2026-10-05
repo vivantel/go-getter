@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readArtifacts } from './artifacts.mjs';
 import { parseRun } from './packs.mjs';
+import { cleanGitEnv } from './vendor.mjs';
 
 const BUILTIN_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'checks', 'builtin');
 
@@ -39,7 +40,8 @@ export async function runTier3(project, { onlyGuardrail } = {}) {
     if (e.parsed.kind === 'builtin') result = await runBuiltin(project, e.parsed);
     else {
       try {
-        execSync(e.parsed.command, { cwd: project, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
+        // Under a git hook GIT_DIR pins every git command to the hooked repository; a check that runs `git init` (the telemetry tests) would re-initialise it as bare.
+        execSync(e.parsed.command, { cwd: project, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8', env: cleanGitEnv(process.env) });
         result = { ok: true };
       } catch (err) {
         result = { ok: false, message: `${e.parsed.command} exited ${err.status}: ${(err.stderr || err.stdout || '').trim().split('\n').slice(-3).join(' | ')}` };

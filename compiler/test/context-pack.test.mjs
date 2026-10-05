@@ -48,3 +48,19 @@ test('the recommended cap fails the check once AGENTS.md exceeds 150 lines', asy
   assert.match(over.message, /151 lines, cap is 150/);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('tier-3 commands run without the hooked repository pinned by git hook variables', async () => {
+  const dir = project();
+  mkdirSync(path.join(dir, 'docs/guardrails'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/guardrails/no-hook-git-env.md'), '---\nid: no-hook-git-env\ntitle: t\nstatus: active\ndate: 2026-10-05\ntags: [guardrail]\ngo-getter:\n  enforcement:\n    - tier: 3\n      check: "GIT_DIR is not inherited"\n      run: "sh -c \'test -z \\"$GIT_DIR\\"\'"\n---\n\nBody.\n');
+  const before = process.env.GIT_DIR;
+  process.env.GIT_DIR = path.join(dir, '.git');
+  try {
+    const result = (await runTier3(dir, { onlyGuardrail: 'no-hook-git-env' }))[0];
+    assert.equal(result.ok, true, result.message);
+  } finally {
+    if (before === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = before;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
