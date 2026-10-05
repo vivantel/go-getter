@@ -1,6 +1,8 @@
 // Shared tier-2 hook runtime: every host's pre-tool hook calls `go-getter hook pre-tool --host <id>`.
 // Evaluates the project's tier-2 guardrail entries against the tool call and answers in the host's format.
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
@@ -45,4 +47,22 @@ export function respond(host, decision) {
   if (!decision.deny) return { code: 0, stdout: '', stderr: '' };
   if (host === 'copilot') return { code: 0, stdout: JSON.stringify({ permissionDecision: 'deny', permissionDecisionReason: decision.reason }), stderr: '' };
   return { code: 2, stdout: '', stderr: decision.reason };
+}
+
+// Session start: run vendored kms nudge scripts (POSIX sh, plain-text output) in the project; failures are silent.
+export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh'];
+
+export function sessionNudges(packageRoot, project) {
+  const lines = [];
+  for (const script of NUDGES) {
+    const file = path.join(packageRoot, 'vendor/kms/hooks', script);
+    if (!existsSync(file)) continue;
+    try {
+      const out = execFileSync('sh', [file], { cwd: project, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10000 }).trim();
+      if (out) lines.push(out);
+    } catch {
+      // a nudge must never block a session
+    }
+  }
+  return lines.join('\n');
 }

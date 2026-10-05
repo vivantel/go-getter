@@ -31,6 +31,12 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 **Interim working rules (until v0.3 replaces them, decision 0004)**: after the bootstrap commit, never push to `main`. Every step is a short-lived branch `type/slug` → PR → squash merge. Conventional Commit titles with `Refs:` trailers to the `docs/` artifacts implemented (the `kms:attribute` skill writes these). One git worktree per parallel task (`git worktree add ../go-getter-wt/<slug> -b <branch>`). Steps marked **‖** may run in parallel.
 
+## Known enforcement debt (from capture, 2026-10-05)
+
+- `routing-*` guardrails run `npm run test:routing` and `telemetry-records-metadata-only` runs `npm run test:telemetry`; both pass vacuously until steps 5.4/5.6 add the tests.
+- `practice-ships-only-after-self-adoption` runs `check:self-adoption`, a stub until step 5.0.
+- Decision 0019's PowerShell shims are not implemented; the runner is POSIX `sh` only.
+
 ## Open questions (resolve in the named step; record answers as facts/decisions)
 
 - Pack file format: JSON (default) vs restricted YAML subset (4.1).
@@ -140,7 +146,7 @@ Do: `compiler/capabilities/<host>.json` ×6, `compiler/schemas/capabilities.sche
 Done-when: six manifests validate in `npm test`; each cites its fact id.
 
 ### 2.4 Adapters ‖ — [x]
-Result: all six adapters in `compiler/src/build.mjs` (`ADAPTERS`), shipped as one PR rather than six because they share one emitter and golden test; distributable packaging ships skills + manifests only — agents/hooks are project-local (`apply`, 4.4). Fixture repo `compiler/test/fixtures/repo` + golden `compiler/test/golden/build.json` (`UPDATE_GOLDEN=1` to refresh). `check:generated` implemented early. Resolutions recorded in fact 0015; `claude plugin validate --strict` passes.
+Result: all six adapters in `compiler/adapters/<host>.mjs` (shared helpers `compiler/src/emit.mjs`; moved there from `build.mjs` after a capture pass found the drift), shipped as one PR rather than six because they share one emitter and golden test; distributable packaging ships skills + manifests only — agents/hooks are project-local (`apply`, 4.4). Fixture repo `compiler/test/fixtures/repo` + golden `compiler/test/golden/build.json` (`UPDATE_GOLDEN=1` to refresh). `check:generated` implemented early. Resolutions recorded in fact 0015; `claude plugin validate --strict` passes.
 Do: per `docs/skills/adding-a-host-agent.md` steps 3-4, one adapter per host in `compiler/adapters/<host>.mjs`: emit native files from `src/` for both output kinds, symlinks for byte-identical outputs (`--copy` fallback), fall back down the tiers and mark outputs advisory where a feature is missing. Split 2.4a Claude Code, 2.4b Codex, 2.4c Kilo/OpenCode, 2.4d Cursor, 2.4e Gemini CLI, 2.4f Copilot — each its own branch/PR. Seed `src/skills/hello/SKILL.md` so output is non-empty.
 Done-when (each): `node compiler/bin/go-getter.mjs build --host <h>` emits that host's files for the sample skill; its golden test passes; output matches the host fact (0003-0008).
 
@@ -168,7 +174,7 @@ Do: `scripts/sync-kms.mjs` (zero-dep, `git` via `child_process`): shallow-clone 
 Done-when: `npm run sync:kms -- <tag>` populates `vendor/kms/` and the lockfile; `npm run check:vendor` exits 0, and non-zero after a test edit to a vendored file (revert it).
 
 ### 3.2 Compile kms to six host agents — [x]
-Result: 14 kms skills + `shared/` + `templates/` compiled for all hosts; reference-resolution test passes for plugin root and Gemini repo root; Kilo remote-index limitation and unshipped kms hooks recorded in fact 0015.
+Result: 14 kms skills + `shared/` + `templates/` compiled for all hosts; reference-resolution test passes for plugin root and Gemini repo root; Kilo remote-index limitation and unshipped kms hooks recorded in fact 0019.
 Context: a kms plugin root has `skills/`, `hooks/`, `shared/`, `templates/`; skill bodies reference `../../shared/artifact-model.md` (fact 0001); kms has a Claude Code hook (`capture-nudge.sh`).
 Do: adapters include `vendor/kms/` skills with relative layout preserved; map kms hooks only where fact 0009 allows; keep upstream skill names.
 Done-when: a test walks every relative reference in every compiled kms `SKILL.md` per host and finds an existing file; `npm run check:generated` exits 0.
@@ -198,6 +204,11 @@ Result: `compiler/src/apply.mjs` (+ `go-getter apply [--hosts] [--check]`): runn
 Context: 0009 and `go-getter.enforcement` (0007).
 Do: `go-getter apply` reads `docs/guardrails/*.md` frontmatter and emits: tier 3 — `.githooks/*` + `git config core.hooksPath .githooks`, and `.github/workflows/go-getter-checks.yml` running `go-getter check`; tier 2 — host hook/permission files where the capability manifest allows; tier 1 — a generated `AGENTS.md` section between `<!-- go-getter:start -->` / `<!-- go-getter:end -->` (text outside the markers untouched; covered by the drift check). `go-getter check` runs every tier-3 `run` (grammar from 4.1) and exits non-zero on failure. Built-in checks in `compiler/src/checks/`: `command`, `path-exists`, `file-max-lines`, `branch-name`, `commit-message`.
 Done-when: running `apply` twice leaves no diff after the second run; `go-getter check` exits 0 on this repo and non-zero in a test with a fixture violating one guardrail; `npm run check:generated` covers the `AGENTS.md` generated section.
+
+### 4.4b Project-local skills for hosts without plugin installs — [ ]
+Context: decision 0021 (output kind B) and fact 0019 say `apply` provides `.agents/skills/` (+ `.claude/skills` symlink) so Kilo remote installs get kms's `shared/`/`templates/` references; `apply` does not emit skills yet (found by capture, 2026-10-05).
+Do: add an opt-in `apply --skills` (default on for `kilo-opencode`) that copies the go-getter package's compiled skills and support dirs into `.agents/skills/` and `.agents/{shared,templates}/`, with the `.claude/skills` symlink when `claude-code` is a host; include them in `diffApply`.
+Done-when: a test applies with `--hosts kilo-opencode` to a fixture and every `../../shared` reference in `.agents/skills/*/SKILL.md` resolves; `apply --check` covers the files.
 
 ### 4.5 Reconfigure — [x]
 Result: `compiler/src/reconfigure.mjs` + `go-getter reconfigure <pack> --answers <file> [--dry-run] | --current`. Changed answers supersede their decisions (with `superseded-by`); non-decision artifacts are re-rendered in place (re-derivation); artifacts no longer produced become `deprecated`; INDEX statuses updated. Emitted artifacts now also carry `go-getter.pack-option` (needed to recover answers; extends decision 0022). Skill `go-getter-init` documents the flow.

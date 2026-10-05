@@ -5,7 +5,7 @@ status: active
 date: 2026-10-04
 tags: [model-routing, governance, guardrail]
 governed-by: 0018-data-classes-constrain-routing-with-tiered-dlp
-grounded-in: [0018-data-classes-constrain-routing-with-tiered-dlp, 0016-quality-gated-cache-aware-model-routing]
+grounded-in: [0018-data-classes-constrain-routing-with-tiered-dlp, 0016-quality-gated-cache-aware-model-routing, 0014-local-model-options]
 derivation-note: Given data classes are hard constraints (0018) and routing minimizes cost (0016), any cost comparison that includes an ineligible model could select it, so eligibility filtering must come first.
 go-getter:
   enforcement:

@@ -4,8 +4,19 @@ import { readFileSync, readdirSync, statSync, existsSync, mkdirSync, writeFileSy
 import path from 'node:path';
 import { parseFrontmatter } from './frontmatter.mjs';
 import { HOSTS, loadCapabilities } from './capabilities.mjs';
+import { PLUGIN_DIR } from './emit.mjs';
+import claudeCode from '../adapters/claude-code.mjs';
+import codex from '../adapters/codex.mjs';
+import kiloOpencode from '../adapters/kilo-opencode.mjs';
+import cursor from '../adapters/cursor.mjs';
+import copilot from '../adapters/copilot.mjs';
+import geminiCli from '../adapters/gemini-cli.mjs';
 
-export const PLUGIN_DIR = 'plugins/go-getter';
+export { PLUGIN_DIR };
+
+// One emitter per host in compiler/adapters/<host>.mjs; identical shared entries are merged.
+export const ADAPTERS = { 'claude-code': claudeCode, codex, 'kilo-opencode': kiloOpencode, cursor, copilot, 'gemini-cli': geminiCli };
+
 // Plugin-root directories that skills reference relatively (kms skills use ../../shared and ../../templates).
 export const SUPPORT_DIRS = ['shared', 'templates'];
 // Paths the build owns completely; anything else in the repo is left alone.
@@ -52,10 +63,6 @@ export function readSkills(baseDir, { exclude = [] } = {}) {
     });
 }
 
-function json(value) {
-  return { content: `${JSON.stringify(value, null, 2)}\n` };
-}
-
 export function packageMeta(pkg) {
   return {
     name: 'go-getter',
@@ -68,73 +75,6 @@ export function packageMeta(pkg) {
     keywords: ['agent-harness', 'sdlc', 'model-routing', 'guardrails'],
   };
 }
-
-const sharedSkills = (ctx) => {
-  const out = {};
-  for (const skill of ctx.skills) {
-    for (const f of skill.files) out[`${PLUGIN_DIR}/skills/${skill.name}/${f}`] = { content: skill.read(f) };
-  }
-  for (const { dir, files, read } of ctx.supportDirs) {
-    for (const f of files) out[`${PLUGIN_DIR}/${dir}/${f}`] = { content: read(f) };
-  }
-  return out;
-};
-
-const agentPluginsManifest = (ctx) => ({
-  [`${PLUGIN_DIR}/plugin.json`]: json({ $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', ...ctx.meta }),
-});
-
-// One emitter per host. Each returns the files that host needs; identical shared entries are merged.
-export const ADAPTERS = {
-  'claude-code': (ctx) => ({
-    ...sharedSkills(ctx),
-    '.claude-plugin/marketplace.json': json({
-      name: 'go-getter',
-      owner: { name: 'vivantel' },
-      description: ctx.meta.description,
-      plugins: [{ name: 'go-getter', description: ctx.meta.description, source: `./${PLUGIN_DIR}` }],
-    }),
-    [`${PLUGIN_DIR}/.claude-plugin/plugin.json`]: json({ ...ctx.meta, displayName: 'go-getter' }),
-  }),
-  codex: (ctx) => ({
-    ...sharedSkills(ctx),
-    [`${PLUGIN_DIR}/.codex-plugin/plugin.json`]: json({
-      name: ctx.meta.name,
-      version: ctx.meta.version,
-      description: ctx.meta.description,
-      skills: './skills',
-    }),
-    // Entry shape per third-party descriptions of Codex marketplaces; verified in plan step 6.3.
-    '.agents/plugins/marketplace.json': json({
-      name: 'go-getter',
-      interface: { displayName: 'go-getter' },
-      plugins: [
-        {
-          name: 'go-getter',
-          source: { source: 'local', path: `./${PLUGIN_DIR}` },
-          policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
-          category: 'Developer Tools',
-        },
-      ],
-    }),
-  }),
-  'kilo-opencode': (ctx) => ({
-    ...sharedSkills(ctx),
-    [`${PLUGIN_DIR}/skills/index.json`]: json({
-      skills: ctx.skills.map((s) => ({ name: s.name, version: ctx.meta.version, files: s.files })),
-    }),
-  }),
-  cursor: (ctx) => ({ ...sharedSkills(ctx), ...agentPluginsManifest(ctx) }),
-  copilot: (ctx) => ({ ...sharedSkills(ctx), ...agentPluginsManifest(ctx) }),
-  // Gemini installs a whole repo and needs gemini-extension.json and skills/ in the same root;
-  // support dirs are linked too so skills' ../../shared references resolve from the repo root.
-  'gemini-cli': (ctx) => ({
-    ...sharedSkills(ctx),
-    'gemini-extension.json': json({ name: ctx.meta.name, version: ctx.meta.version, description: ctx.meta.description }),
-    skills: { symlink: `${PLUGIN_DIR}/skills` },
-    ...Object.fromEntries(ctx.supportDirs.map(({ dir }) => [dir, { symlink: `${PLUGIN_DIR}/${dir}` }])),
-  }),
-};
 
 // Vendored kms (decision 0006): its skills plus the plugin-root support dirs they reference.
 export function readVendored(root) {

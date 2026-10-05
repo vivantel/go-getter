@@ -1,6 +1,7 @@
 # Guardrails index (CSV)
 
 id,title,tags,status
+commit-subjects-are-conventional,"Commit subjects must follow Conventional Commits","git-hooks, ci, guardrail",active
 generated-host-files-not-hand-edited,"Generated host-agent files must never be hand-edited","generated-files, compiler, guardrail",active
 guardrails-declare-enforcement,"Every guardrail must declare how it is enforced","enforcement, guardrail, configuration",active
 neutral-source-has-no-host-specific-language,"Neutral source must not name a host agent or its tools","agent-agnostic, compiler, guardrail",active

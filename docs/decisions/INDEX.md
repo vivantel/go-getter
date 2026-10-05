@@ -11,7 +11,6 @@ id,title,tags,status
 0008-declarative-practice-packs,"Practice areas are declarative packs in two families - harness packs and SDLC packs - driven by one init skill","practice-packs, interview, architecture, harness",active
 0009-tiered-enforcement-git-ci-floor,"Rules are enforced in tiers, with host-independent git hooks and CI as the floor","enforcement, git-hooks, ci, hooks",active
 0010-self-hosting-ratchet,"go-getter dogfoods itself from commit 0 through a self-hosting ratchet","dogfooding, ci, roadmap",active
-0011-nodejs-zero-dependency-tooling,"Compiler and enforcement scripts are Node.js ESM with zero runtime dependencies","nodejs, tooling, compiler",superseded
 0012-public-mit-repo,"The repo is public on GitHub as vivantel/go-getter under the MIT license","licensing, packaging, security",active
 0013-layered-verification-gate,"go-getter is verified in three layers - unit, golden output, behavior evals","verification, eval, ci",active
 0014-agent-roles-compiled-to-native-agents,"Agent roles are declared once and compiled to native host agents' subagents with a shared handoff contract","agent-roles, compiler, practice-packs, harness",active
@@ -24,3 +23,5 @@ id,title,tags,status
 0021-neutral-source-and-output-layout,"Neutral source, compiler and per-host output layout","architecture, compiler, generated-files, packaging",active
 0022-pack-schema-and-enforcement-run-grammar,"Practice packs are JSON files with questions, options and per-answer artifact templates; enforcement runs use a builtin-or-command grammar","practice-packs, interview, enforcement, configuration",active
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",active
+0024-dogfood-workflow-with-own-plugin,"This repo runs its kms workflow through its own go-getter plugin, with capture, conform and attribute on every PR","dogfooding, knowledge-management, git-hooks",active
+0025-shared-tier-2-hook-runtime,"Every host's hooks call one shared go-getter hook runtime instead of host-specific rule logic","enforcement, hooks, architecture",active

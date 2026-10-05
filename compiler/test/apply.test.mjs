@@ -119,3 +119,43 @@ test('go-getter check runs tier-3 guardrails and fails on a violation', async ()
   assert.match(res.stdout, /FAIL agents-cap/);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('a kms knowledge base adds session-start nudge hooks on every host that has one', () => {
+  const dir = project({ tier2: false });
+  mkdirSync(path.join(dir, 'docs/decisions'), { recursive: true });
+  writeApply(dir, planApply(dir, { hosts: HOSTS }));
+  const cc = JSON.parse(readFileSync(path.join(dir, '.claude/settings.json'), 'utf8'));
+  assert.match(cc.hooks.SessionStart[0].hooks[0].command, /hook session-start --host claude-code/);
+  assert.equal(cc.hooks.PreToolUse.length, 1); // only the user's own hook; no tier-2 rules
+  assert.match(JSON.parse(readFileSync(path.join(dir, '.codex/hooks.json'), 'utf8')).hooks.SessionStart[0].hooks[0].command, /session-start/);
+  assert.match(JSON.parse(readFileSync(path.join(dir, '.cursor/hooks.json'), 'utf8')).hooks.sessionStart[0].command, /session-start/);
+  assert.match(JSON.parse(readFileSync(path.join(dir, '.gemini/settings.json'), 'utf8')).hooks.SessionStart[0].hooks[0].command, /session-start/);
+  const cp = JSON.parse(readFileSync(path.join(dir, '.github/hooks/go-getter.json'), 'utf8'));
+  assert.deepEqual(Object.keys(cp.hooks), ['sessionStart']);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('session-start runs the vendored kms nudges and never fails', () => {
+  const dir = project({ tier2: false });
+  execFileSync('git', ['-c', 'user.email=t@e', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'chore: x'], { cwd: dir });
+  const res = spawnSync(process.execPath, [cli, 'hook', 'session-start', '--host', 'claude-code', '--project', dir], { encoding: 'utf8' });
+  assert.equal(res.status, 0);
+  assert.match(res.stdout, /capture skill/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('commit-message builtin ignores merge commits and flags bad subjects', async () => {
+  const { default: commitMessage } = await import('../src/checks/builtin/commit-message.mjs');
+  const dir = project({ tier2: false });
+  const g = (...a) => execFileSync('git', ['-c', 'user.email=t@e', '-c', 'user.name=t', ...a], { cwd: dir, stdio: 'pipe' });
+  g('commit', '-q', '--allow-empty', '-m', 'chore: base');
+  g('branch', 'base');
+  g('commit', '-q', '--allow-empty', '-m', 'feat: good');
+  const pattern = '^(feat|fix|chore)(\\([a-z0-9-]+\\))?!?: .+';
+  assert.equal(commitMessage({ project: dir, args: { pattern, base: 'base' } }).ok, true);
+  g('commit', '-q', '--allow-empty', '-m', 'Bad subject');
+  const r = commitMessage({ project: dir, args: { pattern, base: 'base' } });
+  assert.equal(r.ok, false);
+  assert.match(r.message, /Bad subject/);
+  rmSync(dir, { recursive: true, force: true });
+});

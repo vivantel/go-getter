@@ -7,7 +7,7 @@ export default function commitMessage({ project, args }) {
   let subjects;
   try {
     const base = args.base ?? git(project, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']);
-    subjects = git(project, ['log', '--format=%s', `${base}..HEAD`]).split('\n').filter(Boolean);
+    subjects = git(project, ['log', '--no-merges', '--format=%s', `${base}..HEAD`]).split('\n').filter(Boolean);
   } catch {
     return { ok: true, message: 'no base branch to compare against' };
   }

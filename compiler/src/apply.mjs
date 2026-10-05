@@ -115,25 +115,33 @@ function setEvent(obj, keys, entry) {
 const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 
 // Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook pre-tool --host <id>`.
-export function hostHookOutputs(project, hosts, enabled) {
-  const cmd = (host) => `sh ${RUNNER} hook pre-tool --host ${host}`;
+// `enabled`: tier-2 guardrails exist (pre-tool hook). `session`: kms knowledge base present (session-start nudges).
+export function hostHookOutputs(project, hosts, enabled, session = false) {
+  const cmd = (host, event = 'pre-tool') => `sh ${RUNNER} hook ${event} --host ${host}`;
   const out = {};
-  // Touch a host's hook file only to install our hook, or to remove it from a file that already exists.
-  const wanted = (rel) => enabled || existsSync(path.join(project, rel));
-  const ccLike = (host) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host) }] });
+  // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
+  const wanted = (rel) => enabled || session || existsSync(path.join(project, rel));
+  const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
+  const both = (obj, preKeys, sessionKeys, pre, start) => setEvent(setEvent(obj, preKeys, enabled ? pre : null), sessionKeys, session ? start : null);
   for (const host of hosts) {
-    if (host === 'claude-code' && wanted('.claude/settings.json')) out['.claude/settings.json'] = json(setEvent(readJson(project, '.claude/settings.json'), ['hooks', 'PreToolUse'], enabled ? ccLike(host) : null));
-    if (host === 'codex' && wanted('.codex/hooks.json')) out['.codex/hooks.json'] = json(setEvent(readJson(project, '.codex/hooks.json'), ['hooks', 'PreToolUse'], enabled ? ccLike(host) : null));
+    if (host === 'claude-code' && wanted('.claude/settings.json')) {
+      out['.claude/settings.json'] = json(both(readJson(project, '.claude/settings.json'), ['hooks', 'PreToolUse'], ['hooks', 'SessionStart'], ccLike(host), { hooks: [{ type: 'command', command: cmd(host, 'session-start') }] }));
+    }
+    if (host === 'codex' && wanted('.codex/hooks.json')) {
+      out['.codex/hooks.json'] = json(both(readJson(project, '.codex/hooks.json'), ['hooks', 'PreToolUse'], ['hooks', 'SessionStart'], ccLike(host), { hooks: [{ type: 'command', command: cmd(host, 'session-start') }] }));
+    }
     if (host === 'gemini-cli' && wanted('.gemini/settings.json')) {
-      const settings = setEvent(readJson(project, '.gemini/settings.json'), ['hooks', 'BeforeTool'], enabled ? ccLike(host) : null);
-      out['.gemini/settings.json'] = json(settings);
+      out['.gemini/settings.json'] = json(both(readJson(project, '.gemini/settings.json'), ['hooks', 'BeforeTool'], ['hooks', 'SessionStart'], ccLike(host), { hooks: [{ type: 'command', command: cmd(host, 'session-start') }] }));
     }
     if (host === 'cursor' && wanted('.cursor/hooks.json')) {
       const base = readJson(project, '.cursor/hooks.json');
-      out['.cursor/hooks.json'] = json({ version: 1, ...setEvent(base, ['hooks', 'preToolUse'], enabled ? { command: cmd(host) } : null) });
+      out['.cursor/hooks.json'] = json({ version: 1, ...both(base, ['hooks', 'preToolUse'], ['hooks', 'sessionStart'], { command: cmd(host) }, { command: cmd(host, 'session-start') }) });
     }
-    if (host === 'copilot' && enabled) {
-      out['.github/hooks/go-getter.json'] = json({ version: 1, hooks: { preToolUse: [{ type: 'command', bash: cmd(host), timeoutSec: 30 }] } });
+    if (host === 'copilot' && (enabled || session)) {
+      const hooks = {};
+      if (enabled) hooks.preToolUse = [{ type: 'command', bash: cmd(host), timeoutSec: 30 }];
+      if (session) hooks.sessionStart = [{ type: 'command', bash: cmd(host, 'session-start'), timeoutSec: 30 }];
+      out['.github/hooks/go-getter.json'] = json({ version: 1, hooks });
     }
     if (host === 'kilo-opencode' && enabled) {
       out['.opencode/plugins/go-getter.js'] = {
@@ -178,7 +186,7 @@ export function planApply(project, { hosts } = {}) {
     names.add('AGENTS.md');
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
-  const hookOutputs = hostHookOutputs(project, targetHosts, tier2);
+  const hookOutputs = hostHookOutputs(project, targetHosts, tier2, detected.kms);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {
       // Merge the hook change into the context.fileName change for the same file.

@@ -15,4 +15,8 @@ id,title,tags,status
 0012-model-pricing-openai,"OpenAI model pricing including cached input","cost, model-routing, governance",active
 0013-model-pricing-google,"Google Gemini API model pricing including context caching","cost, model-routing, governance",active
 0014-local-model-options,"Local and custom model endpoints each host agent can use","governance, model-routing, host-agents",active
-0015-distributable-packaging-resolutions,"How the adapters resolved decision 0021's open packaging points","packaging, compiler, generated-files",active
+0015-distributable-packaging-resolutions,"Distributable packaging ships skills only, with a Gemini-compatible repo root","packaging, compiler, generated-files",active
+0016-pack-option-provenance-field,"Pack-emitted artifacts also record the chosen option","practice-packs, configuration",active
+0017-init-skill-name,"The setup skill is named go-getter-init","interview, packaging",active
+0018-plugin-manifest-shapes,"Manifest shapes the adapters emit for Agent Plugins 1.0 and Codex","packaging, cursor, copilot, codex",active
+0019-vendored-kms-packaging,"How vendored kms 0.15.0 is packaged and where it falls short","kms, vendoring, packaging",active
