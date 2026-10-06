@@ -19,6 +19,7 @@ export const FIELDS = {
   cost: num,
   outcome: (v) => OUTCOMES.includes(v),
   escalations: count,
+  redactions: count,
 };
 
 export function validateRecord(record) {

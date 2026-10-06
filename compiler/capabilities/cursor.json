@@ -30,6 +30,7 @@
     "config": ".cursor/hooks.json",
     "blockPreTool": true,
     "rewriteToolInput": true,
+    "rewriteOutput": false,
     "blockStop": true,
     "modelSwap": false,
     "runtime": "command"

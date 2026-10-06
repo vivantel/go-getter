@@ -117,6 +117,24 @@ test('hookRecord keeps metadata only and never tool input', () => {
   assert.deepEqual(validateRecord({ ts: new Date().toISOString(), ...rec }), []);
 });
 
+test('go-getter hook post-tool records the count of redactions and no content', () => {
+  const dir = project();
+  adopt(dir);
+  const token = ['gh', 'p_'].join('') + 'Zx90'.repeat(9); // built at runtime: no literal token in this file
+  const bin = path.join(root, 'compiler/bin/go-getter.mjs');
+  const payload = { tool_name: 'Bash', tool_input: { command: 'deploy' }, tool_response: { stdout: `a ${token} b ${token}`, stderr: '' }, model: 'model-a' };
+  assert.equal(spawnSync('node', [bin, 'hook', 'post-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify(payload), encoding: 'utf8' }).status, 0);
+  const log = readFileSync(path.join(dir, LOG), 'utf8');
+  assert.ok(!log.includes(token) && !log.includes('deploy'));
+  const [rec] = readLog(dir);
+  assert.equal(rec.event, 'post-tool');
+  assert.equal(rec.redactions, 2);
+  assert.deepEqual(Object.keys(rec).sort(), ['event', 'host', 'model', 'redactions', 'ts']);
+  assert.deepEqual(validateRecord(rec), []);
+  assert.ok(validateRecord({ ts: rec.ts, event: 'post-tool', redactions: 'two' }).length);
+  rmSync(dir, { recursive: true, force: true });
+});
+
 test('go-getter hook pre-tool records an event and the summary command reports it', () => {
   const dir = project();
   adopt(dir);

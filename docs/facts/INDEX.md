@@ -20,7 +20,7 @@ id,title,tags,status
 0018-plugin-manifest-shapes,"Manifest shapes the adapters emit for Agent Plugins 1.0 and Codex","packaging, cursor, copilot, codex",active
 0020-agent-role-compilation,"Project agent roles come from adopted decisions and are compiled by apply; four host tool mappings are unconfirmed","agent-roles, compiler, host-agents",active
 0021-governance-data-and-eligibility,"Governance decisions carry the registry and class policy that eligibility reads; the single-provider answer adds a provider question","governance, model-routing, practice-packs",active
-0022-telemetry-record-and-recorder,"Telemetry records allow only short-identifier and numeric metadata fields; hook events record host, model, effort and outcome only","observability, practice-packs, compiler",active
+0022-telemetry-record-and-recorder,"Telemetry records allow only short-identifier and numeric metadata fields; hook events record host, model, effort, outcome and a redaction count only","observability, practice-packs, compiler",active
 0023-verification-gate-runtime,"The verification gate runs adopted check commands by task class and blocks a stop through the shared hook runtime; four hosts can block, the stop answer shapes of Codex and Cursor are unconfirmed","verification, practice-packs, compiler, hooks",active
 0024-model-tiers-and-host-providers,"Priced models are grouped into small, medium and large tiers per provider, and each host agent is mapped to the providers whose models it can run","model-routing, cost, host-agents",active
 0025-routing-runtime,"Routing runs as an eligibility filter, an expected-total-step-cost comparison and a bounded escalation ladder; four hosts rewrite delegations, the rewrite shapes of Codex and Cursor are unconfirmed","model-routing, cost, compiler, hooks",active
@@ -28,3 +28,4 @@ id,title,tags,status
 0027-claude-code-secret-use-and-output-redaction-levers,"Claude Code can deny or mask credentials for sandboxed shell commands (mask only from user or managed settings) and can replace tool output from a hook","claude-code, governance, security, hooks",active
 0028-prompt-cache-refresh-and-prewarm,"Each cache hit refreshes the prompt cache lifetime at no charge, and the API can pre-warm a prefix with max_tokens 0","cost, model-routing",active
 0029-openspec-layout-and-workflow,"OpenSpec keeps living specs under openspec/specs and per-change folders with delta specs that are archived on completion","roadmap, tooling, packaging",active
+0030-tool-output-redaction-runtime,"The post-tool hook redacts restricted-file values, private-key blocks and known token prefixes from tool results; only Claude Code gets it","governance, security, hooks, compiler",active

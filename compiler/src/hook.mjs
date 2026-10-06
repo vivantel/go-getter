@@ -2,7 +2,7 @@
 // Evaluates the project's tier-2 guardrail entries against the tool call and answers in the host's format.
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
 import { FIELDS } from './telemetry/schema.mjs';
@@ -139,6 +139,116 @@ export function evaluatePreTool(project, payload) {
   return { deny: false };
 }
 
+// Tier-2 tool-output redaction (decision 0072): `go-getter hook post-tool` replaces secrets in a tool result with
+// REDACTED where the host can replace output (capability hooks.rewriteOutput). Heuristic, like every hook layer.
+export const REDACTED = '[redacted by go-getter]';
+// Built-in patterns: private-key blocks (to the end marker, or the end of a truncated output) and token prefixes.
+const KEY_BLOCK = '-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\\s\\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)';
+const BUILTIN = [
+  KEY_BLOCK,
+  '\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b', // AWS access key id
+  '\\bAIza[0-9A-Za-z_-]{35}', // Google API key
+  '\\bgh[pousr]_[A-Za-z0-9]{36,}', // GitHub tokens
+  '\\bgithub_pat_[A-Za-z0-9_]{22,}',
+  '\\bglpat-[A-Za-z0-9_-]{20,}', // GitLab
+  '\\bxox[abposr]-[A-Za-z0-9-]{10,}', // Slack
+  '\\bnpm_[A-Za-z0-9]{36}', // npm
+  '\\bsk-ant-[A-Za-z0-9_-]{20,}', // Anthropic
+  '\\bsk_live_[A-Za-z0-9]{20,}', // Stripe
+].map((s) => new RegExp(s, 'g'));
+// A value shorter than this (`true`, `3000`) is left alone: redacting it would scramble ordinary output.
+const MIN_VALUE = 8;
+const MAX_FILE = 256 * 1024;
+const SKIP_DIRS = new Set(['.git', 'node_modules']);
+
+// Restricted patterns of the adopted tier-2 deny-path guardrails.
+function restrictedPatterns(project) {
+  return collectEnforcement(project)
+    .filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'deny-path')
+    .flatMap((e) => patternsOf(e.parsed.args));
+}
+
+// Values of the `KEY=value` lines of every restricted file in the project. All modes count: `use` and `sink` are
+// inactive (treated as `deny`) until `go-getter secret run|put` exist, and no mode may show a value to the model.
+export function restrictedValues(project, patterns = restrictedPatterns(project)) {
+  const values = new Set();
+  if (!patterns.length) return values;
+  const walk = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      const abs = path.join(dir, ent.name);
+      if (ent.isDirectory()) {
+        if (!SKIP_DIRS.has(ent.name)) walk(abs);
+        continue;
+      }
+      if (!ent.isFile() || !matchesAny(path.relative(project, abs), patterns)) continue;
+      try {
+        if (statSync(abs).size > MAX_FILE) continue;
+        for (const line of readFileSync(abs, 'utf8').split(/\r?\n/)) {
+          const m = /^\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_.-]*\s*=\s*(.*?)\s*$/.exec(line);
+          if (!m) continue;
+          const value = m[1].replace(/^(["'])(.*)\1$/, '$2');
+          if (value.length >= MIN_VALUE) values.add(value);
+        }
+      } catch {
+        // an unreadable file has no values to leak
+      }
+    }
+  };
+  walk(project);
+  return values;
+}
+
+// Redacts one string: restricted values first (longest first, so a value inside another goes with it), then patterns.
+export function redactText(text, values) {
+  let count = 0;
+  let out = text;
+  for (const v of [...values].sort((a, b) => b.length - a.length)) {
+    const parts = out.split(v);
+    count += parts.length - 1;
+    out = parts.join(REDACTED);
+  }
+  for (const re of BUILTIN) {
+    out = out.replace(re, () => {
+      count++;
+      return REDACTED;
+    });
+  }
+  return { text: out, count };
+}
+
+// Redacts every string in a tool result, keeping its shape so the host accepts it as a replacement.
+export function evaluatePostTool(project, payload) {
+  const response = payload.tool_response ?? payload.toolResponse ?? payload.tool_output;
+  const values = restrictedValues(project);
+  let redactions = 0;
+  const walk = (v) => {
+    if (typeof v === 'string') {
+      const r = redactText(v, values);
+      redactions += r.count;
+      return r.text;
+    }
+    if (Array.isArray(v)) return v.map(walk);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]));
+    return v;
+  };
+  const output = walk(response);
+  return { output, redactions, mcp: /^mcp__/.test(toolName(payload) ?? '') };
+}
+
+// Host-specific post-tool answer: replace the result only when something was redacted. Only hosts with
+// hooks.rewriteOutput get this hook installed; any other host answers nothing.
+export function respondPostTool(host, result) {
+  if (!result.redactions || host !== 'claude-code') return { code: 0, stdout: '', stderr: '' };
+  const key = result.mcp ? 'updatedMCPToolOutput' : 'updatedToolOutput';
+  return { code: 0, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', [key]: result.output } }), stderr: '' };
+}
+
 // Host-specific answer: exit 2 + stderr where that blocks; Copilot reads a JSON decision.
 export function respond(host, decision) {
   if (!decision.deny) return { code: 0, stdout: '', stderr: '' };
@@ -173,12 +283,14 @@ export function sessionNudges(packageRoot, project) {
 }
 
 // Telemetry record for a hook event: metadata the host's payload carries (model, effort), never tool input or output.
-export function hookRecord(event, host, payload, decision) {
+// A post-tool event adds only the count of redactions.
+export function hookRecord(event, host, payload, decision, redactions) {
   const rec = { event };
   if (host) rec.host = host;
   const model = typeof payload.model === 'string' ? payload.model : payload.model?.id;
   if (FIELDS.model(model)) rec.model = model;
   if (FIELDS.effort(payload.effort)) rec.effort = payload.effort;
   if (decision) rec.outcome = decision.deny ? 'denied' : 'allowed';
+  if (FIELDS.redactions(redactions)) rec.redactions = redactions;
   return rec;
 }

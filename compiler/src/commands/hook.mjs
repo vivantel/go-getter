@@ -3,9 +3,10 @@
 // pre-tool also routes delegations to a role (cost-routing pack): it sets the delegated model, or denies when no model is eligible;
 // and wraps a host watcher command in `go-getter watch` (context pack, decision 0070).
 // go-getter hook stop --host <id>: verification gate; blocks "done" while the adopted checks fail (bounded, then a human).
+// go-getter hook post-tool --host <id>: redacts secrets from the tool result where the host can replace it.
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { evaluatePreTool, respond, sessionNudges, hookRecord } from '../hook.mjs';
+import { evaluatePreTool, respond, sessionNudges, hookRecord, evaluatePostTool, respondPostTool } from '../hook.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
@@ -25,8 +26,8 @@ export default async function hookCommand({ root, args }) {
     if (text) process.stdout.write(`${text}\n`);
     return 0;
   }
-  if (!['pre-tool', 'stop'].includes(event) || !host) {
-    console.error('usage: go-getter hook <pre-tool|stop|session-start> --host <id>');
+  if (!['pre-tool', 'post-tool', 'stop'].includes(event) || !host) {
+    console.error('usage: go-getter hook <pre-tool|post-tool|stop|session-start> --host <id>');
     return 0; // never block on a misconfigured hook
   }
   let payload = {};
@@ -36,6 +37,18 @@ export default async function hookCommand({ root, args }) {
     return 0;
   }
   const dir = payload.cwd ? path.resolve(payload.cwd) : project;
+  if (event === 'post-tool') {
+    let result;
+    try {
+      result = evaluatePostTool(dir, payload);
+    } catch {
+      return 0; // a broken hook fails open (decision 0019)
+    }
+    recordQuietly(dir, hookRecord('post-tool', host, payload, undefined, result.redactions));
+    const out = respondPostTool(host, result);
+    if (out.stdout) process.stdout.write(out.stdout);
+    return out.code;
+  }
   if (event === 'stop') {
     let out;
     try {

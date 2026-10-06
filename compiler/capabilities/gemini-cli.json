@@ -31,6 +31,7 @@
     "config": ".gemini/settings.json",
     "blockPreTool": true,
     "rewriteToolInput": false,
+    "rewriteOutput": false,
     "blockStop": true,
     "modelSwap": true,
     "runtime": "command"

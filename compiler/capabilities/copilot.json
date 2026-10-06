@@ -29,6 +29,7 @@
     "config": ".github/hooks/go-getter.json",
     "blockPreTool": true,
     "rewriteToolInput": false,
+    "rewriteOutput": false,
     "blockStop": false,
     "modelSwap": false,
     "runtime": "command"

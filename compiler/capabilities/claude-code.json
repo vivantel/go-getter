@@ -28,6 +28,7 @@
     "config": ".claude/settings.json",
     "blockPreTool": true,
     "rewriteToolInput": true,
+    "rewriteOutput": true,
     "blockStop": true,
     "modelSwap": false,
     "runtime": "command",

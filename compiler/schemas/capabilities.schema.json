@@ -47,11 +47,12 @@
     "hooks": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["config", "blockPreTool", "rewriteToolInput", "blockStop", "modelSwap"],
+      "required": ["config", "blockPreTool", "rewriteToolInput", "rewriteOutput", "blockStop", "modelSwap"],
       "properties": {
         "config": { "type": "string" },
         "blockPreTool": { "type": "boolean" },
         "rewriteToolInput": { "type": "boolean" },
+        "rewriteOutput": { "type": "boolean" },
         "blockStop": { "type": "boolean" },
         "modelSwap": { "type": "boolean" },
         "runtime": { "enum": ["command", "javascript"] },

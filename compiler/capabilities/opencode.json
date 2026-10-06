@@ -30,6 +30,7 @@
     "config": ".opencode/plugins/go-getter.js",
     "blockPreTool": true,
     "rewriteToolInput": false,
+    "rewriteOutput": false,
     "blockStop": false,
     "modelSwap": false,
     "runtime": "javascript"

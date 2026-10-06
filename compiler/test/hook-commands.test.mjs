@@ -23,7 +23,7 @@ function project() {
   return dir;
 }
 
-// Every hook command string a host config carries, with the host id it names.
+// Every hook command string a host config carries, with the tool event and host id it names.
 function hookCommands(dir) {
   const found = [];
   const visit = (value) => {
@@ -36,7 +36,7 @@ function hookCommands(dir) {
     const file = path.join(dir, rel);
     if (existsSync(file)) visit(JSON.parse(readFileSync(file, 'utf8')));
   }
-  return found.map((command) => ({ command, host: /--host (\S+)/.exec(command)[1] }));
+  return found.map((command) => ({ command, event: / hook (\S+) --host /.exec(command)[1], host: /--host (\S+)/.exec(command)[1] }));
 }
 
 // Replaces the generated runner with a stub that records its arguments.
@@ -61,13 +61,15 @@ test('hook commands of every host find the runner and name the project when run 
     const sub = nested(dir);
     const commands = hookCommands(dir);
     assert.ok(commands.length >= 5, `found hook commands for the JSON-configured hosts, got ${commands.length}`);
-    for (const { command, host } of commands) {
+    assert.deepEqual(commands.filter((c) => c.event === 'post-tool').map((c) => c.host), ['claude-code'], 'post-tool only where hooks.rewriteOutput');
+    for (const { command, event, host } of commands) {
+      assert.ok(['pre-tool', 'post-tool'].includes(event), `${host}: ${event}`);
       rmSync(out, { force: true });
       const run = spawnSync('sh', ['-c', command], { cwd: sub, env: { ...process.env, STUB_OUT: out }, input: '{}', encoding: 'utf8' });
       assert.equal(run.status, 0, `${host}: ${run.stderr}`);
       assert.ok(existsSync(out), `${host}: the runner was not reached from a subdirectory`);
       const args = readFileSync(out, 'utf8').trim().split('\n');
-      assert.deepEqual(args.slice(0, 4), ['hook', 'pre-tool', '--host', host], host);
+      assert.deepEqual(args.slice(0, 4), ['hook', event, '--host', host], host);
       assert.deepEqual(args.slice(4), ['--project', realpathSync(dir)], `${host} names the project root`);
     }
   } finally {
@@ -159,13 +161,13 @@ test('hook commands also work when a host executes them without a shell', () => 
     writeApply(dir, planApply(dir, { hosts: HOSTS }));
     stubRunner(dir);
     const sub = nested(dir);
-    for (const { command, host } of hookCommands(dir)) {
+    for (const { command, event, host } of hookCommands(dir)) {
       rmSync(out, { force: true });
       const [file, ...args] = splitArgv(command);
       const run = spawnSync(file, args, { cwd: sub, env: { ...process.env, STUB_OUT: out }, input: '{}', encoding: 'utf8' });
       assert.equal(run.status, 0, `${host}: ${run.error?.message ?? run.stderr}`);
       assert.ok(existsSync(out), `${host}: the runner was not reached without a shell`);
-      assert.deepEqual(readFileSync(out, 'utf8').trim().split('\n').slice(0, 4), ['hook', 'pre-tool', '--host', host]);
+      assert.deepEqual(readFileSync(out, 'utf8').trim().split('\n').slice(0, 4), ['hook', event, '--host', host]);
     }
   } finally {
     rmSync(dir, { recursive: true, force: true });

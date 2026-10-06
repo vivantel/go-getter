@@ -136,6 +136,8 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   // Hosts whose stop event can keep the agent working (capability hooks.blockStop) get the gate; the rest stay advisory.
   const caps = packageCapabilities();
   const canStop = (host) => stop && caps[host]?.hooks.blockStop === true;
+  // Tool-output redaction rides on the restricted-path guardrails, where the host can replace output (hooks.rewriteOutput).
+  const canRedact = (host) => enabled && caps[host]?.hooks.rewriteOutput === true;
   // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
   const wanted = (rel) => enabled || session || stop || existsSync(path.join(project, rel));
   const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
@@ -146,6 +148,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
     if (host === 'claude-code' && wanted('.claude/settings.json')) {
       out['.claude/settings.json'] = json(events(readJson(project, '.claude/settings.json'), [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
+        [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
         [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
       ]));
