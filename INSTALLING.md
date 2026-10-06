@@ -83,3 +83,10 @@ npx --yes github:vivantel/go-getter coverage
 ```
 
 `coverage` shows, for each of the twelve harness components and each host agent, whether a rule is enforced in CI, blocked by a host hook, advisory or not covered yet.
+
+## When npx cannot fetch from GitHub
+
+The generated runner `.go-getter/bin/go-getter` (called by every host hook and the pre-push hook) runs the CLI through `npx --yes github:vivantel/go-getter`, pinned to the release tag of the version that wrote it (an unreleased build is unpinned). If npm refuses the fetch (for example `EALLOWGIT` where git dependencies are disabled), the hook fails without blocking, enforcement does not run for that call, and the runner says so. Two ways out:
+
+- Set `GO_GETTER_CLI` to `compiler/bin/go-getter.mjs` of a go-getter checkout (in your shell profile, or in the host's `env` setting for the project). The runner then runs that file and never calls npx.
+- Allow git fetches for npm, preferably for one command or session only: `npm_config_allow_git=all`.
