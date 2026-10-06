@@ -66,6 +66,7 @@ Blocked by host hooks where the host supports it:
 
 - Delegations to a role are routed by expected total step cost (`delegations-are-routed`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
+- Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
 
 Advisory:
 
@@ -83,6 +84,5 @@ Advisory:
 - Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
 - The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
-- Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
 
 <!-- go-getter:end -->

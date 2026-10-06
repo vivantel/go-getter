@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "context",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "family": "harness",
   "components": [
     4
@@ -699,10 +699,15 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Instruction only; no host hook rewrites watch calls yet"
+                "check": "Where no hook wraps the watch, start it through `go-getter watch`"
+              },
+              {
+                "tier": 2,
+                "check": "Pre-tool hook wraps the host watcher command in `go-getter watch` where the host allows",
+                "run": "builtin:wrap-watch"
               }
             ],
-            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands.\nAdvisory (tier 1 only).\n"
+            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands. Where the host allows, the pre-tool hook wraps the watch command.\n"
           }
         ]
       },
@@ -744,10 +749,15 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Instruction only; no host hook rewrites watch calls yet"
+                "check": "Where no hook wraps the watch, start it through `go-getter watch`"
+              },
+              {
+                "tier": 2,
+                "check": "Pre-tool hook wraps the host watcher command in `go-getter watch` where the host allows",
+                "run": "builtin:wrap-watch"
               }
             ],
-            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands.\nAdvisory (tier 1 only).\n"
+            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands. Where the host allows, the pre-tool hook wraps the watch command.\n"
           }
         ]
       },
@@ -789,10 +799,15 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Instruction only; no host hook rewrites watch calls yet"
+                "check": "Where no hook wraps the watch, start it through `go-getter watch`"
+              },
+              {
+                "tier": 2,
+                "check": "Pre-tool hook wraps the host watcher command in `go-getter watch` where the host allows",
+                "run": "builtin:wrap-watch"
               }
             ],
-            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands.\nAdvisory (tier 1 only).\n"
+            "body": "## Guardrail\n\nStart watches through `go-getter watch`; use `--until done` for CI runs and long commands. Where the host allows, the pre-tool hook wraps the watch command.\n"
           }
         ]
       }

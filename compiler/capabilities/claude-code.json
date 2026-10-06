@@ -30,7 +30,8 @@
     "rewriteToolInput": true,
     "blockStop": true,
     "modelSwap": false,
-    "runtime": "command"
+    "runtime": "command",
+    "watcher": { "tool": "Monitor", "field": "command" }
   },
   "permissions": {
     "pathReadDeny": true,

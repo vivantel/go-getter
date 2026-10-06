@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { createWatcher, resolveLevel, stateKey, formatDuration } from '../src/watch.mjs';
+import { createWatcher, resolveLevel, stateKey, formatDuration, wrapWatch } from '../src/watch.mjs';
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
 const STATES = ['queued', 'in_progress: build', 'in_progress: test', 'in_progress: deploy', 'completed: success'];
@@ -145,6 +145,59 @@ test('go-getter watch --until done prints one result and keeps the exit code', (
     assert.deepEqual(shell.stdout.trimEnd().split('\n'), ['one', 'watch: ok in 0s (exit 0; 2 lines, 2 states, 1 notified): echo one; echo two', '  last: two']);
     assert.equal(spawnSync(process.execPath, [cli, 'watch', 'echo'], { encoding: 'utf8' }).status, 2);
     assert.equal(spawnSync(process.execPath, [cli, 'watch', '--noise', 'loud', '--', 'true'], { cwd: dir, encoding: 'utf8' }).status, 2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+const GUARDRAIL = '---\nid: watches-use-the-wrapper\ntitle: Watches\nstatus: active\ndate: 2026-10-05\ntags: [x]\n---\n\nx\n';
+const monitor = (command) => ({ tool_name: 'Monitor', tool_input: { command, description: 'd', timeout_ms: 5000 } });
+
+function wrapperProject(adopted = true) {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-watch-'));
+  mkdirSync(path.join(dir, 'docs', 'guardrails'), { recursive: true });
+  if (adopted) writeFileSync(path.join(dir, 'docs', 'guardrails', 'watches-use-the-wrapper.md'), GUARDRAIL);
+  return dir;
+}
+
+test('the pre-tool hook wraps a host watcher command once the wrapper guardrail is adopted', () => {
+  const dir = wrapperProject();
+  try {
+    const out = wrapWatch(dir, 'claude-code', monitor("gh run watch 'x'"));
+    assert.equal(out.rewrite.input.command, `sh '${path.join(dir, '.go-getter', 'bin', 'go-getter')}' watch -- 'gh run watch '\\''x'\\'''`);
+    assert.equal(out.rewrite.input.timeout_ms, 5000);
+    assert.equal(wrapWatch(dir, 'claude-code', monitor(out.rewrite.input.command)), null, 'already wrapped');
+    assert.equal(wrapWatch(dir, 'claude-code', monitor('npx go-getter watch --until done -- npm test')), null);
+    assert.equal(wrapWatch(dir, 'claude-code', { tool_name: 'Monitor', tool_input: { ws: { url: 'wss://x' } } }), null, 'WebSocket watch');
+    assert.equal(wrapWatch(dir, 'claude-code', { tool_name: 'Bash', tool_input: { command: 'ls' } }), null);
+    assert.equal(wrapWatch(dir, 'codex', monitor('tail -f log')), null, 'host without a watcher tool');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  const bare = wrapperProject(false);
+  try {
+    assert.equal(wrapWatch(bare, 'claude-code', monitor('tail -f log')), null, 'not adopted');
+  } finally {
+    rmSync(bare, { recursive: true, force: true });
+  }
+});
+
+test('go-getter hook pre-tool answers a watcher call with a command that runs through the wrapper', () => {
+  const dir = wrapperProject();
+  try {
+    mkdirSync(path.join(dir, '.go-getter', 'bin'), { recursive: true });
+    writeFileSync(path.join(dir, '.go-getter', 'bin', 'go-getter'), `exec "${process.execPath}" "${cli}" "$@"\n`);
+    const hook = spawnSync(process.execPath, [cli, 'hook', 'pre-tool', '--host', 'claude-code', '--project', dir], {
+      cwd: dir,
+      input: JSON.stringify({ ...monitor("echo 'it''s' done"), cwd: dir }),
+      encoding: 'utf8',
+    });
+    assert.equal(hook.status, 0);
+    const out = JSON.parse(hook.stdout).hookSpecificOutput;
+    assert.equal(out.permissionDecision, 'allow');
+    const run = spawnSync('sh', ['-c', out.updatedInput.command], { cwd: dir, encoding: 'utf8' });
+    assert.equal(run.status, 0);
+    assert.equal(run.stdout, "its done\nwatch: ok in 0s (exit 0; 1 lines, 1 states, 1 notified): echo 'it''s' done\n");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

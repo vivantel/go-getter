@@ -54,7 +54,13 @@
         "rewriteToolInput": { "type": "boolean" },
         "blockStop": { "type": "boolean" },
         "modelSwap": { "type": "boolean" },
-        "runtime": { "enum": ["command", "javascript"] }
+        "runtime": { "enum": ["command", "javascript"] },
+        "watcher": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tool", "field"],
+          "properties": { "tool": { "type": "string" }, "field": { "type": "string" } }
+        }
       }
     },
     "permissions": {

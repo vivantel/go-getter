@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction only; the confirm-before-switch hook is not generated yet
-  generated-by: context@0.2.0
+  generated-by: context@0.3.0
   pack-answer: cache-hygiene
   pack-option: advisory-and-confirm
 ---

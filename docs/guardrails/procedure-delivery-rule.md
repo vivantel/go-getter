@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Procedures follow the delivery decision; reviewed in PRs
-  generated-by: context@0.2.0
+  generated-by: context@0.3.0
   pack-answer: procedures
   pack-option: skills-on-demand
 ---

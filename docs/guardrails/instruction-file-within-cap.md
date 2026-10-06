@@ -12,7 +12,7 @@ go-getter:
     - tier: 3
       check: AGENTS.md line count within the cap
       run: builtin:file-max-lines path=AGENTS.md max=150
-  generated-by: context@0.2.0
+  generated-by: context@0.3.0
   pack-answer: instruction-cap
   pack-option: cap-150
 ---

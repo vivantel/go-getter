@@ -2,7 +2,9 @@
 // each output line does not wake a model turn. It reports state changes, collapses duplicates and bursts, caps
 // notifications per hour with one notice and ends with a summary; `--until done` prints only the final result.
 import { spawn } from 'node:child_process';
-import { adoptedData } from './governance.mjs';
+import path from 'node:path';
+import { adoptedData, packageCapabilities } from './governance.mjs';
+import { readArtifacts } from './artifacts.mjs';
 
 const HOUR_MS = 60 * 60 * 1000;
 const TAIL_LINES = 15;
@@ -143,4 +145,21 @@ export function runWatch(argv, { level, until, write = (text) => process.stdout.
     child.on('error', (err) => finish({ error: err.code ?? err.message }, 127));
     child.on('close', (code, signal) => finish({ code, signal }, signal ? 1 : code));
   });
+}
+
+// Tier 2 (decision 0070, fact 0026): a pre-tool hook wraps the host watcher tool's command in `go-getter watch` once
+// the project has adopted the `watches-use-the-wrapper` guardrail. Returns { rewrite: { input } } or null.
+export const WRAPPER_GUARDRAIL = 'watches-use-the-wrapper';
+const WRAPPED = /(^|[\s/'"])go-getter['"]?\s+watch(\s|$)/;
+const shellQuote = (s) => `'${s.replace(/'/g, `'\\''`)}'`;
+
+export function wrapWatch(project, host, payload, { capabilities = packageCapabilities() } = {}) {
+  const watcher = capabilities[host]?.hooks.watcher;
+  if (!watcher || payload.tool_name !== watcher.tool) return null;
+  const input = payload.tool_input;
+  const command = input?.[watcher.field];
+  if (typeof command !== 'string' || !command.trim() || WRAPPED.test(command)) return null;
+  if (!readArtifacts(project, ['guardrails']).some((g) => g.id === WRAPPER_GUARDRAIL && g.data.status === 'active')) return null;
+  const runner = path.join(project, '.go-getter', 'bin', 'go-getter');
+  return { rewrite: { input: { ...input, [watcher.field]: `sh ${shellQuote(runner)} watch -- ${shellQuote(command)}` } } };
 }

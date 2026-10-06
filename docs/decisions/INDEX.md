@@ -70,5 +70,5 @@ id,title,tags,status
 0071-verification-checks-run-locally-or-in-ci,"Each verification check runs locally, in CI or both, so thin dev machines run only the cheap ones","verification, ci, harness, practice-packs",active
 0072-restricted-paths-have-access-modes,"Restricted paths have access modes deny, use and sink, enforced in layers that state where they stop","governance, security, enforcement, hooks",active
 0075-spec-tools-are-detected-and-tolerated,"Spec and change tools such as OpenSpec are detected and tolerated, not wrapped by a pack","roadmap, tooling, practice-packs",active
-0076-watcher-noise,"Watchers are quiet","practice-packs, harness, cost",active
+0076-watcher-noise,"Watchers are quiet","practice-packs, harness, cost",draft
 0077-restricted-path-modes,"Restricted paths have an access mode, deny unless listed","practice-packs, governance, security",active

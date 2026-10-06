@@ -1,6 +1,7 @@
 // go-getter hook pre-tool --host <id> [--project <dir>]: tier-2 runtime called by host hooks; reads the tool call on stdin.
 // go-getter hook session-start --host <id>: prints the vendored capture/lint nudges (never blocks).
-// pre-tool also routes delegations to a role (cost-routing pack): it sets the delegated model, or denies when no model is eligible.
+// pre-tool also routes delegations to a role (cost-routing pack): it sets the delegated model, or denies when no model is eligible;
+// and wraps a host watcher command in `go-getter watch` (context pack, decision 0070).
 // go-getter hook stop --host <id>: verification gate; blocks "done" while the adopted checks fail (bounded, then a human).
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -8,6 +9,7 @@ import { evaluatePreTool, respond, sessionNudges, hookRecord } from '../hook.mjs
 import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
+import { wrapWatch } from '../watch.mjs';
 
 export default async function hookCommand({ root, args }) {
   const [event, ...rest] = args;
@@ -62,6 +64,17 @@ export default async function hookCommand({ root, args }) {
       process.stderr.write(`${routed.advisory}\n`);
     } else if (routed?.rewrite) {
       const rewritten = respondRewrite(host, routed.rewrite);
+      process.stdout.write(rewritten.stdout);
+      return rewritten.code;
+    }
+    let watched = null;
+    try {
+      watched = wrapWatch(project, host, payload);
+    } catch {
+      // a failed wrap leaves the watch as it was
+    }
+    if (!decision.deny && watched) {
+      const rewritten = respondRewrite(host, watched.rewrite);
       process.stdout.write(rewritten.stdout);
       return rewritten.code;
     }
