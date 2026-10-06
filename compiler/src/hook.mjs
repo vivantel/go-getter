@@ -19,7 +19,9 @@ const PROSE = {
   search: ['pattern'],
   fetch: ['prompt'],
   websearch: ['query'],
-  delegate: ['prompt', 'description', 'message'],
+  delegate: ['prompt', 'description', 'message', 'summary'],
+  ask: ['questions'],
+  skill: ['args'],
   todo: ['todos'],
   memory: ['fact'],
 };
@@ -38,7 +40,9 @@ const TOOLS = {
   // web fetch and web search
   webfetch: 'fetch', web_fetch: 'fetch', websearch: 'websearch', google_web_search: 'websearch', web_search: 'websearch',
   // delegation to another agent
-  agent: 'delegate', task: 'delegate', spawn_agent: 'delegate',
+  agent: 'delegate', task: 'delegate', spawn_agent: 'delegate', sendmessage: 'delegate',
+  // questions put to the user and skill arguments are text, not paths a tool opens (the `skill` name is still scanned)
+  askuserquestion: 'ask', skill: 'skill',
   todowrite: 'todo', write_todos: 'todo', update_todo: 'todo', save_memory: 'memory',
 };
 
