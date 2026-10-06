@@ -36,3 +36,4 @@ restricted-data-hosts-rule,"Restricted data is handled only on hosts with a bloc
 verification-gate-blocks-done,"A step is not done while its verification checks fail","practice-packs, verification, guardrail",active
 delegations-are-routed,"Delegations to a role are routed by expected total step cost","practice-packs, model-routing, guardrail",active
 watches-use-the-wrapper,"Watches start through go-getter watch, --until done for CI runs and long commands","practice-packs, harness, guardrail",active
+owned-files-never-clobbered,"apply, update and remove must not overwrite or delete a modified owned item without --force","generated-files, enforcement, guardrail",draft
