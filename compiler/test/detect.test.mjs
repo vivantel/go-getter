@@ -19,7 +19,7 @@ function fixture(files) {
 const none = { format: null, lint: null, typecheck: null, 'static-analysis': null, build: null, test: null, unit: null, integration: null, e2e: null };
 const cmds = (known) => ({ ...none, ...known });
 const empty = {
-  languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], commands: none, ci: [], monorepo: [],
+  languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], commands: none, nodeVersion: null, ci: [], monorepo: [],
   hostAgents: [], agentFiles: [], knowledgeBase: false, sensitivePaths: [], git: { defaultBranch: null, remoteHost: null },
 };
 
@@ -109,6 +109,21 @@ test('every check of the catalog comes from scripts, Makefile targets and langua
   for (const [files, expected] of cases) {
     const dir = fixture(files);
     assert.deepEqual(detect(dir).commands, expected);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('node version: a version file wins over engines.node, which gives its lowest major', () => {
+  for (const [files, expected] of [
+    [{ 'package.json': JSON.stringify({ engines: { node: '>=22' } }) }, '22'],
+    [{ 'package.json': JSON.stringify({ engines: { node: '^18.17 || >=20' } }) }, '18'],
+    [{ 'package.json': JSON.stringify({ engines: { node: '*' } }) }, null],
+    [{ 'package.json': JSON.stringify({ engines: { node: '>=22' } }), '.nvmrc': 'v20.11.0\n' }, '20.11.0'],
+    [{ '.node-version': 'lts/iron\n' }, 'lts/iron'],
+    [{ '.tool-versions': 'python 3.12\nnodejs 21.1.0\n' }, '21.1.0'],
+  ]) {
+    const dir = fixture(files);
+    assert.equal(detect(dir).nodeVersion, expected, JSON.stringify(files));
     rmSync(dir, { recursive: true, force: true });
   }
 });

@@ -4,6 +4,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { loadPack } from '../packs.mjs';
 import { loadCapabilities } from '../capabilities.mjs';
 import { coverage, formatCoverage } from '../coverage.mjs';
+import { ciChecksNote } from '../apply.mjs';
 
 export default function coverageCommand({ root, args }) {
   let project = process.cwd();
@@ -21,5 +22,7 @@ export default function coverageCommand({ root, args }) {
   }
   const rows = coverage(project, packs, loadCapabilities(root));
   console.log(asJson ? JSON.stringify(rows, null, 2) : formatCoverage(rows));
+  const note = asJson ? null : ciChecksNote(project);
+  if (note) console.log(`\n${note}`);
   return 0;
 }

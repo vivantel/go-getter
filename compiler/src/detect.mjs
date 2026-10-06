@@ -119,6 +119,18 @@ function detectCommands(root, { pkg, deps, pyproject, packageManagers, languages
   return commands;
 }
 
+// The project's Node version, for CI jobs: a version file first, then the lowest major of `engines.node`.
+function detectNodeVersion(root, pkg) {
+  for (const file of ['.nvmrc', '.node-version']) {
+    const v = readText(root, file).trim().split('\n')[0].trim().replace(/^v(?=\d)/, '');
+    if (v) return v;
+  }
+  const tool = /^nodejs\s+(\S+)/m.exec(readText(root, '.tool-versions'));
+  if (tool) return tool[1];
+  const engines = /^\s*(?:>=|\^|~|=)?\s*v?(\d+)(?![\d-])/.exec(pkg?.engines?.node ?? '');
+  return engines ? engines[1] : null;
+}
+
 export function detect(root) {
   const pkg = readJson(root, 'package.json');
   const deps = { ...(pkg?.dependencies ?? {}), ...(pkg?.devDependencies ?? {}) };
@@ -203,6 +215,7 @@ export function detect(root) {
     linters: sorted(linters),
     typecheckers: sorted(typecheckers),
     commands,
+    nodeVersion: detectNodeVersion(root, pkg),
     ci: sorted(ci),
     monorepo: sorted(monorepo),
     hostAgents,
