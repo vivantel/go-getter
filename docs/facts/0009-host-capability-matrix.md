@@ -1,6 +1,6 @@
 ---
 id: 0009-host-capability-matrix
-title: Capability matrix of the six host agents
+title: Capability matrix of the seven host agents
 status: active
 date: 2026-10-04
 tags: [host-agents, harness, compiler, enforcement]

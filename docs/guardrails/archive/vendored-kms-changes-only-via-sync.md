@@ -16,4 +16,4 @@ go-getter:
 
 ## Guardrail
 
-Never edit `vendor/kms/` by hand. Change kms upstream, then bump the pin and re-sync per `docs/skills/syncing-vendored-kms.md`.
+Never edit `vendor/kms/` by hand. Change kms upstream, then bump the pin and re-sync per `docs/skills/archive/syncing-vendored-kms.md`.

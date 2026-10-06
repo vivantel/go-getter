@@ -29,7 +29,7 @@ generated-files — concerns committed files produced by the compiler
 git-hooks — concerns host-independent git hooks
 governance — concerns data classes, approved models, local/cloud LLM usage policy, DLP
 guardrail — a normative artifact, or a decision about guardrails
-harness — concerns the agent harness (the 12 components around the model)
+harness — concerns the agent harness (the 12 components around the model) (umbrella)
 hooks — concerns host-agent-native hooks and permissions
 host-agents — concerns which host agents are supported and how
 interview — concerns the guided setup interview
@@ -44,7 +44,7 @@ observability — concerns telemetry, logging and tracing of agent work
 opencode — concerns the OpenCode host agent
 packaging — concerns plugin manifests and install/distribution
 positioning — concerns what the product is for and who it serves
-practice-packs — concerns declarative practice-pack data and schema
+practice-packs — concerns declarative practice-pack data and schema (umbrella)
 procedural — a procedure artifact
 roadmap — concerns the roadmap/plan artifacts
 security — concerns secrets and attack surface
