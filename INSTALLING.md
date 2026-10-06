@@ -40,7 +40,7 @@ Then install `go-getter` from the plugin browser. **Not confirmed:** the install
 Kilo Code CLI is a fork of OpenCode with its own config files and `.kilo/` directories; neither has a marketplace manifest ([fact 0005](docs/facts/0005-kilo-opencode-integration-surface.md)). Kilo can track the skills remotely; add this to your `kilo.jsonc`:
 
 ```json
-{ "skills": { "urls": ["https://raw.githubusercontent.com/vivantel/go-getter/main/plugins/go-getter/skills"] } }
+{ "skills": { "urls": ["https://raw.githubusercontent.com/vivantel/go-getter/master/plugins/go-getter/skills"] } }
 ```
 
 The manifest is [`plugins/go-getter/skills/index.json`](plugins/go-getter/skills/index.json); Kilo re-fetches when a skill's version changes. Alternatively copy `plugins/go-getter/skills/` into `.agents/skills/` in your project. **Not confirmed:** that Kilo loads the skills from this manifest, and the `.kilo/` subdirectory names go-getter writes agents to (assumed to mirror OpenCode's).

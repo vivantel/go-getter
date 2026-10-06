@@ -20,7 +20,7 @@ Read the guardrails in `docs/guardrails/` before changing code they govern.
 
 ## Workflow (interim, until the git-workflow pack replaces it — decision 0068)
 
-- Never push to `main`. Short-lived branch `type/slug` → PR → squash merge.
+- Never push to `master`. Short-lived branch `type/slug` → PR → squash merge.
 - Conventional Commit titles; `Refs:` trailers to the `docs/` artifacts a change implements.
 - One git worktree per parallel task: `git worktree add ../go-getter-wt/<slug> -b <branch>`.
 

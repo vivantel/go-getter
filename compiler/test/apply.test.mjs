@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { planApply, writeApply, diffApply, upsert, withSection } from '../src/apply.mjs';
+import { planApply, writeApply, diffApply, upsert, withSection, ciWorkflow } from '../src/apply.mjs';
 import { evaluatePreTool, respond, candidatePaths } from '../src/hook.mjs';
 import { runTier3 } from '../src/enforce.mjs';
 import { HOSTS } from '../src/capabilities.mjs';
@@ -192,4 +192,9 @@ test('kilo and opencode get project-local skills whose shared references resolve
   assert.ok(diffApply(dir, planApply(dir, { hosts: ['kilo', 'claude-code'] })).includes('differs: .agents/skills/capture/SKILL.md'));
   assert.equal(planApply(dir, { hosts: ['claude-code'] }).skills, false);
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('the generated CI workflow runs on pushes to the default branch it is given', () => {
+  assert.match(ciWorkflow({ branch: 'trunk' }), /branches: \[trunk\]/);
+  assert.match(ciWorkflow(), /branches: \[main\]/);
 });
