@@ -72,3 +72,11 @@ id,title,tags,status
 0075-spec-tools-are-detected-and-tolerated,"Spec and change tools such as OpenSpec are detected and tolerated, not wrapped by a pack","roadmap, tooling, practice-packs",active
 0076-watcher-noise,"Watchers are quiet","practice-packs, harness, cost",draft
 0077-restricted-path-modes,"Restricted paths have an access mode, deny unless listed","practice-packs, governance, security",active
+0078-verification-format-command,"The verification format command is """"","practice-packs, verification, harness",active
+0079-verification-static-analysis-command,"The verification static-analysis command is """"","practice-packs, verification, harness",active
+0080-verification-build-command,"The verification build command is """"","practice-packs, verification, harness",active
+0081-verification-unit-command,"The verification unit command is """"","practice-packs, verification, harness",active
+0082-verification-integration-command,"The verification integration command is """"","practice-packs, verification, harness",active
+0083-verification-e2e-command,"The verification e2e command is """"","practice-packs, verification, harness",active
+0084-verification-machine-profile,"Cheap checks run locally, slow checks only in CI (thin machine profile)","practice-packs, verification, harness, ci",active
+0085-pack-questions-added-later-declare-since,"A pack question added in a later version declares `since` and falls back to its default or recommended option","practice-packs, interview, configuration",draft

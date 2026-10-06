@@ -28,6 +28,7 @@
           "detect": { "type": "string" },
           "pattern": { "type": "string" },
           "default": { "type": ["string", "array"], "items": { "type": "string" } },
+          "since": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
           "when": {
             "type": "object",
             "additionalProperties": false,

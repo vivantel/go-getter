@@ -33,6 +33,17 @@ function checkAnswer(q, a) {
   }
 }
 
+// A question added in a later pack version (`since`) may be missing from an older answer file: it takes its default
+// or recommended option, so the older answers still render.
+export function withFallbacks(pack, answers) {
+  const filled = { ...answers };
+  for (const q of pack.questions) {
+    if (!q.since || filled[q.id] !== undefined) continue;
+    filled[q.id] = q.options ? q.options.find((o) => o.recommended).id : q.default;
+  }
+  return filled;
+}
+
 export function activeQuestions(pack, answers) {
   return pack.questions.filter((q) => {
     if (!q.when) return true;
@@ -82,7 +93,8 @@ export function setIndexStatus(indexFile, id, status) {
 // Returns { artifacts: [{kind, id, path, content}], files: [{path, content}], newTags: [] } without touching disk.
 // `existing` (reconfigure): keepDecisionsFor = questions whose decisions stay (with their ids in decisionIds);
 // overwritable = paths of previously generated non-decision artifacts that may be re-rendered in place.
-export function planRender({ root, pack, answers, acceptedBy, date, detect = {}, existing = {} }) {
+export function planRender({ root, pack, answers: given, acceptedBy, date, detect = {}, existing = {} }) {
+  const answers = withFallbacks(pack, given);
   const keep = existing.keepDecisionsFor ?? new Set();
   const overwritable = existing.overwritable ?? new Set();
   const questions = activeQuestions(pack, answers);

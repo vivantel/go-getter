@@ -9,6 +9,7 @@ import { loadPack, loadPackSchema, validatePack } from '../src/packs.mjs';
 import { planRender, applyRender } from '../src/render.mjs';
 import { planApply, writeApply, diffApply } from '../src/apply.mjs';
 import { verifyConfig, checksFor, verify, evaluateStop, respondStop } from '../src/verify.mjs';
+import { CHECKS } from '../src/detect.mjs';
 import { readLog, LOG } from '../src/telemetry/record.mjs';
 import { validateRecord } from '../src/telemetry/schema.mjs';
 import { coverage } from '../src/coverage.mjs';
@@ -54,10 +55,62 @@ test('the verification-gate pack is valid and covers component 6', () => {
   assert.deepEqual(pack.components, [6]);
 });
 
-test('command questions are prefilled from detected commands', () => {
-  for (const [q, key] of [['test-command', 'commands.test'], ['lint-command', 'commands.lint'], ['typecheck-command', 'commands.typecheck']]) {
-    assert.equal(pack.questions.find((x) => x.id === q).detect, key);
+test('command questions are prefilled from detected commands for every check of the catalog', () => {
+  for (const check of CHECKS) assert.equal(pack.questions.find((x) => x.id === `${check}-command`).detect, `commands.${check}`);
+});
+
+const FAIL = 'node -e "process.exit(1)"';
+const allCommands = Object.fromEntries(CHECKS.map((c) => [`${c}-command`, c === 'format' ? '' : ['build', 'e2e', 'integration', 'static-analysis'].includes(c) ? FAIL : PASS]));
+
+test('a thin profile runs lint and typecheck locally but not build or e2e', async () => {
+  const dir = project();
+  adopt(dir, answersFor({ ...allCommands, 'machine-profile': 'thin' }));
+  const config = verifyConfig(dir);
+  assert.equal(config.profile, 'thin');
+  assert.deepEqual(Object.keys(config.commands), ['lint', 'typecheck', 'test', 'unit']);
+  assert.deepEqual(Object.keys(config.ci), ['static-analysis', 'build', 'test', 'unit', 'integration', 'e2e']);
+  const { ok, results } = await verify(dir, 'implement');
+  assert.equal(ok, true, 'the failing build and e2e commands are left to CI');
+  assert.deepEqual(results.map((r) => r.name), ['lint', 'typecheck', 'test', 'unit']);
+  done(dir);
+});
+
+test('a full profile runs every check locally and a ci-only profile none', async () => {
+  for (const [profile, local, ci] of [
+    ['full', ['lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e'], []],
+    ['ci-only', [], ['lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e']],
+  ]) {
+    const dir = project();
+    adopt(dir, answersFor({ ...allCommands, 'machine-profile': profile }));
+    assert.deepEqual(Object.keys(verifyConfig(dir).commands), local, profile);
+    assert.deepEqual(Object.keys(verifyConfig(dir).ci), ci, profile);
+    dirty(dir);
+    assert.equal((await evaluateStop(dir, {})).block, profile === 'full', `${profile}: the gate runs only local checks`);
+    done(dir);
   }
+});
+
+test('an existing 0.1.0 answer file still renders with the same local checks', () => {
+  const dir = project();
+  const file = path.join(dir, 'answers.json');
+  writeFileSync(file, JSON.stringify({ answers: { checks: 'detected', 'test-command': PASS, 'lint-command': LINT, 'typecheck-command': '', 'review-bar': 'reviewer-verdict', gate: 'block' }, acceptedBy: 't', date: '2026-10-05' }));
+  const run = spawnSync('node', [bin, 'render-pack', 'verification-gate', '--answers', file, '--project', dir], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const config = verifyConfig(dir);
+  assert.equal(config.profile, 'thin', 'a missing profile takes the recommended one');
+  assert.deepEqual(config.commands, { lint: LINT, test: PASS });
+  done(dir);
+});
+
+test('a gate adopted before the machine profile runs every check locally', () => {
+  const dir = project();
+  const v1 = { ...pack, version: '0.1.0', questions: pack.questions.filter((q) => !q.since) };
+  adopt(dir, answersFor(), v1);
+  const config = verifyConfig(dir);
+  assert.equal(config.profile, null);
+  assert.deepEqual(config.commands, { lint: LINT, test: PASS });
+  assert.deepEqual(config.ci, {});
+  done(dir);
 });
 
 test('every answer renders; command questions follow the checks scope', () => {
@@ -82,7 +135,7 @@ test('every answer renders; command questions follow the checks scope', () => {
 test('the recommended gate adopts a tier-2 stop entry and reads back as configuration', () => {
   const dir = project();
   adopt(dir);
-  assert.deepEqual(verifyConfig(dir), { adopted: true, scope: 'detected', commands: { test: PASS, lint: LINT }, reviewBar: 'reviewer-verdict', gate: 'block', maxEscalations: 2 });
+  assert.deepEqual(verifyConfig(dir), { adopted: true, scope: 'detected', profile: 'thin', commands: { lint: LINT, test: PASS }, ci: { test: PASS }, reviewBar: 'reviewer-verdict', gate: 'block', maxEscalations: 2 });
   const guardrail = readFileSync(path.join(dir, 'docs/guardrails/verification-gate-blocks-done.md'), 'utf8');
   assert.match(guardrail, /tier: 2/);
   assert.match(guardrail, /run: builtin:verify-gate/);
@@ -123,13 +176,12 @@ test('verify runs one passing and one failing check, exits non-zero and records 
   adoptTelemetry(dir);
   const run = spawnSync('node', [bin, 'verify', '--class', 'implement', '--project', dir, '--host', 'claude-code'], { encoding: 'utf8' });
   assert.equal(run.status, 1);
-  assert.match(run.stdout, /pass test/);
-  assert.match(run.stdout, /FAIL lint/);
+  assert.match(run.stdout, /FAIL lint\npass test/);
   assert.match(run.stderr, /lint exploded/);
   const records = readLog(dir);
   assert.deepEqual(records.map((r) => [r.event, r.outcome, r.taskClass, r.host]), [
-    ['verify:test', 'pass', 'implement', 'claude-code'],
     ['verify:lint', 'fail', 'implement', 'claude-code'],
+    ['verify:test', 'pass', 'implement', 'claude-code'],
   ]);
   for (const r of records) assert.deepEqual(validateRecord(r), []);
   assert.ok(!readFileSync(path.join(dir, LOG), 'utf8').includes('exploded'), 'check output is never recorded');
@@ -279,7 +331,7 @@ test('coverage shows the verification gate per host', () => {
   adopt(dir);
   const caps = loadCapabilities(root);
   const row = coverage(dir, { 'verification-gate': pack }, caps).find((r) => r.component === 6);
-  assert.deepEqual(row.packs, ['verification-gate@0.1.0']);
+  assert.deepEqual(row.packs, [`verification-gate@${pack.version}`]);
   assert.equal(row.tiers['claude-code'], 2);
   assert.equal(row.tiers.cursor, 2);
   done(dir);

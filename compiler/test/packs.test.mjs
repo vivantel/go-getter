@@ -69,3 +69,14 @@ test('text and list questions validate with defaults or detect keys and "*" outp
   p.outputs.check = { '*': { facts: [{ slug: 'check-command', title: 'Check: {{answer.check}}', tags: ['configuration'], frontmatter: { kind: 'x' }, body: '{{answer.paths}} {{detect.commands.test}}' }] } };
   assert.deepEqual(validatePack(schema, p, { dirName: 'example' }), []);
 });
+
+test('a question added in a later version needs a fallback and a version no later than the pack', () => {
+  const p = example();
+  p.questions.push({ id: 'added', type: 'text', prompt: 'Which?', detect: 'commands.test', since: '0.1.0' });
+  p.questions.push({ id: 'future', type: 'text', prompt: 'Which?', default: '', since: '9.0.0' });
+  p.outputs.added = { '*': {} };
+  p.outputs.future = { '*': {} };
+  const errors = validatePack(schema, p, { dirName: 'example' });
+  assert.ok(errors.some((e) => e.includes('needs a default for older answer files')), errors.join('\n'));
+  assert.ok(errors.some((e) => e.includes('"9.0.0" is later than the pack version')), errors.join('\n'));
+});

@@ -45,35 +45,76 @@ function git(root, args) {
   }
 }
 
-// Commands inferred from conventions; null when unknown.
-function detectCommands(root, { pkg, pyproject, packageManagers, languages }) {
-  const commands = { test: null, lint: null, typecheck: null };
+// Check catalog of decision 0071: the commands each check runs, inferred from conventions; null when unknown.
+export const CHECKS = ['format', 'lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e'];
+// Package scripts and Makefile targets per check, first match wins; non-mutating variants come first.
+const SCRIPTS = {
+  format: ['format:check', 'check:format', 'fmt:check', 'format', 'fmt'],
+  lint: ['lint'],
+  typecheck: ['typecheck', 'type-check', 'tsc'],
+  'static-analysis': ['static-analysis', 'analyze', 'sast'],
+  build: ['build'],
+  unit: ['test:unit', 'unit'],
+  integration: ['test:integration', 'integration', 'test:int'],
+  e2e: ['test:e2e', 'e2e'],
+};
+const TARGETS = {
+  format: ['format', 'fmt'],
+  'static-analysis': ['static-analysis', 'analyze'],
+  build: ['build'],
+  test: ['test'],
+  lint: ['lint'],
+  typecheck: ['typecheck'],
+  unit: ['unit', 'test-unit'],
+  integration: ['integration', 'test-integration'],
+  e2e: ['e2e', 'test-e2e'],
+};
+
+function detectCommands(root, { pkg, deps, pyproject, packageManagers, languages }) {
+  const commands = Object.fromEntries(CHECKS.map((c) => [c, null]));
+  const set = (check, command) => {
+    commands[check] ??= command;
+  };
   if (pkg) {
     const manager = ['pnpm', 'yarn', 'bun'].find((m) => packageManagers.has(m)) ?? 'npm';
     const run = (name) => (name === 'test' ? `${manager} test` : manager === 'npm' ? `npm run ${name}` : `${manager} run ${name}`);
+    const exec = { npm: 'npx', pnpm: 'pnpm exec', yarn: 'yarn', bun: 'bunx' }[manager];
     const scripts = pkg.scripts ?? {};
     // A stock `npm init` placeholder is not a test command.
-    if (scripts.test && !/no test specified/.test(scripts.test)) commands.test = run('test');
-    if (scripts.lint) commands.lint = run('lint');
-    for (const name of ['typecheck', 'type-check', 'tsc']) if (scripts[name] && !commands.typecheck) commands.typecheck = run(name);
+    if (scripts.test && !/no test specified/.test(scripts.test)) set('test', run('test'));
+    for (const [check, names] of Object.entries(SCRIPTS)) for (const name of names) if (scripts[name]) set(check, run(name));
+    if (deps.prettier) set('format', `${exec} prettier --check .`);
+    if (deps['@playwright/test'] || deps.playwright) set('e2e', `${exec} playwright test`);
+    if (deps.cypress) set('e2e', `${exec} cypress run`);
   }
   const make = readText(root, 'Makefile');
-  const target = (name) => new RegExp(`^${name}:`, 'm').test(make);
-  for (const name of ['test', 'lint', 'typecheck']) if (!commands[name] && target(name)) commands[name] = `make ${name}`;
+  for (const [check, names] of Object.entries(TARGETS)) for (const name of names) if (new RegExp(`^${name}:`, 'm').test(make)) set(check, `make ${name}`);
   if (languages.has('python')) {
-    if (!commands.test && (/pytest/.test(pyproject) || has(root, 'pytest.ini'))) commands.test = 'pytest';
-    if (!commands.lint && (/\[tool\.ruff/.test(pyproject) || has(root, 'ruff.toml'))) commands.lint = 'ruff check .';
-    if (!commands.typecheck && (/\[tool\.mypy/.test(pyproject) || has(root, 'mypy.ini'))) commands.typecheck = 'mypy .';
+    const pytest = /pytest/.test(pyproject) || has(root, 'pytest.ini');
+    if (pytest) set('test', 'pytest');
+    if (/\[tool\.ruff/.test(pyproject) || has(root, 'ruff.toml')) {
+      set('lint', 'ruff check .');
+      set('format', 'ruff format --check .');
+    }
+    if (/\[tool\.black/.test(pyproject)) set('format', 'black --check .');
+    if (/\[tool\.mypy/.test(pyproject) || has(root, 'mypy.ini')) set('typecheck', 'mypy .');
+    if (/\[tool\.bandit/.test(pyproject) || has(root, '.bandit')) set('static-analysis', 'bandit -r .');
+    if (/\[build-system\]/.test(pyproject)) set('build', 'python -m build');
+    for (const kind of ['unit', 'integration', 'e2e']) if (pytest && has(root, `tests/${kind}`)) set(kind, `pytest tests/${kind}`);
   }
   if (languages.has('go')) {
-    commands.test ??= 'go test ./...';
-    commands.lint ??= has(root, '.golangci.yml') || has(root, '.golangci.yaml') ? 'golangci-lint run' : 'go vet ./...';
-    commands.typecheck ??= 'go build ./...';
+    set('format', 'test -z "$(gofmt -l .)"');
+    set('test', 'go test ./...');
+    set('lint', has(root, '.golangci.yml') || has(root, '.golangci.yaml') ? 'golangci-lint run' : 'go vet ./...');
+    set('typecheck', 'go build ./...');
+    set('build', 'go build ./...');
   }
   if (languages.has('rust')) {
-    commands.test ??= 'cargo test';
-    commands.lint ??= 'cargo clippy';
-    commands.typecheck ??= 'cargo check';
+    set('format', 'cargo fmt --check');
+    set('test', 'cargo test');
+    set('lint', 'cargo clippy');
+    set('typecheck', 'cargo check');
+    set('build', 'cargo build');
   }
   return commands;
 }
@@ -117,7 +158,7 @@ export function detect(root) {
   if (has(root, 'tsconfig.json')) typecheckers.add('tsc');
   if (/\[tool\.mypy/.test(pyproject) || has(root, 'mypy.ini')) typecheckers.add('mypy');
 
-  const commands = detectCommands(root, { pkg, pyproject, packageManagers, languages });
+  const commands = detectCommands(root, { pkg, deps, pyproject, packageManagers, languages });
 
   const ci = new Set();
   if (has(root, '.github/workflows')) ci.add('github-actions');

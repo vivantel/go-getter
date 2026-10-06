@@ -5,6 +5,11 @@ import { validate } from './schema.mjs';
 
 // Outputs of a text/list question sit under this key and apply whatever the answer is.
 export const ANY_ANSWER = '*';
+
+const compareVersions = (a, b) => {
+  const [x, y] = [a, b].map((v) => v.split('.').map(Number));
+  return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+};
 const PLACEHOLDER = /\{\{\s*([a-z]+)((?:\.[A-Za-z0-9_-]+)*)\s*\}\}/g;
 
 export function loadPackSchema(root) {
@@ -78,6 +83,10 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
           errors.push(`${at}.pattern: not a valid regular expression`);
         }
       }
+    }
+    if (q.since) {
+      if (compareVersions(q.since, pack.version) > 0) errors.push(`${at}.since: "${q.since}" is later than the pack version ${pack.version}`);
+      if (type !== 'choice' && q.default === undefined) errors.push(`${at}: a question with "since" needs a default for older answer files`);
     }
     if (q.when) {
       const prior = questions.get(q.when.question);

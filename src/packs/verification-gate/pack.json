@@ -1,13 +1,13 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "verification-gate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     6
   ],
   "title": "Verification gate",
-  "summary": "What counts as done: the checks implement and debug steps must pass, the review bar, and whether failing checks block completion.",
+  "summary": "What counts as done: the checks implement and debug steps must pass, where each check runs (locally or in CI), the review bar, and whether failing checks block completion.",
   "questions": [
     {
       "id": "checks",
@@ -15,8 +15,8 @@
       "options": [
         {
           "id": "detected",
-          "label": "The detected test, lint and typecheck commands",
-          "tradeoff": "Strongest bar from commands the project already has; slowest per step, and an empty command is skipped.",
+          "label": "The detected check commands (format, lint, typecheck, static analysis, build and tests)",
+          "tradeoff": "Strongest bar from commands the project already has; the machine profile decides which run locally, and an empty command is skipped.",
           "recommended": true
         },
         {
@@ -75,6 +75,96 @@
       }
     },
     {
+      "id": "format-command",
+      "type": "text",
+      "detect": "commands.format",
+      "pattern": "^[^\\n]*$",
+      "default": "",
+      "since": "0.2.0",
+      "prompt": "Which command checks formatting? (empty skips it)",
+      "when": {
+        "question": "checks",
+        "in": [
+          "detected"
+        ]
+      }
+    },
+    {
+      "id": "static-analysis-command",
+      "type": "text",
+      "detect": "commands.static-analysis",
+      "pattern": "^[^\\n]*$",
+      "default": "",
+      "since": "0.2.0",
+      "prompt": "Which command runs static analysis? (empty skips it)",
+      "when": {
+        "question": "checks",
+        "in": [
+          "detected"
+        ]
+      }
+    },
+    {
+      "id": "build-command",
+      "type": "text",
+      "detect": "commands.build",
+      "pattern": "^[^\\n]*$",
+      "default": "",
+      "since": "0.2.0",
+      "prompt": "Which command builds the project? (empty skips it)",
+      "when": {
+        "question": "checks",
+        "in": [
+          "detected"
+        ]
+      }
+    },
+    {
+      "id": "unit-command",
+      "type": "text",
+      "detect": "commands.unit",
+      "pattern": "^[^\\n]*$",
+      "default": "",
+      "since": "0.2.0",
+      "prompt": "Which command runs the unit tests? (empty skips it)",
+      "when": {
+        "question": "checks",
+        "in": [
+          "detected"
+        ]
+      }
+    },
+    {
+      "id": "integration-command",
+      "type": "text",
+      "detect": "commands.integration",
+      "pattern": "^[^\\n]*$",
+      "default": "",
+      "since": "0.2.0",
+      "prompt": "Which command runs the integration tests? (empty skips it)",
+      "when": {
+        "question": "checks",
+        "in": [
+          "detected"
+        ]
+      }
+    },
+    {
+      "id": "e2e-command",
+      "type": "text",
+      "detect": "commands.e2e",
+      "pattern": "^[^\\n]*$",
+      "default": "",
+      "since": "0.2.0",
+      "prompt": "Which command runs the end-to-end tests? (empty skips it)",
+      "when": {
+        "question": "checks",
+        "in": [
+          "detected"
+        ]
+      }
+    },
+    {
       "id": "affected-command",
       "type": "text",
       "pattern": "^[^\\n]*$",
@@ -86,6 +176,29 @@
           "affected-tests"
         ]
       }
+    },
+    {
+      "id": "machine-profile",
+      "since": "0.2.0",
+      "prompt": "Where do the checks run?",
+      "options": [
+        {
+          "id": "thin",
+          "label": "Thin machine: format, lint, typecheck and tests locally; static analysis, build, integration and e2e in CI only",
+          "tradeoff": "Fast local loop on any machine; slow checks report through CI, so a pushed branch waits for CI before it is done. Tests also run in CI.",
+          "recommended": true
+        },
+        {
+          "id": "full",
+          "label": "Full machine: every check locally",
+          "tradeoff": "Every failure is caught before done; slow on thin machines, and CI runs only what the project already has there."
+        },
+        {
+          "id": "ci-only",
+          "label": "CI only: no check locally",
+          "tradeoff": "Cheapest machines; the agent loses the fast local signal and waits for CI on every step. Guardrail checks still run locally."
+        }
+      ]
     },
     {
       "id": "review-bar",
@@ -133,7 +246,7 @@
         "decisions": [
           {
             "slug": "verification-checks",
-            "title": "Implement and debug steps pass the project's test, lint and typecheck commands",
+            "title": "Implement and debug steps pass the project's detected check commands",
             "tags": [
               "practice-packs",
               "verification",
@@ -145,7 +258,7 @@
                 "verify-scope": "detected"
               }
             },
-            "body": "## Decision\n\nA step of class implement or debug is verified by `go-getter verify --class <class>`, which runs the test, lint and typecheck commands recorded in the command decisions; an empty command is skipped.\n\n## Why\n\nThe quality bar of routing (decisions 0016, 0017) is these checks: a cheaper tier that passes them is as good as a dearer one, and one that fails them escalates instead of shipping (pack {{pack.id}}@{{pack.version}}).\n"
+            "body": "## Decision\n\nA step of class implement or debug is verified by `go-getter verify --class <class>`, which runs the commands recorded in the command decisions that the machine profile places locally; an empty command is skipped.\n\n## Why\n\nThe quality bar of routing (decisions 0016, 0017) is these checks: a cheaper tier that passes them is as good as a dearer one, and one that fails them escalates instead of shipping (pack {{pack.id}}@{{pack.version}}).\n"
           }
         ]
       },
@@ -415,6 +528,138 @@
         ]
       }
     },
+    "format-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "verification-format-command",
+            "title": "The verification format command is \"{{answer.format-command}}\"",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-format-command": "{{answer.format-command}}"
+              }
+            },
+            "body": "## Decision\n\nVerification runs `{{answer.format-command}}` for the format check, where the machine profile places it; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
+    "static-analysis-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "verification-static-analysis-command",
+            "title": "The verification static-analysis command is \"{{answer.static-analysis-command}}\"",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-static-analysis-command": "{{answer.static-analysis-command}}"
+              }
+            },
+            "body": "## Decision\n\nVerification runs `{{answer.static-analysis-command}}` for the static-analysis check, where the machine profile places it; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
+    "build-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "verification-build-command",
+            "title": "The verification build command is \"{{answer.build-command}}\"",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-build-command": "{{answer.build-command}}"
+              }
+            },
+            "body": "## Decision\n\nVerification runs `{{answer.build-command}}` for the build check, where the machine profile places it; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
+    "unit-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "verification-unit-command",
+            "title": "The verification unit command is \"{{answer.unit-command}}\"",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-unit-command": "{{answer.unit-command}}"
+              }
+            },
+            "body": "## Decision\n\nVerification runs `{{answer.unit-command}}` for the unit check, where the machine profile places it; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
+    "integration-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "verification-integration-command",
+            "title": "The verification integration command is \"{{answer.integration-command}}\"",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-integration-command": "{{answer.integration-command}}"
+              }
+            },
+            "body": "## Decision\n\nVerification runs `{{answer.integration-command}}` for the integration check, where the machine profile places it; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
+    "e2e-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "verification-e2e-command",
+            "title": "The verification e2e command is \"{{answer.e2e-command}}\"",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-e2e-command": "{{answer.e2e-command}}"
+              }
+            },
+            "body": "## Decision\n\nVerification runs `{{answer.e2e-command}}` for the e2e check, where the machine profile places it; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
     "affected-command": {
       "*": {
         "decisions": [
@@ -433,6 +678,104 @@
               }
             },
             "body": "## Decision\n\nVerification runs `{{answer.affected-command}}` for the affected-tests check; an empty command skips it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe command is project-specific, so it is recorded as an answer rather than guessed at run time.\n"
+          }
+        ]
+      }
+    },
+    "machine-profile": {
+      "thin": {
+        "decisions": [
+          {
+            "slug": "verification-machine-profile",
+            "title": "Cheap checks run locally, slow checks only in CI (thin machine profile)",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness",
+              "ci"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-profile": "thin",
+                "verify-where": {
+                  "format": "local",
+                  "lint": "local",
+                  "typecheck": "local",
+                  "static-analysis": "ci",
+                  "build": "ci",
+                  "test": "both",
+                  "unit": "both",
+                  "integration": "ci",
+                  "e2e": "ci"
+                }
+              }
+            },
+            "body": "## Decision\n\nFormat, lint and typecheck run locally; tests run locally and in CI; static analysis, build, integration and e2e run only in CI. `go-getter verify` and the stop gate run only `local` and `both` checks; `ci` and `both` checks belong to CI (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThin machines should not run builds, full suites or analyzers locally, yet the quality bar must still hold (decision 0071).\n"
+          }
+        ]
+      },
+      "full": {
+        "decisions": [
+          {
+            "slug": "verification-machine-profile",
+            "title": "Every verification check runs locally (full machine profile)",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness",
+              "ci"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-profile": "full",
+                "verify-where": {
+                  "format": "local",
+                  "lint": "local",
+                  "typecheck": "local",
+                  "static-analysis": "local",
+                  "build": "local",
+                  "test": "local",
+                  "unit": "local",
+                  "integration": "local",
+                  "e2e": "local"
+                }
+              }
+            },
+            "body": "## Decision\n\nEvery check runs locally; CI runs only what the project already has there. `go-getter verify` and the stop gate run only `local` and `both` checks; `ci` and `both` checks belong to CI (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThin machines should not run builds, full suites or analyzers locally, yet the quality bar must still hold (decision 0071).\n"
+          }
+        ]
+      },
+      "ci-only": {
+        "decisions": [
+          {
+            "slug": "verification-machine-profile",
+            "title": "Verification checks run only in CI (ci-only machine profile)",
+            "tags": [
+              "practice-packs",
+              "verification",
+              "harness",
+              "ci"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "verify-profile": "ci-only",
+                "verify-where": {
+                  "format": "ci",
+                  "lint": "ci",
+                  "typecheck": "ci",
+                  "static-analysis": "ci",
+                  "build": "ci",
+                  "test": "ci",
+                  "unit": "ci",
+                  "integration": "ci",
+                  "e2e": "ci"
+                }
+              }
+            },
+            "body": "## Decision\n\nNo check runs locally; every check runs in CI. Guardrail checks still run locally. `go-getter verify` and the stop gate run only `local` and `both` checks; `ci` and `both` checks belong to CI (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThin machines should not run builds, full suites or analyzers locally, yet the quality bar must still hold (decision 0071).\n"
           }
         ]
       }

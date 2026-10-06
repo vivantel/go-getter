@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
 import { parseFrontmatter, stringifyFrontmatter } from './frontmatter.mjs';
-import { planRender, applyRender, activeQuestions, setIndexStatus } from './render.mjs';
+import { planRender, applyRender, activeQuestions, setIndexStatus, withFallbacks } from './render.mjs';
 
 const same = (a, b) => JSON.stringify([].concat(a ?? []).sort()) === JSON.stringify([].concat(b ?? []).sort());
 
@@ -21,7 +21,8 @@ export function currentAnswers(artifacts) {
   return answers;
 }
 
-export function planReconfigure({ project, pack, answers, acceptedBy, date, detect }) {
+export function planReconfigure({ project, pack, answers: given, acceptedBy, date, detect }) {
+  const answers = withFallbacks(pack, given);
   const adopted = adoptedArtifacts(project, pack.id);
   if (!adopted.length) throw new Error(`pack "${pack.id}" has not been adopted here; run render-pack first`);
   const before = currentAnswers(adopted);

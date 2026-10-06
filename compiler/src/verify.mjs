@@ -1,10 +1,11 @@
 // Verification gate (plan 5.5, decision 0031): runs the adopted checks of a task class and gates "done" on them.
-// Configuration comes from adopted decisions (`go-getter.verify-scope`, `verify-<check>-command`, `verify-review-bar`, `verify-gate`);
+// Configuration comes from adopted decisions (`go-getter.verify-scope`, `verify-<check>-command`, `verify-where`, `verify-review-bar`, `verify-gate`);
 // every check is recorded as one metadata line (event `verify:<check>`, never its output).
 import path from 'node:path';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { adoptedData } from './governance.mjs';
+import { CHECKS } from './detect.mjs';
 import { runTier3 } from './enforce.mjs';
 import { recordQuietly, STATE_DIR } from './telemetry/record.mjs';
 
@@ -16,17 +17,24 @@ const TIMEOUT_MS = 10 * 60 * 1000;
 const TAIL_LINES = 15;
 
 // The test command of the "affected tests" scope takes the place of the test command.
+// Each check runs where the machine profile places it (decision 0071): `commands` are the `local` and `both` checks
+// the gate runs, `ci` the `ci` and `both` checks CI runs. A profile adopted before 0071 has no placement: all local.
 export function verifyConfig(project) {
   const scope = adoptedData(project, 'verify-scope') ?? null;
   const command = (key) => String(adoptedData(project, key) ?? '').trim();
-  let commands = { test: command('verify-test-command'), lint: command('verify-lint-command'), typecheck: command('verify-typecheck-command') };
+  let commands = Object.fromEntries(CHECKS.map((c) => [c, command(`verify-${c}-command`)]));
   if (scope === 'tests-only') commands = { test: commands.test };
   if (scope === 'affected-tests') commands = { test: command('verify-affected-command') };
+  const placement = adoptedData(project, 'verify-where') ?? {};
+  const where = (name) => placement[name] ?? 'local';
+  const pick = (places) => Object.fromEntries(Object.entries(commands).filter(([name, v]) => v && places.includes(where(name))));
   const escalations = Number.parseInt(adoptedData(project, 'max-escalations'), 10);
   return {
     adopted: scope !== null,
     scope,
-    commands: Object.fromEntries(Object.entries(commands).filter(([, v]) => v)),
+    profile: adoptedData(project, 'verify-profile') ?? null,
+    commands: pick(['local', 'both']),
+    ci: pick(['ci', 'both']),
     reviewBar: adoptedData(project, 'verify-review-bar') ?? 'none',
     gate: adoptedData(project, 'verify-gate') ?? 'report',
     maxEscalations: Number.isInteger(escalations) && escalations >= 0 ? escalations : DEFAULT_MAX_ESCALATIONS,
