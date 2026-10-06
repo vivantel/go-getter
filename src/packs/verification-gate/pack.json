@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "verification-gate",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "family": "harness",
   "components": [
     6
@@ -382,7 +382,7 @@
                 "verify-gate": "block"
               }
             },
-            "body": "## Decision\n\nA stop hook runs the implement checks when the working tree has changes and keeps the agent working while they fail, at most the maximum number of escalations per session (decision 0032, default 2), then hands over to a human. Hosts without a blocking stop hook are advisory (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWithout a blocking gate, cheaper tiers would ship failures instead of escalating (decision 0031).\n"
+            "body": "## Decision\n\nA stop hook runs the implement checks when the working tree has changes and keeps the agent working while they fail, at most the maximum number of escalations per session (decision 0032, default 2), then hands over to a human. On a clean tree pushed as it is, with checks placed in CI, it reads the CI result instead (`go-getter ci status`, decision 0071): red counts as failing, pending ends the stop with a hand-over message. Hosts without a blocking stop hook are advisory (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWithout a blocking gate, cheaper tiers would ship failures instead of escalating (decision 0031).\n"
           }
         ],
         "guardrails": [
@@ -412,7 +412,7 @@
                 "run": "builtin:verify-gate"
               }
             ],
-            "body": "## Guardrail\n\nBefore reporting an implement or debug step done, run `go-getter verify --class <class>` and fix every failure. Where the host supports it, a stop hook enforces this and hands over to a human after the escalation limit.\n"
+            "body": "## Guardrail\n\nBefore reporting an implement or debug step done, run `go-getter verify --class <class>` and fix every failure; on a pushed branch, wait for CI with `go-getter watch --until done -- go-getter ci status --wait` and fix every red job. Where the host supports it, a stop hook enforces this and hands over to a human after the escalation limit.\n"
           }
         ]
       },
@@ -457,7 +457,7 @@
                 "check": "Run `go-getter verify --class implement` before reporting a step done"
               }
             ],
-            "body": "## Guardrail\n\nBefore reporting an implement or debug step done, run `go-getter verify --class <class>` and report every failure.\n"
+            "body": "## Guardrail\n\nBefore reporting an implement or debug step done, run `go-getter verify --class <class>` and report every failure; on a pushed branch, wait for CI with `go-getter watch --until done -- go-getter ci status --wait` and report every red job.\n"
           }
         ]
       }

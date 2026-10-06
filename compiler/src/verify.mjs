@@ -7,6 +7,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { adoptedData } from './governance.mjs';
 import { CHECKS } from './detect.mjs';
 import { runTier3 } from './enforce.mjs';
+import { ciStatus, formatStatus, pushedHead } from './ci.mjs';
 import { recordQuietly, STATE_DIR } from './telemetry/record.mjs';
 
 export const CLASSES = ['explore', 'plan', 'implement', 'review', 'debug'];
@@ -107,11 +108,13 @@ function hasChanges(project) {
 
 const sessionKey = (payload) => String(payload.session_id ?? payload.conversation_id ?? 'default').slice(0, 64);
 
-// Decision for a host's stop event: {block, reason} or {block: false, escalated?: true, reason?}.
-// Blocks while the class `implement` checks fail, at most `maxEscalations` times per session, then hands over to a human.
+// Decision for a host's stop event: {block, reason} or {block: false, escalated?: true, handover?: true, reason?}.
+// A tree with changes is gated on the local implement checks; a clean tree pushed as it is, on the CI checks (0071).
+// Either blocks at most `maxEscalations` times per session, then hands over to a human.
 export async function evaluateStop(project, payload, { host, now = Date.now() } = {}) {
   const config = verifyConfig(project);
-  if (config.gate !== 'block' || !hasChanges(project)) return { block: false };
+  if (config.gate !== 'block') return { block: false };
+  if (!hasChanges(project)) return ciGate(project, config, payload, { host, now });
   const key = sessionKey(payload);
   const blocks = readBlocks(project);
   const { ok, results } = await verify(project, 'implement', { host });
@@ -121,7 +124,33 @@ export async function evaluateStop(project, payload, { host, now = Date.now() } 
     return { block: false };
   }
   const failed = results.filter((r) => !r.ok);
-  const detail = failed.map((f) => `${f.name} failed:\n${f.output}`).join('\n\n');
+  return escalate(project, config, blocks, key, failed.map((f) => `${f.name} failed:\n${f.output}`).join('\n\n'), { host, now, what: 'fix the failing checks' });
+}
+
+const CI_GREEN = 'ci:green';
+
+// CI decides "done" only when the project places checks in CI and HEAD is pushed; a commit seen green is not asked again.
+function ciGate(project, config, payload, { host, now }) {
+  const head = Object.keys(config.ci).length ? pushedHead(project) : null;
+  const blocks = readBlocks(project);
+  if (!head || blocks[CI_GREEN]?.sha === head.sha) return { block: false };
+  const status = ciStatus(project, head);
+  const key = sessionKey(payload);
+  if (status.state === 'unknown') return { block: false };
+  if (status.state === 'pending') {
+    return { block: false, handover: true, reason: `go-getter verification gate: CI is still running for ${head.branch}; the step is done only when it is green. Wait with \`go-getter watch --until done -- go-getter ci status --wait\`.` };
+  }
+  recordQuietly(project, { event: 'verify:ci', ...(host ? { host } : {}), taskClass: 'implement', outcome: status.state === 'success' ? 'pass' : 'fail' });
+  if (status.state === 'success') {
+    delete blocks[key];
+    blocks[CI_GREEN] = { sha: head.sha, ts: now };
+    writeBlocks(project, blocks, now);
+    return { block: false };
+  }
+  return escalate(project, config, blocks, key, formatStatus(status), { host, now, what: 'fix the failing CI jobs, push, then wait with `go-getter watch --until done -- go-getter ci status --wait`' });
+}
+
+function escalate(project, config, blocks, key, detail, { host, now, what }) {
   const count = blocks[key]?.count ?? 0;
   if (count >= config.maxEscalations) {
     delete blocks[key];
@@ -132,7 +161,7 @@ export async function evaluateStop(project, payload, { host, now = Date.now() } 
   blocks[key] = { count: count + 1, ts: now };
   writeBlocks(project, blocks, now);
   recordQuietly(project, { event: 'verify:gate', ...(host ? { host } : {}), taskClass: 'implement', outcome: 'blocked', escalations: count });
-  return { block: true, reason: `go-getter verification gate: not done yet, fix the failing checks (attempt ${count + 1} of ${config.maxEscalations}).\n${detail}` };
+  return { block: true, reason: `go-getter verification gate: not done yet, ${what} (attempt ${count + 1} of ${config.maxEscalations}).\n${detail}` };
 }
 
 // Host answer to a stop event. Cursor continues the agent through a follow-up message; the others read exit 2.
@@ -141,5 +170,5 @@ export function respondStop(host, decision) {
     if (host === 'cursor') return { code: 0, stdout: JSON.stringify({ followup_message: decision.reason }), stderr: '' };
     return { code: 2, stdout: '', stderr: decision.reason };
   }
-  return { code: 0, stdout: '', stderr: decision.escalated ? decision.reason : '' };
+  return { code: 0, stdout: '', stderr: decision.escalated || decision.handover ? decision.reason : '' };
 }
