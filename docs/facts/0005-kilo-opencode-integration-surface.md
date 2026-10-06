@@ -51,7 +51,7 @@ OpenCode plugins run under Bun. Kilo installs from npm (`@kilocode/cli`), so Nod
 
 ## Not confirmed
 - OpenCode's own install methods and whether Node is needed at runtime.
-- Kilo's exact agent/command/plugin directory names under `.kilo/` (assumed to mirror `.opencode/`).
+- Kilo's exact agent and command directory names under `.kilo/` (assumed to mirror `.opencode/`); its plugin directory is `.kilo/plugin/` (fact 0031).
 - Ownership/vendor claims in the fetched Kilo CLI summary were contradictory and are excluded.
 - Prompt-cache behavior, telemetry and spend caps.
 

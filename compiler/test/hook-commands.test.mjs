@@ -61,7 +61,7 @@ test('hook commands of every host find the runner and name the project when run 
     const sub = nested(dir);
     const commands = hookCommands(dir);
     assert.ok(commands.length >= 5, `found hook commands for the JSON-configured hosts, got ${commands.length}`);
-    assert.deepEqual(commands.filter((c) => c.event === 'post-tool').map((c) => c.host), ['claude-code'], 'post-tool only where hooks.rewriteOutput');
+    assert.deepEqual(commands.filter((c) => c.event === 'post-tool').map((c) => c.host).sort(), ['claude-code', 'codex', 'copilot', 'gemini-cli'], 'post-tool only where hooks.rewriteOutput');
     for (const { command, event, host } of commands) {
       assert.ok(['pre-tool', 'post-tool'].includes(event), `${host}: ${event}`);
       rmSync(out, { force: true });
@@ -84,7 +84,7 @@ test('the hook plugin file of a host that uses one finds the runner from a subdi
     const plan = planApply(dir, { hosts: HOSTS });
     writeApply(dir, plan);
     stubRunner(dir);
-    const plugins = Object.keys(plan.outputs).filter((rel) => /plugins\/go-getter\.js$/.test(rel));
+    const plugins = Object.keys(plan.outputs).filter((rel) => /plugins?\/go-getter\.js$/.test(rel));
     assert.equal(plugins.length, 2, 'Kilo and OpenCode each get a plugin file');
     const sub = nested(dir);
     for (const rel of plugins) {
@@ -100,6 +100,26 @@ test('the hook plugin file of a host that uses one finds the runner from a subdi
       assert.deepEqual(args.slice(0, 4), ['hook', 'pre-tool', '--host', host], rel);
       assert.deepEqual(args.slice(-2), ['--project', realpathSync(dir)]);
     }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the Kilo plugin replaces a tool result with the runtime answer and keeps it when there is none', () => {
+  const dir = project();
+  try {
+    writeApply(dir, planApply(dir, { hosts: ['kilo'] }));
+    const runner = path.join(dir, '.go-getter/bin/go-getter');
+    // Stub: answers { output } for post-tool when $STUB_ANSWER is set, and nothing otherwise.
+    writeFileSync(runner, '#!/bin/sh\ncat > /dev/null\n[ "$2" = post-tool ] && [ -n "$STUB_ANSWER" ] && printf \'{"output":"%s"}\' "$STUB_ANSWER"\nexit 0\n');
+    chmodSync(runner, 0o755);
+    const copy = path.join(dir, 'kilo-plugin.mjs');
+    copyFileSync(path.join(dir, '.kilo/plugin/go-getter.js'), copy);
+    const script = `import { GoGetter } from ${JSON.stringify(`file://${copy}`)}; const hooks = await GoGetter(); const output = { output: 'raw' }; await hooks['tool.execute.after']({ tool: 'bash' }, output); console.log(output.output);`;
+    const sub = nested(dir);
+    const run = (answer) => spawnSync(process.execPath, ['--input-type=module', '-e', script], { cwd: sub, env: { ...process.env, STUB_ANSWER: answer }, encoding: 'utf8' });
+    assert.equal(run('clean').stdout.trim(), 'clean');
+    assert.equal(run('').stdout.trim(), 'raw');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

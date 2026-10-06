@@ -25,19 +25,21 @@ const PROSE = {
 };
 // Tool names (lowercased) of every host the shared runtime serves, mapped to their kind. A name not listed is unknown:
 // all of its input is scanned. Shell commands stay tokenised whole, so a restricted name anywhere in one is denied.
+// Codex, Cursor and Copilot names are confirmed by fact 0031; their argument field names mostly are not.
 const TOOLS = {
-  // file read, write and edit tools
+  // file read, write and edit tools; `apply_patch` carries its patch (paths included) in `command`, scanned whole
   read: 'file', write: 'file', edit: 'file', multiedit: 'file', notebookedit: 'file', read_file: 'file', write_file: 'file',
   replace: 'file', read_many_files: 'file', view: 'file', create: 'file', str_replace_editor: 'file', delete: 'file',
+  apply_patch: 'file',
   // shell tools
-  bash: 'shell', shell: 'shell', run_shell_command: 'shell',
+  bash: 'shell', shell: 'shell', run_shell_command: 'shell', powershell: 'shell',
   // content search: the pattern is a regex over file bodies; the path, glob and include fields are scanned
-  grep: 'search', search_file_content: 'search', grep_search: 'search',
+  grep: 'search', search_file_content: 'search', grep_search: 'search', rg: 'search',
   // web fetch and web search
   webfetch: 'fetch', web_fetch: 'fetch', websearch: 'websearch', google_web_search: 'websearch', web_search: 'websearch',
   // delegation to another agent
   agent: 'delegate', task: 'delegate', spawn_agent: 'delegate',
-  todowrite: 'todo', write_todos: 'todo', save_memory: 'memory',
+  todowrite: 'todo', write_todos: 'todo', update_todo: 'todo', save_memory: 'memory',
 };
 
 const toolName = (payload) => {
@@ -224,7 +226,7 @@ export function redactText(text, values) {
 
 // Redacts every string in a tool result, keeping its shape so the host accepts it as a replacement.
 export function evaluatePostTool(project, payload) {
-  const response = payload.tool_response ?? payload.toolResponse ?? payload.tool_output;
+  const response = payload.tool_response ?? payload.toolResponse ?? payload.tool_output ?? payload.toolResult;
   const values = restrictedValues(project);
   let redactions = 0;
   const walk = (v) => {
@@ -243,10 +245,23 @@ export function evaluatePostTool(project, payload) {
 
 // Host-specific post-tool answer: replace the result only when something was redacted. Only hosts with
 // hooks.rewriteOutput get this hook installed; any other host answers nothing.
+// Shapes (fact 0031): Claude Code and Copilot replace the result in place; Codex and Gemini CLI replace it with the
+// text of a block decision's reason; the Kilo plugin sets `output.output` from `{ output }`.
 export function respondPostTool(host, result) {
-  if (!result.redactions || host !== 'claude-code') return { code: 0, stdout: '', stderr: '' };
-  const key = result.mcp ? 'updatedMCPToolOutput' : 'updatedToolOutput';
-  return { code: 0, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', [key]: result.output } }), stderr: '' };
+  const none = { code: 0, stdout: '', stderr: '' };
+  if (!result.redactions) return none;
+  const text = (v) => (typeof v === 'string' ? v : JSON.stringify(v));
+  const answer = (value) => ({ code: 0, stdout: JSON.stringify(value), stderr: '' });
+  const out = result.output;
+  if (host === 'claude-code') {
+    const key = result.mcp ? 'updatedMCPToolOutput' : 'updatedToolOutput';
+    return answer({ hookSpecificOutput: { hookEventName: 'PostToolUse', [key]: out } });
+  }
+  if (host === 'copilot') return answer({ modifiedResult: { resultType: 'success', textResultForLlm: text(out?.textResultForLlm ?? out) } });
+  if (host === 'codex') return answer({ decision: 'block', reason: text(out) });
+  if (host === 'gemini-cli') return answer({ decision: 'deny', reason: text(out?.llmContent ?? out) });
+  if (host === 'kilo') return answer({ output: text(out) });
+  return none;
 }
 
 // Host-specific answer: exit 2 + stderr where that blocks; Copilot reads a JSON decision.

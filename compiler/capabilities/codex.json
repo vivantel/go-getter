@@ -27,7 +27,7 @@
     "config": ".codex/hooks.json",
     "blockPreTool": true,
     "rewriteToolInput": true,
-    "rewriteOutput": false,
+    "rewriteOutput": true,
     "blockStop": true,
     "modelSwap": false,
     "runtime": "command"
@@ -65,7 +65,7 @@
   "notes": [
     "Hooks gated by features.hooks.",
     "Model providers and otel are user-level config only.",
-    "No per-path read deny documented; DLP via PreToolUse hooks and sandbox.",
+    "Per-path read deny exists in permission profiles for sandboxed commands; project-level support unconfirmed (fact 0031).",
     "Checkpointing unconfirmed."
   ]
 }

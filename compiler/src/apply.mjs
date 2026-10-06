@@ -197,6 +197,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
     if (host === 'codex' && wanted('.codex/hooks.json')) {
       out['.codex/hooks.json'] = json(events(readJson(project, '.codex/hooks.json'), [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
+        [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
         [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
       ]));
@@ -204,6 +205,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
     if (host === 'gemini-cli' && wanted('.gemini/settings.json')) {
       out['.gemini/settings.json'] = json(events(readJson(project, '.gemini/settings.json'), [
         [['hooks', 'BeforeTool'], enabled ? ccLike(host) : null],
+        [['hooks', 'AfterTool'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
         [['hooks', 'AfterAgent'], canStop(host) ? plain(host, 'stop') : null],
       ]));
@@ -218,6 +220,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
     if (host === 'copilot' && (enabled || session)) {
       const hooks = {};
       if (enabled) hooks.preToolUse = [{ type: 'command', bash: cmd(host), timeoutSec: 30 }];
+      if (canRedact(host)) hooks.postToolUse = [{ type: 'command', bash: cmd(host, 'post-tool'), timeoutSec: 30 }];
       if (session) hooks.sessionStart = [{ type: 'command', bash: cmd(host, 'session-start'), timeoutSec: 30 }];
       out['.github/hooks/go-getter.json'] = json({ version: 1, hooks });
     }
@@ -246,7 +249,22 @@ export const GoGetter = async () => ({
       encoding: 'utf8',
     });
     if (res.status === 2) throw new Error(res.stderr.trim() || 'blocked by go-getter guardrail');
-  },
+  },${canRedact(host) ? `
+  // Tool-output redaction: the runtime answers { output } only when it redacted something; any failure keeps the result.
+  'tool.execute.after': async (input, output) => {
+    const root = findRoot(process.cwd());
+    if (!root) return;
+    const res = spawnSync('sh', [path.join(root, RUNNER), 'hook', 'post-tool', '--host', '${host}', '--project', root], {
+      input: JSON.stringify({ tool_name: input.tool, tool_response: output.output }),
+      encoding: 'utf8',
+    });
+    try {
+      const answer = res.status === 0 && res.stdout ? JSON.parse(res.stdout) : null;
+      if (typeof answer?.output === 'string') output.output = answer.output;
+    } catch {
+      // fail open (decision 0019)
+    }
+  },` : ''}
 });
 `,
       };

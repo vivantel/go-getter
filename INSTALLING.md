@@ -43,7 +43,7 @@ Kilo Code CLI is a fork of OpenCode with its own config files and `.kilo/` direc
 { "skills": { "urls": ["https://raw.githubusercontent.com/vivantel/go-getter/main/plugins/go-getter/skills"] } }
 ```
 
-The manifest is [`plugins/go-getter/skills/index.json`](plugins/go-getter/skills/index.json); Kilo re-fetches when a skill's version changes. Alternatively copy `plugins/go-getter/skills/` into `.agents/skills/` in your project. **Not confirmed:** that Kilo loads the skills from this manifest, and the `.kilo/` subdirectory names go-getter writes agents and hooks to (assumed to mirror OpenCode's).
+The manifest is [`plugins/go-getter/skills/index.json`](plugins/go-getter/skills/index.json); Kilo re-fetches when a skill's version changes. Alternatively copy `plugins/go-getter/skills/` into `.agents/skills/` in your project. **Not confirmed:** that Kilo loads the skills from this manifest, and the `.kilo/` subdirectory names go-getter writes agents to (assumed to mirror OpenCode's).
 
 ## OpenCode
 

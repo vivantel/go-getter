@@ -8,7 +8,7 @@ kind: derived
 governed-by: 0005-neutral-source-compiler-architecture
 ---
 
-Derived from facts 0003 (Claude Code, CC), 0004 (Codex, CX), 0005 (Kilo, KI; OpenCode, OC), 0006 (Cursor, CU), 0007 (Gemini CLI, GE), 0008 (Copilot, CP). `?` = unconfirmed in the source fact.
+Derived from facts 0003 (Claude Code, CC), 0004 (Codex, CX), 0005 (Kilo, KI; OpenCode, OC), 0006 (Cursor, CU), 0007 (Gemini CLI, GE), 0008 (Copilot, CP); output and read levers from 0027 and 0031. `?` = unconfirmed in the source fact.
 
 ## Extension points
 
@@ -19,7 +19,8 @@ Derived from facts 0003 (Claude Code, CC), 0004 (Codex, CX), 0005 (Kilo, KI; Ope
 | Subagent format | `.claude/agents/*.md` | `.codex/agents/*.toml` | `.kilo/agents/*.md` (assumed to mirror OpenCode; unconfirmed) | `.opencode/agents/*.md` | `.cursor/agents/*.md` (also reads `.claude/`, `.codex/`) | `.gemini/agents/*.md` | `.github/agents/*.agent.md` |
 | Commands | merged into skills | skills only | `.kilo/commands/*.md` (assumed to mirror OpenCode; unconfirmed) | `.opencode/commands/*.md` | migrated to skills | `.gemini/commands/*.toml` | skills/agents |
 | Blocking pre-tool hook | yes | yes | yes (plugin throws) | yes (plugin throws) | yes | yes | yes (`preToolUse` only) |
-| Path read deny | `Read(...)` rules, sandbox | ? (hooks only) | `permission.read` | `permission.read` | `beforeReadFile`, CLI `Read(...)`, `.cursorignore` | hooks / `argsPattern` | hooks, content exclusion (?) |
+| Path read deny | `Read(...)` rules, sandbox | hooks; permission profiles (sandboxed commands) | `permission.read` | `permission.read` | `beforeReadFile`, CLI `Read(...)`, `.cursorignore` | hooks / `argsPattern` | hooks; `--deny-tool='read(PATH)'` flag |
+| Replace tool output | `updatedToolOutput` | block `reason` | `tool.execute.after` | ? | MCP tools only | deny `reason` | `modifiedResult` |
 | Per-agent model | yes | yes | yes | yes | yes | yes | yes |
 | Effort control | yes (`effort`) | yes (`model_reasoning_effort`) | yes (variants) | yes (variants) | yes (`[effort=...]`) | no | ? |
 | Model swap by hook | `PreModelSwitch` (gate only) | no | no | no | no | `BeforeModel` | no |

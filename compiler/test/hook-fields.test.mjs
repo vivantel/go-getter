@@ -68,6 +68,10 @@ test('reads, writes and shell commands naming a restricted path stay denied on e
     call('Agent', { prompt: 'x', cwd_override: `secrets/prod` }),
     { toolName: 'bash', toolArgs: JSON.stringify({ command: `cat ${ENV}` }) },
     { toolName: 'view', toolArgs: `{"path": "${ENV}"` },
+    // names confirmed in fact 0031: Codex and Copilot patches, Copilot PowerShell and rg
+    call('apply_patch', { command: `*** Begin Patch\n*** Update File: ${ENV}\n+X=1\n*** End Patch` }),
+    { toolName: 'powershell', toolArgs: { command: `Get-Content ${ENV}` } },
+    { toolName: 'rg', toolArgs: { pattern: 'KEY', path: ENV } },
   ]) {
     assert.equal(evaluatePreTool(dir, payload).deny, true, JSON.stringify(payload));
   }

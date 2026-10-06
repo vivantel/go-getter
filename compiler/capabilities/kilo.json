@@ -27,10 +27,10 @@
     "format": "markdown"
   },
   "hooks": {
-    "config": ".kilo/plugins/go-getter.js",
+    "config": ".kilo/plugin/go-getter.js",
     "blockPreTool": true,
     "rewriteToolInput": false,
-    "rewriteOutput": false,
+    "rewriteOutput": true,
     "blockStop": false,
     "modelSwap": false,
     "runtime": "javascript"
@@ -62,7 +62,7 @@
     "12": 1
   },
   "notes": [
-    "Kilo Code CLI is a fork of OpenCode that uses kilo.json[c] and .kilo/ instead of opencode.json and .opencode/ (fact 0005); the subdirectory names under .kilo/ are assumed to mirror OpenCode's and are unconfirmed.",
+    "Kilo Code CLI is a fork of OpenCode that uses kilo.json[c] and .kilo/ instead of opencode.json and .opencode/ (fact 0005); its plugin directory is .kilo/plugin/ (fact 0031); the other subdirectory names under .kilo/ are assumed to mirror OpenCode's and are unconfirmed.",
     "Plugins run under Bun; argument mutation for routing unconfirmed.",
     "Effort via model variants.",
     "Remote skills: skills.urls serving plugins/go-getter/skills/index.json."

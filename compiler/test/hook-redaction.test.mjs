@@ -82,9 +82,35 @@ test('go-getter hook post-tool answers with the redacted result', () => {
 
 test('apply installs the post-tool hook only where the host can rewrite output', () => {
   const dir = project();
-  const out = hostHookOutputs(dir, ['claude-code', 'codex'], true);
-  assert.match(JSON.parse(out['.claude/settings.json'].content).hooks.PostToolUse[0].hooks[0].command, /hook post-tool --host claude-code/);
-  assert.equal(JSON.parse(out['.codex/hooks.json'].content).hooks.PostToolUse, undefined);
+  const out = hostHookOutputs(dir, ['claude-code', 'codex', 'gemini-cli', 'copilot', 'cursor', 'kilo', 'opencode'], true);
+  const hooks = (rel) => JSON.parse(out[rel].content).hooks;
+  assert.match(hooks('.claude/settings.json').PostToolUse[0].hooks[0].command, /hook post-tool --host claude-code/);
+  assert.match(hooks('.codex/hooks.json').PostToolUse[0].hooks[0].command, /hook post-tool --host codex/);
+  assert.match(hooks('.gemini/settings.json').AfterTool[0].hooks[0].command, /hook post-tool --host gemini-cli/);
+  assert.match(hooks('.github/hooks/go-getter.json').postToolUse[0].bash, /hook post-tool --host copilot/);
+  assert.ok(!JSON.stringify(hooks('.cursor/hooks.json')).includes('post-tool'), 'Cursor replaces MCP results only');
+  assert.match(out['.kilo/plugin/go-getter.js'].content, /'tool\.execute\.after'[\s\S]*'post-tool', '--host', 'kilo'/);
+  assert.ok(!out['.opencode/plugins/go-getter.js'].content.includes('post-tool'), 'OpenCode output rewriting is unconfirmed');
   assert.equal(JSON.parse(hostHookOutputs(dir, ['claude-code'], false, true)['.claude/settings.json'].content).hooks.PostToolUse, undefined);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('each host gets the redacted result in the shape its post-tool hook reads (fact 0031)', () => {
+  const dir = project();
+  const answer = (host, payload) => {
+    const r = evaluatePostTool(dir, payload);
+    assert.ok(r.redactions >= 1, host);
+    const out = respondPostTool(host, r);
+    assert.ok(!out.stdout.includes(TOKEN), host);
+    return JSON.parse(out.stdout);
+  };
+  const line = `x ${TOKEN} y`;
+  assert.deepEqual(answer('copilot', { toolName: 'bash', toolArgs: { command: 'c' }, toolResult: { resultType: 'success', textResultForLlm: line } }), { modifiedResult: { resultType: 'success', textResultForLlm: `x ${REDACTED} y` } });
+  const codex = answer('codex', shell(line));
+  assert.equal(codex.decision, 'block');
+  assert.equal(JSON.parse(codex.reason).stdout, `x ${REDACTED} y`);
+  assert.deepEqual(answer('gemini-cli', { tool_name: 'run_shell_command', tool_response: { llmContent: line, returnDisplay: line } }), { decision: 'deny', reason: `x ${REDACTED} y` });
+  assert.deepEqual(answer('kilo', { tool_name: 'bash', tool_response: line }), { output: `x ${REDACTED} y` });
+  for (const host of ['cursor', 'opencode']) assert.equal(respondPostTool(host, evaluatePostTool(dir, shell(line))).stdout, '', host);
   rmSync(dir, { recursive: true, force: true });
 });
