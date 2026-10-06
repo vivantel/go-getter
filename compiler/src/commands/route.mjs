@@ -1,6 +1,7 @@
 // go-getter route --class <c> [--context-tokens <n>] [--handoff-tokens <n>] [--cache warm|cold] [--session-model <id>]
 //                 [--data-class <public|internal|confidential|restricted>] [--host <id>] [--project <dir>]
-//   Where should this step run? Prints the cheapest eligible route by expected total step cost as JSON.
+//   Where should this step run? Prints the cheapest eligible route by expected total step cost as JSON; `delegateModel` is
+//   the value the host's delegation tool accepts for `model` (an alias where the host has a table, else the full id).
 // go-getter route --escalate --class <c> --from <tier> --attempts <n> [--host <id>]
 //   The next route after a failed verification; a human once the escalation bound is reached.
 // go-getter route --headless-flags --host <id>
@@ -8,7 +9,8 @@
 import path from 'node:path';
 import { chooseRoute, escalate, routingInputs, TIERS } from '../routing/policy.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
-import { routeRecord } from '../routing/delegate.mjs';
+import { delegatedModel, routeRecord } from '../routing/delegate.mjs';
+import { packageCapabilities } from '../governance.mjs';
 
 const SPEND_FLAG = { 'claude-code': (usd) => `--max-budget-usd ${usd}`, copilot: (usd) => `--max-ai-credits ${usd}` };
 
@@ -55,6 +57,10 @@ export default function routeCommand({ args }) {
     route = escalate({ ...common, from: opt.from, attempts: int(opt.attempts, 0) });
   } else {
     route = chooseRoute({ ...common, sessionModel: opt['session-model'] ?? null });
+  }
+  if (route.model) {
+    const delegation = host && packageCapabilities()[host]?.routing?.delegation;
+    route.delegateModel = delegation ? delegatedModel(delegation, route.model) : route.model;
   }
   recordQuietly(project, routeRecord(host ?? undefined, route, step.handoffTokens));
   console.log(JSON.stringify(route, null, 2));

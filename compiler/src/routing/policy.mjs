@@ -36,6 +36,7 @@ export function loadPolicy(project) {
   const escalations = Number.parseInt(adoptedData(project, 'max-escalations'), 10);
   const cap = Number.parseFloat(adoptedData(project, 'headless-spend-cap-usd'));
   const ttl = adoptedData(project, 'cache-ttl');
+  const calibration = adoptedData(project, 'routing-calibration');
   return {
     classes: adoptedData(project, 'routing-classes') ?? {},
     startTiers,
@@ -43,7 +44,19 @@ export function loadPolicy(project) {
     maxEscalations: Number.isInteger(escalations) && escalations >= 0 ? escalations : 2,
     spendCapUsd: Number.isFinite(cap) && cap > 0 ? cap : null,
     cacheTtl: ttl && typeof ttl === 'object' ? { main: ttl.main ?? null, subagent: ttl.subagent ?? null } : { main: null, subagent: null },
+    ...calibrated(calibration),
   };
+}
+
+// Failure rates and step shape of an active `routing-calibration` decision (decision 0017); invalid values are ignored.
+function calibrated(data) {
+  if (!data || typeof data !== 'object') return {};
+  const rate = (v) => typeof v === 'number' && v >= 0 && v <= 1;
+  const size = (v) => Number.isInteger(v) && v > 0;
+  const rates = Object.fromEntries(TIERS.filter((t) => rate(data['failure-rates']?.[t])).map((t) => [t, data['failure-rates'][t]]));
+  const keys = { turns: 'turns', 'new-tokens': 'newTokens', 'output-tokens': 'outputTokens' };
+  const step = Object.fromEntries(Object.entries(keys).filter(([k]) => size(data.step?.[k])).map(([k, v]) => [v, data.step[k]]));
+  return { failureRates: rates, step };
 }
 
 // Task classes sharing a routing class (fast/strong grouping) are routed together; the group needs the strongest member's tier and effort.
@@ -93,12 +106,12 @@ const summary = (rung, extra) => ({ model: rung.model.id, provider: rung.model.p
  * Chooses where a step runs. `step`: { sessionTokens, handoffTokens, turns?, newTokens?, outputTokens?, cache? } (tokens
  * of the current session's prefix and of what a delegate must be handed). Returns { action: 'stay' | 'delegate' | 'human', ... }.
  */
-export function chooseRoute({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, policy, step, sessionModel = null, ttl = '5m', failureRates = DEFAULT_FAILURE_RATES }) {
+export function chooseRoute({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, policy, step, sessionModel = null, ttl = '5m', failureRates = { ...DEFAULT_FAILURE_RATES, ...policy.failureRates } }) {
   const start = startTier(policy, taskClass);
   if (!start) return { action: 'human', reason: `no routing class for "${taskClass}"`, taskClass, dataClass };
   const eligible = candidates({ models, tiers, hostProviders, dataClass, registry });
   if (!eligible.length) return { action: 'human', reason: `no eligible model for data class "${dataClass}"`, taskClass, dataClass };
-  const full = { ...DEFAULT_STEP, handoffTokens: DEFAULT_HANDOFF_TOKENS, sessionTokens: 0, ...step };
+  const full = { ...DEFAULT_STEP, ...policy.step, handoffTokens: DEFAULT_HANDOFF_TOKENS, sessionTokens: 0, ...step };
   const ladder = buildLadder(eligible, tiers, full, ttl);
   const common = { ladder, step: full, failureRates, escalations: policy.maxEscalations, ttl };
   const startRank = rankOf(start);
@@ -125,7 +138,7 @@ export function chooseRoute({ taskClass, dataClass = DEFAULT_DATA_CLASS, models,
 export function escalate({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, policy, step, from, attempts, ttl = '5m' }) {
   if (attempts >= policy.maxEscalations) return { action: 'human', reason: `escalation bound of ${policy.maxEscalations} reached`, taskClass, dataClass, attempts };
   const eligible = candidates({ models, tiers, hostProviders, dataClass, registry });
-  const full = { ...DEFAULT_STEP, handoffTokens: DEFAULT_HANDOFF_TOKENS, sessionTokens: 0, ...step };
+  const full = { ...DEFAULT_STEP, ...policy.step, handoffTokens: DEFAULT_HANDOFF_TOKENS, sessionTokens: 0, ...step };
   const next = buildLadder(eligible, tiers, full, ttl).find((rung) => rung.rank > rankOf(from));
   if (!next) return { action: 'human', reason: `no stronger eligible tier above "${from}"`, taskClass, dataClass, attempts };
   return { ...summary(next, { action: 'delegate' }), effort: effortFor(policy, taskClass), taskClass, dataClass, attempts: attempts + 1 };

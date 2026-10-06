@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "cost-routing",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     11
@@ -223,7 +223,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Where no hook routes the delegation, run `go-getter route --class <class>` and use the model it returns"
+                "check": "Where no hook routes the delegation, run `go-getter route --class <class> --host <host id>` and delegate with the `delegateModel` it returns"
               },
               {
                 "tier": 2,
@@ -231,7 +231,7 @@
                 "run": "builtin:route-delegation"
               }
             ],
-            "body": "## Guardrail\n\nA delegation to a role uses the model `go-getter route` returns for its class: the host hook sets it where the host allows, otherwise ask the router before delegating. After the maximum number of escalations a step goes to a human.\n"
+            "body": "## Guardrail\n\nA delegation to a role uses the model `go-getter route` returns for its class, passed as its `delegateModel` (the value the host's delegation tool accepts): the host hook sets it where the host allows, otherwise ask the router before delegating. After the maximum number of escalations a step goes to a human.\n"
           }
         ]
       },
@@ -286,7 +286,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Where no hook routes the delegation, run `go-getter route --class <class>` and use the model it returns"
+                "check": "Where no hook routes the delegation, run `go-getter route --class <class> --host <host id>` and delegate with the `delegateModel` it returns"
               },
               {
                 "tier": 2,
@@ -294,7 +294,7 @@
                 "run": "builtin:route-delegation"
               }
             ],
-            "body": "## Guardrail\n\nA delegation to a role uses the model `go-getter route` returns for its class: the host hook sets it where the host allows, otherwise ask the router before delegating. After the maximum number of escalations a step goes to a human.\n"
+            "body": "## Guardrail\n\nA delegation to a role uses the model `go-getter route` returns for its class, passed as its `delegateModel` (the value the host's delegation tool accepts): the host hook sets it where the host allows, otherwise ask the router before delegating. After the maximum number of escalations a step goes to a human.\n"
           }
         ]
       },
@@ -349,7 +349,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Where no hook routes the delegation, run `go-getter route --class <class>` and use the model it returns"
+                "check": "Where no hook routes the delegation, run `go-getter route --class <class> --host <host id>` and delegate with the `delegateModel` it returns"
               },
               {
                 "tier": 2,
@@ -357,7 +357,7 @@
                 "run": "builtin:route-delegation"
               }
             ],
-            "body": "## Guardrail\n\nA delegation to a role uses the model `go-getter route` returns for its class: the host hook sets it where the host allows, otherwise ask the router before delegating. After the maximum number of escalations a step goes to a human.\n"
+            "body": "## Guardrail\n\nA delegation to a role uses the model `go-getter route` returns for its class, passed as its `delegateModel` (the value the host's delegation tool accepts): the host hook sets it where the host allows, otherwise ask the router before delegating. After the maximum number of escalations a step goes to a human.\n"
           }
         ]
       }

@@ -64,7 +64,7 @@ function substitute(value, vars) {
   return value;
 }
 
-function nextNumber(dir) {
+export function nextNumber(dir) {
   if (!existsSync(dir)) return 1;
   const nums = readdirSync(dir).map((n) => /^(\d{4})-/.exec(n)?.[1]).filter(Boolean).map(Number);
   return nums.length ? Math.max(...nums) + 1 : 1;

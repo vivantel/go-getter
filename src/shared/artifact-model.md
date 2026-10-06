@@ -44,7 +44,7 @@ Optional frontmatter key on any artifact; the only place go-getter tooling reads
 go-getter:
   enforcement:
     - tier: 1
-      check: Where no hook routes the delegation, run `go-getter route --class <class>` and use the model it returns
+      check: Where no hook routes the delegation, run `go-getter route --class <class> --host <host id>` and delegate with the `delegateModel` it returns
     - tier: 2
       check: Pre-delegation hook sets the delegated model from the router, or denies when no model is eligible
       run: builtin:route-delegation

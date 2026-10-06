@@ -80,3 +80,4 @@ id,title,tags,status
 0083-verification-e2e-command,"The verification e2e command is """"","practice-packs, verification, harness",active
 0084-verification-machine-profile,"Cheap checks run locally, slow checks only in CI (thin machine profile)","practice-packs, verification, harness, ci",active
 0085-pack-questions-added-later-declare-since,"A pack question added in a later version declares `since` and falls back to its default or recommended option","practice-packs, interview, configuration",draft
+0086-calibration-proposals-take-effect-when-activated,"Routing calibration proposals are draft decisions whose data routing reads only once a human activates them","model-routing, cost, observability",draft

@@ -170,7 +170,7 @@ test('the guardrail declares tier 1 and a tier-2 routing entry, and coverage rea
   const guardrail = readFileSync(path.join(dir, 'docs/guardrails/delegations-are-routed.md'), 'utf8');
   assert.match(guardrail, /run: builtin:route-delegation/);
   const row = coverage(dir, { 'cost-routing': pack }, loadCapabilities(root)).find((r) => r.component === 11);
-  assert.deepEqual(row.packs, ['cost-routing@0.1.0']);
+  assert.deepEqual(row.packs, [`cost-routing@${pack.version}`]);
   assert.equal(row.tiers['claude-code'], 2);
   done(dir);
 });
@@ -274,8 +274,11 @@ test('go-getter route answers from the adopted policy, escalates and stops at th
   };
   const first = route('--class', 'explore', '--context-tokens', '5000', '--cache', 'cold');
   assert.deepEqual([first.code, first.out.action, first.out.model, first.out.effort], [0, 'delegate', 'claude-haiku-4-5', 'low']);
+  assert.equal(first.out.delegateModel, 'haiku', "the host's Agent tool takes only the family alias");
+  const noHost = JSON.parse(spawnSync('node', [bin, 'route', '--project', dir, '--class', 'explore'], { encoding: 'utf8' }).stdout);
+  assert.equal(noHost.delegateModel, noHost.model, 'without a host the full id is the value');
   const up1 = route('--escalate', '--class', 'explore', '--from', 'small', '--attempts', '0');
-  assert.deepEqual([up1.out.action, up1.out.tier, up1.out.attempts], ['delegate', 'medium', 1]);
+  assert.deepEqual([up1.out.action, up1.out.tier, up1.out.attempts, up1.out.delegateModel], ['delegate', 'medium', 1, 'sonnet']);
   const up2 = route('--escalate', '--class', 'explore', '--from', 'medium', '--attempts', '1');
   assert.deepEqual([up2.out.tier, up2.out.attempts], ['large', 2]);
   const bound = route('--escalate', '--class', 'explore', '--from', 'large', '--attempts', '2');
