@@ -297,14 +297,26 @@ export function sessionNudges(packageRoot, project) {
   return capLines(lines.join('\n'));
 }
 
-// Telemetry record for a hook event: metadata the host's payload carries (model, effort), never tool input or output.
-// A post-tool event adds only the count of redactions.
+// Token and cost fields a host's hook payload carries (draft decision 0087). Only Claude Code documents any: a resumed
+// session-start brings the context size, whether its prompt cache likely expired, and the estimated cache-write cost.
+export function payloadUsage(payload) {
+  const n = payload.context_tokens;
+  if (!Number.isInteger(n) || n < 0) return {};
+  const expired = payload.prompt_cache_likely_expired === true;
+  const usage = { tokens: expired ? { cacheWrite: n } : { cacheRead: n } };
+  if (expired && FIELDS.cost(payload.estimated_cache_write_usd)) usage.cost = payload.estimated_cache_write_usd;
+  return usage;
+}
+
+// Telemetry record for a hook event: metadata the host's payload carries (model, effort, tokens, cost), never tool
+// input or output. A post-tool event adds only the count of redactions.
 export function hookRecord(event, host, payload, decision, redactions) {
   const rec = { event };
   if (host) rec.host = host;
   const model = typeof payload.model === 'string' ? payload.model : payload.model?.id;
   if (FIELDS.model(model)) rec.model = model;
   if (FIELDS.effort(payload.effort)) rec.effort = payload.effort;
+  Object.assign(rec, payloadUsage(payload));
   if (decision) rec.outcome = decision.deny ? 'denied' : 'allowed';
   if (FIELDS.redactions(redactions)) rec.redactions = redactions;
   return rec;

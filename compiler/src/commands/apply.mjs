@@ -30,5 +30,8 @@ export default function applyCommand({ args }) {
   const written = writeApply(project, plan);
   console.log(`apply: hosts ${plan.hosts.join(', ') || '(none detected)'}; tier 2 ${plan.tier2 ? 'on' : 'off'}; tier 3 ${plan.tier3 ? 'on' : 'off'}; project-local skills ${plan.skills ? 'on' : 'off'}`);
   for (const w of written) console.log(`  ${w}`);
+  for (const [host, r] of Object.entries(plan.otel ?? {})) {
+    console.log(`  otel ${host}: ${r.status === 'emitted' ? `emitted in ${r.file}` : `unavailable (${r.reason})`}`);
+  }
   return 0;
 }

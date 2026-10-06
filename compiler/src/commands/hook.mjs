@@ -21,7 +21,14 @@ export default async function hookCommand({ root, args }) {
     else if (rest[i] === '--project') project = path.resolve(rest[++i]);
   }
   if (event === 'session-start') {
-    recordQuietly(project, hookRecord('session-start', host, {}));
+    // The payload carries metadata only here (model, effort, resume token and cost estimates); a terminal stdin is skipped.
+    let payload = {};
+    try {
+      if (!process.stdin.isTTY) payload = JSON.parse(readFileSync(0, 'utf8') || '{}');
+    } catch {
+      // no or malformed payload: record without it
+    }
+    recordQuietly(project, hookRecord('session-start', host, payload));
     const text = sessionNudges(root, project);
     if (text) process.stdout.write(`${text}\n`);
     return 0;

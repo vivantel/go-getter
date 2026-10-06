@@ -11,6 +11,7 @@ import { agentOutputs, staleAgentFiles } from './agents.mjs';
 import { packageCapabilities, promptLoggingTargets, setPath } from './governance.mjs';
 import { loadPolicy } from './routing/policy.mjs';
 import { verifyConfig } from './verify.mjs';
+import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 
 export const RUNNER = '.go-getter/bin/go-getter';
 const MARK_START = '<!-- go-getter:start -->';
@@ -339,6 +340,14 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
     const base = outputs[file] ? JSON.parse(outputs[file].content) : readJson(project, file);
     outputs[file] = json(setPath(base, key, false));
   }
+  // Telemetry: host OpenTelemetry settings where the project config accepts them (draft decision 0087).
+  const otel = otelReport(project, targetHosts);
+  const { endpoint } = otelConfig(project);
+  for (const [host, r] of Object.entries(otel ?? {})) {
+    if (r.status !== 'emitted') continue;
+    const base = outputs[r.file] ? JSON.parse(outputs[r.file].content) : readJson(project, r.file);
+    outputs[r.file] = json(withOtel(host, base, endpoint));
+  }
   // Cost routing: prompt-cache lifetimes where the host has settings for them (decision 0032).
   const ttl = loadPolicy(project)?.cacheTtl;
   for (const host of ttl ? targetHosts : []) {
@@ -362,7 +371,7 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
   Object.assign(outputs, agentOutputs(project, targetHosts));
   const stale = staleAgentFiles(project, targetHosts, outputs);
-  return { hosts: targetHosts, outputs, stale, tier2, tier3, skills: withSkills };
+  return { hosts: targetHosts, outputs, stale, tier2, tier3, skills: withSkills, otel };
 }
 
 export function diffApply(project, plan) {

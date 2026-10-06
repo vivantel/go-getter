@@ -70,6 +70,14 @@ export function summarize(records) {
   const by = (key) => records.reduce((acc, r) => (r[key] === undefined ? acc : { ...acc, [r[key]]: (acc[r[key]] ?? 0) + 1 }), {});
   const tokens = { input: 0, cacheRead: 0, cacheWrite: 0, output: 0 };
   for (const r of records) for (const k of Object.keys(tokens)) tokens[k] += r.tokens?.[k] ?? 0;
+  // Cost by task class; records with a cost but no class (hook events) fall under `unclassified`.
+  const costByTaskClass = {};
+  for (const r of records) {
+    if (r.cost === undefined) continue;
+    const c = r.taskClass ?? 'unclassified';
+    costByTaskClass[c] = (costByTaskClass[c] ?? 0) + r.cost;
+  }
+  for (const c of Object.keys(costByTaskClass)) costByTaskClass[c] = Number(costByTaskClass[c].toFixed(6));
   return {
     records: records.length,
     from: records[0]?.ts ?? null,
@@ -80,6 +88,7 @@ export function summarize(records) {
     taskClasses: by('taskClass'),
     tokens,
     cost: Number(records.reduce((s, r) => s + (r.cost ?? 0), 0).toFixed(6)),
+    costByTaskClass,
     escalations: records.reduce((s, r) => s + (r.escalations ?? 0), 0),
   };
 }

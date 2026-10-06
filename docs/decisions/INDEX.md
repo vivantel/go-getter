@@ -81,3 +81,4 @@ id,title,tags,status
 0084-verification-machine-profile,"Cheap checks run locally, slow checks only in CI (thin machine profile)","practice-packs, verification, harness, ci",active
 0085-pack-questions-added-later-declare-since,"A pack question added in a later version declares `since` and falls back to its default or recommended option","practice-packs, interview, configuration",draft
 0086-calibration-proposals-take-effect-when-activated,"Routing calibration proposals are draft decisions whose data routing reads only once a human activates them","model-routing, cost, observability",draft
+0087-host-otel-settings-only-where-project-config-accepts-them,"apply writes host OpenTelemetry settings only where a host's project config accepts them, and fills token and cost fields only from documented hook data","observability, cost, enforcement",draft
