@@ -2,7 +2,7 @@
 
 go-getter is a plugin of skills. Install it on one host agent, then ask that agent to **"set up the agent harness here"** (the `go-getter-init` skill). Its guided interview records your choices as decisions in `docs/` and generates the enforcement for every host agent you use.
 
-The skills run the CLI through `npx --yes github:vivantel/go-getter <command>`, which needs Node.js 22 or newer. Without Node, your choices are still recorded but enforcement stays advisory.
+The `go-getter-init` skill carries its own copy of the CLI (`skills/go-getter-init/cli`), so setup needs no network, npx or environment variable; it needs Node.js 22 or newer. Install the whole skill directory: a copy that leaves out `cli/` cannot run. Without Node, your choices are still recorded but enforcement stays advisory.
 
 Every install below is untested until step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md) runs it on the host. Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md) is the install test on each host that confirms or corrects them.
 
@@ -75,11 +75,11 @@ copilot plugin install ./go-getter/plugins/go-getter
 
 ## After installing
 
-Ask your agent to set up the harness, or run the CLI yourself from your project:
+Ask your agent to set up the harness, or run the bundled CLI yourself from your project (the path is wherever your host put the skill, for example `.claude/skills/go-getter-init`):
 
 ```
-npx --yes github:vivantel/go-getter detect
-npx --yes github:vivantel/go-getter coverage
+node <skill-dir>/cli/compiler/bin/go-getter.mjs detect
+node <skill-dir>/cli/compiler/bin/go-getter.mjs coverage
 ```
 
 `coverage` shows, for each of the twelve harness components and each host agent, whether a rule is enforced in CI, blocked by a host hook, advisory or not covered yet.
@@ -110,7 +110,7 @@ npx --yes github:vivantel/go-getter apply --remove
 
 ## When npx cannot fetch from GitHub
 
-The generated runner `.go-getter/bin/go-getter` (called by every host hook and the pre-push hook) runs the CLI through `npx --yes github:vivantel/go-getter`, pinned to the release tag of the version that wrote it (an unreleased build is unpinned). If npm refuses the fetch (for example `EALLOWGIT` where git dependencies are disabled), the hook fails without blocking, enforcement does not run for that call, and the runner says so. Two ways out:
+This affects only the hooks, not setup. The generated runner `.go-getter/bin/go-getter` (called by every host hook and the pre-push hook) runs the CLI through `npx --yes github:vivantel/go-getter`, pinned to the release tag of the version that wrote it (an unreleased build is unpinned). If npm refuses the fetch (for example `EALLOWGIT` where git dependencies are disabled), the hook fails without blocking, enforcement does not run for that call, and the runner says so. Two ways out:
 
 - Set `GO_GETTER_CLI` to `compiler/bin/go-getter.mjs` of a go-getter checkout (in your shell profile, or in the host's `env` setting for the project). The runner then runs that file and never calls npx.
 - Allow git fetches for npm, preferably for one command or session only: `npm_config_allow_git=all`.

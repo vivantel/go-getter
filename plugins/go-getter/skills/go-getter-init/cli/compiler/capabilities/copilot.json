@@ -1,0 +1,68 @@
+{
+  "$schema": "../schemas/capabilities.schema.json",
+  "host": "copilot",
+  "fact": "0008-copilot-integration-surface",
+  "instructions": {
+    "file": "AGENTS.md",
+    "readsAgentsMd": true,
+    "agentsMdVia": "native"
+  },
+  "skills": {
+    "dirs": [
+      ".agents/skills",
+      ".github/skills",
+      ".claude/skills"
+    ]
+  },
+  "agents": {
+    "format": "markdown",
+    "dir": ".github/agents",
+    "extension": ".agent.md",
+    "model": true,
+    "effort": false,
+    "tools": true
+  },
+  "commands": {
+    "native": false
+  },
+  "hooks": {
+    "config": ".github/hooks/go-getter.json",
+    "blockPreTool": true,
+    "rewriteToolInput": false,
+    "rewriteOutput": true,
+    "blockStop": false,
+    "modelSwap": false,
+    "runtime": "command"
+  },
+  "permissions": {
+    "pathReadDeny": false
+  },
+  "routing": {
+    "localEndpoints": false,
+    "spendCap": "autopilot",
+    "cacheTokensVisible": false
+  },
+  "telemetry": {
+    "otel": false,
+    "cost": false
+  },
+  "sandbox": true,
+  "checkpointing": false,
+  "nodeAtRuntime": false,
+  "tiers": {
+    "3": 2,
+    "6": 1,
+    "7": 2,
+    "8": 1,
+    "9": 1,
+    "10": 2,
+    "11": 2,
+    "12": 1
+  },
+  "notes": [
+    "Only preToolUse can deny.",
+    "Content exclusion support in CLI/agent mode is contradictory in docs; treated as unenforced.",
+    "Sandbox = cloud agent firewall.",
+    "Node needed only for npm installs (>=22)."
+  ]
+}

@@ -5,7 +5,7 @@ description: Set up this project's agent harness and SDLC practices through a gu
 
 # go-getter init
 
-Run the CLI as `npx --yes github:vivantel/go-getter <command>` (written `gg <command>` below). It needs Node.js; if `node --version` fails or is older than the oldest supported LTS, tell the user that go-getter will record their choices but enforcement on this machine stays advisory until Node is installed, and continue.
+Run the CLI bundled with this skill: `node <skill-dir>/cli/compiler/bin/go-getter.mjs <command>`, where `<skill-dir>` is the absolute path of the directory holding this file (written `gg <command>` below), from the project's root. It needs no network. If `<skill-dir>/cli` is missing, the skill was installed without its files: tell the user to reinstall the plugin, or copy the whole `go-getter-init` directory, and stop. It needs Node.js; if `node --version` fails or is older than the oldest supported LTS, tell the user that go-getter will record their choices but enforcement on this machine stays advisory until Node is installed, and continue.
 
 ## 1. Look before asking
 
