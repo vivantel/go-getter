@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 3
       check: "Every non-merge commit not yet on main has a Conventional Commits subject"
-      run: 'builtin:commit-message pattern="^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)(\([a-z0-9-]+\))?!?: .+" base=origin/main'
+      run: 'builtin:commit-message pattern="^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)(\([a-z0-9-]+\))?!?: .+"'
 ---
 
 ## Guardrail
