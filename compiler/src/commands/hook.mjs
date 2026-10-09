@@ -67,7 +67,7 @@ export default async function hookCommand({ root, args }) {
     if (out.stderr) process.stderr.write(`${out.stderr}\n`);
     return out.code;
   }
-  const decision = evaluatePreTool(dir, payload);
+  const decision = evaluatePreTool(dir, payload, host);
   recordQuietly(dir, hookRecord('pre-tool', host, payload, decision));
   if (!decision.deny) {
     let routed = null;
