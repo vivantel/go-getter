@@ -13,11 +13,9 @@ import { loadPolicy } from './routing/policy.mjs';
 import { verifyConfig } from './verify.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
-import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting } from './reconcile.mjs';
+import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting, isLink, MARK_START, MARK_END } from './reconcile.mjs';
 
 export const RUNNER = '.go-getter/bin/go-getter';
-const MARK_START = '<!-- go-getter:start -->';
-const MARK_END = '<!-- go-getter:end -->';
 // Recognises go-getter's hook entries in both command shapes (the old relative `sh <runner> hook` and the walk-up one that quotes the path).
 const HOOK_TAG = new RegExp(`${RUNNER.replaceAll('.', '\\.')}(\\\\")? hook`);
 const NODE_FLOOR = 22;
@@ -327,6 +325,18 @@ export function projectSkillOutputs(packageRoot, hosts) {
   return out;
 }
 
+// Whether a path belongs to a host this plan does not target: its agent files, hook and permission files, and the
+// instruction file only it reads.
+function foreignHostPaths(caps, targetHosts) {
+  const others = Object.entries(caps).filter(([host]) => !targetHosts.includes(host));
+  const mine = new Set(targetHosts.flatMap((h) => [caps[h]?.hooks?.config, caps[h]?.permissions?.config, caps[h]?.instructions?.file]));
+  return (rel) =>
+    others.some(([, c]) => {
+      const own = [c.hooks?.config, c.permissions?.config, c.instructions?.file !== 'AGENTS.md' ? c.instructions?.file : undefined];
+      return (c.agents && rel.startsWith(`${c.agents.dir}/`)) || (own.includes(rel) && !mine.has(rel));
+    });
+}
+
 function packageVersion(packageRoot) {
   try {
     return JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).version;
@@ -453,6 +463,9 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
   Object.assign(outputs, agentOutputs(project, targetHosts));
   const stale = new Set(staleAgentFiles(project, targetHosts, outputs));
+  // A plan for some hosts leaves the files of the others alone: they stay in the manifest and are not stale.
+  const foreign = foreignHostPaths(caps, targetHosts);
+  const carried = {};
 
   // Whole files: one edited since go-getter wrote it (or not go-getter's at all) is skipped; one that is no longer produced is removed.
   const owned = previous?.files ?? {};
@@ -468,6 +481,10 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
       if (owned[rel]) skipped[rel] = owned[rel];
     }
     for (const [rel, rec] of Object.entries(owned)) {
+      if (!planned.has(rel) && foreign(rel)) {
+        carried[rel] = rec;
+        continue;
+      }
       if (planned.has(rel) || !existsSync(path.join(project, rel)) && !isLink(path.join(project, rel))) continue;
       if (!edited(rel, rec)) stale.add(rel);
       else {
@@ -476,8 +493,13 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
       }
     }
   } else {
-    for (const rel of Object.keys(owned)) if (!planned.has(rel)) stale.add(rel);
+    for (const [rel, rec] of Object.entries(owned)) {
+      if (planned.has(rel)) continue;
+      if (foreign(rel)) carried[rel] = rec;
+      else stale.add(rel);
+    }
   }
+  for (const [rel, rec] of Object.entries(carried)) skipped[rel] = rec;
 
   // core.hooksPath: left alone when changed since go-getter set it; restored when the hooks are no longer produced.
   const recordedGit = previous?.shared?.['git-config']?.[0];
@@ -489,17 +511,9 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     project, version: packageVersion(packageRoot), shared, before, block, markers: [MARK_START, MARK_END],
     modified, held, skipped, blockHeld: Boolean(blockHeld), recordedGit, gitHeld: Boolean(gitHeld),
     gitConfig: tier3 && !gitHeld ? { setting: 'core.hooksPath', value: '.githooks', replaced: currentGit } : null,
-    gitUnset: !tier3 && recordedGit && !gitHeld ? { replaced: recordedGit.replaced } : null,
+    gitUnset: !tier3 && recordedGit && !recordedGit.unknown && !gitHeld ? { replaced: recordedGit.replaced } : null,
   };
 }
-
-const isLink = (file) => {
-  try {
-    return lstatSync(file).isSymbolicLink();
-  } catch {
-    return false;
-  }
-};
 
 export function diffApply(project, plan) {
   const problems = [];

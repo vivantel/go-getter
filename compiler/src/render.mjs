@@ -33,8 +33,6 @@ function checkAnswer(q, a) {
   }
 }
 
-// A question added in a later pack version (`since`) may be missing from an older answer file: it takes its default
-// or recommended option, so the older answers still render.
 // Answers recorded under an option id the pack has since renamed (`renamed` on a question), mapped to the new id.
 export function renameAnswers(pack, answers) {
   const out = { ...answers };
@@ -46,6 +44,8 @@ export function renameAnswers(pack, answers) {
   return out;
 }
 
+// A question added in a later pack version (`since`) may be missing from an older answer file: it takes its default
+// or recommended option, so the older answers still render.
 export function withFallbacks(pack, answers) {
   const filled = renameAnswers(pack, answers);
   for (const q of pack.questions) {
@@ -105,7 +105,8 @@ export function setIndexStatus(indexFile, id, status) {
 // `existing` (reconfigure): keepDecisionsFor = questions whose decisions stay (with their ids in decisionIds);
 // overwritable = paths of previously generated non-decision artifacts that may be re-rendered in place, artifactIds =
 // their ids by `<dir>/<slug>`, so a re-render keeps the number it was adopted with.
-export function planRender({ root, pack, answers: given, acceptedBy, date, detect = {}, existing = {} }) {
+// `draft`: decisions are rendered as `draft` without `accepted-by` (decision 0091: update proposes, the owner accepts).
+export function planRender({ root, pack, answers: given, acceptedBy, date, detect = {}, existing = {}, draft = false }) {
   const answers = withFallbacks(pack, given);
   const keep = existing.keepDecisionsFor ?? new Set();
   const overwritable = existing.overwritable ?? new Set();
@@ -153,11 +154,14 @@ export function planRender({ root, pack, answers: given, acceptedBy, date, detec
           const rendered = substitute(tpl, vars);
           // A template's own `go-getter` data (e.g. roles, access) merges with the keys the renderer owns.
           const { 'go-getter': own = {}, ...extra } = rendered.frontmatter ?? {};
-          const data = { id, title: rendered.title, status: 'active', date, tags: rendered.tags, ...extra };
+          const status = draft && kind === 'decisions' ? 'draft' : 'active';
+          const data = { id, title: rendered.title, status, date, tags: rendered.tags, ...extra };
           if (kind === 'decisions') {
             if (!data.track) throw new Error(`decision template "${tpl.slug}" needs frontmatter.track`);
-            if (!acceptedBy) throw new Error('acceptedBy is required to render active decisions');
-            data['accepted-by'] = acceptedBy;
+            if (status === 'active') {
+              if (!acceptedBy) throw new Error('acceptedBy is required to render active decisions');
+              data['accepted-by'] = acceptedBy;
+            }
           }
           if (kind === 'facts' && !data.kind) throw new Error(`fact template "${tpl.slug}" needs frontmatter.kind`);
           if (kind === 'guardrails') {
@@ -174,7 +178,7 @@ export function planRender({ root, pack, answers: given, acceptedBy, date, detec
           const rel = `docs/${dir}/${id}.md`;
           const replaces = existsSync(path.join(root, rel));
           if (replaces && !overwritable.has(rel)) throw new Error(`${rel} already exists (use reconfigure to change an adopted pack)`);
-          artifacts.push({ kind: dir, id, title: rendered.title, tags: rendered.tags, path: rel, replaces, questionId: q.id, content: stringifyFrontmatter(data, `\n${rendered.body.trimEnd()}\n`) });
+          artifacts.push({ kind: dir, id, status, title: rendered.title, tags: rendered.tags, path: rel, replaces, questionId: q.id, content: stringifyFrontmatter(data, `\n${rendered.body.trimEnd()}\n`) });
         }
       }
       for (const f of out.files ?? []) {
@@ -195,7 +199,7 @@ export function applyRender({ root, plan }) {
     writeFileSync(path.join(root, a.path), a.content);
     const index = path.join(root, 'docs', a.kind, 'INDEX.md');
     if (!existsSync(index)) writeFileSync(index, `# ${INDEX_HEADER[a.kind]} index (CSV)\n\nid,title,tags,status\n`);
-    setIndexRow(index, a.id, `${a.id},${csv(a.title)},${csv(a.tags.join(', '))},active`);
+    setIndexRow(index, a.id, `${a.id},${csv(a.title)},${csv(a.tags.join(', '))},${a.status}`);
   }
   if (plan.newTags.length) {
     const tagsFile = path.join(root, 'docs/skills/tags.md');

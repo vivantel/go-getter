@@ -5,6 +5,16 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
+export const MARK_START = '<!-- go-getter:start -->';
+export const MARK_END = '<!-- go-getter:end -->';
+export const isLink = (file) => {
+  try {
+    return lstatSync(file).isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
+
 export const hashContent = (content) => `sha256:${createHash('sha256').update(content).digest('hex')}`;
 
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);

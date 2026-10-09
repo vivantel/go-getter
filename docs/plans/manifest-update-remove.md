@@ -49,7 +49,7 @@ Done-when: a fixture adopted at an older pack version updates to the newer one i
 
 ### 7 Drift signals — [x]
 Class: implement · Needs: 1 · Check: `npm run test:update`
-Do: add a session-start nudge script under `src/hooks/` and list it in `NUDGES` in `compiler/src/hook.mjs`: one line when the manifest version or an adopted pack is older than the installed package (`go-getter <installed> installed, project at <manifest>: run go-getter update`), nothing otherwise, within the nudge line budget; make `apply --check` report a version mismatch as a problem.
+Do: add a session-start nudge (`driftNudge` in `compiler/src/manifest.mjs`, called in-process from `sessionNudges` in `compiler/src/hook.mjs`): one line when the manifest version or an adopted pack is older than the installed package (`go-getter <installed> installed, project at <manifest>: run go-getter update`), nothing otherwise, within the nudge line budget; make `apply --check` report a version mismatch as a problem.
 Done-when: tests show the nudge line for an older manifest, no line for a current one, and `apply --check` failing on the mismatch and passing after `update`.
 
 ### 8 Adopt here and document — [x]

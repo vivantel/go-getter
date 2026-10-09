@@ -1,12 +1,12 @@
 // `go-getter apply --remove` (decision 0090): undo every item the manifest lists. A file, key or block edited since
 // go-getter wrote it is `modified`: kept, reported and left in the manifest, unless `force`. `docs/` and
 // `.go-getter/state` are never touched.
-import { existsSync, readFileSync, writeFileSync, rmSync, readdirSync, rmdirSync, lstatSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, rmSync, readdirSync, rmdirSync } from 'node:fs';
 import path from 'node:path';
 import { MANIFEST, SCHEMA, readManifest, manifestText } from './manifest.mjs';
-import { undoJson, blockOf, hashContent, fileEdited, gitSetting, setGitSetting } from './reconcile.mjs';
+import { undoJson, blockOf, hashContent, fileEdited, gitSetting, setGitSetting, isLink, MARK_START, MARK_END } from './reconcile.mjs';
 
-const MARKERS = ['<!-- go-getter:start -->', '<!-- go-getter:end -->'];
+const MARKERS = [MARK_START, MARK_END];
 const PROTECTED = [/^docs(\/|$)/, /^\.go-getter\/state(\/|$)/];
 
 const safe = (rel) => {
@@ -49,7 +49,10 @@ export function planRemove(project, { force = false } = {}) {
       const [rec] = items;
       const now = gitSetting(project, rec.setting);
       if (now === undefined) continue;
-      if (!force && now !== rec.value) {
+      if (rec.unknown) {
+        // What the setting was before go-getter is not recorded, so it stays as it is.
+        steps.push({ text: `keep ${rec.setting} = ${now} (its previous value was not recorded)`, run: () => {} });
+      } else if (!force && now !== rec.value) {
         keep(rec.setting, 'git-config', `changed to ${now} since go-getter set it`);
         kept.shared[rel] = items;
       } else steps.push({ text: rec.replaced === undefined ? `unset ${rec.setting}` : `restore ${rec.setting} = ${rec.replaced}`, run: () => setGitSetting(project, rec.setting, rec.replaced) });
@@ -84,14 +87,6 @@ export function planRemove(project, { force = false } = {}) {
     : { text: `delete ${MANIFEST}`, run: () => rmSync(abs(MANIFEST), { force: true }), deleted: MANIFEST });
   return { steps, modified, remaining };
 }
-
-const isLink = (file) => {
-  try {
-    return lstatSync(file).isSymbolicLink();
-  } catch {
-    return false;
-  }
-};
 
 // Runs the plan, then removes the directories it emptied (never above the project).
 export function applyRemove(project, plan) {

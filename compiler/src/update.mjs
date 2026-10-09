@@ -3,27 +3,18 @@
 // from the manifest. The plan is made by running the update on a scratch copy of the project and diffing the two trees,
 // so the printed plan is exactly what a real run writes.
 import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { readArtifacts } from './artifacts.mjs';
 import { applyPlan, bootstrap, planApply } from './apply.mjs';
 import { parseFrontmatter, stringifyFrontmatter } from './frontmatter.mjs';
-import { SCHEMA, readManifest, drift, driftLine } from './manifest.mjs';
+import { SCHEMA, adoptedPacks, readManifest } from './manifest.mjs';
+import { gitSetting } from './reconcile.mjs';
 import { loadPack } from './packs.mjs';
 import { adoptedArtifacts, applyReconfigure, planReconfigure, currentAnswers } from './reconfigure.mjs';
 
-const SKIP = new Set(['.git', 'node_modules']);
-
-// Adopted pack ids with the version they were rendered at (`generated-by: <pack>@<version>` of active artifacts).
-export function adoptedPackVersions(project) {
-  const found = {};
-  for (const a of readArtifacts(project)) {
-    const m = ['active', 'draft'].includes(a.data.status) && /^([^@]+)@(.+)$/.exec(String(a.data['go-getter']?.['generated-by'] ?? ''));
-    if (m) found[m[1]] = m[2];
-  }
-  return found;
-}
+const skipped = (name) => name === '.git' || name === 'node_modules';
 
 // An artifact re-rendered unchanged keeps its date, so a second update is a no-op.
 function keepDate(project, artifact) {
@@ -35,7 +26,7 @@ function keepDate(project, artifact) {
 }
 
 function reRender(project, root, date, notes) {
-  for (const id of Object.keys(adoptedPackVersions(project)).sort()) {
+  for (const id of Object.keys(adoptedPacks(project))) {
     const packFile = path.join(root, 'src/packs', id, 'pack.json');
     if (!existsSync(packFile)) {
       notes.push(`pack ${id}: not in this go-getter version; left as it is`);
@@ -43,8 +34,8 @@ function reRender(project, root, date, notes) {
     }
     const pack = loadPack(packFile);
     const adopted = adoptedArtifacts(project, id);
-    const acceptedBy = adopted.map((a) => a.data['accepted-by']).find(Boolean);
-    const result = planReconfigure({ project, pack, answers: currentAnswers(adopted), acceptedBy, date, detect: {} });
+    // Decisions an update adds are proposals (decision 0091): rendered as draft, for the owner to accept.
+    const result = planReconfigure({ project, pack, answers: currentAnswers(adopted), date, detect: {}, draft: true });
     const artifacts = result.plan.artifacts.map((a) => keepDate(project, a));
     const differs = (rel, content) => !existsSync(path.join(project, rel)) || readFileSync(path.join(project, rel), 'utf8') !== content;
     result.plan = {
@@ -69,48 +60,56 @@ export function runUpdate(project, { root, date, force = false }) {
   return { modified, notes };
 }
 
+// Path to content hash (or link target) for every file under `dir`, skipping `.git` at the top and `node_modules` anywhere.
 function tree(dir, rel = '') {
   const out = new Map();
   for (const name of readdirSync(path.join(dir, rel)).sort()) {
-    if (!rel && SKIP.has(name)) continue;
+    if (name === 'node_modules' || (!rel && name === '.git')) continue;
     const r = rel ? `${rel}/${name}` : name;
     const stat = lstatSync(path.join(dir, r));
     if (stat.isDirectory()) for (const [k, v] of tree(dir, r)) out.set(k, v);
-    else out.set(r, stat.isSymbolicLink() ? `-> ${readlinkSync(path.join(dir, r))}` : readFileSync(path.join(dir, r), 'utf8'));
+    else out.set(r, stat.isSymbolicLink() ? `-> ${readlinkSync(path.join(dir, r))}` : createHash('sha256').update(readFileSync(path.join(dir, r))).digest('hex'));
   }
   return out;
+}
+
+const gitOut = (cwd, ...args) => {
+  try {
+    return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return '';
+  }
+};
+
+// The copy has no history: it gets the settings detection and apply read (current branch, origin and its HEAD,
+// core.hooksPath), so its plan matches the real one, and its own git directory, so nothing reaches the real repository.
+function copyGitState(project, scratch) {
+  if (!existsSync(path.join(project, '.git'))) return;
+  const branch = gitOut(project, 'branch', '--show-current') || 'main';
+  const remote = gitOut(project, 'remote', 'get-url', 'origin');
+  const originHead = gitOut(project, 'symbolic-ref', 'refs/remotes/origin/HEAD');
+  const hooksPath = gitSetting(project, 'core.hooksPath');
+  execFileSync('git', ['init', '-q', '-b', branch], { cwd: scratch });
+  if (remote) execFileSync('git', ['remote', 'add', 'origin', remote], { cwd: scratch });
+  if (originHead) execFileSync('git', ['symbolic-ref', 'refs/remotes/origin/HEAD', originHead], { cwd: scratch });
+  if (hooksPath !== undefined) execFileSync('git', ['config', 'core.hooksPath', hooksPath], { cwd: scratch });
 }
 
 // What an update would change, by running it on a scratch copy: { added, changed, removed, modified, notes, docs }.
 export function planUpdate(project, opts) {
   const scratch = mkdtempSync(path.join(tmpdir(), 'gg-update-'));
   try {
-    cpSync(project, scratch, { recursive: true, verbatimSymlinks: true, filter: (src) => path.basename(src) !== 'node_modules' });
-    // A worktree's `.git` is a file pointing at the shared repository: give the copy its own, so git settings stay in the copy.
-    const gitFile = path.join(scratch, '.git');
-    if (existsSync(gitFile) && lstatSync(gitFile).isFile()) {
-      const hooksPath = readHooksPath(project);
-      rmSync(gitFile);
-      execFileSync('git', ['init', '-q'], { cwd: scratch });
-      if (hooksPath) execFileSync('git', ['config', 'core.hooksPath', hooksPath], { cwd: scratch });
-    }
+    cpSync(project, scratch, { recursive: true, verbatimSymlinks: true, filter: (src) => src === project || !skipped(path.basename(src)) });
+    copyGitState(project, scratch);
     const before = tree(project);
     const { modified, notes } = runUpdate(scratch, opts);
     const after = tree(scratch);
     const added = [...after.keys()].filter((k) => !before.has(k));
     const removed = [...before.keys()].filter((k) => !after.has(k));
     const changed = [...after.keys()].filter((k) => before.has(k) && before.get(k) !== after.get(k));
-    return { added, changed, removed, modified, notes, git: readHooksPath(scratch) !== readHooksPath(project) };
+    return { added, changed, removed, modified, notes, git: gitSetting(scratch, 'core.hooksPath') !== gitSetting(project, 'core.hooksPath') };
   } finally {
     rmSync(scratch, { recursive: true, force: true });
-  }
-}
-
-function readHooksPath(dir) {
-  try {
-    return execFileSync('git', ['config', '--get', 'core.hooksPath'], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-  } catch {
-    return '';
   }
 }
 
@@ -138,25 +137,4 @@ export function writePlanSummary(plan, log = console.log) {
   if (!any) log('  nothing to change');
   for (const n of plan.notes) log(`  note: ${n}`);
   return any;
-}
-
-// The installed package: its version and the version of every pack it ships.
-export function installedPackage(root) {
-  let version;
-  try {
-    version = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).version;
-  } catch {
-    // unversioned checkout
-  }
-  const packs = {};
-  const dir = path.join(root, 'src/packs');
-  if (existsSync(dir)) for (const id of readdirSync(dir)) if (existsSync(path.join(dir, id, 'pack.json'))) packs[id] = loadPack(path.join(dir, id, 'pack.json')).version;
-  return { version, packs };
-}
-
-// The session-start nudge: one line when the project's manifest is older than the installed package, else nothing.
-export function driftNudge(project, root) {
-  const manifest = readManifest(project);
-  const installed = installedPackage(root);
-  return driftLine(drift(manifest, installed), installed.version, manifest);
 }

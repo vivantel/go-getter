@@ -8,6 +8,7 @@ import { matchesAny } from './glob.mjs';
 import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData } from './governance.mjs';
+import { driftNudge } from './manifest.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -276,7 +277,7 @@ export function respond(host, decision) {
 }
 
 // Session start: run vendored nudge scripts (POSIX sh, plain-text output) in the project; failures are silent.
-export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh', 'update-nudge.sh'];
+export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh'];
 // Nudge output enters context on every session start (decision 0070), so it has a fixed line budget.
 export const NUDGE_LINE_BUDGET = 20;
 
@@ -297,6 +298,12 @@ export function sessionNudges(packageRoot, project) {
     } catch {
       // a nudge must never block a session
     }
+  }
+  try {
+    const drift = driftNudge(project, packageRoot);
+    if (drift) lines.push(drift);
+  } catch {
+    // a nudge must never block a session
   }
   return capLines(lines.join('\n'));
 }

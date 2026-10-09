@@ -22,7 +22,7 @@ export function currentAnswers(artifacts) {
   return answers;
 }
 
-export function planReconfigure({ project, pack, answers: given, acceptedBy, date, detect }) {
+export function planReconfigure({ project, pack, answers: given, acceptedBy, date, detect, draft = false }) {
   const answers = withFallbacks(pack, given);
   const adopted = adoptedArtifacts(project, pack.id);
   if (!adopted.length) throw new Error(`pack "${pack.id}" has not been adopted here; run render-pack first`);
@@ -42,7 +42,7 @@ export function planReconfigure({ project, pack, answers: given, acceptedBy, dat
   const overwritable = new Set(adopted.filter((a) => a.type !== 'decisions').map((a) => a.file.split(path.sep).join('/')));
   const artifactIds = {};
   for (const a of adopted) if (a.type !== 'decisions') artifactIds[`${a.type}/${a.id.replace(/^\d+-/, '')}`] = a.id;
-  const plan = planRender({ root: project, pack, answers, acceptedBy, date, detect, existing: { keepDecisionsFor, decisionIds, overwritable, artifactIds } });
+  const plan = planRender({ root: project, pack, answers, acceptedBy, date, detect, draft, existing: { keepDecisionsFor, decisionIds, overwritable, artifactIds } });
 
   const emitted = new Set(plan.artifacts.map((a) => a.path));
   const statusChanges = [];

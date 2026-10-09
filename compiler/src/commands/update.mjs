@@ -3,7 +3,8 @@
 // Brings the generated output up to the installed go-getter: prints the plan, then applies it with --yes or on confirmation.
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
-import { driftNudge, planUpdate, runUpdate, writePlanSummary } from '../update.mjs';
+import { driftNudge } from '../manifest.mjs';
+import { planUpdate, runUpdate, writePlanSummary } from '../update.mjs';
 
 export default async function updateCommand({ root, args }) {
   let project = process.cwd();

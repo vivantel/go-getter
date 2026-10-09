@@ -3,8 +3,7 @@
 import path from 'node:path';
 import { planApply, applyPlan, diffApply } from '../apply.mjs';
 import { planRemove, applyRemove } from '../remove.mjs';
-import { readManifest, drift } from '../manifest.mjs';
-import { installedPackage } from '../update.mjs';
+import { readManifest, drift, installedPackage } from '../manifest.mjs';
 import { HOSTS } from '../capabilities.mjs';
 
 export default function applyCommand({ root, args }) {
