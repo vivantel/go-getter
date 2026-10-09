@@ -11,7 +11,7 @@ governed-facts: [0033-apply-keeps-no-record-of-what-it-wrote]
 
 ## Decision
 
-Accepted 2026-10-09, from the work on go-getter update (plan `manifest-update-remove`, step 6). A pack-rendered artifact (`go-getter.generated-by`) with `status: draft` or `active` is adopted. `update` and `reconfigure` keep its decision for an unchanged answer and re-render the rest from it; they do not render a second decision beside it.
+Accepted 2026-10-09, from the work on go-getter update (plan `manifest-update-remove`, now in `docs/plans/archive/`, step 6). A pack-rendered artifact (`go-getter.generated-by`) with `status: draft` or `active` is adopted. `update` and `reconfigure` keep its decision for an unchanged answer and re-render the rest from it; they do not render a second decision beside it.
 
 ## Why
 
