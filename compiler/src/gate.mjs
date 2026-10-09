@@ -141,6 +141,9 @@ function segments(command) {
 
 const PREFIX = /^\s*(?:(?:[A-Za-z_]\w*=\S*|sudo(?:\s+(?:-[ugCphrtUT]\s+\S+|-\S+))*|env(?:\s+(?:-[uCS]\s+\S+|-\S+))*)(?:\s+|$))*/;
 
+// A project pattern written /like this/ is a regex; any other is a command prefix. `extra` lists are comma-separated, so a
+// regex with a comma (a `{1,3}` quantifier) cannot be written there.
+export const isRegexExtra = (spec) => /^\/.+\/[a-z]*$/s.test(spec);
 const parseExtra = (spec) => {
   const m = /^\/(.+)\/([a-z]*)$/s.exec(spec);
   return m ? { id: `extra:${spec}`, test: (text) => new RegExp(m[1], m[2]).test(text) } : { id: `extra:${spec}`, test: (text) => text === spec.trim() || text.startsWith(`${spec.trim()} `) };
@@ -176,7 +179,7 @@ export function matchGated(command, { classes = ['irreversible', 'outward'], ext
 // The `extra` patterns as catalog-shaped entries for `nativeRules`: a command prefix becomes a glob; a /regex/ has no native
 // form, so it carries no globs and `nativeRules` leaves it to the hook.
 export const extraEntries = (extra = []) =>
-  extra.map(String).map((s) => s.trim()).filter(Boolean).map((s) => ({ id: `extra:${s}`, class: 'outward', native: /^\/.+\/[a-z]*$/s.test(s) ? [] : [`${s} *`] }));
+  extra.map(String).map((s) => s.trim()).filter(Boolean).map((s) => ({ id: `extra:${s}`, class: 'outward', native: isRegexExtra(s) ? [] : [`${s} *`] }));
 
 // The host's native ask rules for `entries` (catalog entries from `CATALOG`, `extraEntries`), in the format its capabilities
 // name under `permissions.ask`; null for a host without one.
@@ -204,6 +207,13 @@ export function gateEntries(enforcement) {
     const args = gateArgs(e.parsed.args);
     const bad = args.classes.filter((c) => !GATE_CLASSES.includes(c));
     if (!args.classes.length || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
+    for (const x of args.extra.filter(isRegexExtra)) {
+      try {
+        new RegExp(x.slice(1, x.lastIndexOf('/')), x.slice(x.lastIndexOf('/') + 1));
+      } catch (err) {
+        throw new Error(`guardrail ${e.guardrail}: gate-command extra ${x} is not a valid regular expression (${err.message})`);
+      }
+    }
     return args;
   });
   const classes = new Set(gates.flatMap((g) => g.classes));

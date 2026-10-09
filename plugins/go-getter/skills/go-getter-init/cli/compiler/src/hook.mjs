@@ -9,7 +9,7 @@ import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
-import { matchGated, gateArgs } from './gate.mjs';
+import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -129,7 +129,7 @@ function exemption(project, payload) {
   return { mode: SECRET_MODE[sub], modes: restrictedModes(project), names: new Set(candidatePaths({ tool_name: 'bash', tool_input: { command } }, project)) };
 }
 
-// Hosts with a native ask rule prompt the human themselves (decision 0094), so the hook gates only the others.
+// Hosts with a native ask rule prompt the human themselves (decision 0094), so the hook gates only the others (and, on every host, the `/regex/` extras, which have no native rule).
 let capabilities;
 const hasNativeAsk = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.permissions?.ask);
 
@@ -150,7 +150,12 @@ function gatedCommand(entry, payload, host) {
   const command = shellCommand(payload);
   if (!command) return null;
   const args = gateArgs(entry.parsed.args);
-  const hit = matchGated(command, hasNativeAsk(host) ? { classes: [], extra: args.extra.filter((x) => /^\/.+\/[a-z]*$/s.test(x)) } : args)[0];
+  let hit;
+  try {
+    hit = matchGated(command, hasNativeAsk(host) ? { classes: [], extra: args.extra.filter(isRegexExtra) } : args)[0];
+  } catch {
+    return null; // an invalid pattern gates nothing here rather than breaking every shell call; `apply` rejects it
+  }
   return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
 }
 

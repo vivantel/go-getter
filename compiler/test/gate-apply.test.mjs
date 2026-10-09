@@ -230,3 +230,8 @@ test('a gate-command with an unknown or empty class list fails loudly', () => {
   assert.throws(() => gateEntries(entry('')), /classes must be/);
   assert.ok(gateEntries(entry('outward')).length > 0);
 });
+
+test('a gate-command with an invalid regex extra fails loudly', () => {
+  const entry = [{ guardrail: 'g', tier: 2, parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'outward', extra: '/(unclosed/' } } }];
+  assert.throws(() => gateEntries(entry), /not a valid regular expression/);
+});

@@ -177,6 +177,6 @@ test('update returns the apply notes about gated patterns that still run unpromp
   writeFileSync(path.join(dir, 'docs/guardrails/gated.md'), guardrail('gated', 2, 'builtin:gate-command classes=outward'));
   writeFileSync(path.join(dir, 'opencode.json'), JSON.stringify({ permission: 'allow' }));
   const { notes } = runUpdate(dir, { root: repo, date: '2026-10-09' });
-  assert.ok(notes.some((n) => /gated pattern\(s\) still run without a prompt on opencode/.test(n)), notes.join('\n'));
+  assert.ok(notes.some((n) => /^opencode\.json: \d+ gated pattern\(s\) still run without a prompt on opencode/.test(n)), notes.join('\n'));
   rmSync(dir, { recursive: true, force: true });
 });
