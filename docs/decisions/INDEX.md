@@ -88,3 +88,4 @@ id,title,tags,status
 0092-pack-rendered-drafts-count-as-adopted,"update and reconfigure treat pack-rendered artifacts that are still draft as adopted","generated-files, configuration",active
 0093-init-skill-carries-its-own-cli,"The go-getter-init skill carries a copy of the CLI and runs it from its own directory, not through npx","packaging, nodejs, tooling, generated-files",draft
 0094-gated-actions-need-human-approval,"Irreversible and outward-facing commands need a human, through native ask rules where they can be tested and a hook hand-over elsewhere","harness, hooks, enforcement, practice-packs",active
+0095-gated-actions,"Gated actions need a human","practice-packs, hooks, guardrail",active
