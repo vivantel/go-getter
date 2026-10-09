@@ -90,7 +90,7 @@ export function ciWorkflow({ guardrails = true, checks = {}, node = null, branch
     'on:',
     '  pull_request:',
     '  push:',
-    `    branches: [${branch}]`,
+    `    branches: [${scalar(branch)}]`,
     '',
     'permissions:',
     '  contents: read',
@@ -121,6 +121,20 @@ export function ciWorkflow({ guardrails = true, checks = {}, node = null, branch
     lines.push(`      - run: ${scalar(command)}`);
   }
   return `${lines.join('\n')}\n`;
+}
+
+// The branch whose pushes the workflow runs on. A remote that names its default branch decides; without one (a CI
+// checkout of a pull request is detached) the branch the committed workflow already names stays, so the workflow does
+// not change with where apply runs. Failing both, the checked-out branch if it is main or master, else main.
+function workflowBranch(project, detected) {
+  if (detected.git?.defaultBranchKnown) return detected.git.defaultBranch;
+  try {
+    const m = /^    branches: \[(.*)\]$/m.exec(readFileSync(path.join(project, '.github/workflows/go-getter-checks.yml'), 'utf8'));
+    if (m) return m[1].startsWith('"') ? JSON.parse(m[1]) : m[1];
+  } catch {
+    // no workflow yet
+  }
+  return ['main', 'master'].includes(detected.git?.defaultBranch) ? detected.git.defaultBranch : 'main';
 }
 
 const onGitHub = (detected) => detected.ci.includes('github-actions') || detected.git.remoteHost === 'github.com';
@@ -457,7 +471,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     const node = existsSync(path.join(project, 'package.json'))
       ? { version: detected.nodeVersion ?? 'lts/*', install: INSTALL[['pnpm', 'yarn', 'bun', 'npm'].find((m) => detected.packageManagers.includes(m))] ?? 'npm install' }
       : null;
-    outputs['.github/workflows/go-getter-checks.yml'] = { content: ciWorkflow({ guardrails: tier3, checks: ciChecks, node, branch: detected.git?.defaultBranch || 'main' }) };
+    outputs['.github/workflows/go-getter-checks.yml'] = { content: ciWorkflow({ guardrails: tier3, checks: ciChecks, node, branch: workflowBranch(project, detected) }) };
   }
   const withSkills = skills ?? (targetHosts.includes('kilo') || targetHosts.includes('opencode'));
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));

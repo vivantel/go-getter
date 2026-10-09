@@ -1,5 +1,6 @@
 // Repository detection probes (plan 4.2): facts the init interview prefills instead of asking.
 // Output is deterministic: sorted arrays, null when unknown.
+import { defaultBranch } from './git-env.mjs';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -204,9 +205,8 @@ export function detect(root) {
 
   const remote = git(root, ['remote', 'get-url', 'origin']);
   const remoteHost = remote ? (/^(?:https?:\/\/|ssh:\/\/)?(?:[^@/]+@)?([^/:]+)/.exec(remote)?.[1] ?? null) : null;
-  const defaultBranch =
-    git(root, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'])?.replace(/^origin\//, '') ??
-    (git(root, ['rev-parse', '--is-inside-work-tree']) ? git(root, ['branch', '--show-current']) : null);
+  const branch = defaultBranch(root);
+  const defaultBranchName = branch.name;
 
   return {
     languages: sorted(languages),
@@ -222,6 +222,6 @@ export function detect(root) {
     agentFiles,
     knowledgeBase: has(root, 'docs/decisions') || has(root, 'docs/facts'),
     sensitivePaths: sorted(sensitivePaths),
-    git: { defaultBranch, remoteHost },
+    git: { defaultBranch: defaultBranchName, defaultBranchKnown: branch.known, remoteHost },
   };
 }

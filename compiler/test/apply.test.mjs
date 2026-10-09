@@ -198,3 +198,23 @@ test('the generated CI workflow runs on pushes to the default branch it is given
   assert.match(ciWorkflow({ branch: 'trunk' }), /branches: \[trunk\]/);
   assert.match(ciWorkflow(), /branches: \[main\]/);
 });
+
+// The default branch is the remote's answer, never a guess made on a detached CI checkout (review of the rename to master).
+test('the workflow keeps its branch where the remote does not name one, and quotes odd branch names', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const { defaultBranch } = await import('../src/git-env.mjs');
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-branch-'));
+  const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'ignore' });
+  git('init', '-q', '-b', 'master');
+  git('config', 'user.email', 't@t');
+  git('config', 'user.name', 't');
+  git('commit', '-q', '--allow-empty', '-m', 'chore: x');
+  assert.deepEqual(defaultBranch(dir), { name: 'master', known: false });
+  git('update-ref', 'refs/remotes/origin/master', 'HEAD');
+  assert.deepEqual(defaultBranch(dir), { name: 'master', known: true });
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  git('checkout', '-q', '--detach');
+  assert.deepEqual(defaultBranch(dir), { name: null, known: false });
+  assert.match(ciWorkflow({ branch: 'release,v2' }), /branches: \["release,v2"\]/);
+  rmSync(dir, { recursive: true, force: true });
+});

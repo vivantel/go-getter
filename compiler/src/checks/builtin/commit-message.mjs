@@ -1,12 +1,15 @@
 // Commit subjects not yet on the base branch must match `pattern`. Base: args.base, else origin's default branch.
 import { execFileSync } from 'node:child_process';
+import { defaultBranch } from '../../git-env.mjs';
 
 const git = (project, a) => execFileSync('git', a, { cwd: project, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
 
 export default function commitMessage({ project, args }) {
   let subjects;
   try {
-    const base = args.base ?? git(project, ['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']);
+    const known = defaultBranch(project);
+    const base = args.base ?? (known.known ? `origin/${known.name}` : null);
+    if (!base) throw new Error('no base');
     subjects = git(project, ['log', '--no-merges', '--format=%s', `${base}..HEAD`]).split('\n').filter(Boolean);
   } catch {
     return { ok: true, message: 'no base branch to compare against' };

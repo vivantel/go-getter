@@ -1,5 +1,6 @@
 // `go-getter worktree new|list|clean` (plan 5.2): parallel-task isolation as chosen in the orchestration pack's
 // isolation, location and concurrency decisions (decision 0028). Defaults to the recommended answers when the pack is not adopted.
+import { defaultBranch as remoteDefaultBranch } from './git-env.mjs';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -36,8 +37,8 @@ export function listWorktrees(cwd) {
 }
 
 function defaultBranch(main) {
-  const remote = tryGit(main, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD');
-  if (remote) return remote;
+  const remote = remoteDefaultBranch(main);
+  if (remote.known) return `origin/${remote.name}`;
   return ['main', 'master'].find((b) => tryGit(main, 'rev-parse', '--verify', '--quiet', `refs/heads/${b}`)) ?? 'HEAD';
 }
 
