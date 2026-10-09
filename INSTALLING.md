@@ -84,6 +84,10 @@ node <skill-dir>/cli/compiler/bin/go-getter.mjs coverage
 
 `coverage` shows, for each of the twelve harness components and each host agent, whether a rule is enforced in CI, blocked by a host hook, advisory or not covered yet.
 
+## Approvals
+
+A project that adopts the `hitl` pack gates irreversible and outward-facing shell commands (force-push, hard reset, `rm -rf`, pushes, pull requests, releases, publishing). Claude Code, Kilo and OpenCode prompt you natively: `apply` writes ask rules into `.claude/settings.json`, `kilo.json` and `opencode.json`. Cursor, Codex and Gemini CLI get a hand-over: the pre-tool hook denies the command and asks the agent to have you run it. Copilot is advisory until its hook payload is confirmed. Agents in such a project will ask before pushes, pull requests and releases. A mode that skips permission prompts defeats the native rules; allow a verb in your own uncommitted host settings if you want fewer prompts.
+
 ## Updating
 
 `apply` records what it generated in `.go-getter/manifest.json` (commit it): the go-getter version, each adopted pack and version, a hash for every file it owns, and the keys, hook entries or marked block it owns in shared files with the value each replaced.

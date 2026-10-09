@@ -14,20 +14,21 @@ One plugin, seven host agents — see [INSTALLING.md](INSTALLING.md). Then ask y
 
 ## What it sets up (v0.1)
 
-Six harness packs, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
+Seven harness packs, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
 
 | Pack | Component | What you choose |
 |---|---|---|
 | `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
 | `verification-gate` | 6 Verification loops | which checks mean "done" and where each runs (locally or in CI), the review bar, whether failing checks block completion |
 | `governance` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, which providers may see internal and confidential data, prompt logging |
+| `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns |
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
 | `cost-routing` | 11 Cost & model routing | task classes, starting tiers, escalation bound, headless spend cap, prompt-cache lifetime |
 | `telemetry` | 12 Observability | a metadata-only step log, its retention and export |
 
 ### Harness coverage
 
-How each rule ends up enforced, per component and host agent, once all six packs are adopted (`go-getter coverage` prints this for your project): `hook+ci` = blocked by a host hook and checked in CI, `hook` = blocked by a host hook, `ci` = checked in CI, `advisory` = instruction only, `-` = not covered yet.
+How each rule ends up enforced, per component and host agent, once all seven packs are adopted (`go-getter coverage` prints this for your project): `hook+ci` = blocked by a host hook and checked in CI, `hook` = blocked by a host hook, `ci` = checked in CI, `advisory` = instruction only, `-` = not covered yet.
 
 | Component | Pack | Claude Code | Codex | Kilo | OpenCode | Cursor | Gemini CLI | Copilot |
 |---|---|---|---|---|---|---|---|---|
@@ -38,7 +39,7 @@ How each rule ends up enforced, per component and host agent, once all six packs
 | 5 Memory | — | - | - | - | - | - | - | - |
 | 6 Verification loops | `verification-gate` | hook | hook | advisory | advisory | hook | hook | advisory |
 | 7 Guardrails & DLP | `governance` | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci |
-| 8 Human-in-the-loop | — | - | - | - | - | - | - | - |
+| 8 Human-in-the-loop | `hitl` | hook | hook | hook | hook | hook | hook | advisory |
 | 9 Checkpointing | — | - | - | - | - | - | - | - |
 | 10 Multi-agent orchestration | `orchestration` | advisory | advisory | advisory | advisory | advisory | advisory | advisory |
 | 11 Cost & model routing | `cost-routing` | hook | hook | hook | hook | hook | hook | hook |
