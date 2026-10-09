@@ -37,7 +37,11 @@
   },
   "permissions": {
     "pathReadDeny": true,
-    "config": "opencode.json"
+    "config": "opencode.json",
+    "ask": {
+      "file": "opencode.json",
+      "format": "opencode-permission"
+    }
   },
   "routing": {
     "localEndpoints": true,

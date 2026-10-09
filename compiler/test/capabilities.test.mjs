@@ -50,3 +50,13 @@ test('schema validator handles types, enums, patterns and nested items', () => {
   assert.deepEqual(validate(schema, { a: [1, 2] }), []);
   assert.equal(validate(schema, { a: [0], b: 'y', c: 'q' }).length, 3);
 });
+
+test('permissions.ask needs a file and a known format', () => {
+  const schema = loadSchema(root);
+  const base = structuredClone(loadCapabilities(root).kilo);
+  assert.deepEqual(validateCapabilities(schema, base), []);
+  base.permissions.ask = { format: 'opencode-permission' };
+  assert.ok(validateCapabilities(schema, base).some((e) => e.includes('missing required "file"')));
+  base.permissions.ask = { file: 'kilo.json', format: 'toml' };
+  assert.ok(validateCapabilities(schema, base).some((e) => e.includes('must be one of')));
+});
