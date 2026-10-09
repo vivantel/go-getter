@@ -34,7 +34,7 @@ At each plan phase boundary run `go-getter:lint`; at each release run `go-getter
 
 ## Remaining work
 
-Step status lives in `docs/plans/v0.2-agent-core-hardening.md` (the finished v0.1 plan is in `docs/plans/archive/`). Update the markers as you go.
+Step status lives in `docs/plans/v0.2-agent-core-hardening.md`; step C.3 has its own plan, `docs/plans/hitl-pack.md`. Finished plans are in `docs/plans/archive/`. Update the markers as you go.
 
 <!-- go-getter:start -->
 ## Guardrails
