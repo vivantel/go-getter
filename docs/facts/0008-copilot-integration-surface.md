@@ -24,7 +24,7 @@ Copilot CLI plugins: root `plugin.json` in Agent Plugins 1.0 format (`$schema: h
 `copilot --agent <id> --prompt "..."`, `--allow-tool` / `--deny-tool`, `--output-format text|json` (JSONL), `--max-ai-credits N` (spend cap in autopilot mode).
 
 ## Hooks and permissions
-- **Hooks**: `.github/hooks/*.json` (repo) and `~/.copilot/hooks/*.json` (CLI); schema `version: 1`, `hooks` with `type: "command"`, `bash` / `powershell`, optional `cwd`, `env`, `timeoutSec` (30). Events: `sessionStart`, `sessionEnd`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `agentStop`, `subagentStop`, `errorOccurred`. Only `preToolUse` can approve/deny. Supported by cloud agent and CLI; IDE support not stated.
+- **Hooks**: `.github/hooks/*.json` (repo) and `~/.copilot/hooks/*.json` (CLI); schema `version: 1`, `hooks` with `type: "command"`, `bash` / `powershell`, optional `cwd`, `env`, `timeoutSec` (30). Events: `sessionStart`, `sessionEnd`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `agentStop`, `subagentStop`, `errorOccurred`. Only `preToolUse` can approve/deny (stdout JSON `permissionDecision: "deny"` with a required `permissionDecisionReason`, or exit code 2; it is fail-closed, timeouts fail open). Supported by cloud agent and CLI only per the hooks reference; IDE support not stated.
 - **Tool permissions**: CLI `--allow-tool` / `--deny-tool`; per-agent `tools`.
 - **Cloud agent firewall**: outbound internet limited by default, with allowlist; org setting Enabled / Disabled / Let repositories decide.
 - **Content exclusion** (Business/Enterprise): path exclusions configured at repo/org/enterprise.
@@ -52,7 +52,7 @@ CLI: npm install needs Node ≥22; also Homebrew cask, WinGet, install script, d
 
 ## Not confirmed
 - Content exclusion vs CLI/agent mode: one page says CLI and IDE agent mode do **not** support it, another says the CLI respects it. Treat as unenforced until verified.
-- Hook input fields and whether hooks can modify arguments.
+- Hook input fields: the payload has `toolName` and `toolArgs` (camelCase) or `tool_name` and `tool_input` (VS Code format), but the docs do not say which field of them holds a shell command. Whether hooks can modify arguments.
 - Whether IDE agent mode runs `.github/hooks`.
 - Effort control, BYOK/custom endpoints, usage reporting.
 

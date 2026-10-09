@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, cpSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -75,4 +75,27 @@ test('coverage CLI lists every component on this repo, uncovered ones as none', 
   const rows = JSON.parse(res.stdout);
   assert.equal(rows.length, 12);
   assert.deepEqual(rows.map((r) => r.component), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+});
+
+test('coverage shows component 8 with the hitl pack and tier 2 on the hosts whose capabilities reach it', () => {
+  const hitl = loadPack(path.join(root, 'src/packs/hitl/pack.json'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-coverage-'));
+  mkdirSync(path.join(dir, 'docs/skills'), { recursive: true });
+  mkdirSync(path.join(dir, 'docs/decisions'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/skills/tags.md'), '# Tags\n\npractice-packs — x\nhooks — x\nguardrail — x\n');
+  writeFileSync(path.join(dir, 'docs/decisions/0043-human-escalation.md'), '---\nid: 0043-human-escalation\ntitle: Human escalation\nstatus: active\ndate: 2026-10-05\ntags: [hooks]\ntrack: process\n---\n\nx\n');
+  applyRender({ root: dir, plan: planRender({ root: dir, pack: hitl, answers: { 'gated-classes': 'both', 'extra-patterns': [] }, acceptedBy: 't', date: '2026-10-09' }) });
+  const caps = loadCapabilities(root);
+  const row = coverage(dir, { hitl }, caps).find((r) => r.component === 8);
+  assert.deepEqual(row.packs, [`hitl@${hitl.version}`]);
+  for (const [host, cap] of Object.entries(caps)) assert.equal(row.inHost[host], cap.tiers['8'] === 2 ? 2 : null, host);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('fact 0009 row for component 8 equals the capabilities tiers', () => {
+  const fact = readFileSync(path.join(root, 'docs/facts/0009-host-capability-matrix.md'), 'utf8');
+  const cells = /^\| 8 Human-in-the-loop \|(.*)\|$/m.exec(fact)[1].split('|').map((c) => Number(c.trim()));
+  const caps = loadCapabilities(root);
+  const order = ['claude-code', 'codex', 'kilo', 'opencode', 'cursor', 'gemini-cli', 'copilot'];
+  assert.deepEqual(cells, order.map((h) => caps[h].tiers['8']));
 });
