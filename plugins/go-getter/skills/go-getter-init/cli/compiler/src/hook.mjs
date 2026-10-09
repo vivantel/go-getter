@@ -7,8 +7,9 @@ import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
 import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
-import { adoptedData } from './governance.mjs';
+import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
+import { matchGated } from './gate.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -128,12 +129,41 @@ function exemption(project, payload) {
   return { mode: SECRET_MODE[sub], modes: restrictedModes(project), names: new Set(candidatePaths({ tool_name: 'bash', tool_input: { command } }, project)) };
 }
 
+// Hosts with a native ask rule prompt the human themselves (decision 0094), so the hook gates only the others.
+let capabilities;
+const hasNativeAsk = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.permissions?.ask);
+
+// The command of a shell tool call as text: a Codex-style argv of `sh -c <script>` is its script.
+function shellCommand(payload) {
+  if (TOOLS[toolName(payload)?.toLowerCase()] !== 'shell') return undefined;
+  const input = toolInput(payload);
+  const command = typeof input === 'string' ? input : input?.command ?? input?.cmd;
+  if (Array.isArray(command)) return /^-\w*c$/.test(command[1] ?? '') ? String(command.at(-1)) : command.join(' ');
+  return typeof command === 'string' ? command : undefined;
+}
+
+// `{ command, class }` when a `gate-command` entry gates this call on this host, else null. Without a known host the call
+// is not gated: whether the host prompts natively cannot be told.
+function gatedCommand(entry, payload, host) {
+  if (!host || hasNativeAsk(host)) return null;
+  const command = shellCommand(payload);
+  if (!command) return null;
+  const { classes, extra } = entry.parsed.args;
+  const hit = matchGated(command, { classes: patternsOf({ paths: classes ?? 'irreversible,outward' }), extra: patternsOf({ paths: extra }) })[0];
+  return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
+}
+
 // `use` and `sink` stay inactive until `go-getter secret run|put` exist (decision 0072): their paths are denied like
 // `deny` paths, except a `use` path in the command of `go-getter secret run` and a `sink` path in `go-getter secret put`.
-export function evaluatePreTool(project, payload) {
+export function evaluatePreTool(project, payload, host) {
   let exempt;
   for (const e of collectEnforcement(project)) {
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin') continue;
+    if (e.parsed.id === 'gate-command') {
+      const gated = gatedCommand(e, payload, host);
+      if (gated) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" is an ${gated.class} command and needs a human; ask the user to run it themselves` };
+      continue;
+    }
     if (e.parsed.id === 'deny-path') {
       const patterns = patternsOf(e.parsed.args);
       const hits = candidatePaths(payload, project).filter((p) => matchesAny(p, patterns));
