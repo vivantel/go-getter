@@ -4,7 +4,7 @@ go-getter is a plugin of skills. Install it on one host agent, then ask that age
 
 The `go-getter-init` skill carries its own copy of the CLI (`skills/go-getter-init/cli`), so setup needs no network, npx or environment variable; it needs Node.js 22 or newer. Install the whole skill directory: a copy that leaves out `cli/` cannot run. Without Node, your choices are still recorded but enforcement stays advisory.
 
-Every install below is untested until step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md) runs it on the host. Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md) is the install test on each host that confirms or corrects them.
+Every install below is `untested` until the [install smoke test](docs/skills/install-smoke-test.md) (step 0.1 of the [plan](docs/plans/v0.2-agent-core-hardening.md)) records the host as `tested` (installed and set up on a scratch repo) or `static-only` (only the manifests and the paths they name were checked; nothing was installed). Steps marked **not confirmed** come from the vendor documentation summarised in `docs/facts/0003`–`0008`, which does not give an exact end-user command; the smoke test confirms or corrects them. On a host that is not `tested`, please file an issue with what happened.
 
 - [Claude Code](#claude-code)
 - [Codex](#codex)
