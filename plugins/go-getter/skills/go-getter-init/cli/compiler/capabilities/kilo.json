@@ -37,7 +37,11 @@
   },
   "permissions": {
     "pathReadDeny": true,
-    "config": "kilo.json"
+    "config": "kilo.json",
+    "ask": {
+      "file": "kilo.json",
+      "format": "opencode-permission"
+    }
   },
   "routing": {
     "localEndpoints": true,

@@ -24,7 +24,7 @@ const inTemp = (text) => {
   return targets.length > 0 && targets.every((t) => !t.split('/').includes('..') && roots.some((r) => t.startsWith(`${r}/`)));
 };
 
-export const CATALOG = [
+const ENTRIES = [
   { id: 'git-push-force', class: 'irreversible', description: 'force-push rewrites remote history',
     pattern: new RegExp(`^${GIT}push${END}(?:${hasFlag(`${flag('f')}|--force(?:-with-lease|-if-includes)?(?:=\\S+)?`)}|${hasFlag('\\+\\S+')})`),
     examples: { match: ['git push --force', 'git push -f origin main', 'git push --force-with-lease=main', 'git push origin +main', 'git -C app push -uf'], noMatch: ['git push origin main', 'git push --follow-tags'] } },
@@ -72,6 +72,31 @@ export const CATALOG = [
     pattern: /^gh\s+(?:issue|pr)\s+comment(?=\s|$)/,
     examples: { match: ['gh issue comment 3 -b hi', 'gh pr comment 5 -b hi'], noMatch: ['gh issue view 3', 'gh pr checks'] } },
 ];
+
+// Command globs of each entry for the hosts' native ask rules (`*` matches any text; a trailing ` *` also matches the bare
+// command). Native rules see one command at a time, after the host splits compound commands. They cannot tell `rm -rf /tmp/x`
+// from `rm -rf x`, nor a list `git tag -l` from a create, and do not strip `sudo` or see `git -C dir push`: they prompt more
+// than `matchGated` in the first two cases and less in the last two, so the hook is not a substitute (decision 0094).
+const around = (base, ...flags) => flags.flatMap((f) => [`${base} ${f}`, `${base} * ${f}`]);
+const sql = (tool) => ['DROP *', 'drop *', 'TRUNCATE*', 'truncate*', 'DELETE FROM*', 'delete from*'].map((w) => `${tool} *${w}`);
+const NATIVE = {
+  'git-push-force': [...around('git push', '-f*', '--force*', '+*')],
+  'git-push-delete': [...around('git push', '-d*', '--delete*', ':*')],
+  'git-reset-hard': around('git reset', '--hard*'),
+  'git-rebase': ['git rebase *'],
+  'git-filter-branch': ['git filter-branch *', 'git filter-repo *'],
+  'git-branch-delete': [...around('git branch', '-D*', '-df*', '-fd*', '--delete --force*', '--force --delete*')],
+  'git-tag-delete': around('git tag', '-d*', '--delete*'),
+  'rm-rf': [...around('rm', '-rf*', '-fr*', '-Rf*', '-fR*', '-r -f*', '-f -r*', '--recursive --force*', '--force --recursive*')],
+  'sql-destructive': ['psql', 'mysql', 'sqlite3'].flatMap(sql),
+  'git-push': ['git push *'],
+  'gh-pr': ['gh pr create *', 'gh pr merge *', 'gh pr close *'],
+  'gh-release-create': ['gh release create *'],
+  'git-tag-create': ['git tag *'],
+  'package-publish': ['npm publish *', 'pnpm publish *', 'yarn publish *', 'yarn npm publish *'],
+  'gh-comment': ['gh issue comment *', 'gh pr comment *'],
+};
+export const CATALOG = ENTRIES.map((e) => ({ ...e, native: NATIVE[e.id] }));
 
 // Splits into command segments, each as `{ raw, masked }` of equal length; masked has quoted text (quotes included) as 'X'.
 function segments(command) {
@@ -146,4 +171,22 @@ export function matchGated(command, { classes = ['irreversible', 'outward'], ext
     }
   }
   return found;
+}
+
+// The `extra` patterns as catalog-shaped entries for `nativeRules`: a command prefix becomes a glob; a /regex/ has no native
+// form, so it carries no globs and `nativeRules` leaves it to the hook.
+export const extraEntries = (extra = []) =>
+  extra.map(String).map((s) => s.trim()).filter(Boolean).map((s) => ({ id: `extra:${s}`, class: 'outward', native: /^\/.+\/[a-z]*$/s.test(s) ? [] : [`${s} *`] }));
+
+// The host's native ask rules for `entries` (catalog entries from `CATALOG`, `extraEntries`), in the format its capabilities
+// name under `permissions.ask`; null for a host without one.
+//   claude-permissions: a list of `Bash(<glob>)` rules for `permissions.ask`
+//   opencode-permission: a map of glob to "ask" for `permission.bash`
+export function nativeRules(host, entries, caps) {
+  const format = caps[host]?.permissions?.ask?.format;
+  if (!format) return null;
+  const globs = [...new Set(entries.flatMap((e) => e.native ?? []))];
+  if (format === 'claude-permissions') return globs.map((g) => `Bash(${g})`);
+  if (format === 'opencode-permission') return Object.fromEntries(globs.map((g) => [g, 'ask']));
+  throw new Error(`unknown ask rule format "${format}" for ${host}`);
 }

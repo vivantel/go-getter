@@ -68,7 +68,19 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["pathReadDeny"],
-      "properties": { "pathReadDeny": { "type": "boolean" }, "config": { "type": "string" } }
+      "properties": {
+        "pathReadDeny": { "type": "boolean" },
+        "config": { "type": "string" },
+        "ask": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "format"],
+          "properties": {
+            "file": { "type": "string" },
+            "format": { "enum": ["claude-permissions", "opencode-permission"] }
+          }
+        }
+      }
     },
     "routing": {
       "type": "object",

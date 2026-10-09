@@ -36,7 +36,11 @@
   },
   "permissions": {
     "pathReadDeny": true,
-    "config": ".claude/settings.json"
+    "config": ".claude/settings.json",
+    "ask": {
+      "file": ".claude/settings.json",
+      "format": "claude-permissions"
+    }
   },
   "routing": {
     "localEndpoints": true,
