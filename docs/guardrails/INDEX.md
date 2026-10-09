@@ -37,3 +37,4 @@ verification-gate-blocks-done,"A step is not done while its verification checks 
 delegations-are-routed,"Delegations to a role are routed by expected total step cost","practice-packs, model-routing, guardrail",active
 watches-use-the-wrapper,"Watches start through go-getter watch, --until done for CI runs and long commands","practice-packs, harness, guardrail",active
 owned-files-never-clobbered,"apply, update and remove must not overwrite or delete a modified owned item without --force","generated-files, enforcement, guardrail",active
+gated-actions-need-human-approval,"Irreversible and outward-facing commands need a human","practice-packs, hooks, guardrail",active

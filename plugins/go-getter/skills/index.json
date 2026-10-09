@@ -170,6 +170,7 @@
         "cli/src/packs/context/pack.json",
         "cli/src/packs/cost-routing/pack.json",
         "cli/src/packs/governance/pack.json",
+        "cli/src/packs/hitl/pack.json",
         "cli/src/packs/orchestration/pack.json",
         "cli/src/packs/telemetry/pack.json",
         "cli/src/packs/verification-gate/pack.json",
