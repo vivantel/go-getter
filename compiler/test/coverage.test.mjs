@@ -77,7 +77,7 @@ test('coverage CLI lists every component on this repo, uncovered ones as none', 
   assert.deepEqual(rows.map((r) => r.component), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 });
 
-test('coverage shows component 8 with the hitl pack and the capabilities tier on every host', () => {
+test('coverage shows component 8 with the hitl pack and tier 2 on the hosts whose capabilities reach it', () => {
   const hitl = loadPack(path.join(root, 'src/packs/hitl/pack.json'));
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-coverage-'));
   mkdirSync(path.join(dir, 'docs/skills'), { recursive: true });
@@ -88,8 +88,7 @@ test('coverage shows component 8 with the hitl pack and the capabilities tier on
   const caps = loadCapabilities(root);
   const row = coverage(dir, { hitl }, caps).find((r) => r.component === 8);
   assert.deepEqual(row.packs, [`hitl@${hitl.version}`]);
-  for (const [host, cap] of Object.entries(caps)) assert.equal(row.inHost[host], cap.tiers['8'], host);
-  assert.ok(Object.values(row.inHost).every((t) => t === 2), 'the hand-over reaches tier 2 everywhere');
+  for (const [host, cap] of Object.entries(caps)) assert.equal(row.inHost[host], cap.tiers['8'] === 2 ? 2 : null, host);
   rmSync(dir, { recursive: true, force: true });
 });
 

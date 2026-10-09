@@ -53,14 +53,15 @@
     "3": 2,
     "6": 1,
     "7": 2,
-    "8": 2,
+    "8": 1,
     "9": 1,
     "10": 2,
     "11": 2,
     "12": 1
   },
   "notes": [
-    "Only preToolUse can deny; the gated-command hand-over (component 8) uses it, as restricted paths do.",
+    "Only preToolUse can deny.",
+    "Component 8 stays at 1: the gated-command hand-over reads the shell command from the tool input, and the docs do not say which field of toolArgs holds it; hooks also run only in the CLI and cloud agent. Raise to 2 once a real payload confirms the field.",
     "Content exclusion support in CLI/agent mode is contradictory in docs; treated as unenforced.",
     "Sandbox = cloud agent firewall.",
     "Node needed only for npm installs (>=22)."

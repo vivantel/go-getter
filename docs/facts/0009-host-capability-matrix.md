@@ -42,7 +42,7 @@ Tier 3 (git hooks + CI) is available for every host and is omitted. `2` = a bloc
 | 3 Sandbox | 2 | 2 | – | – | 2 | 2 | 2 (cloud firewall) |
 | 6 Verification loop (block stop) | 2 | 2 | 1 | 1 | 2 | 2 | 1 |
 | 7 Guardrails / DLP | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
-| 8 Human-in-the-loop | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| 8 Human-in-the-loop | 2 | 2 | 2 | 2 | 2 | 2 | 1 |
 | 9 Checkpointing | 2 | 1 | 1 | 1 | 1 | 2 | 1 |
 | 10 Multi-agent roles (tools/model per agent) | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
 | 11 Cost & routing (per-agent model; hard cap) | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
