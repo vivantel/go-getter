@@ -10,7 +10,7 @@ import { planApply, applyPlan, diffApply } from '../src/apply.mjs';
 import { readManifest } from '../src/manifest.mjs';
 import { HOSTS } from '../src/capabilities.mjs';
 import { packageCapabilities } from '../src/governance.mjs';
-import { CATALOG, nativeRules, withAskRules } from '../src/gate.mjs';
+import { CATALOG, nativeRules, withAskRules, gateEntries } from '../src/gate.mjs';
 import { runTier3 } from '../src/enforce.mjs';
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
@@ -211,4 +211,27 @@ test('as a tier-3 check the gate reports ok and says where it is enforced', asyn
   assert.equal(result.ok, true);
   assert.equal(result.message, 'enforced by host ask rules and the pre-tool hook');
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('claude-permissions adds no empty permissions.ask when there is nothing to add', () => {
+  assert.deepEqual(withAskRules('claude-permissions', {}, []).config, {});
+  const config = { permissions: { ask: ['Bash(git push *)'] } };
+  assert.equal(withAskRules('claude-permissions', config, ['Bash(git push *)']).config, config);
+});
+
+test('a null permission in an opencode-format file is treated as no permission', () => {
+  const { config } = withAskRules('opencode-permission', { permission: null }, { 'git push *': 'ask' });
+  assert.deepEqual(config.permission, { bash: { 'git push *': 'ask' } });
+});
+
+test('a gate-command with an unknown or empty class list fails loudly', () => {
+  const entry = (classes) => [{ guardrail: 'g', tier: 2, parsed: { kind: 'builtin', id: 'gate-command', args: { classes } } }];
+  assert.throws(() => gateEntries(entry('irreversable')), /classes must be irreversible and\/or outward, not irreversable/);
+  assert.throws(() => gateEntries(entry('')), /classes must be/);
+  assert.ok(gateEntries(entry('outward')).length > 0);
+});
+
+test('a gate-command with an invalid regex extra fails loudly', () => {
+  const entry = [{ guardrail: 'g', tier: 2, parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'outward', extra: '/(unclosed/' } } }];
+  assert.throws(() => gateEntries(entry), /not a valid regular expression/);
 });

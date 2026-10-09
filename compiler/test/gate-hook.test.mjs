@@ -47,7 +47,7 @@ test('a gated command is denied on the hand-over hosts, in each host format', ()
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('the hosts with native ask rules are never gated by the hook', () => {
+test('the hosts with native ask rules are not gated by the hook for catalog commands', () => {
   const dir = project();
   for (const host of NATIVE) assert.equal(evaluatePreTool(dir, SHELL[host]('git push --force'), host).deny, false, host);
   rmSync(dir, { recursive: true, force: true });
@@ -107,5 +107,22 @@ test('through the CLI the hook denies on a hand-over host and allows on a native
   assert.equal(cursor.status, 2);
   assert.match(cursor.stderr, /needs a human/);
   assert.equal(run('claude-code').status, 0);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('a /regex/ extra has no native rule, so the hook gates it on native hosts too; the catalog and prefix extras stay native', () => {
+  const dir = project('builtin:gate-command classes=outward extra="make deploy,/terraform\\s+apply/"');
+  for (const host of NATIVE) {
+    assert.equal(evaluatePreTool(dir, SHELL[host]('terraform  apply -auto-approve'), host).deny, true, host);
+    assert.equal(evaluatePreTool(dir, SHELL[host]('git push'), host).deny, false, `${host}: catalog`);
+    assert.equal(evaluatePreTool(dir, SHELL[host]('make deploy'), host).deny, false, `${host}: prefix extra`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('an invalid regex extra neither breaks the hook nor stops the other guardrails', () => {
+  const dir = project('builtin:gate-command classes=outward extra=/(unclosed/');
+  assert.equal(evaluatePreTool(dir, SHELL['claude-code']('echo hi'), 'claude-code').deny, false);
+  assert.equal(evaluatePreTool(dir, SHELL['claude-code']('cat secrets/prod/key.json'), 'claude-code').deny, true);
   rmSync(dir, { recursive: true, force: true });
 });

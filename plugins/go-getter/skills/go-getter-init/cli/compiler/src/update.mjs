@@ -56,7 +56,9 @@ export function runUpdate(project, { root, date, force = false }) {
   }
   if (!manifest) bootstrap(project);
   reRender(project, root, date, notes);
-  const { modified } = applyPlan(project, planApply(project, { force }));
+  const plan = planApply(project, { force });
+  notes.push(...(plan.notes ?? []).map((n) => n.replace(/^note: /, '')));
+  const { modified } = applyPlan(project, plan);
   return { modified, notes };
 }
 
