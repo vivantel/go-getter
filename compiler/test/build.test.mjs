@@ -4,6 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync, lstatSync, readlinkSy
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { compile, writeOutputs, readSkills, ADAPTERS } from '../src/build.mjs';
 import { diffGenerated } from '../src/checks/generated.mjs';
 import { HOSTS } from '../src/capabilities.mjs';
@@ -115,4 +116,33 @@ test('skill validation rejects bad names, missing descriptions and non-standard 
   writeFileSync(skill, '---\nname: hello\ndescription: x\nmodel: big\n---\n');
   assert.throws(() => readSkills(path.join(repo, 'src')), /non-standard frontmatter model/);
   rmSync(repo, { recursive: true, force: true });
+});
+
+test('go-getter-init carries a CLI copy that runs from where it is installed (decision 0093)', () => {
+  const root = path.resolve(here, '..', '..');
+  const outputs = compile({ root, hosts: ['claude-code', 'kilo'] });
+  const base = 'plugins/go-getter/skills/go-getter-init/cli';
+  for (const f of ['package.json', 'compiler/bin/go-getter.mjs', 'compiler/src/apply.mjs', 'src/packs/context/pack.json']) {
+    assert.ok(outputs[`${base}/${f}`], `${f} is bundled`);
+  }
+  assert.ok(!Object.keys(outputs).some((p) => p.startsWith(`${base}/compiler/test`)), 'tests are not bundled');
+  assert.ok(!outputs['plugins/go-getter/skills/attribute/cli/package.json'], 'only the skills that run the CLI carry it');
+  const index = JSON.parse(outputs['plugins/go-getter/skills/index.json'].content);
+  const init = index.skills.find((s) => s.name === 'go-getter-init');
+  assert.ok(init.files.includes('cli/compiler/bin/go-getter.mjs'), 'remote skill indexes list the bundled files');
+
+  const installed = mkdtempSync(path.join(tmpdir(), 'go-getter-bundle-'));
+  try {
+    writeOutputs(installed, outputs);
+    const cli = path.join(installed, base, 'compiler/bin/go-getter.mjs');
+    const run = (args) => spawnSync('node', [cli, ...args], { cwd: installed, encoding: 'utf8' });
+    const packs = run(['packs']);
+    assert.equal(packs.status, 0, packs.stderr);
+    assert.match(packs.stdout, /^context@/m);
+    const applied = run(['apply', '--skills', '--hosts', 'claude-code']);
+    assert.equal(applied.status, 0, applied.stderr);
+    assert.ok(existsSync(path.join(installed, '.agents/skills/go-getter-init/cli/compiler/bin/go-getter.mjs')), 'project-local skills keep their CLI');
+  } finally {
+    rmSync(installed, { recursive: true, force: true });
+  }
 });
