@@ -9,7 +9,7 @@ import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
-import { matchGated } from './gate.mjs';
+import { matchGated, gateArgs } from './gate.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -148,8 +148,7 @@ function gatedCommand(entry, payload, host) {
   if (!host || hasNativeAsk(host)) return null;
   const command = shellCommand(payload);
   if (!command) return null;
-  const { classes, extra } = entry.parsed.args;
-  const hit = matchGated(command, { classes: patternsOf({ paths: classes ?? 'irreversible,outward' }), extra: patternsOf({ paths: extra }) })[0];
+  const hit = matchGated(command, gateArgs(entry.parsed.args))[0];
   return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
 }
 

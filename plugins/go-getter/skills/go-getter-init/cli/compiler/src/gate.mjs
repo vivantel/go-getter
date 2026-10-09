@@ -190,3 +190,137 @@ export function nativeRules(host, entries, caps) {
   if (format === 'opencode-permission') return Object.fromEntries(globs.map((g) => [g, 'ask']));
   throw new Error(`unknown ask rule format "${format}" for ${host}`);
 }
+
+const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+
+// The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
+export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra) });
+
+// The entries the tier-2 `builtin:gate-command` enforcement entries gate (from `collectEnforcement`): catalog entries of
+// their classes, then their `extra` patterns.
+export function gateEntries(enforcement) {
+  const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => gateArgs(e.parsed.args));
+  const classes = new Set(gates.flatMap((g) => g.classes));
+  return [...CATALOG.filter((e) => classes.has(e.class)), ...extraEntries([...new Set(gates.flatMap((g) => g.extra))])];
+}
+
+// OpenCode globs as automata, to reason about every command a glob matches rather than a sample of them. A glob is a token
+// list (`*` any text, `?` one character, else a literal character); a trailing ` *` also accepts the bare command.
+const STAR = Symbol('*');
+const ANY = Symbol('?');
+const automaton = (glob) => {
+  const tokens = [...glob].map((ch) => (ch === '*' ? STAR : ch === '?' ? ANY : ch));
+  return { tokens, accept: new Set(glob.endsWith(' *') ? [tokens.length, tokens.length - 2] : [tokens.length]) };
+};
+// The positions reachable from `positions` without reading a character (a star may match nothing), sorted.
+const closure = (tokens, positions) => {
+  const out = [...new Set(positions)];
+  for (let k = 0; k < out.length; k++) if (tokens[out[k]] === STAR && !out.includes(out[k] + 1)) out.push(out[k] + 1);
+  return out.sort((a, b) => a - b);
+};
+// The positions after reading `ch` (null stands for any character no glob names).
+const step = (tokens, positions, ch) =>
+  closure(tokens, positions.flatMap((i) => (tokens[i] === STAR ? [i] : tokens[i] === ANY || (ch !== null && tokens[i] === ch) ? [i + 1] : [])));
+
+const LIMIT = 20000;
+// Whether some command matched by `globs[0]` makes `test` true; `test` gets, per glob, whether that glob matches the
+// command. Walks the product of the automata: from each state only the literals the current positions expect, plus
+// one character none of them expects, lead anywhere distinct. null past LIMIT states.
+function someCommand(globs, test) {
+  const machines = globs.map(automaton);
+  const keyOf = (state) => state.map((s) => s.join(',')).join('|');
+  const start = machines.map((m) => closure(m.tokens, [0]));
+  const seen = new Set([keyOf(start)]);
+  const queue = [start];
+  while (queue.length) {
+    const state = queue.pop();
+    if (test(state.map((s, i) => s.some((p) => machines[i].accept.has(p))))) return true;
+    const expected = new Set(state.flatMap((s, i) => s.map((p) => machines[i].tokens[p]).filter((t) => typeof t === 'string')));
+    for (const ch of [...expected, null]) {
+      const next = state.map((s, i) => step(machines[i].tokens, s, ch));
+      if (!next[0].length) continue;
+      const key = keyOf(next);
+      if (seen.has(key)) continue;
+      if (seen.add(key).size > LIMIT) return null;
+      queue.push(next);
+    }
+  }
+  return false;
+}
+
+// The OpenCode rules that apply to bash, in evaluation order: `permission` keys `*` and `bash`, a string value being a
+// rule for every command. Each carries `pos`, the index of its `permission` key, and `at`, its index inside that key's map.
+const bashRules = (permission) =>
+  Object.entries(permission).flatMap(([key, value], pos) => {
+    if (key !== 'bash' && key !== '*') return [];
+    if (typeof value === 'string') return [{ glob: '*', action: value, pos, at: 0 }];
+    return Object.entries(value ?? {}).map(([glob, action], at) => ({ glob, action, pos, at }));
+  });
+// The action of the last of `rules` whose glob matches, given the match vector (index 0 is the glob being placed).
+const lastAction = (rules, matched) => rules.findLast((_, i) => matched[i + 1])?.action;
+const prompts = (action) => action === 'ask' || action === 'deny';
+// The rules that match some command `glob` matches (the others never decide one of its commands), in order; a rule
+// whose overlap is unknown is kept.
+const overlapping = (glob, rules) => rules.filter((r) => someCommand([glob, r.glob], (m) => m[1]) !== false);
+// Whether some command of `glob` makes `test` true, given the rules that overlap it and the match vector.
+const anyCommand = (glob, rules, test) => someCommand([glob, ...rules.map((r) => r.glob)], (m) => m[0] && test(m));
+
+// `config` (a host's settings object) with the ask `rules` from `nativeRules` added, never weakening the user's own rules.
+// Returns { config, unprompted, reason }: `unprompted` lists the rule globs some of whose commands still run without a
+// prompt, because covering them would have overridden one of the user's rules.
+//   claude-permissions: the rules the user's `permissions.ask` lacks are appended (deny rules win over ask on that host).
+//   opencode-permission: OpenCode takes the last matching rule in config order (`evaluate`, findLast). A glob whose
+//   commands the user already asks for or denies is skipped. Otherwise it goes into `permission.bash` at the latest place
+//   where it overrides no command the user denies (a user key with the same glob that allows is set to ask in place);
+//   user keys never move, so removing the added keys restores the map as it was. A string `permission` or
+//   `permission.bash` is left as it is: replacing it with a map would make go-getter own the whole value.
+export function withAskRules(format, config, rules) {
+  if (format === 'claude-permissions') {
+    const ask = [].concat(config.permissions?.ask ?? []);
+    return { config: { ...config, permissions: { ...config.permissions, ask: [...ask, ...rules.filter((r) => !ask.includes(r))] } }, unprompted: [] };
+  }
+  if (format !== 'opencode-permission') throw new Error(`unknown ask rule format "${format}"`);
+  const { permission = {} } = config;
+  if (typeof permission === 'string' || typeof permission.bash === 'string') {
+    const unprompted = prompts(typeof permission === 'string' ? permission : permission.bash) ? [] : Object.keys(rules);
+    return { config, unprompted, reason: unprompted.length ? `its ${typeof permission === 'string' ? 'permission' : 'permission.bash'} is a string; write it as a map to get ask rules` : undefined };
+  }
+  const user = bashRules(permission);
+  const own = Object.keys(permission.bash ?? {});
+  // Without a bash key, one is appended to `permission`, after every rule.
+  const bashPos = 'bash' in permission ? Object.keys(permission).indexOf('bash') : Object.keys(permission).length;
+  // Whether a rule is evaluated after a glob placed before the user's bash key `p` (own.length: after them all).
+  const isLater = (r, p) => r.pos > bashPos || (r.pos === bashPos && r.at >= p);
+  const bash = { ...permission.bash };
+  const before = own.map(() => []); // before[p]: globs to insert before the user's bash key p
+  const last = [];
+  const unprompted = [];
+  for (const [glob, action] of Object.entries(rules)) {
+    const near = overlapping(glob, user);
+    // Nothing to do where the user already prompts for every command of the glob (unknown counts as needing a rule).
+    if (anyCommand(glob, near, (m) => !prompts(lastAction(near, m))) === false) continue;
+    // Where the glob goes: before the user's bash key p (own.length: after them all), or onto the user's own key p - 1.
+    let p = null;
+    if (glob in bash) {
+      if (bash[glob] === 'allow') {
+        bash[glob] = action;
+        p = own.indexOf(glob) + 1;
+      }
+    } else {
+      // The latest place where the glob, winning a command, does not turn the user's deny into ask.
+      for (let q = own.length; q >= 0 && p === null; q--) {
+        if (anyCommand(glob, near, (m) => !near.some((r, i) => m[i + 1] && isLater(r, q)) && lastAction(near, m) === 'deny') === false) p = q;
+      }
+      if (p !== null) (p === own.length ? last : before[p]).push([glob, action]);
+    }
+    // Some of its commands still run unprompted when it is not written, or when a later user rule lets them through. The
+    // other added rules only ask, so they cannot make a command unprompted.
+    const later = p === null ? null : near.filter((r) => isLater(r, p));
+    const open = later === null || anyCommand(glob, later, (m) => later.some((_, i) => m[i + 1]) && !prompts(lastAction(later, m))) !== false;
+    if (open) unprompted.push(glob);
+  }
+  const merged = Object.fromEntries([...own.flatMap((g, p) => [...before[p], [g, bash[g]]]), ...last]);
+  const next = { ...config, permission: { ...permission, bash: merged } };
+  const changed = JSON.stringify(merged) !== JSON.stringify(permission.bash ?? {});
+  return { config: changed ? next : config, unprompted, reason: unprompted.length ? 'covering them would override your own rules' : undefined };
+}
