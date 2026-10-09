@@ -1,0 +1,235 @@
+{
+  "$schema": "../../../compiler/schemas/pack.schema.json",
+  "id": "hitl",
+  "version": "0.1.0",
+  "family": "harness",
+  "components": [
+    8
+  ],
+  "title": "Human-in-the-loop gates",
+  "summary": "Which shell commands need a human: irreversible ones, outward-facing ones, project-specific patterns, and whether a host prompts natively or the pre-tool hook hands the command over.",
+  "questions": [
+    {
+      "id": "gated-classes",
+      "prompt": "Which shell commands need a human?",
+      "options": [
+        {
+          "id": "both",
+          "label": "Irreversible and outward-facing commands",
+          "tradeoff": "Pushes, pull requests, releases and destructive commands always ask; more prompts, and a feature-branch push is not told from a default-branch push.",
+          "recommended": true
+        },
+        {
+          "id": "irreversible",
+          "label": "Irreversible commands only",
+          "tradeoff": "Force-push, hard reset, rm -rf and destructive SQL ask; pushes and releases go through unprompted."
+        },
+        {
+          "id": "outward",
+          "label": "Outward-facing commands only",
+          "tradeoff": "Pushes, pull requests, releases and publishing ask; local destructive commands go through unprompted."
+        },
+        {
+          "id": "advisory-only",
+          "label": "Instruction only",
+          "tradeoff": "No friction; depends on the agent complying."
+        }
+      ]
+    },
+    {
+      "id": "extra-patterns",
+      "type": "list",
+      "prompt": "Which project commands also need a human? A command prefix or a /regex/.",
+      "pattern": "^[^\\s\",][^\",]*$",
+      "default": [],
+      "since": "0.1.0",
+      "when": {
+        "question": "gated-classes",
+        "in": [
+          "both",
+          "irreversible",
+          "outward"
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "gated-classes": {
+      "both": {
+        "decisions": [
+          {
+            "slug": "gated-actions",
+            "title": "Gated actions need a human",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nIrreversible and outward-facing shell commands need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}). Extra patterns: {{answer.extra-patterns}}.\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "gated-actions-need-human-approval",
+            "title": "Irreversible and outward-facing commands need a human",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.gated-classes}}",
+              "grounded-in": [
+                "{{id.decision.gated-classes}}",
+                "0043-human-escalation"
+              ],
+              "derivation-note": "Given agents must hand over before irreversible or outward-facing actions (0043), the host must ask a human or deny the command, since an instruction alone fails silently."
+            },
+            "enforcement": [
+              {
+                "tier": 2,
+                "check": "Host ask rules and the pre-tool hook gate these commands",
+                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\""
+              }
+            ],
+            "body": "## Guardrail\n\nShell commands of both classes need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
+          }
+        ]
+      },
+      "irreversible": {
+        "decisions": [
+          {
+            "slug": "gated-actions",
+            "title": "Irreversible commands need a human",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nIrreversible shell commands (force-push, history rewrite, hard reset, `rm -rf`, destructive SQL, deleting a branch or tag) need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}). Extra patterns: {{answer.extra-patterns}}.\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "gated-actions-need-human-approval",
+            "title": "Irreversible commands need a human",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.gated-classes}}",
+              "grounded-in": [
+                "{{id.decision.gated-classes}}",
+                "0043-human-escalation"
+              ],
+              "derivation-note": "Given agents must hand over before irreversible or outward-facing actions (0043), the host must ask a human or deny the command, since an instruction alone fails silently."
+            },
+            "enforcement": [
+              {
+                "tier": 2,
+                "check": "Host ask rules and the pre-tool hook gate these commands",
+                "run": "builtin:gate-command classes=irreversible extra=\"{{answer.extra-patterns}}\""
+              }
+            ],
+            "body": "## Guardrail\n\nShell commands of irreversible need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
+          }
+        ]
+      },
+      "outward": {
+        "decisions": [
+          {
+            "slug": "gated-actions",
+            "title": "Outward-facing commands need a human",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nOutward-facing shell commands (push, pull requests, releases, tags, publishing, issue comments) need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}). Extra patterns: {{answer.extra-patterns}}.\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "gated-actions-need-human-approval",
+            "title": "Outward-facing commands need a human",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.gated-classes}}",
+              "grounded-in": [
+                "{{id.decision.gated-classes}}",
+                "0043-human-escalation"
+              ],
+              "derivation-note": "Given agents must hand over before irreversible or outward-facing actions (0043), the host must ask a human or deny the command, since an instruction alone fails silently."
+            },
+            "enforcement": [
+              {
+                "tier": 2,
+                "check": "Host ask rules and the pre-tool hook gate these commands",
+                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\""
+              }
+            ],
+            "body": "## Guardrail\n\nShell commands of outward need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
+          }
+        ]
+      },
+      "advisory-only": {
+        "decisions": [
+          {
+            "slug": "gated-actions",
+            "title": "Gated actions are advisory",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nAgents are told to hand over before irreversible or outward-facing actions; nothing blocks them (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe project accepted the risk for less friction (decision 0043).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "gated-actions-need-human-approval",
+            "title": "Agents hand over before irreversible or outward-facing actions",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.gated-classes}}",
+              "grounded-in": [
+                "{{id.decision.gated-classes}}",
+                "0043-human-escalation"
+              ],
+              "derivation-note": "Given the project chose no mechanical gate, the rule rests on the agent following it."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction only"
+              }
+            ],
+            "body": "## Guardrail\n\nAsk the user before irreversible or outward-facing commands. Advisory (tier 1): nothing blocks them.\n"
+          }
+        ]
+      }
+    }
+  }
+}
