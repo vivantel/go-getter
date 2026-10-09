@@ -136,6 +136,7 @@
         "cli/compiler/src/emit.mjs",
         "cli/compiler/src/enforce.mjs",
         "cli/compiler/src/frontmatter.mjs",
+        "cli/compiler/src/gate.mjs",
         "cli/compiler/src/git-env.mjs",
         "cli/compiler/src/glob.mjs",
         "cli/compiler/src/governance.mjs",
