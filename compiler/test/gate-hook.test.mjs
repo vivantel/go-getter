@@ -109,3 +109,13 @@ test('through the CLI the hook denies on a hand-over host and allows on a native
   assert.equal(run('claude-code').status, 0);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('a /regex/ extra has no native rule, so the hook gates it on native hosts too; the catalog and prefix extras stay native', () => {
+  const dir = project('builtin:gate-command classes=outward extra="make deploy,/terraform\\s+apply/"');
+  for (const host of NATIVE) {
+    assert.equal(evaluatePreTool(dir, SHELL[host]('terraform  apply -auto-approve'), host).deny, true, host);
+    assert.equal(evaluatePreTool(dir, SHELL[host]('git push'), host).deny, false, `${host}: catalog`);
+    assert.equal(evaluatePreTool(dir, SHELL[host]('make deploy'), host).deny, false, `${host}: prefix extra`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+});

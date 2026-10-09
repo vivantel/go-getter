@@ -194,12 +194,18 @@ export function nativeRules(host, entries, caps) {
 const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boolean);
 
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
+export const GATE_CLASSES = ['irreversible', 'outward'];
 export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra) });
 
 // The entries the tier-2 `builtin:gate-command` enforcement entries gate (from `collectEnforcement`): catalog entries of
 // their classes, then their `extra` patterns.
 export function gateEntries(enforcement) {
-  const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => gateArgs(e.parsed.args));
+  const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => {
+    const args = gateArgs(e.parsed.args);
+    const bad = args.classes.filter((c) => !GATE_CLASSES.includes(c));
+    if (!args.classes.length || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
+    return args;
+  });
   const classes = new Set(gates.flatMap((g) => g.classes));
   return [...CATALOG.filter((e) => classes.has(e.class)), ...extraEntries([...new Set(gates.flatMap((g) => g.extra))])];
 }
@@ -261,7 +267,7 @@ const lastAction = (rules, matched) => rules.findLast((_, i) => matched[i + 1])?
 const prompts = (action) => action === 'ask' || action === 'deny';
 // The rules that match some command `glob` matches (the others never decide one of its commands), in order; a rule
 // whose overlap is unknown is kept.
-const overlapping = (glob, rules) => rules.filter((r) => someCommand([glob, r.glob], (m) => m[1]) !== false);
+const overlapping = (glob, rules) => rules.filter((r) => someCommand([glob, r.glob], (m) => m[0] && m[1]) !== false);
 // Whether some command of `glob` makes `test` true, given the rules that overlap it and the match vector.
 const anyCommand = (glob, rules, test) => someCommand([glob, ...rules.map((r) => r.glob)], (m) => m[0] && test(m));
 
@@ -277,10 +283,12 @@ const anyCommand = (glob, rules, test) => someCommand([glob, ...rules.map((r) =>
 export function withAskRules(format, config, rules) {
   if (format === 'claude-permissions') {
     const ask = [].concat(config.permissions?.ask ?? []);
-    return { config: { ...config, permissions: { ...config.permissions, ask: [...ask, ...rules.filter((r) => !ask.includes(r))] } }, unprompted: [] };
+    const added = rules.filter((r) => !ask.includes(r));
+    if (!added.length) return { config, unprompted: [] };
+    return { config: { ...config, permissions: { ...config.permissions, ask: [...ask, ...added] } }, unprompted: [] };
   }
   if (format !== 'opencode-permission') throw new Error(`unknown ask rule format "${format}"`);
-  const { permission = {} } = config;
+  const permission = config.permission ?? {};
   if (typeof permission === 'string' || typeof permission.bash === 'string') {
     const unprompted = prompts(typeof permission === 'string' ? permission : permission.bash) ? [] : Object.keys(rules);
     return { config, unprompted, reason: unprompted.length ? `its ${typeof permission === 'string' ? 'permission' : 'permission.bash'} is a string; write it as a map to get ask rules` : undefined };

@@ -171,3 +171,12 @@ test('the update plan ignores nested node_modules and keeps the git state of a w
   assert.deepEqual(plan.removed, []);
   assert.equal(plan.git, false);
 });
+
+test('update returns the apply notes about gated patterns that still run unprompted', () => {
+  const dir = project();
+  writeFileSync(path.join(dir, 'docs/guardrails/gated.md'), guardrail('gated', 2, 'builtin:gate-command classes=outward'));
+  writeFileSync(path.join(dir, 'opencode.json'), JSON.stringify({ permission: 'allow' }));
+  const { notes } = runUpdate(dir, { root: repo, date: '2026-10-09' });
+  assert.ok(notes.some((n) => /gated pattern\(s\) still run without a prompt on opencode/.test(n)), notes.join('\n'));
+  rmSync(dir, { recursive: true, force: true });
+});

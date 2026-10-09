@@ -143,12 +143,14 @@ function shellCommand(payload) {
 }
 
 // `{ command, class }` when a `gate-command` entry gates this call on this host, else null. Without a known host the call
-// is not gated: whether the host prompts natively cannot be told.
+// is not gated: whether the host prompts natively cannot be told. A host with native ask rules prompts for the catalog and
+// the prefix extras; a `/regex/` extra has no native rule there, so the hook gates only those.
 function gatedCommand(entry, payload, host) {
-  if (!host || hasNativeAsk(host)) return null;
+  if (!host) return null;
   const command = shellCommand(payload);
   if (!command) return null;
-  const hit = matchGated(command, gateArgs(entry.parsed.args))[0];
+  const args = gateArgs(entry.parsed.args);
+  const hit = matchGated(command, hasNativeAsk(host) ? { classes: [], extra: args.extra.filter((x) => /^\/.+\/[a-z]*$/s.test(x)) } : args)[0];
   return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
 }
 
