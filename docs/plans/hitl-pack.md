@@ -20,7 +20,7 @@ Existing code you will touch: `compiler/src/enforce.mjs` (reads each guardrail's
 
 ---
 
-### 1 Gate catalog and matcher — [ ]
+### 1 Gate catalog and matcher — [x]
 Class: implement · Needs: none · Check: `node --test compiler/test/gate.test.mjs`
 Do: add `compiler/src/gate.mjs` exporting `CATALOG` (entries `{ id, class: 'irreversible' | 'outward', description, pattern, examples: { match: [...], noMatch: [...] } }`) and `matchGated(command, { classes, extra })`, which splits a shell command into segments (on `&&`, `||`, `;`, `|`, newlines), strips leading `VAR=value` words, `sudo` and `env`, and returns the entries a segment matches. Irreversible: `git push --force`/`-f`/`--force-with-lease`, `git reset --hard`, `git rebase`, `git filter-branch`, `git branch -D`/`git tag -d`/`git push --delete`, `rm -rf` (outside `/tmp` and the OS temp directory), `DROP`/`TRUNCATE`/`DELETE FROM` in `psql`/`mysql`/`sqlite3` commands. Outward: `git push`, `gh pr create|merge|close`, `gh release create`, `git tag` (creating), `npm|pnpm|yarn publish`, `gh issue|pr comment`. `extra` is a list of project patterns (command prefixes or `/regex/`). A verb inside a quoted argument (`echo "git push"`) does not match; a wrapped command (`sh -c`, `eval`) is matched on its literal text only (document both in the file header).
 Done-when: `compiler/test/gate.test.mjs` shows every catalog entry matches each of its `match` examples and none of its `noMatch` examples; `cd x && git push` and `echo hi | git push` match; `echo "git push"` and `git status` do not; `extra` patterns match; classes filter the entries.
