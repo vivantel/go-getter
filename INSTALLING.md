@@ -23,7 +23,7 @@ Add this repository as a marketplace, then install the plugin ([fact 0003](docs/
 /plugin install go-getter
 ```
 
-If the name does not resolve, run `/plugin marketplace list` and install as `go-getter@<marketplace-name>`. The manifests are [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) and [`plugins/go-getter/.claude-plugin/plugin.json`](plugins/go-getter/.claude-plugin/plugin.json); `claude plugin validate` checks them. **Not confirmed:** the exact `/plugin` command syntax above; fact 0003 says only that Claude Code distributes plugins through git marketplaces.
+If the name does not resolve, run `/plugin marketplace list` and install as `go-getter@<marketplace-name>`. The manifests are [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) and [`plugins/go-getter/.claude-plugin/plugin.json`](plugins/go-getter/.claude-plugin/plugin.json); `claude plugin validate` checks them.
 
 ## Codex
 
