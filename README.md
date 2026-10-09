@@ -12,7 +12,7 @@ Host agents: Claude Code, Codex, Kilo Code, OpenCode, Cursor, Gemini CLI, GitHub
 
 One plugin, seven host agents — see [INSTALLING.md](INSTALLING.md). Then ask your agent to *"set up the agent harness here"*.
 
-## What it sets up (v0.1)
+## What it sets up
 
 Seven harness packs, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
 
@@ -28,7 +28,7 @@ Seven harness packs, each a short guided interview with a recommended default pe
 
 ### Harness coverage
 
-How each rule ends up enforced, per component and host agent, once all seven packs are adopted (`go-getter coverage` prints this for your project): `hook+ci` = blocked by a host hook and checked in CI, `hook` = blocked by a host hook, `ci` = checked in CI, `advisory` = instruction only, `-` = not covered yet.
+How each rule ends up enforced, per component and host agent, once all seven packs are adopted (`go-getter coverage` prints this for your project): `hook+ci` = blocked by a host hook and checked in CI, `hook` = blocked or prompted by a host hook or permission rule, `ci` = checked in CI, `advisory` = instruction only, `-` = not covered yet.
 
 | Component | Pack | Claude Code | Codex | Kilo | OpenCode | Cursor | Gemini CLI | Copilot |
 |---|---|---|---|---|---|---|---|---|
