@@ -189,7 +189,7 @@ test('kilo and opencode get project-local skills whose shared references resolve
   assert.ok(refs > 0);
   assert.deepEqual(diffApply(dir, planApply(dir, { hosts: ['kilo', 'claude-code'] })), []);
   writeFileSync(path.join(dir, '.agents/skills/capture/SKILL.md'), 'edited');
-  assert.ok(diffApply(dir, planApply(dir, { hosts: ['kilo', 'claude-code'] })).includes('differs: .agents/skills/capture/SKILL.md'));
+  assert.ok(diffApply(dir, planApply(dir, { hosts: ['kilo', 'claude-code'] })).some((p) => p.startsWith('modified: .agents/skills/capture/SKILL.md')));
   assert.equal(planApply(dir, { hosts: ['claude-code'] }).skills, false);
   rmSync(dir, { recursive: true, force: true });
 });

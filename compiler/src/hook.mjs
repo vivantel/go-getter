@@ -276,7 +276,7 @@ export function respond(host, decision) {
 }
 
 // Session start: run vendored nudge scripts (POSIX sh, plain-text output) in the project; failures are silent.
-export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh'];
+export const NUDGES = ['capture-nudge.sh', 'lint-nudge.sh', 'update-nudge.sh'];
 // Nudge output enters context on every session start (decision 0070), so it has a fixed line budget.
 export const NUDGE_LINE_BUDGET = 20;
 

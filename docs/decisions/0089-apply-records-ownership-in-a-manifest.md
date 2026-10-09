@@ -1,16 +1,17 @@
 ---
 id: 0089-apply-records-ownership-in-a-manifest
 title: apply records what it owns in .go-getter/manifest.json and never overwrites or removes a modified owned item without --force
-status: draft
+status: active
 date: 2026-10-06
 tags: [generated-files, enforcement, configuration]
 track: process
+accepted-by: sergemso
 governed-facts: [0033-apply-keeps-no-record-of-what-it-wrote]
 ---
 
 ## Decision
 
-Draft from the owner's interview on updating and removing go-getter (2026-10-06); active under decision 0091.
+Draft from the owner's interview on updating and removing go-getter (2026-10-06); active since apply and update use the manifest (0091).
 
 - `apply` writes a committed `.go-getter/manifest.json`: a `schema` number, the go-getter version, each adopted pack and its version, every whole file it owns with a content hash, and for each shared file the keys or marked blocks it owns with the value they replaced (including `core.hooksPath`).
 - A later `apply`, `update` or `--remove` (0090) works from the diff between the manifest and the target outputs.

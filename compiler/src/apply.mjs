@@ -12,6 +12,8 @@ import { packageCapabilities, promptLoggingTargets, setPath } from './governance
 import { loadPolicy } from './routing/policy.mjs';
 import { verifyConfig } from './verify.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
+import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
+import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting } from './reconcile.mjs';
 
 export const RUNNER = '.go-getter/bin/go-getter';
 const MARK_START = '<!-- go-getter:start -->';
@@ -163,6 +165,8 @@ function readJson(project, rel) {
   return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
 }
 
+const SHARED_HOOK_FILES = ['.claude/settings.json', '.codex/hooks.json', '.gemini/settings.json', '.cursor/hooks.json'];
+
 const isOurs = (h) => HOOK_TAG.test(JSON.stringify(h));
 
 // Replace go-getter's entry in an event list (or remove it when entry is null), keeping everything else.
@@ -187,7 +191,7 @@ const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 // Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook <event> --host <id>`.
 // `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: knowledge base present (session-start nudges).
 // `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
-export function hostHookOutputs(project, hosts, enabled, session = false, stop = false) {
+export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, read = (rel) => readJson(project, rel)) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the
   // runtime as --project. Without a runner the hook warns and lets the call through (fail open, decision 0019).
   // The script is wrapped in `sh -c '...'` so it also works for a host that executes the command without a shell;
@@ -211,7 +215,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   const events = (obj, list) => list.reduce((acc, [keys, entry]) => setEvent(acc, keys, entry), obj);
   for (const host of hosts) {
     if (host === 'claude-code' && wanted('.claude/settings.json')) {
-      out['.claude/settings.json'] = json(events(readJson(project, '.claude/settings.json'), [
+      out['.claude/settings.json'] = json(events(read('.claude/settings.json'), [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
         [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
@@ -219,7 +223,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
       ]));
     }
     if (host === 'codex' && wanted('.codex/hooks.json')) {
-      out['.codex/hooks.json'] = json(events(readJson(project, '.codex/hooks.json'), [
+      out['.codex/hooks.json'] = json(events(read('.codex/hooks.json'), [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
         [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
@@ -227,7 +231,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
       ]));
     }
     if (host === 'gemini-cli' && wanted('.gemini/settings.json')) {
-      out['.gemini/settings.json'] = json(events(readJson(project, '.gemini/settings.json'), [
+      out['.gemini/settings.json'] = json(events(read('.gemini/settings.json'), [
         [['hooks', 'BeforeTool'], enabled ? ccLike(host) : null],
         [['hooks', 'AfterTool'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
@@ -235,7 +239,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
       ]));
     }
     if (host === 'cursor' && wanted('.cursor/hooks.json')) {
-      out['.cursor/hooks.json'] = json({ version: 1, ...events(readJson(project, '.cursor/hooks.json'), [
+      out['.cursor/hooks.json'] = json({ version: 1, ...events(read('.cursor/hooks.json'), [
         [['hooks', 'preToolUse'], enabled ? { command: cmd(host) } : null],
         [['hooks', 'sessionStart'], session ? { command: cmd(host, 'session-start') } : null],
         [['hooks', 'stop'], canStop(host) ? { command: cmd(host, 'stop') } : null],
@@ -331,7 +335,11 @@ function packageVersion(packageRoot) {
   }
 }
 
-export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT } = {}) {
+// Plans every output. With a manifest (decision 0089) the plan also reconciles the project with it: owned parts of
+// shared files are undone before planning, so what is no longer wanted goes and what replaced a value is read back
+// from the restored file; anything edited since go-getter wrote it is `modified`, left as it is (unless `force`) and
+// kept in the manifest so the next run reports it again.
+export function planApply(project, { hosts, skills, force = false, bootstrap = false, packageRoot = PACKAGE_ROOT } = {}) {
   const detected = detect(project);
   const targetHosts = hosts?.length ? hosts : detected.hostAgents;
   for (const h of targetHosts) if (!HOSTS.includes(h)) throw new Error(`unknown host "${h}"`);
@@ -343,20 +351,50 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   const tier3 = entries.some((e) => e.tier === 3);
   const outputs = { [RUNNER]: { content: runnerScript(packageVersion(packageRoot)), mode: 0o755 } };
 
-  const agentsMd = existsSync(path.join(project, 'AGENTS.md')) ? readFileSync(path.join(project, 'AGENTS.md'), 'utf8') : '# AGENTS.md\n';
-  outputs['AGENTS.md'] = { content: withSection(agentsMd, guardrailSection(entries)) };
+  // Files shared with the user, where apply owns only keys, items or a block (manifest, decision 0089), and their
+  // content before apply (null when absent).
+  const previous = readManifest(project);
+  const shared = new Set(['AGENTS.md']);
+  const before = {};
+  const modified = [];
+  const held = {}; // shared file -> owned key items edited since go-getter wrote them
+  const read = (rel) => {
+    if (bootstrap) return {}; // outputs on empty settings: what go-getter itself wants (bootstrapManifest)
+    const { json: base, modified: edited } = undoJson(readJson(project, rel), previous?.shared?.[rel] ?? [], force);
+    if (edited.length) held[rel] = edited;
+    return base;
+  };
+  const remember = (rel) => {
+    shared.add(rel);
+    if (!(rel in before)) before[rel] = existsSync(path.join(project, rel)) ? JSON.stringify(read(rel)) : null;
+  };
+
+  const hasAgentsMd = existsSync(path.join(project, 'AGENTS.md'));
+  const agentsMd = hasAgentsMd ? readFileSync(path.join(project, 'AGENTS.md'), 'utf8') : '# AGENTS.md\n';
+  const block = guardrailSection(entries);
+  before['AGENTS.md'] = hasAgentsMd ? agentsMd : null;
+  outputs['AGENTS.md'] = { content: withSection(agentsMd, block) };
+  const recordedBlock = previous?.shared?.['AGENTS.md']?.[0];
+  const currentBlock = blockOf(agentsMd, [MARK_START, MARK_END]);
+  const blockHeld = !force && recordedBlock && currentBlock && ![recordedBlock.hash, hashContent(block)].includes(hashContent(currentBlock));
+  if (blockHeld) {
+    outputs['AGENTS.md'] = { content: agentsMd };
+    modified.push({ path: 'AGENTS.md', what: 'block', reason: 'the go-getter block was edited since go-getter wrote it' });
+  }
   if (targetHosts.includes('claude-code')) {
     const claude = path.join(project, 'CLAUDE.md');
     const isRegularFile = existsSync(claude) && !lstatSync(claude).isSymbolicLink();
     if (!isRegularFile) outputs['CLAUDE.md'] = { symlink: 'AGENTS.md' };
   }
   if (targetHosts.includes('gemini-cli')) {
-    const settings = readJson(project, '.gemini/settings.json');
+    remember('.gemini/settings.json');
+    const settings = read('.gemini/settings.json');
     const names = new Set([].concat(settings.context?.fileName ?? []));
     names.add('AGENTS.md');
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
-  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop);
+  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, read);
+  for (const p of Object.keys(hookOutputs)) if (SHARED_HOOK_FILES.includes(p)) remember(p);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {
       // Merge the hook change into the context.fileName change for the same file.
@@ -368,7 +406,8 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   const caps = packageCapabilities(packageRoot);
   for (const host of promptLoggingTargets(project, caps, targetHosts)) {
     const { file, key } = caps[host].telemetry.promptLogOff;
-    const base = outputs[file] ? JSON.parse(outputs[file].content) : readJson(project, file);
+    remember(file);
+    const base = outputs[file] ? JSON.parse(outputs[file].content) : read(file);
     outputs[file] = json(setPath(base, key, false));
   }
   // Telemetry: host OpenTelemetry settings where the project config accepts them (draft decision 0087).
@@ -376,7 +415,8 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   const { endpoint } = otelConfig(project);
   for (const [host, r] of Object.entries(otel ?? {})) {
     if (r.status !== 'emitted') continue;
-    const base = outputs[r.file] ? JSON.parse(outputs[r.file].content) : readJson(project, r.file);
+    remember(r.file);
+    const base = outputs[r.file] ? JSON.parse(outputs[r.file].content) : read(r.file);
     outputs[r.file] = json(withOtel(host, base, endpoint));
   }
   // Cost routing: prompt-cache lifetimes where the host has settings for them (decision 0032).
@@ -384,11 +424,22 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   for (const host of ttl ? targetHosts : []) {
     const target = caps[host]?.routing.cacheTtl;
     if (!target) continue;
-    let base = outputs[target.file] ? JSON.parse(outputs[target.file].content) : readJson(project, target.file);
+    remember(target.file);
+    let base = outputs[target.file] ? JSON.parse(outputs[target.file].content) : read(target.file);
     for (const [kind, value] of [['main', ttl.main], ['subagent', ttl.subagent]]) {
       if (value) for (const key of target[kind]) base = setPath(base, [key], value);
     }
     outputs[target.file] = json(base);
+  }
+  // Keys edited since go-getter wrote them keep the user's value, whatever the plan now wants.
+  for (const [rel, items] of Object.entries(held)) {
+    const current = readJson(project, rel);
+    let content = outputs[rel] ? JSON.parse(outputs[rel].content) : current;
+    for (const item of items) {
+      content = setAt(content, item.path, at(current, item.path));
+      modified.push({ path: rel, what: 'key', reason: `${item.path.join('.')} was edited since go-getter wrote it` });
+    }
+    outputs[rel] = json(content);
   }
   if (tier3) outputs['.githooks/pre-push'] = { content: prePush, mode: 0o755 };
   const ciChecks = verifyConfig(project).ci;
@@ -401,9 +452,54 @@ export function planApply(project, { hosts, skills, packageRoot = PACKAGE_ROOT }
   const withSkills = skills ?? (targetHosts.includes('kilo') || targetHosts.includes('opencode'));
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
   Object.assign(outputs, agentOutputs(project, targetHosts));
-  const stale = staleAgentFiles(project, targetHosts, outputs);
-  return { hosts: targetHosts, outputs, stale, tier2, tier3, skills: withSkills, otel };
+  const stale = new Set(staleAgentFiles(project, targetHosts, outputs));
+
+  // Whole files: one edited since go-getter wrote it (or not go-getter's at all) is skipped; one that is no longer produced is removed.
+  const owned = previous?.files ?? {};
+  const skipped = {};
+  const planned = new Set(Object.keys(outputs));
+  const edited = (rel, rec) => fileEdited(project, rel, rec);
+  if (previous && !force) {
+    for (const [rel, o] of Object.entries(outputs)) {
+      if (shared.has(rel) || 'symlink' in o || !edited(rel, owned[rel] ?? null)) continue;
+      if (hashContent(readFileSync(path.join(project, rel), 'utf8')) === hashContent(o.content)) continue;
+      modified.push({ path: rel, what: 'file', reason: owned[rel] ? 'edited since go-getter wrote it' : 'exists and is not go-getter\'s' });
+      delete outputs[rel];
+      if (owned[rel]) skipped[rel] = owned[rel];
+    }
+    for (const [rel, rec] of Object.entries(owned)) {
+      if (planned.has(rel) || !existsSync(path.join(project, rel)) && !isLink(path.join(project, rel))) continue;
+      if (!edited(rel, rec)) stale.add(rel);
+      else {
+        modified.push({ path: rel, what: 'file', reason: 'edited since go-getter wrote it' });
+        skipped[rel] = rec;
+      }
+    }
+  } else {
+    for (const rel of Object.keys(owned)) if (!planned.has(rel)) stale.add(rel);
+  }
+
+  // core.hooksPath: left alone when changed since go-getter set it; restored when the hooks are no longer produced.
+  const recordedGit = previous?.shared?.['git-config']?.[0];
+  const currentGit = gitSetting(project, 'core.hooksPath');
+  const gitHeld = !force && recordedGit && currentGit !== undefined && currentGit !== recordedGit.value;
+  if (gitHeld) modified.push({ path: 'core.hooksPath', what: 'git-config', reason: `changed to ${currentGit} since go-getter set it` });
+  return {
+    hosts: targetHosts, outputs, stale: [...stale].sort(), tier2, tier3, skills: withSkills, otel,
+    project, version: packageVersion(packageRoot), shared, before, block, markers: [MARK_START, MARK_END],
+    modified, held, skipped, blockHeld: Boolean(blockHeld), recordedGit, gitHeld: Boolean(gitHeld),
+    gitConfig: tier3 && !gitHeld ? { setting: 'core.hooksPath', value: '.githooks', replaced: currentGit } : null,
+    gitUnset: !tier3 && recordedGit && !gitHeld ? { replaced: recordedGit.replaced } : null,
+  };
 }
+
+const isLink = (file) => {
+  try {
+    return lstatSync(file).isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
 
 export function diffApply(project, plan) {
   const problems = [];
@@ -421,10 +517,26 @@ export function diffApply(project, plan) {
     } else if (stat.isSymbolicLink() || readFileSync(file, 'utf8') !== o.content) problems.push(`differs: ${rel}`);
   }
   for (const rel of plan.stale ?? []) problems.push(`stale: ${rel}`);
+  for (const m of plan.modified ?? []) problems.push(`modified: ${m.path} (${m.reason})`);
   return problems.sort();
 }
 
-export function writeApply(project, plan) {
+// Writes the plan and returns the written paths; `applyPlan` also returns what was skipped as `modified`.
+// A project adopted before manifests existed (decision 0090): records what it already holds as go-getter's, writing
+// no output. A project with a manifest keeps it. Returns the manifest.
+export function bootstrap(project, opts = {}) {
+  const existing = readManifest(project);
+  if (existing) return existing;
+  const manifest = bootstrapManifest(project, planApply(project, { ...opts, bootstrap: true }));
+  const file = path.join(project, MANIFEST);
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, manifestText(manifest));
+  return manifest;
+}
+
+export const writeApply = (project, plan) => applyPlan(project, plan).written;
+
+export function applyPlan(project, plan) {
   for (const [rel, o] of Object.entries(plan.outputs)) {
     const file = path.join(project, rel);
     mkdirSync(path.dirname(file), { recursive: true });
@@ -436,12 +548,10 @@ export function writeApply(project, plan) {
     if (o.mode) chmodSync(file, o.mode);
   }
   for (const rel of plan.stale ?? []) rmSync(path.join(project, rel), { force: true });
-  if (plan.tier3) {
-    try {
-      execFileSync('git', ['config', 'core.hooksPath', '.githooks'], { cwd: project, stdio: 'ignore' });
-    } catch {
-      // not a git repository; the hook files are still written
-    }
-  }
-  return Object.keys(plan.outputs).sort();
+  const manifest = path.join(project, MANIFEST);
+  mkdirSync(path.dirname(manifest), { recursive: true });
+  writeFileSync(manifest, manifestText(buildManifest(plan, readManifest(project))));
+  if (plan.tier3 && !plan.gitHeld) setGitSetting(project, 'core.hooksPath', '.githooks');
+  else if (plan.gitUnset) setGitSetting(project, 'core.hooksPath', plan.gitUnset.replaced);
+  return { written: Object.keys(plan.outputs).sort(), modified: plan.modified ?? [] };
 }

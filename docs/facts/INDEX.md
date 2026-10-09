@@ -30,4 +30,4 @@ id,title,tags,status
 0029-openspec-layout-and-workflow,"OpenSpec keeps living specs under openspec/specs and per-change folders with delta specs that are archived on completion","roadmap, tooling, packaging",active
 0030-tool-output-redaction-runtime,"The post-tool hook redacts restricted-file values, private-key blocks and known token prefixes from tool results on the hosts that can replace them","governance, security, hooks, compiler",active
 0031-host-output-redaction-and-read-deny-levers,"Copilot, Codex, Gemini CLI and Kilo hooks can replace a tool result; Cursor only an MCP result; reads are denied by config on Cursor, OpenCode and Kilo and by hooks everywhere","host-agents, governance, security, hooks",active
-0033-apply-keeps-no-record-of-what-it-wrote,"apply keeps no record of what it wrote, so it cannot undo settings or tell its content from the user's","generated-files, enforcement",active
+0033-apply-keeps-no-record-of-what-it-wrote,"Until the manifest (0089), apply kept no record of what it wrote, so it could not undo settings or tell its content from the user's","generated-files, enforcement",active

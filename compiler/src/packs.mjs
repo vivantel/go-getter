@@ -69,8 +69,14 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
         if (new Set(optionIds).size !== optionIds.length) errors.push(`${at}.options: duplicate option ids`);
         if (q.options.filter((o) => o.recommended).length !== 1) errors.push(`${at}.options: exactly one option must be recommended`);
       }
+      const current = (q.options ?? []).map((o) => o.id);
+      for (const [oldId, newId] of Object.entries(q.renamed ?? {})) {
+        if (current.includes(oldId)) errors.push(`${at}.renamed.${oldId}: "${oldId}" is still an option of "${q.id}"`);
+        if (!current.includes(newId)) errors.push(`${at}.renamed.${oldId}: "${newId}" is not an option of "${q.id}"`);
+      }
       for (const k of ['pattern', 'default']) if (q[k] !== undefined) errors.push(`${at}.${k}: only text and list questions take "${k}"`);
     } else {
+      if (q.renamed) errors.push(`${at}.renamed: only choice questions rename options`);
       if (q.options) errors.push(`${at}.options: ${type} questions take no options`);
       if (q.default === undefined && !q.detect) errors.push(`${at}: ${type} questions need a default or a detect key`);
       if (type === 'text' && Array.isArray(q.default)) errors.push(`${at}.default: text questions take a string default`);

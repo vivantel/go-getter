@@ -14,6 +14,7 @@
   "scripts": {
     "build": "node compiler/bin/go-getter.mjs build",
     "test": "node --test \"compiler/test/**/*.test.mjs\"",
+    "test:update": "node --test \"compiler/test/update/**/*.test.mjs\"",
     "test:routing": "node --test \"compiler/test/routing/**/*.test.mjs\"",
     "test:telemetry": "node --test \"compiler/test/telemetry/**/*.test.mjs\"",
     "check:generated": "node compiler/bin/go-getter.mjs check generated",

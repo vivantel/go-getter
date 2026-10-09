@@ -84,6 +84,30 @@ npx --yes github:vivantel/go-getter coverage
 
 `coverage` shows, for each of the twelve harness components and each host agent, whether a rule is enforced in CI, blocked by a host hook, advisory or not covered yet.
 
+## Updating
+
+`apply` records what it generated in `.go-getter/manifest.json` (commit it): the go-getter version, each adopted pack and version, a hash for every file it owns, and the keys, hook entries or marked block it owns in shared files with the value each replaced.
+
+After upgrading go-getter, run:
+
+```
+npx --yes github:vivantel/go-getter update --dry-run
+npx --yes github:vivantel/go-getter update
+```
+
+`update` re-renders each adopted pack from the answers recorded in `docs/` (a question added since takes its default), then updates the host files. It prints one plan (docs re-rendered, files added, changed or removed) and applies it on confirmation, or with `--yes`. A project without a manifest gets one on its first `update`. A session start prints one line when the project is older than the installed go-getter, and `apply --check` fails on the mismatch.
+
+A file, key or block you edited since go-getter wrote it is skipped and reported as `modified`, and the command exits non-zero. `--force` overwrites or removes it.
+
+## Removing
+
+```
+npx --yes github:vivantel/go-getter apply --remove --dry-run
+npx --yes github:vivantel/go-getter apply --remove
+```
+
+`--remove` undoes everything the manifest lists: it deletes the generated files and the generated runner, removes the hook entries and the instruction-file block, restores each replaced settings value and `core.hooksPath`, and deletes the manifest last. It leaves `docs/` (the decisions and guardrails stay as plain knowledge) and the telemetry log. Modified items are kept and reported unless you pass `--force`.
+
 ## When npx cannot fetch from GitHub
 
 The generated runner `.go-getter/bin/go-getter` (called by every host hook and the pre-push hook) runs the CLI through `npx --yes github:vivantel/go-getter`, pinned to the release tag of the version that wrote it (an unreleased build is unpinned). If npm refuses the fetch (for example `EALLOWGIT` where git dependencies are disabled), the hook fails without blocking, enforcement does not run for that call, and the runner says so. Two ways out:

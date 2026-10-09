@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "version": "0.0.0",
+  "packs": {
+    "context": "0.3.0",
+    "cost-routing": "0.2.0",
+    "governance": "0.2.0",
+    "orchestration": "0.1.0",
+    "telemetry": "0.1.0",
+    "verification-gate": "0.3.0"
+  },
+  "files": {
+    ".claude/agents/explorer.md": {
+      "hash": "sha256:b5e3757fa6dfb80804d71b876862226e8e698cb230cc8f6a0ebc43b93a9ddb52"
+    },
+    ".claude/agents/implementer.md": {
+      "hash": "sha256:9794c376155521f9a7947f1d0303011ea8358a233d524d4f7fafb574046921de"
+    },
+    ".claude/agents/planner.md": {
+      "hash": "sha256:5dc81a2e2d108e3198207341df2532cfb332780b8e518bc14fcfe2383d26279d"
+    },
+    ".claude/agents/reviewer.md": {
+      "hash": "sha256:1ec388588d7bc775eceed051193389f464c0cf2dd4371b60d1cb8e81a7903902"
+    },
+    ".claude/agents/tester.md": {
+      "hash": "sha256:0258e824e1ba1f14911cd222a51bfc0f008dc12697db1549b14fbf2bf6470c8b"
+    },
+    ".githooks/pre-push": {
+      "hash": "sha256:2528788ad90954d60da57caca98782e6fd9baf9d6e842c3f6040fd8a9b391fa0",
+      "mode": "755"
+    },
+    ".github/workflows/go-getter-checks.yml": {
+      "hash": "sha256:0daa64fc1d6c0c5972cab3c29be8d66c73b0baa6aef7e4ada92ff986ae9c27ba"
+    },
+    ".go-getter/bin/go-getter": {
+      "hash": "sha256:6c9affc3903cfc8e9cbba224a3ce9eeed16fa8ef9406cff261b4a101c5d48811",
+      "mode": "755"
+    },
+    "CLAUDE.md": {
+      "symlink": "AGENTS.md"
+    }
+  },
+  "shared": {
+    ".claude/settings.json": [
+      {
+        "kind": "items",
+        "path": [
+          "hooks",
+          "PostToolUse"
+        ],
+        "items": [
+          {
+            "matcher": "*",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook post-tool --host claude-code --project \"$d\"'"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "items",
+        "path": [
+          "hooks",
+          "PreToolUse"
+        ],
+        "items": [
+          {
+            "matcher": "*",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook pre-tool --host claude-code --project \"$d\"'"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "items",
+        "path": [
+          "hooks",
+          "SessionStart"
+        ],
+        "items": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook session-start --host claude-code --project \"$d\"'"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "items",
+        "path": [
+          "hooks",
+          "Stop"
+        ],
+        "items": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "sh -c 'd=$PWD; while [ ! -f \"$d/.go-getter/bin/go-getter\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/.go-getter/bin/go-getter\" ] || { echo \"go-getter: runner not found; hook skipped\" >&2; exit 0; }; exec sh \"$d/.go-getter/bin/go-getter\" hook stop --host claude-code --project \"$d\"'"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "key",
+        "path": [
+          "promptCacheTtl"
+        ],
+        "value": "1h",
+        "unknown": true
+      },
+      {
+        "kind": "key",
+        "path": [
+          "subagentPromptCacheTtl"
+        ],
+        "value": "5m",
+        "unknown": true
+      }
+    ],
+    "AGENTS.md": [
+      {
+        "kind": "block",
+        "hash": "sha256:c61f5f57daf44c7f42b781ce423aaa6b17401e3fee7a32bf1145eb838afcd367"
+      }
+    ],
+    "git-config": [
+      {
+        "kind": "git-config",
+        "setting": "core.hooksPath",
+        "value": ".githooks"
+      }
+    ]
+  }
+}

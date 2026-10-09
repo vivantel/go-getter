@@ -35,8 +35,19 @@ function checkAnswer(q, a) {
 
 // A question added in a later pack version (`since`) may be missing from an older answer file: it takes its default
 // or recommended option, so the older answers still render.
+// Answers recorded under an option id the pack has since renamed (`renamed` on a question), mapped to the new id.
+export function renameAnswers(pack, answers) {
+  const out = { ...answers };
+  for (const q of pack.questions) {
+    if (!q.renamed || out[q.id] === undefined) continue;
+    const map = (a) => q.renamed[a] ?? a;
+    out[q.id] = Array.isArray(out[q.id]) ? out[q.id].map(map) : map(out[q.id]);
+  }
+  return out;
+}
+
 export function withFallbacks(pack, answers) {
-  const filled = { ...answers };
+  const filled = renameAnswers(pack, answers);
   for (const q of pack.questions) {
     if (!q.since || filled[q.id] !== undefined) continue;
     filled[q.id] = q.options ? q.options.find((o) => o.recommended).id : q.default;
@@ -92,7 +103,8 @@ export function setIndexStatus(indexFile, id, status) {
 
 // Returns { artifacts: [{kind, id, path, content}], files: [{path, content}], newTags: [] } without touching disk.
 // `existing` (reconfigure): keepDecisionsFor = questions whose decisions stay (with their ids in decisionIds);
-// overwritable = paths of previously generated non-decision artifacts that may be re-rendered in place.
+// overwritable = paths of previously generated non-decision artifacts that may be re-rendered in place, artifactIds =
+// their ids by `<dir>/<slug>`, so a re-render keeps the number it was adopted with.
 export function planRender({ root, pack, answers: given, acceptedBy, date, detect = {}, existing = {} }) {
   const answers = withFallbacks(pack, given);
   const keep = existing.keepDecisionsFor ?? new Set();
@@ -130,8 +142,12 @@ export function planRender({ root, pack, answers: given, acceptedBy, date, detec
           }
           let id = tpl.slug;
           if (NUMBERED.has(kind)) {
-            counters[dir] ??= nextNumber(path.join(root, 'docs', dir));
-            id = `${String(counters[dir]++).padStart(4, '0')}-${tpl.slug}`;
+            const adopted = kind === 'decisions' ? undefined : existing.artifactIds?.[`${dir}/${tpl.slug}`];
+            if (adopted) id = adopted;
+            else {
+              counters[dir] ??= nextNumber(path.join(root, 'docs', dir));
+              id = `${String(counters[dir]++).padStart(4, '0')}-${tpl.slug}`;
+            }
           }
           if (kind === 'decisions') vars[`id.decision.${q.id}`] ??= id;
           const rendered = substitute(tpl, vars);

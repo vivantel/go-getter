@@ -17,42 +17,42 @@ go-getter (`/home/ubuntu/projects/vivantel/go-getter`, GitHub `vivantel/go-gette
 
 ---
 
-### 1 Manifest writer — [ ]
+### 1 Manifest writer — [x]
 Class: implement · Needs: none · Check: `node --test compiler/test/manifest.test.mjs`
 Do: add `compiler/src/manifest.mjs` with `buildManifest(plan, previous)` and `readManifest(project)`. Extend `planApply` in `compiler/src/apply.mjs` so each output records whether it is a whole file (hash) or a key or block in a shared file (`.claude/settings.json` and the other host settings files, `AGENTS.md` between `<!-- go-getter:start -->` and `<!-- go-getter:end -->`, git config `core.hooksPath`), with the replaced value read from the project before the first write. `writeApply` writes `.go-getter/manifest.json` (stable key order, trailing newline) after the outputs. Tests in `compiler/test/manifest.test.mjs` use a fixture project.
 Done-when: a fixture `apply` writes a manifest listing every output; a second `apply` leaves it byte-identical; replaced values are recorded for settings keys and `core.hooksPath`.
 
-### 2 Apply from the diff — [ ]
+### 2 Apply from the diff — [x]
 Class: implement · Needs: 1 · Check: `npm run test:update`
 Do: add `"test:update": "node --test \"compiler/test/update/**/*.test.mjs\""` to `package.json`. Make `diffApply`/`writeApply` compare the manifest with the target outputs: remove owned items that are no longer produced (whole files, keys restored to their recorded value, blocks deleted), skip `modified` items with the reason, exit non-zero when any is skipped, and honour `--force`. `staleAgentFiles` stays as a source of stale paths until the manifest covers them.
 Done-when: tests show a file that stops being produced is deleted, a key that stops being written is restored to its old value, a hand-edited file, key and block are each skipped and reported, and `--force` overwrites or removes them; this is what guardrail `owned-files-never-clobbered` runs.
 
-### 3 apply --remove — [ ]
+### 3 apply --remove — [x]
 Class: implement · Needs: 2 · Check: `npm run test:update`
 Do: add `--remove` and `--dry-run` (apply has neither today; its flags are `--project`, `--hosts`, `--skills`, `--no-skills`, `--check`) to `compiler/src/commands/apply.mjs`: plan against an empty target, undo every item the manifest lists (including restoring `core.hooksPath`, or unsetting it if it was unset), delete `.go-getter/bin/` and the manifest last; never touch `docs/` or `.go-getter/state`; honour `modified` and `--force`; `--dry-run` prints the plan and writes nothing.
 Done-when: a fixture adopted with `apply` and then `apply --remove` equals the original fixture except `docs/` and `.go-getter/state`; a modified item survives without `--force`.
 
-### 4 Bootstrap a project that has no manifest — [ ]
+### 4 Bootstrap a project that has no manifest — [x]
 Class: implement · Needs: 2 · Check: `npm run test:update`
 Do: in `compiler/src/manifest.mjs` add `bootstrapManifest(project, plan)`: recompute the outputs, record each one whose current content matches as owned (value replaced unknown, recorded as `unknown`), and record the rest as `modified`.
 Done-when: a fixture adopted with the pre-manifest `apply` yields a manifest with every output owned; an edited file is `modified`; a second bootstrap changes nothing.
 
-### 5 Pack `renamed` map — [ ]
+### 5 Pack `renamed` map — [x]
 Class: implement · Needs: none · Check: `npm run check:packs`
 Do: extend the pack schema (`compiler/src/schema.mjs`, decision 0022) with an optional `renamed` map on a question (old option id to new), read by `compiler/src/reconfigure.mjs` when it maps recorded answers to the pack's options; document it in `src/shared/artifact-model.md` or the pack docs where options are described; `npm run build`.
 Done-when: a fixture pack with a renamed option re-renders an artifact adopted under the old id without a changed answer; `check:packs` passes.
 
-### 6 go-getter update — [ ]
+### 6 go-getter update — [x]
 Class: implement · Effort: high · Needs: 2, 4, 5 · Check: `npm run test:update`
 Do: add `compiler/src/commands/update.mjs` and add an `update` case to the `switch` in `compiler/bin/go-getter.mjs` (also add `update` to its usage line): read the manifest (bootstrap it if absent), refuse a newer `schema`, re-render each adopted pack through `planReconfigure` with the recorded answers (new questions take their default per decision 0085), diff the host outputs as in step 2, print one dry-run plan (docs re-rendered, files added, changed or removed, `modified` skipped) and apply only with `--yes` or on interactive confirmation; `--dry-run` never writes.
 Done-when: a fixture adopted at an older pack version updates to the newer one in one run with a printed plan; a second `update` is a no-op; the dry run writes nothing.
 
-### 7 Drift signals — [ ]
+### 7 Drift signals — [x]
 Class: implement · Needs: 1 · Check: `npm run test:update`
 Do: add a session-start nudge script under `src/hooks/` and list it in `NUDGES` in `compiler/src/hook.mjs`: one line when the manifest version or an adopted pack is older than the installed package (`go-getter <installed> installed, project at <manifest>: run go-getter update`), nothing otherwise, within the nudge line budget; make `apply --check` report a version mismatch as a problem.
 Done-when: tests show the nudge line for an older manifest, no line for a current one, and `apply --check` failing on the mismatch and passing after `update`.
 
-### 8 Adopt here and document — [ ]
+### 8 Adopt here and document — [x]
 Class: implement · Needs: 3, 6, 7 · Check: `npm run check:self-adoption && npm run check:generated && npm test`
 Do: run `go-getter update` in this repo so `.go-getter/manifest.json` is committed; update the `uninstall` skill source (`src/skills/uninstall/SKILL.md`; `npm run build` regenerates `skills/uninstall/`) to run `go-getter apply --remove --dry-run` first; add "Updating" and "Removing" sections to `INSTALLING.md`; set guardrail `owned-files-never-clobbered` and decisions 0089 and 0090 `active` (with `accepted-by`) in the PR that makes `apply` use the manifest, update the index files, `npm run build`.
 Done-when: this repo has a committed manifest and `apply --check` is clean; `go-getter apply --remove --dry-run` lists only generated items; decisions 0089-0091 are `active` or the owner's decision to leave one draft is recorded.

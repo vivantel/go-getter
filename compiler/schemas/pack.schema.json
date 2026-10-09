@@ -29,6 +29,10 @@
           "pattern": { "type": "string" },
           "default": { "type": ["string", "array"], "items": { "type": "string" } },
           "since": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "renamed": {
+            "type": "object",
+            "additionalProperties": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }
+          },
           "when": {
             "type": "object",
             "additionalProperties": false,
