@@ -190,3 +190,64 @@ export function nativeRules(host, entries, caps) {
   if (format === 'opencode-permission') return Object.fromEntries(globs.map((g) => [g, 'ask']));
   throw new Error(`unknown ask rule format "${format}" for ${host}`);
 }
+
+const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+
+// The entries the tier-2 `builtin:gate-command` enforcement entries gate (from `collectEnforcement`): catalog entries of
+// their classes, then their `extra` patterns.
+export function gateEntries(enforcement) {
+  const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command');
+  const classes = new Set(gates.flatMap((e) => list(e.parsed.args.classes ?? 'irreversible,outward')));
+  return [...CATALOG.filter((e) => classes.has(e.class)), ...extraEntries([...new Set(gates.flatMap((e) => list(e.parsed.args.extra)))])];
+}
+
+// An OpenCode glob as a regex: `*` any text, `?` one character, a trailing ` *` also matches the bare command.
+const globRegex = (glob) => {
+  const body = (g) => g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*').replaceAll('?', '.');
+  return glob.endsWith(' *') ? new RegExp(`^${body(glob.slice(0, -2))}(?: .*)?$`, 's') : new RegExp(`^${body(glob)}$`, 's');
+};
+
+// The user's OpenCode `permission` rules that apply to bash, in order: a string value is a rule for every command.
+const bashRules = (permission) =>
+  Object.entries(permission).flatMap(([key, value]) => {
+    if (key !== 'bash' && key !== '*') return [];
+    return typeof value === 'string' ? [{ glob: '*', action: value }] : Object.entries(value ?? {}).map(([glob, action]) => ({ glob, action }));
+  });
+
+// `config` (a host's settings object) with the ask `rules` from `nativeRules` added, never weakening the user's own:
+//   claude-permissions: the rules the user's `permissions.ask` lacks are appended (deny rules win over ask on that host).
+//   opencode-permission: OpenCode takes the last matching rule (`evaluate`, findLast). A glob is added only where the
+//   user's last rule matching its bare command allows it, right after the last `permission.bash` rule that matches it
+//   (in place when that rule has the same glob), so it beats the user's broader allows while their later, narrower rules
+//   still win. Removing the added keys restores the user's map as it was. A string `permission` or `permission.bash`
+//   becomes the equivalent map (`"*"` key) to hold the rules. A global `"*"` key placed after `bash` still overrides them.
+export function withAskRules(format, config, rules) {
+  if (format === 'claude-permissions') {
+    const ask = [].concat(config.permissions?.ask ?? []);
+    return { ...config, permissions: { ...config.permissions, ask: [...ask, ...rules.filter((r) => !ask.includes(r))] } };
+  }
+  if (format !== 'opencode-permission') throw new Error(`unknown ask rule format "${format}"`);
+  const top = typeof config.permission === 'string' ? { '*': config.permission } : { ...config.permission };
+  const bash = typeof top.bash === 'string' ? { '*': top.bash } : { ...top.bash };
+  const user = bashRules({ ...top, bash });
+  const own = Object.keys(bash);
+  const after = own.map(() => []); // after[i]: globs to insert after the user's i-th bash key
+  const first = [];
+  const moved = new Set(); // the user's keys with an added glob's name that a later user key would shadow
+  let changed = false;
+  for (const [glob, action] of Object.entries(rules)) {
+    const sample = glob.replace(/ \*$/, '').replace(/[*?]/g, 'x');
+    const matching = user.filter((r) => globRegex(r.glob).test(sample));
+    if (['ask', 'deny'].includes(matching.at(-1)?.action)) continue;
+    changed = true;
+    const last = own.findLastIndex((g) => globRegex(g).test(sample));
+    if (own[last] === glob) bash[glob] = action;
+    else {
+      if (glob in bash) moved.add(glob);
+      (last === -1 ? first : after[last]).push([glob, action]);
+    }
+  }
+  if (!changed) return config;
+  const merged = Object.fromEntries([...first, ...own.flatMap((g, i) => [...(moved.has(g) ? [] : [[g, bash[g]]]), ...after[i]])]);
+  return { ...config, permission: { ...top, bash: merged } };
+}

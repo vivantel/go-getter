@@ -11,6 +11,7 @@ import { agentOutputs, staleAgentFiles } from './agents.mjs';
 import { packageCapabilities, promptLoggingTargets, setPath } from './governance.mjs';
 import { loadPolicy } from './routing/policy.mjs';
 import { verifyConfig } from './verify.mjs';
+import { gateEntries, nativeRules, withAskRules } from './gate.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
 import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting, isLink, MARK_START, MARK_END } from './reconcile.mjs';
@@ -463,6 +464,21 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     }
     outputs[target.file] = json(base);
   }
+  // Gated commands: the host's native ask rules where it has them (decision 0094); the pre-tool hook covers the rest. A
+  // file that recorded rules is rewritten without them once they are no longer wanted, or removed when nothing is left.
+  const gated = gateEntries(entries);
+  const emptied = [];
+  for (const host of targetHosts) {
+    const ask = caps[host]?.permissions?.ask;
+    if (!ask) continue;
+    const rules = gated.length ? nativeRules(host, gated, caps) : null;
+    if (!rules && !outputs[ask.file] && !previous?.shared?.[ask.file]) continue;
+    remember(ask.file);
+    const base = outputs[ask.file] ? JSON.parse(outputs[ask.file].content) : read(ask.file);
+    const next = rules ? withAskRules(ask.format, base, rules) : base;
+    if (Object.keys(next).length || outputs[ask.file] || held[ask.file]) outputs[ask.file] = json(next);
+    else if (existsSync(path.join(project, ask.file))) emptied.push(ask.file);
+  }
   // Keys edited since go-getter wrote them keep the user's value, whatever the plan now wants.
   for (const [rel, items] of Object.entries(held)) {
     const current = readJson(project, rel);
@@ -484,7 +500,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   const withSkills = skills ?? (targetHosts.includes('kilo') || targetHosts.includes('opencode'));
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
   Object.assign(outputs, agentOutputs(project, targetHosts));
-  const stale = new Set(staleAgentFiles(project, targetHosts, outputs));
+  const stale = new Set([...staleAgentFiles(project, targetHosts, outputs), ...emptied]);
   // A plan for some hosts leaves the files of the others alone: they stay in the manifest and are not stale.
   const foreign = foreignHostPaths(caps, targetHosts);
   const carried = {};

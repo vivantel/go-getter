@@ -94,6 +94,7 @@
         "cli/compiler/src/checks/builtin/commit-message.mjs",
         "cli/compiler/src/checks/builtin/deny-path.mjs",
         "cli/compiler/src/checks/builtin/file-max-lines.mjs",
+        "cli/compiler/src/checks/builtin/gate-command.mjs",
         "cli/compiler/src/checks/builtin/gitignore-includes.mjs",
         "cli/compiler/src/checks/builtin/path-exists.mjs",
         "cli/compiler/src/checks/builtin/prompt-logging-off.mjs",
