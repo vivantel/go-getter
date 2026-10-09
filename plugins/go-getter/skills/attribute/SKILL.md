@@ -23,7 +23,7 @@ This skill only runs when explicitly invoked. Never apply its conventions to a p
 
 ## Writing a PR description
 
-1. Determine the branch's base (e.g. `main`) and run `git log <base>..HEAD`.
+1. Determine the branch's base (the default branch) and run `git log <base>..HEAD`.
 2. Build the `Refs` section by collecting the union of `Refs:` trailers already present on those commits — the commits are the source of truth. Then run `go-getter refs --base <base>` and show the user any must-have it lists that no commit carries, with its reason; add one only when the user confirms.
 3. Render three sections:
    - `Intent` — drawn from the commits' body paragraphs.
