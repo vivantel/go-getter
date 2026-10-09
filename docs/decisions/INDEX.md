@@ -85,4 +85,4 @@ id,title,tags,status
 0089-apply-records-ownership-in-a-manifest,"apply records what it owns in .go-getter/manifest.json and never overwrites or removes a modified owned item without --force","generated-files, enforcement, configuration",active
 0090-update-and-remove-work-from-the-manifest,"go-getter update re-renders from recorded answers, apply --remove undoes generated output outside docs, and drift is surfaced at session start and by apply --check","generated-files, configuration, dogfooding",active
 0091-decisions-activate-on-acceptance-or-adoption,"A decision stays draft until the owner accepts it or it is adopted, whichever comes first; committing it is not adoption","knowledge-management, dogfooding",active
-0092-pack-rendered-drafts-count-as-adopted,"update and reconfigure treat pack-rendered artifacts that are still draft as adopted","generated-files, configuration",draft
+0092-pack-rendered-drafts-count-as-adopted,"update and reconfigure treat pack-rendered artifacts that are still draft as adopted","generated-files, configuration",active
