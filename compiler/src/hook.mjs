@@ -8,6 +8,7 @@ import { matchesAny } from './glob.mjs';
 import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData } from './governance.mjs';
+import { driftNudge } from './manifest.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -297,6 +298,12 @@ export function sessionNudges(packageRoot, project) {
     } catch {
       // a nudge must never block a session
     }
+  }
+  try {
+    const drift = driftNudge(project, packageRoot);
+    if (drift) lines.push(drift);
+  } catch {
+    // a nudge must never block a session
   }
   return capLines(lines.join('\n'));
 }

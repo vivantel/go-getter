@@ -1,15 +1,16 @@
 ---
 id: 0091-decisions-activate-on-acceptance-or-adoption
 title: A decision stays draft until the owner accepts it or it is adopted, whichever comes first; committing it is not adoption
-status: draft
+status: active
 date: 2026-10-06
 tags: [knowledge-management, dogfooding]
 track: process
+accepted-by: sergemso
 ---
 
 ## Decision
 
-Draft from the owner's instruction (2026-10-06); active once it is accepted or first applied.
+Draft from the owner's instruction (2026-10-06); active since it was first applied, when 0089 and 0090 were adopted.
 
 - A decision committed to git stays `draft`. Committing records it; it commits nobody to it.
 - It becomes `active` when the owner explicitly accepts it (`accepted-by` names them), or when it is adopted: put into effect, for example `apply` now enforces it, a pack that implements it is adopted by a project, or the behaviour it describes runs in this repo. The change that adopts it flips the status.

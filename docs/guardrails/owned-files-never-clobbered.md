@@ -1,7 +1,7 @@
 ---
 id: owned-files-never-clobbered
 title: apply, update and remove must not overwrite or delete a modified owned item without --force
-status: draft
+status: active
 date: 2026-10-06
 tags: [generated-files, enforcement, guardrail]
 governed-by: 0089-apply-records-ownership-in-a-manifest

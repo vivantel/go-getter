@@ -51,6 +51,7 @@ Checked by git hooks and CI:
 - go-getter must have no runtime dependencies (`no-runtime-dependencies`)
 - No credentials or non-public information may be committed (`no-secrets-in-public-repo`)
 - The Node.js floor must be the oldest LTS line still supported (`node-floor-is-oldest-supported-lts`)
+- apply, update and remove must not overwrite or delete a modified owned item without --force (`owned-files-never-clobbered`)
 - Every choice question in a pack must name exactly one recommended option (`pack-questions-have-a-recommended-default`)
 - A practice pack must not ship before this repo has adopted it (`practice-ships-only-after-self-adoption`)
 - Host prompt logging must stay disabled (`prompt-logging-disabled`)

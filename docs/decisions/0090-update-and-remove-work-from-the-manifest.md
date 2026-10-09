@@ -1,16 +1,17 @@
 ---
 id: 0090-update-and-remove-work-from-the-manifest
 title: go-getter update re-renders from recorded answers, apply --remove undoes generated output outside docs, and drift is surfaced at session start and by apply --check
-status: draft
+status: active
 date: 2026-10-06
 tags: [generated-files, configuration, dogfooding]
 track: process
+accepted-by: sergemso
 governed-facts: [0033-apply-keeps-no-record-of-what-it-wrote]
 ---
 
 ## Decision
 
-Draft from the owner's interview on updating and removing go-getter (2026-10-06); active under decision 0091. Builds on 0089.
+Draft from the owner's interview on updating and removing go-getter (2026-10-06); active since apply and update use the manifest (0091). Builds on 0089.
 
 - **`go-getter update`**: reads the manifest, re-renders each adopted pack's artifacts in `docs/` from the recorded answers (a question added since takes its default, per 0085), then diffs the host outputs. It prints one dry-run plan (docs re-rendered, files added, changed or removed, `modified` items skipped) and applies only on confirmation.
 - **`go-getter apply --remove`**: removes the files and blocks the manifest lists, restores the previous value of every key and of `core.hooksPath`, and deletes the manifest last. It leaves `docs/` (adopted decisions and guardrails stay as plain knowledge, their enforcement metadata inert) and `.go-getter/state` (the telemetry log).

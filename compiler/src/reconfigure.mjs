@@ -4,12 +4,13 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
 import { parseFrontmatter, stringifyFrontmatter } from './frontmatter.mjs';
-import { planRender, applyRender, activeQuestions, setIndexStatus, withFallbacks } from './render.mjs';
+import { planRender, applyRender, activeQuestions, setIndexStatus, withFallbacks, renameAnswers } from './render.mjs';
 
 const same = (a, b) => JSON.stringify([].concat(a ?? []).sort()) === JSON.stringify([].concat(b ?? []).sort());
 
+// Pack-rendered artifacts count as adopted while still draft (decision 0091: a draft stays draft until accepted).
 export function adoptedArtifacts(project, packId) {
-  return readArtifacts(project).filter((a) => a.data.status === 'active' && String(a.data['go-getter']?.['generated-by'] ?? '').startsWith(`${packId}@`));
+  return readArtifacts(project).filter((a) => ['active', 'draft'].includes(a.data.status) && String(a.data['go-getter']?.['generated-by'] ?? '').startsWith(`${packId}@`));
 }
 
 export function currentAnswers(artifacts) {
@@ -21,11 +22,11 @@ export function currentAnswers(artifacts) {
   return answers;
 }
 
-export function planReconfigure({ project, pack, answers: given, acceptedBy, date, detect }) {
+export function planReconfigure({ project, pack, answers: given, acceptedBy, date, detect, draft = false }) {
   const answers = withFallbacks(pack, given);
   const adopted = adoptedArtifacts(project, pack.id);
   if (!adopted.length) throw new Error(`pack "${pack.id}" has not been adopted here; run render-pack first`);
-  const before = currentAnswers(adopted);
+  const before = renameAnswers(pack, currentAnswers(adopted));
   const active = new Set(activeQuestions(pack, answers).map((q) => q.id));
   const changed = new Set(pack.questions.map((q) => q.id).filter((q) => !same(before[q], active.has(q) ? answers[q] : undefined)));
   const oldDecisions = adopted.filter((a) => a.type === 'decisions');
@@ -39,7 +40,9 @@ export function planReconfigure({ project, pack, answers: given, acceptedBy, dat
     }
   }
   const overwritable = new Set(adopted.filter((a) => a.type !== 'decisions').map((a) => a.file.split(path.sep).join('/')));
-  const plan = planRender({ root: project, pack, answers, acceptedBy, date, detect, existing: { keepDecisionsFor, decisionIds, overwritable } });
+  const artifactIds = {};
+  for (const a of adopted) if (a.type !== 'decisions') artifactIds[`${a.type}/${a.id.replace(/^\d+-/, '')}`] = a.id;
+  const plan = planRender({ root: project, pack, answers, acceptedBy, date, detect, draft, existing: { keepDecisionsFor, decisionIds, overwritable, artifactIds } });
 
   const emitted = new Set(plan.artifacts.map((a) => a.path));
   const statusChanges = [];

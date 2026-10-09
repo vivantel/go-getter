@@ -5,6 +5,10 @@ description: Finds everything bootstrap/capture added to this project and offers
 
 Run this *before* uninstalling the go-getter plugin — nothing can act automatically afterward, so this is the only window for cleanup. Finds every trace `bootstrap`/`capture` left in this project and offers to detach (keep the content, stop tracking it as go-getter's) or remove it.
 
+## First: the generated harness output
+
+If `.go-getter/manifest.json` exists, run `go-getter apply --remove --dry-run` before anything else and show the plan. It lists only what `apply` generated (files, settings keys, hook entries, the instruction-file block, `core.hooksPath`) and writes nothing. On an explicit yes, run `go-getter apply --remove`; it restores the values it replaced, keeps anything edited since (reported as `modified`; `--force` removes it), deletes the manifest last, and leaves `docs/` and the telemetry log alone. Without a manifest, skip this step.
+
 ## What to scan for
 
 1. **`seeded: true` files** — anywhere under `docs/`, matching this skill's sibling `../../templates/` (one subdirectory per artifact type; currently just `guardrails/`).
