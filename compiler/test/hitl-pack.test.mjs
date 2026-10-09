@@ -92,3 +92,14 @@ test('golden: the artifacts of the recommended path', () => {
   assert.deepEqual(actual, JSON.parse(readFileSync(goldenFile, 'utf8')));
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('each narrower answer renders readable text and no dangling extra-patterns sentence', () => {
+  for (const [answer, phrase] of [['both', 'the irreversible and outward-facing classes'], ['irreversible', 'the irreversible class'], ['outward', 'the outward-facing class']]) {
+    const dir = project();
+    const plan = planRender({ root: dir, pack, answers: { ...recommended, 'gated-classes': answer }, acceptedBy: 't', date: '2026-10-09' });
+    const guardrail = plan.artifacts.find((a) => a.kind === 'guardrails');
+    assert.match(guardrail.content, new RegExp(`Shell commands of ${phrase} need a human`), answer);
+    assert.ok(plan.artifacts.every((a) => !/Extra patterns/.test(a.content)), answer);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

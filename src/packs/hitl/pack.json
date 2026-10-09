@@ -68,7 +68,7 @@
             "frontmatter": {
               "track": "process"
             },
-            "body": "## Decision\n\nIrreversible and outward-facing shell commands need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}). Extra patterns: {{answer.extra-patterns}}.\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
+            "body": "## Decision\n\nIrreversible and outward-facing shell commands need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
           }
         ],
         "guardrails": [
@@ -95,7 +95,7 @@
                 "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\""
               }
             ],
-            "body": "## Guardrail\n\nShell commands of both classes need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
+            "body": "## Guardrail\n\nShell commands of the irreversible and outward-facing classes need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
           }
         ]
       },
@@ -112,7 +112,7 @@
             "frontmatter": {
               "track": "process"
             },
-            "body": "## Decision\n\nIrreversible shell commands (force-push, history rewrite, hard reset, `rm -rf`, destructive SQL, deleting a branch or tag) need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}). Extra patterns: {{answer.extra-patterns}}.\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
+            "body": "## Decision\n\nIrreversible shell commands (force-push, history rewrite, hard reset, `rm -rf`, destructive SQL, deleting a branch or tag) need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
           }
         ],
         "guardrails": [
@@ -139,7 +139,7 @@
                 "run": "builtin:gate-command classes=irreversible extra=\"{{answer.extra-patterns}}\""
               }
             ],
-            "body": "## Guardrail\n\nShell commands of irreversible need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
+            "body": "## Guardrail\n\nShell commands of the irreversible class need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
           }
         ]
       },
@@ -156,7 +156,7 @@
             "frontmatter": {
               "track": "process"
             },
-            "body": "## Decision\n\nOutward-facing shell commands (push, pull requests, releases, tags, publishing, issue comments) need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}). Extra patterns: {{answer.extra-patterns}}.\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
+            "body": "## Decision\n\nOutward-facing shell commands (push, pull requests, releases, tags, publishing, issue comments) need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nDecision 0043 asks agents to stop before costly actions; nothing enforces it without a gate (decision 0094).\n"
           }
         ],
         "guardrails": [
@@ -183,7 +183,7 @@
                 "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\""
               }
             ],
-            "body": "## Guardrail\n\nShell commands of outward need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
+            "body": "## Guardrail\n\nShell commands of the outward-facing class need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
           }
         ]
       },

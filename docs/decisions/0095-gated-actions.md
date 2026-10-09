@@ -14,7 +14,7 @@ go-getter:
 
 ## Decision
 
-Irreversible and outward-facing shell commands need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack hitl@0.1.0). Extra patterns: .
+Irreversible and outward-facing shell commands need a human: native ask rules on hosts that support them, a pre-tool hook hand-over on the others (pack hitl@0.1.0).
 
 ## Why
 
