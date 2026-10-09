@@ -391,11 +391,15 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   const before = {};
   const modified = [];
   const held = {}; // shared file -> owned key items edited since go-getter wrote them
+  const undone = {}; // shared file -> its content with go-getter's owned parts undone, read once
   const read = (rel) => {
     if (bootstrap) return {}; // outputs on empty settings: what go-getter itself wants (bootstrapManifest)
-    const { json: base, modified: edited } = undoJson(readJson(project, rel), previous?.shared?.[rel] ?? [], force);
-    if (edited.length) held[rel] = edited;
-    return base;
+    if (!(rel in undone)) {
+      const { json: base, modified: edited } = undoJson(readJson(project, rel), previous?.shared?.[rel] ?? [], force);
+      if (edited.length) held[rel] = edited;
+      undone[rel] = base;
+    }
+    return structuredClone(undone[rel]);
   };
   const remember = (rel) => {
     shared.add(rel);
@@ -464,20 +468,24 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     }
     outputs[target.file] = json(base);
   }
-  // Gated commands: the host's native ask rules where it has them (decision 0094); the pre-tool hook covers the rest. A
-  // file that recorded rules is rewritten without them once they are no longer wanted, or removed when nothing is left.
+  // Gated commands: the host's native ask rules where it has them (decision 0094); the pre-tool hook covers the rest.
   const gated = gateEntries(entries);
-  const emptied = [];
-  for (const host of targetHosts) {
+  const notes = [];
+  for (const host of gated.length ? targetHosts : []) {
     const ask = caps[host]?.permissions?.ask;
     if (!ask) continue;
-    const rules = gated.length ? nativeRules(host, gated, caps) : null;
-    if (!rules && !outputs[ask.file] && !previous?.shared?.[ask.file]) continue;
     remember(ask.file);
     const base = outputs[ask.file] ? JSON.parse(outputs[ask.file].content) : read(ask.file);
-    const next = rules ? withAskRules(ask.format, base, rules) : base;
-    if (Object.keys(next).length || outputs[ask.file] || held[ask.file]) outputs[ask.file] = json(next);
-    else if (existsSync(path.join(project, ask.file))) emptied.push(ask.file);
+    const { config, unprompted, reason } = withAskRules(ask.format, base, nativeRules(host, gated, caps));
+    outputs[ask.file] = json(config);
+    if (unprompted.length) notes.push(`note: ${ask.file}: ${unprompted.length} gated pattern(s) still run without a prompt on ${host}, since ${reason}: ${unprompted.join(', ')}`);
+  }
+  // Shared files holding parts go-getter no longer produces get them undone (decision 0090); other hosts' files stay.
+  const foreign = foreignHostPaths(caps, targetHosts);
+  for (const rel of Object.keys(previous?.shared ?? {})) {
+    if (['AGENTS.md', 'git-config'].includes(rel) || outputs[rel] || foreign(rel) || !existsSync(path.join(project, rel))) continue;
+    remember(rel);
+    outputs[rel] = json(read(rel));
   }
   // Keys edited since go-getter wrote them keep the user's value, whatever the plan now wants.
   for (const [rel, items] of Object.entries(held)) {
@@ -500,9 +508,8 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   const withSkills = skills ?? (targetHosts.includes('kilo') || targetHosts.includes('opencode'));
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
   Object.assign(outputs, agentOutputs(project, targetHosts));
-  const stale = new Set([...staleAgentFiles(project, targetHosts, outputs), ...emptied]);
+  const stale = new Set(staleAgentFiles(project, targetHosts, outputs));
   // A plan for some hosts leaves the files of the others alone: they stay in the manifest and are not stale.
-  const foreign = foreignHostPaths(caps, targetHosts);
   const carried = {};
 
   // Whole files: one edited since go-getter wrote it (or not go-getter's at all) is skipped; one that is no longer produced is removed.
@@ -545,7 +552,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   const gitHeld = !force && recordedGit && currentGit !== undefined && currentGit !== recordedGit.value;
   if (gitHeld) modified.push({ path: 'core.hooksPath', what: 'git-config', reason: `changed to ${currentGit} since go-getter set it` });
   return {
-    hosts: targetHosts, outputs, stale: [...stale].sort(), tier2, tier3, skills: withSkills, otel,
+    hosts: targetHosts, outputs, stale: [...stale].sort(), tier2, tier3, skills: withSkills, otel, notes,
     project, version: packageVersion(packageRoot), shared, before, block, markers: [MARK_START, MARK_END],
     modified, held, skipped, blockHeld: Boolean(blockHeld), recordedGit, gitHeld: Boolean(gitHeld),
     gitConfig: tier3 && !gitHeld ? { setting: 'core.hooksPath', value: '.githooks', replaced: currentGit } : null,

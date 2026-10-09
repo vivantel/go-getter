@@ -24,7 +24,7 @@ const text = (value) => `${JSON.stringify(value, null, 2)}\n`;
 const USER = {
   '.claude/settings.json': { model: 'x', permissions: { allow: ['Bash(npm test)'], ask: ['Bash(make deploy *)'] } },
   'kilo.json': { permission: { edit: 'ask', bash: { '*': 'allow', 'git push *': 'allow', 'git push --force*': 'deny', 'ls *': 'allow' } } },
-  'opencode.json': { model: 'x', permission: 'allow' },
+  'opencode.json': { model: 'x', permission: { '*': 'allow' } },
 };
 
 function project({ gate = 'builtin:gate-command classes=irreversible,outward', user = USER } = {}) {
@@ -78,7 +78,8 @@ test('apply writes the native ask rules of the three hosts, records them and ins
   assert.deepEqual(manifest.shared['.claude/settings.json'].find((i) => i.path.join('.') === 'permissions.ask').items, rules('claude-code'));
   const kiloKeys = manifest.shared['kilo.json'].map((i) => i.path.at(-1));
   assert.ok(kiloKeys.includes('git push *') && kiloKeys.includes('rm -rf*') && !kiloKeys.includes('ls *'));
-  assert.deepEqual(manifest.shared['opencode.json'], [{ kind: 'key', path: ['permission'], value: read(dir, 'opencode.json').permission, replaced: 'allow' }]);
+  assert.deepEqual(manifest.shared['opencode.json'].map((i) => i.path.slice(0, 2)), Object.keys(rules('opencode')).map(() => ['permission', 'bash']));
+  assert.ok(manifest.shared['opencode.json'].every((i) => i.kind === 'key' && !('replaced' in i)));
   // the gate is tier 2, so the hook is installed: it hands gated commands over on the other hosts
   assert.ok(claude.hooks.PreToolUse.length);
   assert.ok(read(dir, '.cursor/hooks.json').hooks.preToolUse.length);
@@ -115,15 +116,55 @@ test('the user\'s own rules survive and are never weakened', () => {
 test('a user setting that already asks or denies is left alone', () => {
   const user = { 'kilo.json': { permission: { bash: 'deny' } }, 'opencode.json': { permission: { '*': 'ask' } } };
   const dir = project({ user });
-  adopt(dir, ['kilo', 'opencode']);
+  const plan = planApply(dir, { hosts: ['kilo', 'opencode'], skills: false });
+  assert.deepEqual(plan.notes, []);
+  applyPlan(dir, plan);
   assert.equal(readFileSync(path.join(dir, 'kilo.json'), 'utf8'), text(user['kilo.json']));
   assert.equal(readFileSync(path.join(dir, 'opencode.json'), 'utf8'), text(user['opencode.json']));
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('an added glob goes after the user\'s last rule that matches it', () => {
-  const merged = withAskRules('opencode-permission', { permission: { bash: { 'git push --force*': 'deny', 'git push *': 'allow', 'git *': 'allow', 'git push --tags*': 'deny' } } }, { 'git push *': 'ask' });
-  assert.deepEqual(Object.entries(merged.permission.bash), [['git push --force*', 'deny'], ['git *', 'allow'], ['git push *', 'ask'], ['git push --tags*', 'deny']]);
+const merge = (permission, globs = ['git push *']) => withAskRules('opencode-permission', { permission }, Object.fromEntries(globs.map((g) => [g, 'ask'])));
+
+test('an added glob never turns a user deny into ask, and what it cannot cover is reported', () => {
+  const { config, unprompted } = merge({ bash: { '*': 'allow', 'git push --force*': 'deny', 'git push': 'allow' } });
+  assert.deepEqual(Object.keys(config.permission.bash), ['*', 'git push *', 'git push --force*', 'git push']);
+  const action = (c) => opencodeAction(config.permission, c);
+  assert.equal(action('git push --force'), 'deny');
+  assert.equal(action('git push origin main'), 'ask');
+  assert.equal(action('git push'), 'allow');
+  assert.deepEqual(unprompted, ['git push *']);
+});
+
+test('an added glob beats the user\'s narrower allows that do not match the bare command', () => {
+  const { config, unprompted } = merge({ bash: { 'git push origin*': 'allow' } });
+  assert.equal(opencodeAction(config.permission, 'git push origin main'), 'ask');
+  assert.deepEqual(unprompted, []);
+});
+
+test('a user key with the same glob is set to ask in place, never moved', () => {
+  const { config, unprompted } = merge({ bash: { 'git push *': 'allow', 'git push --force*': 'deny', 'git *': 'allow' } });
+  assert.deepEqual(Object.entries(config.permission.bash), [['git push *', 'ask'], ['git push --force*', 'deny'], ['git *', 'allow']]);
+  assert.deepEqual(unprompted, ['git push *']);
+});
+
+test('rules a later global key or a string setting would defeat are reported', () => {
+  const later = merge({ bash: {}, '*': 'allow' });
+  assert.deepEqual(later.unprompted, ['git push *']);
+  for (const permission of ['allow', { bash: 'allow' }]) {
+    const { config, unprompted, reason } = merge(permission);
+    assert.deepEqual(config, { permission });
+    assert.deepEqual(unprompted, ['git push *']);
+    assert.match(reason, /is a string; write it as a map/);
+  }
+});
+
+test('apply reports patterns it left unprompted', () => {
+  const dir = project({ user: { 'kilo.json': { permission: 'allow' } } });
+  const plan = planApply(dir, { hosts: ['kilo'], skills: false });
+  assert.equal(plan.notes.length, 1);
+  assert.match(plan.notes[0], /^note: kilo\.json: \d+ gated pattern\(s\) still run without a prompt on kilo, since its permission is a string/);
+  rmSync(dir, { recursive: true, force: true });
 });
 
 test('narrowing the classes and removing the guardrail take the rules out again', () => {
@@ -142,15 +183,14 @@ test('narrowing the classes and removing the guardrail take the rules out again'
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a file apply created for the rules is deleted when they go', () => {
+test('a file apply created for the rules is emptied when they go, never deleted', () => {
   const dir = project({ user: {} });
   adopt(dir, ['kilo']);
   assert.ok(read(dir, 'kilo.json').permission.bash['git push *']);
   rmSync(path.join(dir, GATE));
-  const plan = planApply(dir, { hosts: ['kilo'], skills: false });
-  assert.ok(plan.stale.includes('kilo.json'));
-  applyPlan(dir, plan);
-  assert.ok(!existsSync(path.join(dir, 'kilo.json')));
+  adopt(dir, ['kilo']);
+  assert.equal(readFileSync(path.join(dir, 'kilo.json'), 'utf8'), '{}\n');
+  assert.ok(!readManifest(dir).shared['kilo.json']);
   rmSync(dir, { recursive: true, force: true });
 });
 

@@ -56,6 +56,7 @@ export default function applyCommand({ root, args }) {
   for (const [host, r] of Object.entries(plan.otel ?? {})) {
     console.log(`  otel ${host}: ${r.status === 'emitted' ? `emitted in ${r.file}` : `unavailable (${r.reason})`}`);
   }
+  for (const n of plan.notes ?? []) console.log(`  ${n}`);
   for (const m of modified) console.error(`  modified: ${m.path} (${m.reason}); skipped, use --force to overwrite or remove it`);
   return modified.length ? 1 : 0;
 }
