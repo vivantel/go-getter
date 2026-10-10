@@ -347,7 +347,7 @@ export function sessionNudges(packageRoot, project) {
   return capLines(lines.join('\n'));
 }
 
-// Token and cost fields a host's hook payload carries (draft decision 0087). Only Claude Code documents any: a resumed
+// Token and cost fields a host's hook payload carries (decision 0087). Only Claude Code documents any: a resumed
 // session-start brings the context size, whether its prompt cache likely expired, and the estimated cache-write cost.
 export function payloadUsage(payload) {
   const n = payload.context_tokens;

@@ -1,10 +1,11 @@
 ---
 id: 0076-watcher-noise
 title: Watchers are quiet
-status: draft
+status: active
 date: 2026-10-05
 tags: [practice-packs, harness, cost]
 track: process
+accepted-by: sergemso
 go-getter:
   watcher-noise: quiet
   generated-by: context@0.2.0
@@ -22,4 +23,4 @@ Each watcher line can wake a model turn that re-reads the whole context from cac
 
 ## Status
 
-Recorded by an agent from decision 0070's recommended default; the owner should confirm it (set `status: active` and `accepted-by`). Until then `go-getter watch` uses the plugin default, also `quiet`.
+Recorded by an agent from decision 0070's recommended default; accepted by the owner 2026-10-10.

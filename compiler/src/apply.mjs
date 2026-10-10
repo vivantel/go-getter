@@ -469,7 +469,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     const base = outputs[file] ? JSON.parse(outputs[file].content) : read(file);
     outputs[file] = json(setPath(base, key, false));
   }
-  // Telemetry: host OpenTelemetry settings where the project config accepts them (draft decision 0087).
+  // Telemetry: host OpenTelemetry settings where the project config accepts them (decision 0087).
   const otel = otelReport(project, targetHosts);
   const { endpoint } = otelConfig(project);
   for (const [host, r] of Object.entries(otel ?? {})) {

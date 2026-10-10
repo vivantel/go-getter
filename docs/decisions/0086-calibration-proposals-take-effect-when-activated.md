@@ -1,10 +1,11 @@
 ---
 id: 0086-calibration-proposals-take-effect-when-activated
 title: Routing calibration proposals are draft decisions whose data routing reads only once a human activates them
-status: draft
+status: active
 date: 2026-10-06
 tags: [model-routing, cost, observability]
 track: product
+accepted-by: sergemso
 governed-facts: [0025-routing-runtime]
 ---
 
