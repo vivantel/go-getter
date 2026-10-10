@@ -171,6 +171,7 @@
         "cli/package.json",
         "cli/src/hooks/capture-nudge.sh",
         "cli/src/hooks/lint-nudge.sh",
+        "cli/src/packs/checkpointing/pack.json",
         "cli/src/packs/context/pack.json",
         "cli/src/packs/cost-routing/pack.json",
         "cli/src/packs/governance/pack.json",

@@ -65,6 +65,7 @@ Checked by git hooks and CI:
 
 Blocked by host hooks where the host supports it:
 
+- A gated action is preceded by a checkpoint (`checkpoint-before-gated-action`)
 - Delegations to a role are routed by expected total step cost (`delegations-are-routed`)
 - Irreversible and outward-facing commands need a human (`gated-actions-need-human-approval`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)

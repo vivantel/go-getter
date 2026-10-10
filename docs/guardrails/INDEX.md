@@ -38,3 +38,4 @@ delegations-are-routed,"Delegations to a role are routed by expected total step 
 watches-use-the-wrapper,"Watches start through go-getter watch, --until done for CI runs and long commands","practice-packs, harness, guardrail",active
 owned-files-never-clobbered,"apply, update and remove must not overwrite or delete a modified owned item without --force","generated-files, enforcement, guardrail",active
 gated-actions-need-human-approval,"Irreversible and outward-facing commands need a human","practice-packs, hooks, guardrail",active
+checkpoint-before-gated-action,"A gated action is preceded by a checkpoint","practice-packs, hooks, guardrail",active
