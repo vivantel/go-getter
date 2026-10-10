@@ -42,10 +42,23 @@ Done-when: `check:packs` passes; `check:self-adoption` reports governance at 0.3
 
 ## S3 — PII masking (governance 0.4.0)
 
-### 5 Session identity per host — [ ]
+### 5 Session identity per host — [x]
 Class: explore · Needs: none · Check: `npm run check:guardrails`
 Do: for each of the seven hosts, from vendor documentation, record in the host's integration-surface fact whether the hook payload carries a session id and whether there is a session-end event; note the one the pseudonym map will key on and the fallback (a project-level map expiring after 24 hours). Mark unconfirmed items **Not confirmed**, with sources and access dates.
 Done-when: each host's fact states session id and end event as confirmed or not; the plan's design notes the key per host.
+
+Result, 2026-10-10 (facts 0003-0008, "Session identity"): the pseudonym map is needed only on hosts that can replace tool output, so Cursor and OpenCode need no key. The key is read from the post-tool payload as `session_id`, else `sessionId`, else `sessionID`, else `conversation_id`:
+
+| Host | Key in the post-tool payload | Session end |
+|---|---|---|
+| Claude Code | `session_id` (confirmed) | `SessionEnd`, `reason`; default 1.5 s timeout, a file delete fits |
+| Codex | `session_id` (confirmed) | `SessionEnd`, `reason` (always `other` now) |
+| Gemini CLI | `session_id` (confirmed; also `GEMINI_SESSION_ID`) | `SessionEnd`, `reason` |
+| Copilot | `sessionId` (default events) or `session_id` (VS Code form), confirmed | `sessionEnd`, `reason` |
+| Kilo | `sessionID` in the plugin tool hooks (confirmed from Kilo's source) | not confirmed: use the 24-hour sweep |
+| Cursor, OpenCode | not needed (output cannot be replaced) | not applicable |
+
+Step 7 registers the end event on the four hosts that document one (a delete of the session's map file) and relies on the 24-hour sweep for Kilo and for a killed process, which no host documents a guarantee for.
 
 ### 6 PII detectors — [ ]
 Class: implement · Needs: 1 · Check: `node --test compiler/test/pii.test.mjs`
