@@ -14,6 +14,8 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 **Rules the design fixes (do not re-decide):** no fifth artifact type; runbook only (no playbook); generated and committed with a drift check; the spike ends with a go or no-go decision and ships nothing before it.
 
+**Scope change, 2026-10-10 (after step 3):** the owner's hypothesis is that a runbook is built around a *procedure*, which may serve several guardrails or none (an operational procedure, an IT-style diagnosis), not around a guardrail. The measurements below bear it out in part (see "Hypothesis check"), so steps 1-3 stay as the guardrail-centric first attempt and steps 4-5 test the procedure-centric form before step 6 decides.
+
 ---
 
 ### 1 Runbook builder and drift check — [x]
@@ -26,24 +28,63 @@ Class: implement · Needs: 1 · Check: `go-getter runbook build checkpoint-befor
 Do: build and commit the runbooks for the three guardrails above under `docs/runbooks/`, and add `npm run check:runbooks` (checks every committed runbook) to the CI workflow and `package.json` next to the other `check:*` scripts.
 Done-when: the three `SKILL.md` files exist; `npm run check:runbooks` passes and fails after a source edit; `npm run check:generated` still passes.
 
-### 3 Measure and judge — [ ]
+### 3 Measure and judge — [x]
 Class: review · Needs: 2 · Check: `npm run check:plans`
 Do: for each runbook count tokens (an approximate count by characters over 4, stated as such) of the runbook against loading its sources separately (guardrail, procedure, grounded facts); judge each against `one-statement-one-job` (does the runbook state one thing, and does the three-guardrails case duplicate steps?) and `token-economy`; note what a runbook costs to keep (drift failures per source edit). Record the numbers and findings in the section below.
 Done-when: the Findings section holds a table (runbook / sources tokens / runbook tokens / duplicates) and a paragraph per guardrail judged.
 
-### 4 Go or no-go, and close — [ ]
-Class: plan · Needs: 3 · Check: `npm run check:plans`
-Do: write the decision (go: what ships and in which release; no-go: why and what is removed), and either remove the spike code and `docs/runbooks/` or keep it as the first slice; mark L.3 done in the v0.2 plan's backlog and archive this plan.
+### 4 Procedure-centric builder — [ ]
+Class: implement · Needs: 3 · Check: `node --test compiler/test/runbook.test.mjs`
+Do: let a procedure declare what it rests on with an optional `uses:` list in its frontmatter (a list of artifact ids, each optionally `id#Heading` to take one section of that artifact; a plain id takes its body). Add `go-getter runbook build <procedure-id>`: the runbook is the procedure's steps, then each `uses` item inlined under its title (the named section only for `id#Heading`), then the guardrails it `operationalizes` as a short "Norms" list (their body, no steps copied). A procedure with no `uses` and no `operationalizes` builds to its steps alone. `check runbooks` covers both kinds; the guardrail-id form from step 1 is removed if step 5 shows it adds nothing.
+Done-when: the test shows a procedure with two `uses` items (one with `#Heading`) inlines the item and only that section; a procedure serving three guardrails builds once, not three times; a procedure with neither field builds; a dangling `uses` id or a missing heading fails with the id; the drift check fails after a used fact changes.
+
+### 5 Measure it on the SOPs — [ ]
+Class: review · Needs: 4 · Check: `npm run check:runbooks`
+Do: add `uses:` to `adding-a-host-agent` (fact 0002 section on the components, decision 0009 tiers, decision 0087) and to `adding-a-practice-pack`, build their runbooks, and measure each against the procedure plus the cited items read separately, both whole and by cited section. Count what the section selector costs to write and keep (a heading rename breaks the build, which is the drift check working). Record the table under Findings.
+Done-when: Findings holds the table and a paragraph on whether a selective runbook beats reading the procedure and fetching what it cites, and on the cost of the `uses:` field.
+
+### 6 Go or no-go, and close — [ ]
+Class: plan · Needs: 5 · Check: `npm run check:plans`
+Do: write the decision (go: what ships, in which release and for which artifacts; no-go: why and what is removed), and either remove the spike code and `docs/runbooks/` or keep it as the first slice; mark L.3 done in the v0.2 plan's backlog and archive this plan.
 Done-when: the decision is active and indexed; the spike's files match it; this plan is fully `[x]` and archived.
 
 ---
 
 ## Findings
 
-(Step 3 fills this in.)
+Measured 2026-10-10 on the three runbooks. Tokens are characters divided by 4 (approximate). "Files" is what an agent reads today: the guardrail file and its procedure file, frontmatter included. "Bodies" is the same without frontmatter.
+
+| Runbook | Files | Bodies | Runbook | vs files | vs bodies |
+|---|---|---|---|---|---|
+| `checkpoint-before-gated-action` | 508 | 198 | 289 | -43% | +46% |
+| `branch-names-follow-the-pattern` | 500 | 150 | 219 | -56% | +46% |
+| `commit-subjects-are-conventional` | 445 | 123 | 193 | -57% | +57% |
+| both git guardrails in one task | 747 | 189 | 412 | -45% | +118% |
+
+- **The saving is the frontmatter, not the compilation.** A guardrail file is about three quarters metadata (`enforcement`, `derivation-note`, `grounded-in`: 929 of 1,234 characters for the checkpoint guardrail). Dropping it gives the whole saving; the runbook then adds a generated-by line, headings and a "Grounded in" list, so against bodies it costs 35-46% more.
+- **No fact was inlined.** All three guardrails are grounded in decisions only (pack output cites the pack's own decision), and decisions are named, not copied, so the runbook's central claim, concrete facts next to the norm, never happened in these pairs. The concrete value that matters (the branch pattern) was already in the guardrail body.
+- **The many-to-many link duplicates.** `working-a-change` operationalizes three guardrails; each runbook copies all four steps, including steps that do not concern the guardrail (a branch-name runbook tells the agent to squash merge). A task that needs two of them reads the steps twice (412 tokens against 189 for the bodies).
+- **Maintenance cost.** One added step in `working-a-change` fails two of the two compiled git runbooks (three once the third guardrail is compiled); every source edit becomes a regeneration commit.
+- **Norm text carries over unedited.** The checkpoint norm ends "(see the procedure)", which points at nothing inside the runbook.
+- **On-demand loading rests on the `description`**, and a description derived from the guardrail title ("Use when the task involves: A gated action is preceded by a checkpoint") is a weak trigger. A good one needs authoring, so it would be hand-written source in a generated file.
+
+Judged against the guardrails:
+
+- `token-economy`: not met against bodies; the runbook restates the procedure's steps and the guardrail's norm in a longer file, and again in each git runbook.
+- `one-statement-one-job`: it constrains facts, guardrails and derivation-notes, not skills, so a runbook is not in breach. The restated steps are, though, the same statement in several files, which the guardrail exists to avoid.
+
+## Hypothesis check
+
+The owner's hypothesis (2026-10-10): a runbook covers a procedure that may serve several guardrails or none, like an IT runbook or a standard operational procedure. Checked against the five procedures in `docs/skills/`.
+
+- **Confirmed, the unit is the procedure.** Three of five (`adding-a-host-agent`, `adding-a-practice-pack`, `install-smoke-test`) operationalize no guardrail. Compiling `working-a-change` once per guardrail made the duplication above; one runbook per procedure would not.
+- **Confirmed, SOPs have concrete dependencies.** `adding-a-host-agent` rests on fact 0002 (the 12 components), decision 0009 (the tiers) and decision 0087 (OpenTelemetry), but cites them only in prose; `operationalizes` is guardrail-only, so a builder cannot follow them.
+- **Not confirmed, that inlining saves tokens.** Inlining those three in full takes the procedure from 478 to 1,467 tokens (bodies only), three times the size, for an agent that needs one list from fact 0002. A runbook can only win by inlining the cited part, which nothing marks today.
+- **Not testable here, the diagnosis runbook** (symptom, cause, fix): no example exists in this repo, and it is closer to the playbook form (0104) and the v0.4 debugging work.
 
 ## Open items (not part of these steps)
 
-- Whether a runbook should inline decisions' concrete values (a branch pattern) rather than name the decision: judged in step 3.
+- Whether a runbook should inline a decision's concrete values rather than name the decision: not tested, since the pack-rendered decisions are short and the value is already in the guardrail body.
 - How a runbook reaches each host (project-local skills for Kilo and OpenCode, plugin skills elsewhere) is decided only on a go.
-- The playbook form (0104) is not built.
+- The playbook form (0104) is not built; a diagnosis runbook (symptom, cause, fix) belongs there and needs a real example first.
+- Whether `uses:` belongs on every procedure or only runbook-bound ones is decided in step 6.
