@@ -4,10 +4,7 @@ title: Procedure for adding a host agent to the compiler
 status: active
 date: 2026-10-04
 tags: [host-agents, compiler, harness, procedural]
-uses:
-  - 0002-agent-harness-and-host-agent-terminology
-  - 0009-tiered-enforcement-git-ci-floor#Decision
-  - 0087-host-otel-settings-only-where-project-config-accepts-them#Decision
+grounded-in: [0002-agent-harness-and-host-agent-terminology, 0009-tiered-enforcement-git-ci-floor, 0087-host-otel-settings-only-where-project-config-accepts-them]
 ---
 
 ## Procedure

@@ -27,7 +27,6 @@
     "check:deps": "node compiler/bin/go-getter.mjs check deps",
     "check:packs": "node compiler/bin/go-getter.mjs check packs",
     "check:plans": "node compiler/bin/go-getter.mjs check plans",
-    "check:runbooks": "node compiler/bin/go-getter.mjs check runbooks",
     "eval": "node compiler/bin/go-getter.mjs eval"
   },
   "devDependencies": {

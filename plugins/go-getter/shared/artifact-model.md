@@ -28,7 +28,7 @@ Guardrail — add `governed-by: <decision-id>`, `grounded-in: [<fact-id, decisio
 
 Decision — add `track: product | process` (required, exactly one — never `both`/`mixed`: product = what the project is for and who it serves; process = how it's built, organized, or shipped); `superseded-by: <decision-id>`, required when `status: superseded`; optionally `governed-facts: [<fact-id>, ...]`, `fitness-functions: [<check description>, ...]`, and `accepted-by: <name>` (who is accountable for this decision, independent of who committed it — a human directing an AI agent's commits is still the accountable party; set when `status` first becomes `active`).
 
-Procedure — optionally add `operationalizes: [<guardrail-id>, ...]` when this procedure is a runbook/playbook for a guardrail's required behavior, not general reference material. Many-to-many: a procedure may list several guardrails, and more than one procedure may list the same guardrail. Most procedures won't carry this field at all.
+Procedure — optionally add `operationalizes: [<guardrail-id>, ...]` when this procedure is a runbook/playbook for a guardrail's required behavior, not general reference material. Many-to-many: a procedure may list several guardrails, and more than one procedure may list the same guardrail. Most procedures won't carry this field at all. A procedure may also add `grounded-in: [<fact-id, decision-id, or guardrail-id>, ...]` for the artifacts its steps rest on, so `lint` catches a dangling one and `go-getter refs` lists them.
 
 ## The `go-getter:` key
 

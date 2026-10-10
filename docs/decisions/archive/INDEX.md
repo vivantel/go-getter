@@ -8,3 +8,4 @@ id,title,tags,status
 0073-spec-workflow-through-a-tool-adapter,"The spec and change workflow is an SDLC pack over a spec-tool adapter, OpenSpec first, with no native spec format","roadmap, practice-packs, tooling",superseded
 0074-keep-warm-is-cost-model-advice,"Cache keep-warm is advice from the cost model, not an autonomous pinger skill","cost, model-routing, harness",deprecated
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",superseded
+0104-behavior-is-a-layer-over-knowledge-artifacts,"Behavior is a layer over the four artifact types, split into pure and derived, and derived forms are compiled from knowledge","knowledge-management, generated-files, roadmap",superseded
