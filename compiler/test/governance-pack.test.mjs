@@ -267,3 +267,49 @@ test('an answer file from before 0.3.0 renders with scanning on and no skipped p
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('PII masking is on by default and renders a tier-2 redact-pii entry the hook reads', async () => {
+  const { piiConfig } = await import('../src/secrets/mask.mjs');
+  const dir = project();
+  const extra = project();
+  try {
+    adopt(dir);
+    const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'pii-masked-in-tool-output');
+    assert.deepEqual(entries.map((e) => e.tier), [2, 1]);
+    assert.equal(entries[0].parsed.id, 'redact-pii');
+    assert.deepEqual(piiConfig(dir), { classes: ['email', 'card', 'iban'] });
+    adopt(extra, answersFor({ 'pii-extra': ['phone', 'national-id'] }));
+    assert.deepEqual(piiConfig(extra).classes, ['email', 'card', 'iban', 'phone', 'national-id']);
+    const plan = planApply(dir, { hosts: ['claude-code'] });
+    assert.ok(JSON.parse(plan.outputs['.claude/settings.json'].content).hooks.PostToolUse, 'the post-tool hook is installed');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(extra, { recursive: true, force: true });
+  }
+});
+
+test('turning PII masking off renders a decision and no guardrail; an old answer file renders with it on', async () => {
+  const { piiConfig } = await import('../src/secrets/mask.mjs');
+  const off = project();
+  const old = project();
+  try {
+    adopt(off, answersFor({ 'pii-masking': 'off' }));
+    assert.equal(collectEnforcement(off).some((e) => e.guardrail === 'pii-masked-in-tool-output'), false);
+    assert.equal(piiConfig(off), null);
+    const answers = answersFor();
+    delete answers['pii-masking'];
+    delete answers['pii-extra'];
+    adopt(old, answers);
+    assert.deepEqual(piiConfig(old), { classes: ['email', 'card', 'iban'] });
+  } finally {
+    rmSync(off, { recursive: true, force: true });
+    rmSync(old, { recursive: true, force: true });
+  }
+});
+
+test('the extra types accept only phone and national-id', () => {
+  const q = pack.questions.find((x) => x.id === 'pii-extra');
+  const re = new RegExp(q.pattern);
+  assert.ok(re.test('phone') && re.test('national-id'));
+  assert.ok(!re.test('email') && !re.test('ssn'));
+});

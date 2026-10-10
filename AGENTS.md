@@ -71,6 +71,7 @@ Blocked by host hooks where the host supports it:
 - A gated action is preceded by a checkpoint (`checkpoint-before-gated-action`)
 - Delegations to a role are routed by expected total step cost (`delegations-are-routed`)
 - Irreversible and outward-facing commands need a human (`gated-actions-need-human-approval`)
+- Personal data is masked in tool output (`pii-masked-in-tool-output`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
 - Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
 
