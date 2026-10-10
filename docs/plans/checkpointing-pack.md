@@ -16,7 +16,7 @@ Known constraint: the hook passes `classes: []` to `matchGated` on hosts with na
 
 ---
 
-### 1 Checkpoint core — [ ]
+### 1 Checkpoint core — [x]
 Class: implement · Needs: none · Check: `node --test compiler/test/checkpoint.test.mjs`
 Do: add `compiler/src/checkpoint.mjs` exporting `createCheckpoint(project, { label, keep })` (returns `{ ref, commit, pruned }` or `null` outside a git repository; works with an unborn `HEAD`, as a root commit), `listCheckpoints(project)` (newest first, with time, label, short commit), `pruneCheckpoints(project, keep)` and `restorePlan(project, ref)` (`git diff --name-status <ref>` plus the untracked files present now and not in the ref). Labels are sanitised to `[a-z0-9-]`.
 Done-when: the test, on a temp git repository, shows `create` leaves `git status --porcelain`, the index, `HEAD` and branches byte-identical; an untracked file is in the checkpoint's tree and an ignored file is not; the 11th create prunes the oldest; two creates in the same second get distinct refs; a non-git directory returns `null`; an unborn `HEAD` works.
