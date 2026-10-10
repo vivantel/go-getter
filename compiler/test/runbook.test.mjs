@@ -98,3 +98,23 @@ test('the command rejects bad usage', () => {
     cleanup(dir);
   }
 });
+
+test('check runbooks passes with none, with fresh ones, and fails on a stale or orphaned runbook', () => {
+  const dir = kb();
+  const check = () => spawnSync(process.execPath, [cli, 'check', 'runbooks', '--project', dir], { encoding: 'utf8' });
+  try {
+    assert.equal(check().status, 0);
+    assert.match(check().stdout, /ok \(0 runbooks\)/);
+    run(dir, 'build', 'keep-it-small');
+    assert.match(check().stdout, /ok \(1 runbooks\)/);
+    appendFileSync(path.join(dir, 'docs/skills/splitting-a-change.md'), '3. More.\n');
+    const stale = check();
+    assert.equal(stale.status, 1);
+    assert.match(stale.stderr, /keep-it-small\/SKILL\.md is out of date/);
+    mkdirSync(path.join(dir, 'docs/runbooks/gone'), { recursive: true });
+    writeFileSync(path.join(dir, 'docs/runbooks/gone/SKILL.md'), 'x\n');
+    assert.match(check().stderr, /no guardrail "gone"/);
+  } finally {
+    cleanup(dir);
+  }
+});
