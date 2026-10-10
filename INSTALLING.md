@@ -88,6 +88,18 @@ node <skill-dir>/cli/compiler/bin/go-getter.mjs coverage
 
 A project that adopts the `hitl` pack gates irreversible and outward-facing shell commands (force-push, hard reset, `rm -rf`, pushes, pull requests, releases, publishing). Claude Code, Kilo and OpenCode prompt you natively: `apply` writes ask rules into `.claude/settings.json`, `kilo.json` and `opencode.json`. Cursor, Codex and Gemini CLI get a hand-over: the pre-tool hook denies the command and asks the agent to have you run it. Copilot's hook hand-over is untested, so it is counted as advisory until its hook payload is confirmed. Agents in such a project will ask before pushes, pull requests and releases, among other gated commands (the catalog is in decision 0094). To get fewer prompts, narrow the classes in the pack's answers: an allow rule in your own settings does not override the committed ask rules on Claude Code. A mode that skips permission prompts defeats the native rules, and a wrapped command (`sh -c`, `eval`, a script) or `sudo`/`git -C` is not matched.
 
+## Checkpoints
+
+A project that adopts the `checkpointing` pack saves its working tree to a hidden git ref (`refs/go-getter/checkpoints/`) before a gated command, and optionally before a plan step. The pre-tool hook takes it automatically; the 10 newest are kept (or all, if you chose that). Taking one never changes a branch, the index or a file, and never blocks the command. Ignored files are not saved, and an untracked file that is not ignored is: keep secret files in `.gitignore`.
+
+```sh
+go-getter checkpoint list                       # newest first
+go-getter checkpoint restore <label>            # shows what would change, changes nothing
+go-getter checkpoint restore <label> --yes      # puts back modified and deleted files
+```
+
+Restore leaves files created since the checkpoint in place and lists them; remove them yourself if unwanted. Claude Code (`/rewind`) and Gemini CLI (`/restore`) also have their own commands for file edits, which do not undo what a shell command did. Copilot gets no automatic checkpoint until its hook payload is confirmed; there the agent is instructed to run `go-getter checkpoint create`.
+
 ## Updating
 
 `apply` records what it generated in `.go-getter/manifest.json` (commit it): the go-getter version, each adopted pack and version, a hash for every file it owns, and the keys, hook entries or marked block it owns in shared files with the value each replaced.
