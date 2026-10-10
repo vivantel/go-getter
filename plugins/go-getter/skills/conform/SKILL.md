@@ -7,7 +7,7 @@ Given a pending changeset, flag anything in it that violates an existing guardra
 
 ## Determining the target
 
-No argument and something's staged: the staged diff (`git diff --staged`). No argument and nothing's staged: the diff against the branch's upstream/base. A number ("last 3 PRs", "last 5 commits"): resolve to that many merged PRs or commits and diff across the combined range. A branch name, commit range, or PR reference: use it directly.
+No argument and something's staged: the staged diff (`git diff --staged`). No argument and nothing's staged: the diff against the branch's upstream/base. A number ("last 3 PRs", "last 5 commits"): resolve to that many merged PRs or commits and diff across the combined range. A branch name, commit range, or PR reference: use it directly. A spec-tool change folder (`openspec/changes/<id>`, or archived `openspec/changes/archive/<date>-<id>`): the commits and files that touch it (`git log -- <folder>`), checked as below; the change's own proposal and specs are not an extra rulebook.
 
 ## Checking conformance
 
