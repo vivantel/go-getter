@@ -9,7 +9,7 @@ track: process
 
 ## Decision
 
-Draft from the owner's review of the first install in a second repository (2026-10-07); active under decision 0091. On acceptance it supersedes 0023 for how skills run the CLI: 0023 then moves to `archive/` with `status: superseded` and `superseded-by: 0092-init-skill-carries-its-own-cli`. Until then 0023 stays active, because a draft takes no effect (0091).
+Draft from the owner's review of the first install in a second repository (2026-10-07); active under decision 0091. On acceptance it supersedes 0023 for how skills run the CLI: 0023 then moves to `archive/` with `status: superseded` and `superseded-by: 0093-init-skill-carries-its-own-cli`. Until then 0023 stays active, because a draft takes no effect (0091).
 
 - **Bundle**: `compile` copies the CLI into every skill listed in `CLI_SKILLS` (today `go-getter-init`) as `<skill>/cli`: `compiler/{bin,src,schemas,capabilities,adapters}`, `src/{packs,hooks}` and a `package.json` with the package's name, version and engines. Tests and authoring files are not copied.
 - **Run**: the skill runs `node <skill-dir>/cli/compiler/bin/go-getter.mjs <command>` from the project root. No network, npx or environment variable is involved, and the CLI version equals the skill version.
