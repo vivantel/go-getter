@@ -94,6 +94,11 @@ test('every docs/ artifact frontmatter parses', () => {
   for (const f of files) {
     const { data, hasFrontmatter } = parseFrontmatter(readFileSync(f, 'utf8'));
     if (f.includes(`${path.sep}plans${path.sep}`) || f.endsWith('INDEX.md')) continue;
+    // Generated runbooks are skills (name, description), not knowledge-base artifacts.
+    if (f.includes(`${path.sep}runbooks${path.sep}`)) {
+      assert.ok(hasFrontmatter && typeof data.name === 'string', `${f} has frontmatter and a name`);
+      continue;
+    }
     assert.ok(hasFrontmatter, `${f} has frontmatter`);
     assert.equal(typeof data.id, 'string', `${f} has id`);
   }

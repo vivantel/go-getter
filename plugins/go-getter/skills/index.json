@@ -111,6 +111,7 @@
         "cli/compiler/src/checks/node-floor.mjs",
         "cli/compiler/src/checks/packs.mjs",
         "cli/compiler/src/checks/plans.mjs",
+        "cli/compiler/src/checks/runbooks.mjs",
         "cli/compiler/src/checks/self-adoption.mjs",
         "cli/compiler/src/checks/tags.mjs",
         "cli/compiler/src/checks/versions.mjs",
