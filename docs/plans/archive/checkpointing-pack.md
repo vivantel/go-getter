@@ -41,7 +41,7 @@ Class: implement · Needs: 3 · Check: `node --test compiler/test/capabilities.t
 Do: set `tiers["9"]` in each `compiler/capabilities/<host>.json` to what is confirmed: 2 where the host has a blocking pre-tool hook that runs the checkpoint (and on Claude Code and Gemini CLI, which also have native checkpoints), 1 on Copilot until its hook payload is confirmed (see `docs/plans/archive/hitl-pack.md`). Update the note on component 9 in `go-getter coverage` output so it names the restore route per host. Record anything learned about a host in its integration-surface fact with a source; mark unconfirmed items **Not confirmed**.
 Done-when: the tests show component 9 with the tier per host and the restore route; `go-getter coverage` lists it.
 
-### 6 Adopt it in this repo — [ ]
+### 6 Adopt it in this repo — [x]
 Class: implement · Needs: 4, 5 · Check: `npm run check:self-adoption && npm run check:generated && npm test`
 Do: the pack was rendered here in step 4 (the self-adoption check requires it). Update any text that names the pack count, document the command in `INSTALLING.md`, and run `go-getter:lint`.
 Done-when: `npm run check:self-adoption` reports 8 packs adopted; `go-getter coverage` lists component 9 with `checkpointing`; in this repo, running `git push` through a host hook creates a ref listed by `go-getter checkpoint list`; `go-getter apply --check` is clean.
