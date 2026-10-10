@@ -38,7 +38,7 @@ Done-when: `npm run check:packs` passes; the golden fixture shows the artifacts 
 
 ### 5 Host tiers and coverage — [ ]
 Class: implement · Needs: 3 · Check: `node --test compiler/test/capabilities.test.mjs compiler/test/coverage.test.mjs`
-Do: set `tiers["9"]` in each `compiler/capabilities/<host>.json` to what is confirmed: 2 where the host has a blocking pre-tool hook that runs the checkpoint (and on Claude Code and Gemini CLI, which also have native checkpoints), 1 on Copilot until its hook payload is confirmed (see `docs/plans/hitl-pack.md`). Update the note on component 9 in `go-getter coverage` output so it names the restore route per host. Record anything learned about a host in its integration-surface fact with a source; mark unconfirmed items **Not confirmed**.
+Do: set `tiers["9"]` in each `compiler/capabilities/<host>.json` to what is confirmed: 2 where the host has a blocking pre-tool hook that runs the checkpoint (and on Claude Code and Gemini CLI, which also have native checkpoints), 1 on Copilot until its hook payload is confirmed (see `docs/plans/archive/hitl-pack.md`). Update the note on component 9 in `go-getter coverage` output so it names the restore route per host. Record anything learned about a host in its integration-surface fact with a source; mark unconfirmed items **Not confirmed**.
 Done-when: the tests show component 9 with the tier per host and the restore route; `go-getter coverage` lists it.
 
 ### 6 Adopt it in this repo — [ ]

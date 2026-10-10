@@ -87,6 +87,7 @@ id,title,tags,status
 0091-decisions-activate-on-acceptance-or-adoption,"A decision stays draft until the owner accepts it or it is adopted, whichever comes first; committing it is not adoption","knowledge-management, dogfooding",active
 0092-pack-rendered-drafts-count-as-adopted,"update and reconfigure treat pack-rendered artifacts that are still draft as adopted","generated-files, configuration",active
 0093-init-skill-carries-its-own-cli,"The go-getter-init skill carries a copy of the CLI and runs it from its own directory, not through npx","packaging, nodejs, tooling, generated-files",draft
+0094-gated-actions-need-human-approval,"Irreversible and outward-facing commands need a human, through native ask rules where they can be tested and a hook hand-over elsewhere","harness, hooks, enforcement, practice-packs",active
 0095-gated-actions,"Gated actions need a human","practice-packs, hooks, guardrail",active
 0096-enforcement-runs-a-vendored-cli,"apply copies the CLI into the project and the generated runner runs that copy before npx","packaging, nodejs, generated-files, enforcement",active
 0097-checkpoints-are-hidden-git-refs-taken-before-gated-actions,"A checkpoint is a hidden git ref taken by the pre-tool hook before a gated action, and the last 10 are kept","practice-packs, harness, hooks, enforcement",active
