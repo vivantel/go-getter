@@ -1,3 +1,4 @@
+# Registered with GitHub Actions on the default branch (master).
 # Release gate (decision 0013, guardrail release-requires-passing-gate): the release job needs the unit, golden and
 # behavior-eval jobs. A pushed vX.Y.Z tag publishes a GitHub release from CHANGELOG.md; a manual dispatch runs every
 # gate and stops before publishing (a dry run).
