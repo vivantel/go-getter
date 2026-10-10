@@ -6,3 +6,4 @@ adding-a-practice-pack,"Procedure for adding a practice pack","practice-packs, i
 install-smoke-test,"Procedure for the install smoke test of a host agent","packaging, verification, procedural",active
 tags,"Canonical tag vocabulary","knowledge-management, configuration",active
 restoring-a-checkpoint,"Restore work from a checkpoint","practice-packs, hooks, procedural",active
+working-a-change,"Work a change from branch to merge","practice-packs, git-hooks, procedural",active

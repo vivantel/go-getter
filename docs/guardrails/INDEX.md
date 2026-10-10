@@ -1,7 +1,6 @@
 # Guardrails index (CSV)
 
 id,title,tags,status
-commit-subjects-are-conventional,"Commit subjects must follow Conventional Commits","git-hooks, ci, guardrail",active
 generated-host-files-not-hand-edited,"Generated host-agent files must never be hand-edited","generated-files, compiler, guardrail",active
 guardrails-declare-enforcement,"Every guardrail must declare how it is enforced","enforcement, guardrail, configuration",active
 neutral-source-has-no-host-specific-language,"Neutral source must not name a host agent or its tools","agent-agnostic, compiler, guardrail",active
@@ -39,3 +38,7 @@ watches-use-the-wrapper,"Watches start through go-getter watch, --until done for
 owned-files-never-clobbered,"apply, update and remove must not overwrite or delete a modified owned item without --force","generated-files, enforcement, guardrail",active
 gated-actions-need-human-approval,"Irreversible and outward-facing commands need a human","practice-packs, hooks, guardrail",active
 checkpoint-before-gated-action,"A gated action is preceded by a checkpoint","practice-packs, hooks, guardrail",active
+branch-names-follow-the-pattern,"Branch names must match the project pattern","practice-packs, git-hooks, guardrail",active
+commit-subjects-are-conventional,"Commit subjects must follow Conventional Commits","practice-packs, git-hooks, guardrail",active
+changes-land-as-one-squashed-pull-request,"A change lands as one squashed pull request with green CI","practice-packs, git-hooks, guardrail",active
+no-commits-on-the-default-branch,"Work must not happen on the default branch","practice-packs, git-hooks, guardrail",active

@@ -16,18 +16,19 @@ Working rules: never push to `master`; each step is a short-lived `type/slug` br
 
 ---
 
-### 1 Default-branch check — [ ]
+### 1 Default-branch check — [x]
 Class: implement · Needs: none · Check: `node --test compiler/test/checks/default-branch.test.mjs`
 Do: add the builtin `not-on-default-branch` (`compiler/src/checks/builtin/`) that fails when the current branch, or in CI the PR head, is the project's default branch, with an `allow` argument for releases; register it where builtins are listed. Read the default branch through `git-env.mjs`; detached HEAD passes, as `branch-name` does.
 Done-when: the test, on a temp repository, shows a commit on the default branch fails, a `type/slug` branch passes, a detached HEAD passes, and `allow` lets a named branch through.
 
-### 2 The pack — [ ]
+### 2 The pack — [x]
 Class: implement · Needs: 1 · Check: `npm run check:packs`
 Do: add `src/packs/git-workflow/pack.json` (id `git-workflow`, family sdlc, no components), questions `branch-pattern` (text, default `type/slug`), `default-branch` (protect / instruction only, protect recommended) and `refs` (encouraged recommended, required, off), each option with a tradeoff and exactly one recommended. Outputs: a decision per answer, guardrails `branch-names-follow-the-pattern` and `no-commits-on-the-default-branch` (tier 3 `builtin:branch-name`, `builtin:not-on-default-branch`; tier 1 instruction), a `refs-trailers` guardrail only when the answer is `required` (a `builtin:commit-message` check for the trailer), a host-neutral procedure `docs/skills/working-a-change.md`, and the golden fixture and an eval case as in `docs/skills/adding-a-practice-pack.md`.
 Done-when: `npm run check:packs` passes; the golden fixture shows the artifacts of the recommended path; `render-pack git-workflow --dry-run` lists them.
 
 ### 3 Adopt it in this repo — [ ]
 Class: implement · Needs: 2 · Check: `npm run check:self-adoption && npm run check:generated && npm test`
+Progress 2026-10-10: the pack was rendered here in step 2 (the self-adoption check requires it) and the hand-written `commit-subjects-are-conventional` was replaced by the pack's. Left: replace the interim sections.
 Do: `go-getter render-pack git-workflow` here with the recommended answers (`accepted-by: sergemso`), then `apply` and `npm run build`. Replace the "Workflow (interim)" section of `AGENTS.md` and the working rules in the v0.2 plan with a pointer to the rendered procedure, keeping `AGENTS.md` within 150 lines. Reconcile `commit-subjects-are-conventional` with the pack (one statement, one job: keep one of the two) and keep decision 0024's local rule.
 Done-when: `check:self-adoption` reports 9 packs adopted; pushing a branch named `wip` through the pre-push hook fails; `apply --check` is clean.
 
