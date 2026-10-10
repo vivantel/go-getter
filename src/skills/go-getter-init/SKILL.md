@@ -13,19 +13,21 @@ Run `gg detect` and keep its JSON. Anything it answers (languages, test commands
 
 ## 2. Choose packs
 
-Run `gg packs`. Present the packs grouped by family (harness, sdlc) and ask which to configure. Recommend all harness packs. Order the chosen packs so every pack comes after the packs it `requires`.
+Run `gg packs`. Present the packs grouped by family (harness, sdlc) and ask which to configure, as a multi-select question where the host's question tool supports it. Recommend all harness packs. Order the chosen packs so every pack comes after the packs it `requires`.
 
 ## 3. Interview, pack by pack
+
+Every question is its own message: never combine two questions, and never ask a later question (such as accountability) together with an earlier one.
 
 For each pack, run `gg pack <id>` and walk its `questions` in order:
 
 - Skip a question whose `when` condition is not met by earlier answers.
 - If the question has a `detect` key (a dotted path into the `gg detect` result, e.g. `commands.test`) and the detection result covers it, propose that value and ask for confirmation.
 - A question of `type: text` or `type: list` has no options: ask it with the prefilled value (the detected value, else the question's `default`; a list question with both prefills the detected items followed by the default items not already in it) and let the user accept or edit it. Check the answer against the question's `pattern` (each item, for a list) and re-ask on a mismatch. A list answer is an array of strings.
-- Ask a choice question exactly one at a time. Show every option with its `tradeoff`, list the recommended option first and mark it "(Recommended)". Never invent options; the pack's options are the full list, plus the user's free-text answer if none fits — in that case explain that a free-text answer cannot be rendered and ask them to pick the closest option or stop.
+- Ask a choice question exactly one at a time. Always ask through the host's structured question tool (selectable options) when it has one: one entry per option, the label carrying the option name and the description its `tradeoff`. Never print options as a numbered list in a message while that tool is available; use plain text only when the host has none. Show every option with its `tradeoff`, list the recommended option first and mark it "(Recommended)". Never invent options; the pack's options are the full list, plus the user's free-text answer if none fits — in that case explain that a free-text answer cannot be rendered and ask them to pick the closest option or stop.
 - After the first question of a pack, offer "accept the recommended defaults for the rest of this pack" (recommended option for choice questions, the prefilled value for text and list questions).
 
-Ask once, before rendering, who is accountable for these decisions (their name for `accepted-by`).
+Ask separately, after the last pack question and before rendering, who is accountable for these decisions (their name for `accepted-by`).
 
 ## 4. One go-ahead, then render
 
