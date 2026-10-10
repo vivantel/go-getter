@@ -1,3 +1,4 @@
+# Reusable by the release workflow; also runnable on its own.
 # Behavior evals, layer 3 of decision 0013 (decision 0065): deterministic, no model and no secret.
 name: eval
 
