@@ -104,6 +104,10 @@ Restore leaves files created since the checkpoint in place and lists them; remov
 
 A project that adopts the `git-workflow` pack gets branch, commit and pull request rules: branches named `type/slug` (or your own pattern), no commits or pushes on the default branch, Conventional Commit subjects, and one squash-merged pull request per change with green CI. The pre-commit and pre-push git hooks and the CI job check the branch name and the default branch; `Refs:` trailers can be required, encouraged or off. Branch protection and required checks on your hosting platform are yours to set: go-getter cannot write them. A push from a feature branch to the default branch's name (`git push origin feat:main`) is not detected.
 
+## Spec tools
+
+go-getter detects OpenSpec (an `openspec/` directory with `config.yaml`, `specs/` or `changes/`) and leaves it alone: it adds no pack, no validation and no spec format. `go-getter detect` reports `specTool`. `go-getter refs` and the `attribute` skill list each change folder a diff touches (`openspec/changes/<id>`, or `openspec/changes/archive/<date>-<id>`) as a `Refs:` target, and a branch named for an existing change lists it as a suggestion. `conform` accepts a change folder as a target. OpenSpec's own block in `AGENTS.md`, if your version writes one, stays untouched and counts toward the 150-line cap.
+
 ## Updating
 
 `apply` records what it generated in `.go-getter/manifest.json` (commit it): the go-getter version, each adopted pack and version, a hash for every file it owns, and the keys, hook entries or marked block it owns in shared files with the value each replaced.
