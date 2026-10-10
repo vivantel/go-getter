@@ -2,6 +2,7 @@
   "schema": 1,
   "version": "0.1.0",
   "packs": {
+    "checkpointing": "0.1.0",
     "context": "0.3.0",
     "cost-routing": "0.2.0",
     "governance": "0.2.0",
@@ -219,7 +220,7 @@
     "AGENTS.md": [
       {
         "kind": "block",
-        "hash": "sha256:5d89bebed534e1abba643bb672267b6e5c85062182f257416459c7643f36ff88"
+        "hash": "sha256:27888a3e5949f6d74d7ffef8da4c67059c69196ef6147d912ad4131fbe8fe8c0"
       }
     ],
     "git-config": [

@@ -84,6 +84,9 @@ tests:
   - description: "pack cost-routing"
     vars: { label: pack-cost-routing, fixture: node, packs: cost-routing, hosts: claude-code }
     assert: [*init-ok]
+  - description: "pack checkpointing"
+    vars: { label: pack-checkpointing, fixture: node, packs: "hitl,checkpointing", hosts: "claude-code,cursor" }
+    assert: [*init-ok]
 
   # --- routing: total expected cost, routing on vs off, same verification gate ----------------------------------
   - description: "cost-routing lowers total expected step cost on a fixed task set"
