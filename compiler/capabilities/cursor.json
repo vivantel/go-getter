@@ -60,7 +60,7 @@
     "6": 2,
     "7": 2,
     "8": 2,
-    "9": 1,
+    "9": 2,
     "10": 2,
     "11": 2,
     "12": 1
@@ -69,6 +69,7 @@
     "Effort via model id parameters, e.g. model[effort=high].",
     "Agent frontmatter supports readonly instead of a tool list.",
     "Non-zero hook exits other than 2 fail open.",
-    "CLI permissions may not apply to the IDE agent (unconfirmed)."
+    "CLI permissions may not apply to the IDE agent (unconfirmed).",
+    "Component 9 tier 2: the pre-tool hook takes the checkpoint before a gated command (decision 0097); the host has no native checkpoint."
   ]
 }

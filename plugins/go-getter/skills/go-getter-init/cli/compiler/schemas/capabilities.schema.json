@@ -139,6 +139,7 @@
     },
     "sandbox": { "type": "boolean" },
     "checkpointing": { "type": "boolean" },
+    "checkpointRestore": { "type": "string" },
     "nodeAtRuntime": { "type": "boolean" },
     "tiers": {
       "type": "object",

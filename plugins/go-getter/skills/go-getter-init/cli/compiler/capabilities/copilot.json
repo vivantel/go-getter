@@ -64,6 +64,7 @@
     "Component 8 stays at 1: the gated-command hand-over reads the shell command from the tool input, and the docs do not say which field of toolArgs holds it; hooks also run only in the CLI and cloud agent. Raise to 2 once a real payload confirms the field.",
     "Content exclusion support in CLI/agent mode is contradictory in docs; treated as unenforced.",
     "Sandbox = cloud agent firewall.",
-    "Node needed only for npm installs (>=22)."
+    "Node needed only for npm installs (>=22).",
+    "Component 9 stays tier 1 until Copilot's hook payload is confirmed (as for component 8)."
   ]
 }

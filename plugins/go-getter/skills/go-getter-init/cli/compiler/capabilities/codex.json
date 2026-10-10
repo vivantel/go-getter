@@ -57,7 +57,7 @@
     "6": 2,
     "7": 2,
     "8": 2,
-    "9": 1,
+    "9": 2,
     "10": 2,
     "11": 2,
     "12": 2
@@ -66,6 +66,7 @@
     "Hooks gated by features.hooks.",
     "Model providers and otel are user-level config only.",
     "Per-path read deny exists in permission profiles for sandboxed commands; project-level support unconfirmed (fact 0031).",
-    "Checkpointing unconfirmed."
+    "Checkpointing unconfirmed.",
+    "Component 9 tier 2: the pre-tool hook takes the checkpoint before a gated command (decision 0097); the host has no native checkpoint."
   ]
 }
