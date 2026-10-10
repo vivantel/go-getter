@@ -30,7 +30,7 @@ Class: implement · Needs: 1 · Check: `node --test compiler/test/refs.test.mjs`
 Do: in `compiler/src/refs.mjs` add each touched change folder to the must-have group with the reason "change folder touched in this diff", and a branch-slug match to an existing change id to the nice-to-have group. Update `skills/attribute/SKILL.md` so a change folder is a valid `Refs:` target (repo-relative path), keeping the `Refs:` rule that no issue numbers replace the trailer; regenerate the plugin copy with `npm run build`.
 Done-when: the test shows a diff touching `openspec/changes/add-x/tasks.md` lists the folder as must-have, an archived change by its archive path, a branch `feat/add-y` with an untouched existing `add-y` lists it as nice-to-have only, and a repository without the tool is unchanged.
 
-### 3 Conform and coexistence — [ ]
+### 3 Conform and coexistence — [x]
 Class: implement · Needs: 1 · Check: `node --test compiler/test/spec-tool-coexistence.test.mjs`
 Do: update `skills/conform/SKILL.md` so a change folder (live or archived) resolves to the commits and files touching it, then is checked as today; no new checks. Add the coexistence test: a fixture `AGENTS.md` with another tool's block outside go-getter's markers keeps it byte-identical through `apply`, and `builtin:file-max-lines` counts it.
 Done-when: the test shows the foreign block unchanged after two `apply` runs and the line count including it; `npm run check:generated` and `check:neutral` pass.
