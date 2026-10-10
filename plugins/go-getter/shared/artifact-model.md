@@ -34,7 +34,7 @@ Procedure — optionally add `operationalizes: [<guardrail-id>, ...]` when this 
 
 Optional frontmatter key on any artifact; the only place go-getter tooling reads structured data from (it never parses prose). It is go-getter's own format, not a general knowledge-base field. Fields:
 
-- `enforcement` (guardrails): list of `{tier, check, run}`. `tier` is `1` instruction, `2` host hook or permission, `3` git hook or CI; `check` is a one-line description; `run` is a built-in check id with params (`builtin:<id> key=value`) or a command, required for tiers 2 and 3.
+- `enforcement` (guardrails): list of `{tier, check, run, stages?}`. `tier` is `1` instruction, `2` host hook or permission, `3` git hook or CI; `check` is a one-line description; `run` is a built-in check id with params (`builtin:<id> key=value`) or a command, required for tiers 2 and 3. A tier-3 entry may list `stages` (`pre-commit`, `pre-push`; default `pre-push`); CI runs every entry.
 - `generated-by: <pack-id>@<version>` — set on pack-emitted artifacts.
 - `pack-answer: <question-id>` — the pack question the artifact answers.
 - `pack-option: <option-id>` — the chosen option (a list for multi-answer questions).
