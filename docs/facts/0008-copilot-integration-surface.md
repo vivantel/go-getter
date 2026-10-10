@@ -28,6 +28,7 @@ Copilot CLI plugins: root `plugin.json` in Agent Plugins 1.0 format (`$schema: h
 - **Tool permissions**: CLI `--allow-tool` / `--deny-tool`; per-agent `tools`.
 - **Cloud agent firewall**: outbound internet limited by default, with allowlist; org setting Enabled / Disabled / Let repositories decide.
 - **Content exclusion** (Business/Enterprise): path exclusions configured at repo/org/enterprise.
+- **Session identity** (accessed 2026-10-10, https://docs.github.com/en/copilot/reference/hooks-reference): the default camelCase events carry `sessionId` (`timestamp`, `cwd`), and the VS Code-compatible PascalCase events carry `session_id`; `postToolUse` has both forms. `sessionEnd` exists and takes `reason` (`complete`, `error`, `abort`, `timeout`, `user_exit`).
 
 ## Model selection and effort
 Per custom agent `model`; otherwise the default model. Effort control not documented.
