@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0] - 2026-10-10
+
+### Added
+
+- A checkpointing pack: before a gated command (force-push, hard reset, `rm -rf` and the rest of the catalog) and, optionally, before a plan step, a checkpoint of the working tree is taken, so work lost to a shell command can be restored. You choose who takes it (the pre-tool hook with an instruction fallback, or instruction only), when, and how many to keep (10 or all).
+- Checkpoints are hidden git refs under `refs/go-getter/checkpoints` (tracked and untracked files, not ignored ones), written without touching the working tree, index, HEAD or branches.
+- `go-getter checkpoint create|list|restore|prune`. `restore` shows what would change and acts only with `--yes`; it puts back the files modified or deleted since the checkpoint and leaves files created since in place, listing them.
+- The harness coverage report shows component 9 (checkpointing) at tier 2 on Codex, Cursor, Kilo and OpenCode, where the hook takes the checkpoint, and names the restore commands (Claude Code and Gemini CLI also have their own, which cover file edits only). Copilot stays advisory until its hook payload is confirmed.
+
+### Documentation
+
+- The README and INSTALLING.md describe the checkpointing pack, which checkpoint commands exist, what is and is not saved, and the secret-file caveat.
+
 ## [0.1.0] - 2026-10-10
 
 ### Added
