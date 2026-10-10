@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "governance",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "family": "harness",
   "components": [
     7
@@ -80,6 +80,38 @@
       "prompt": "Which paths does the secret scan skip entirely? (test fixtures with fake keys, documentation of token formats)",
       "when": {
         "question": "secret-scan",
+        "in": [
+          "on"
+        ]
+      }
+    },
+    {
+      "id": "pii-masking",
+      "since": "0.4.0",
+      "prompt": "Is personal data masked in tool output before the agent reads it?",
+      "options": [
+        {
+          "id": "on",
+          "label": "Email addresses, card numbers and IBANs become per-session pseudonyms in tool output",
+          "tradeoff": "The agent keeps what it needs (two addresses stay distinguishable as [email-1] and [email-2]) without seeing the data; on hosts that cannot replace tool output nothing is masked (the coverage report lists them), and prompts and file writes are never masked.",
+          "recommended": true
+        },
+        {
+          "id": "off",
+          "label": "No masking",
+          "tradeoff": "Tool output reaches the agent as it is; no pseudonym state to keep, and no chance of a masked value confusing a command."
+        }
+      ]
+    },
+    {
+      "id": "pii-extra",
+      "type": "list",
+      "since": "0.4.0",
+      "pattern": "^(phone|national-id)$",
+      "default": [],
+      "prompt": "Which locale-bound types are masked as well? phone (a leading + and 8-15 digits) and national-id (US social security numbers). They match more ordinary numbers than the defaults do.",
+      "when": {
+        "question": "pii-masking",
         "in": [
           "on"
         ]
@@ -864,6 +896,96 @@
               }
             },
             "body": "## Decision\n\nThe secret scan skips the paths {{answer.scan-allow-paths}} (pack {{pack.id}}@{{pack.version}}); an empty list skips none.\n\n## Why\n\nFixtures and documentation hold fake keys on purpose, and a path is easier to review than a marker on every line (decision 0106).\n"
+          }
+        ]
+      }
+    },
+    "pii-masking": {
+      "on": {
+        "decisions": [
+          {
+            "slug": "pii-masking",
+            "title": "Personal data in tool output is masked with per-session pseudonyms",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nWhere the host can replace tool output, the post-tool hook replaces email addresses, payment card numbers and IBANs, and the types in [{{answer.pii-extra}}], with names such as `[email-1]`: the same value keeps its name within a session (pack {{pack.id}}@{{pack.version}}). Secrets keep the single marker `[redacted by go-getter]`.\n\n## Why\n\nAn agent that does not need personal data should not read it, and a stable name lets it tell two values apart (decision 0106).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "pii-masked-in-tool-output",
+            "title": "Personal data is masked in tool output",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.pii-masking}}",
+              "grounded-in": [
+                "{{id.decision.pii-masking}}",
+                "0106-scanning-and-masking-share-one-pattern-library"
+              ],
+              "derivation-note": "Given the agent must not read personal data it does not need (0106), tool output that carries it must be masked before the agent sees it, where the host allows."
+            },
+            "enforcement": [
+              {
+                "tier": 2,
+                "check": "The post-tool hook masks email, card numbers, IBANs and the listed types in tool output",
+                "run": "builtin:redact-pii classes=\"email,card,iban,{{answer.pii-extra}}\""
+              },
+              {
+                "tier": 1,
+                "check": "Do not paste personal data into prompts or files; a prompt and a file write are never masked"
+              }
+            ],
+            "body": "## Guardrail\n\nTool output that carries email addresses, card numbers or IBANs (and [{{answer.pii-extra}}]) reaches the agent with each value replaced by a per-session name. Hosts that cannot replace tool output show it unmasked (the coverage report lists them); prompts and file writes are never masked, so personal data is not pasted into either.\n"
+          }
+        ]
+      },
+      "off": {
+        "decisions": [
+          {
+            "slug": "pii-masking",
+            "title": "Personal data in tool output is not masked",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nTool output reaches the agent unmasked (pack {{pack.id}}@{{pack.version}}); secrets are still redacted where restricted paths are enforced.\n\n## Why\n\nThe project accepted the exposure for less machinery and no pseudonym state (decision 0106).\n"
+          }
+        ]
+      }
+    },
+    "pii-extra": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pii-extra",
+            "title": "The locale-bound types masked in tool output are listed",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "pii-extra": "{{answer.pii-extra}}"
+              }
+            },
+            "body": "## Decision\n\nThe types masked in addition to email, card numbers and IBANs are [{{answer.pii-extra}}] (pack {{pack.id}}@{{pack.version}}); an empty list adds none.\n\n## Why\n\nPhone and national-id formats are locale-bound and match ordinary numbers, so the project opts in (decision 0106).\n"
           }
         ]
       }

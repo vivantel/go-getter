@@ -43,3 +43,4 @@ commit-subjects-are-conventional,"Commit subjects must follow Conventional Commi
 changes-land-as-one-squashed-pull-request,"A change lands as one squashed pull request with green CI","practice-packs, git-hooks, guardrail",active
 no-commits-on-the-default-branch,"Work must not happen on the default branch","practice-packs, git-hooks, guardrail",active
 no-secrets-in-added-lines,"Added lines must not contain secrets","practice-packs, governance, security, guardrail",active
+pii-masked-in-tool-output,"Personal data is masked in tool output","practice-packs, governance, security, guardrail",active

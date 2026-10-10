@@ -20,7 +20,7 @@ Eight harness packs and one SDLC pack, each a short guided interview with a reco
 |---|---|---|
 | `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
 | `verification-gate` | 6 Verification loops | which checks mean "done" and where each runs (locally or in CI), the review bar, whether failing checks block completion |
-| `governance` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, which providers may see internal and confidential data, prompt logging |
+| `governance` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, whether the lines a change adds are scanned for secrets, whether personal data in tool output is masked, which providers may see internal and confidential data, prompt logging |
 | `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns |
 | `checkpointing` | 9 Checkpointing | whether work is saved to a hidden git ref before a gated command or a plan step, who takes it (the pre-tool hook or the agent), how many are kept |
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
@@ -46,6 +46,8 @@ How each rule ends up enforced, per component and host agent, once all eight pac
 | 10 Multi-agent orchestration | `orchestration` | advisory | advisory | advisory | advisory | advisory | advisory | advisory |
 | 11 Cost & model routing | `cost-routing` | hook | hook | hook | hook | hook | hook | hook |
 | 12 Observability | `telemetry` | - | - | - | - | - | - | - |
+
+Component 7 also reports where tool output is masked (secrets, and personal data when the project masks it): on every host that can replace tool output, which is all but Cursor and OpenCode, so there nothing is masked and the coverage report says so. Prompts and file writes are never masked.
 
 Known gaps (hosts without a blocking stop hook, unconfirmed hook shapes, routing that is advisory where a host has no model lever) are listed under "Known enforcement debt" in the [plan](docs/plans/v0.2-agent-core-hardening.md). Plan-guided work, watcher noise, access modes for restricted paths, local and CI checks, calibration, observability export, human-in-the-loop gates and checkpointing come in v0.2; the git workflow and spec workflow in v0.3; testing practices and memory in v0.4.
 

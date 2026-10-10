@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { loadPack } from '../src/packs.mjs';
 import { planRender, applyRender } from '../src/render.mjs';
-import { loadCapabilities } from '../src/capabilities.mjs';
+import { loadCapabilities, HOSTS } from '../src/capabilities.mjs';
 import { coverage, formatCoverage } from '../src/coverage.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -110,4 +110,26 @@ test('component 9 shows a tier per host, and the restore line names the commands
   const text = formatCoverage(rows);
   assert.match(text, /Restore \(component 9\): go-getter checkpoint restore on every host; native, for file edits: claude-code \/rewind, gemini-cli \/restore\./);
   assert.doesNotMatch(formatCoverage(coverage(root, {}, caps)), /Restore \(component 9\)/);
+});
+
+test('component 7 says where tool output is masked: secrets, personal data, and the hosts that cannot replace output', () => {
+  const caps = loadCapabilities(root);
+  const row = coverage(root, { governance: loadPack(path.join(root, 'src/packs/governance/pack.json')) }, caps).find((r) => r.component === 7);
+  const replace = HOSTS.filter((h) => caps[h].hooks.rewriteOutput === true);
+  assert.deepEqual(row.outputMasking.secrets, replace);
+  assert.deepEqual(row.outputMasking.pii, replace);
+  assert.deepEqual(row.outputMasking.none.sort(), ['cursor', 'opencode']);
+  const text = formatCoverage(coverage(root, { governance: loadPack(path.join(root, 'src/packs/governance/pack.json')) }, caps));
+  assert.match(text, /Tool-output masking \(component 7\): secrets on claude-code, codex, kilo, gemini-cli, copilot; personal data on claude-code, codex, kilo, gemini-cli, copilot; not on opencode, cursor \(the host cannot replace tool output\)\./);
+});
+
+test('without a governance pack there is no masking line', () => {
+  const caps = loadCapabilities(root);
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-coverage-'));
+  try {
+    mkdirSync(path.join(dir, 'docs/guardrails'), { recursive: true });
+    assert.doesNotMatch(formatCoverage(coverage(dir, {}, caps)), /Tool-output masking/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

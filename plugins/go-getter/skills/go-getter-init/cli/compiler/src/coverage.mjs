@@ -45,6 +45,16 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
     );
     const row = { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers, inHost };
     // The host's own restore command for what its native checkpoint covers (file edits), beside `go-getter checkpoint restore`.
+    // Tool-output masking (component 7, decision 0106): where the host can replace tool output, and what is masked there.
+    if (c === 7) {
+      const canReplace = hosts.filter((h) => caps[h]?.hooks?.rewriteOutput === true);
+      const inHostEntries = entries.filter((e) => e.tier === 2);
+      row.outputMasking = {
+        secrets: inHostEntries.length ? canReplace : [],
+        pii: inHostEntries.some((e) => /^builtin:redact-pii\b/.test(e.run ?? '')) ? canReplace : [],
+        none: inHostEntries.length ? hosts.filter((h) => !canReplace.includes(h)) : [],
+      };
+    }
     if (c === 9) row.nativeRestore = Object.fromEntries(hosts.filter((h) => caps[h]?.checkpointRestore).map((h) => [h, caps[h].checkpointRestore]));
     return row;
   });
@@ -59,8 +69,17 @@ export function formatCoverage(rows, hosts = HOSTS) {
   const body = rows.map((r) => [`${r.component} ${r.name}`, r.packs.length ? r.packs.join(', ') : 'none', ...hosts.map((h) => cell(r, h))]);
   const widths = header.map((_, i) => Math.max(...[header, ...body].map((row) => row[i].length)));
   const table = [header, ...body].map((row) => row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd()).join('\n');
+  const lines = [table];
+  const masking = rows.find((r) => r.component === 7)?.outputMasking;
+  if (masking?.secrets.length) {
+    const parts = [`secrets on ${masking.secrets.join(', ')}`];
+    if (masking.pii.length) parts.push(`personal data on ${masking.pii.join(', ')}`);
+    if (masking.none.length) parts.push(`not on ${masking.none.join(', ')} (the host cannot replace tool output)`);
+    lines.push(`Tool-output masking (component 7): ${parts.join('; ')}.`);
+  }
   const checkpoints = rows.find((r) => r.component === 9);
-  if (!checkpoints?.packs.length) return table;
+  if (!checkpoints?.packs.length) return lines.join('\n\n');
   const native = Object.entries(checkpoints.nativeRestore ?? {}).map(([h, cmd]) => `${h} ${cmd}`);
-  return `${table}\n\nRestore (component 9): go-getter checkpoint restore on every host${native.length ? `; native, for file edits: ${native.join(', ')}` : ''}.`;
+  lines.push(`Restore (component 9): go-getter checkpoint restore on every host${native.length ? `; native, for file edits: ${native.join(', ')}` : ''}.`);
+  return lines.join('\n\n');
 }
