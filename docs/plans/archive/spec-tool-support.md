@@ -35,7 +35,7 @@ Class: implement · Needs: 1 · Check: `node --test compiler/test/spec-tool-coex
 Do: update `skills/conform/SKILL.md` so a change folder (live or archived) resolves to the commits and files touching it, then is checked as today; no new checks. Add the coexistence test: a fixture `AGENTS.md` with another tool's block outside go-getter's markers keeps it byte-identical through `apply`, and `builtin:file-max-lines` counts it.
 Done-when: the test shows the foreign block unchanged after two `apply` runs and the line count including it; `npm run check:generated` and `check:neutral` pass.
 
-### 4 Docs and close — [ ]
+### 4 Docs and close — [x]
 Class: review · Needs: 2, 3 · Check: `npm run check:plans`
 Do: add a short section on spec tools to README or INSTALLING.md (what is detected, what `Refs:` lists, what is not done), run `go-getter:lint`, mark L.2 done in the v0.2 plan's backlog and archive this plan.
 Done-when: lint reports no new errors; this plan is fully `[x]` and archived.
