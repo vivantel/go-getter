@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -221,4 +221,49 @@ test('without modes, secret run and put are denied too; the tier-3 check rejects
   assert.equal(result.ok, false);
   for (const file of Object.values(FILES)) assert.match(result.message, new RegExp(file.replace(/\./g, '\\.')));
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('secret scanning is on by default and renders a tier-3 check at the commit and push stages', () => {
+  const dir = project();
+  try {
+    adopt(dir, answersFor({ 'scan-allow-paths': ['tests/fixtures/**', 'docs/**'] }));
+    const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'no-secrets-in-added-lines');
+    assert.deepEqual(entries.map((e) => e.tier), [3, 1]);
+    assert.equal(entries[0].parsed.id, 'secret-scan');
+    assert.equal(entries[0].parsed.args.allow, 'tests/fixtures/**, docs/**');
+    assert.deepEqual(entries[0].stages, ['pre-commit', 'pre-push']);
+    const plan = planApply(dir, { hosts: ['claude-code'] });
+    assert.ok(plan.outputs['.githooks/pre-commit'], 'a pre-commit hook is planned');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('an empty allow list skips nothing, and turning the scan off renders a decision and no guardrail', () => {
+  const on = project();
+  const off = project();
+  try {
+    adopt(on, answersFor({ 'scan-allow-paths': [] }));
+    assert.equal(collectEnforcement(on).find((e) => e.guardrail === 'no-secrets-in-added-lines' && e.tier === 3).parsed.args.allow, '');
+    adopt(off, answersFor({ 'secret-scan': 'off' }));
+    assert.equal(collectEnforcement(off).some((e) => e.guardrail === 'no-secrets-in-added-lines'), false);
+    assert.match(readFileSync(path.join(off, 'docs/decisions', readdirSync(path.join(off, 'docs/decisions')).find((f) => f.endsWith('-secret-scan.md'))), 'utf8'), /not scanned/);
+  } finally {
+    rmSync(on, { recursive: true, force: true });
+    rmSync(off, { recursive: true, force: true });
+  }
+});
+
+test('an answer file from before 0.3.0 renders with scanning on and no skipped paths', () => {
+  const dir = project();
+  try {
+    const old = answersFor();
+    delete old['secret-scan'];
+    delete old['scan-allow-paths'];
+    adopt(dir, old);
+    const scan = collectEnforcement(dir).find((e) => e.guardrail === 'no-secrets-in-added-lines' && e.tier === 3);
+    assert.equal(scan.parsed.args.allow, '');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

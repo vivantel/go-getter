@@ -99,3 +99,5 @@ id,title,tags,status
 0105-behavior-layer-without-generated-runbooks,"Behavior is a layer over the four artifact types, with no generated runbook form","knowledge-management, roadmap",active
 0106-scanning-and-masking-share-one-pattern-library,"Secret scanning and PII masking share one pattern library, scan added lines only, and mask with per-session pseudonyms kept as salted hashes","governance, security, enforcement",active
 0107-secret-run-and-put-are-limited-to-approved-commands-and-sources,"secret run runs only commands approved for that secret, secret put takes stdin or a declared command, and sandbox snippets are printed, never written","governance, security, enforcement",active
+0108-secret-scan,"Secrets in added lines are scanned before a commit and a push","practice-packs, governance, security",active
+0109-scan-allow-paths,"The secret scan skips a declared list of paths","practice-packs, governance, security",active

@@ -6,7 +6,7 @@
     "context": "0.3.0",
     "cost-routing": "0.2.0",
     "git-workflow": "0.1.0",
-    "governance": "0.2.0",
+    "governance": "0.3.0",
     "hitl": "0.1.0",
     "orchestration": "0.1.0",
     "telemetry": "0.1.0",
@@ -27,6 +27,10 @@
     },
     ".claude/agents/tester.md": {
       "hash": "sha256:0258e824e1ba1f14911cd222a51bfc0f008dc12697db1549b14fbf2bf6470c8b"
+    },
+    ".githooks/pre-commit": {
+      "hash": "sha256:29c07f01ce4716ad83628b52d69441ee3340662279c52ceabe2626ca2d368d1a",
+      "mode": "755"
     },
     ".githooks/pre-push": {
       "hash": "sha256:2528788ad90954d60da57caca98782e6fd9baf9d6e842c3f6040fd8a9b391fa0",
@@ -221,7 +225,7 @@
     "AGENTS.md": [
       {
         "kind": "block",
-        "hash": "sha256:1f4a5c8d9eb214eae22fa720c10d1b3dbd04beb9625ef0118b2265280933fa89"
+        "hash": "sha256:7a7a2e9f2543207edd9dde4c51d9879c4ff69cb46e75bac8b1bc219cda6faa8b"
       }
     ],
     "git-config": [

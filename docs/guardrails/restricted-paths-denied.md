@@ -2,7 +2,7 @@
 id: restricted-paths-denied
 title: Agents must not touch restricted paths and none may be committed
 status: active
-date: 2026-10-05
+date: 2026-10-10
 tags: [practice-packs, governance, guardrail]
 governed-by: 0046-restricted-paths-enforcement
 grounded-in: [0046-restricted-paths-enforcement]
@@ -15,7 +15,7 @@ go-getter:
     - tier: 3
       check: No tracked file matches a restricted path
       run: builtin:deny-path paths=".env, .env.*, *.pem, *.key, id_rsa, id_ed25519, .go-getter/state/"
-  generated-by: governance@0.2.0
+  generated-by: governance@0.3.0
   pack-answer: enforcement
   pack-option: hook-and-never-committed
 ---

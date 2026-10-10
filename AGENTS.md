@@ -51,6 +51,7 @@ Checked by git hooks and CI:
 - Neutral source must not name a host agent or its tools (`neutral-source-has-no-host-specific-language`)
 - Work must not happen on the default branch (`no-commits-on-the-default-branch`)
 - go-getter must have no runtime dependencies (`no-runtime-dependencies`)
+- Added lines must not contain secrets (`no-secrets-in-added-lines`)
 - No credentials or non-public information may be committed (`no-secrets-in-public-repo`)
 - The Node.js floor must be the oldest LTS line still supported (`node-floor-is-oldest-supported-lts`)
 - apply, update and remove must not overwrite or delete a modified owned item without --force (`owned-files-never-clobbered`)
