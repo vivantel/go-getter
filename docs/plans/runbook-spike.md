@@ -26,7 +26,7 @@ Class: implement · Needs: 1 · Check: `go-getter runbook build checkpoint-befor
 Do: build and commit the runbooks for the three guardrails above under `docs/runbooks/`, and add `npm run check:runbooks` (checks every committed runbook) to the CI workflow and `package.json` next to the other `check:*` scripts.
 Done-when: the three `SKILL.md` files exist; `npm run check:runbooks` passes and fails after a source edit; `npm run check:generated` still passes.
 
-### 3 Measure and judge — [ ]
+### 3 Measure and judge — [x]
 Class: review · Needs: 2 · Check: `npm run check:plans`
 Do: for each runbook count tokens (an approximate count by characters over 4, stated as such) of the runbook against loading its sources separately (guardrail, procedure, grounded facts); judge each against `one-statement-one-job` (does the runbook state one thing, and does the three-guardrails case duplicate steps?) and `token-economy`; note what a runbook costs to keep (drift failures per source edit). Record the numbers and findings in the section below.
 Done-when: the Findings section holds a table (runbook / sources tokens / runbook tokens / duplicates) and a paragraph per guardrail judged.
@@ -40,10 +40,29 @@ Done-when: the decision is active and indexed; the spike's files match it; this 
 
 ## Findings
 
-(Step 3 fills this in.)
+Measured 2026-10-10 on the three runbooks. Tokens are characters divided by 4 (approximate). "Files" is what an agent reads today: the guardrail file and its procedure file, frontmatter included. "Bodies" is the same without frontmatter.
+
+| Runbook | Files | Bodies | Runbook | vs files | vs bodies |
+|---|---|---|---|---|---|
+| `checkpoint-before-gated-action` | 508 | 198 | 289 | -43% | +46% |
+| `branch-names-follow-the-pattern` | 500 | 150 | 219 | -56% | +46% |
+| `commit-subjects-are-conventional` | 445 | 123 | 193 | -57% | +57% |
+| both git guardrails in one task | 747 | 189 | 412 | -45% | +118% |
+
+- **The saving is the frontmatter, not the compilation.** A guardrail file is about three quarters metadata (`enforcement`, `derivation-note`, `grounded-in`: 929 of 1,234 characters for the checkpoint guardrail). Dropping it gives the whole saving; the runbook then adds a generated-by line, headings and a "Grounded in" list, so against bodies it costs 35-46% more.
+- **No fact was inlined.** All three guardrails are grounded in decisions only (pack output cites the pack's own decision), and decisions are named, not copied, so the runbook's central claim, concrete facts next to the norm, never happened in these pairs. The concrete value that matters (the branch pattern) was already in the guardrail body.
+- **The many-to-many link duplicates.** `working-a-change` operationalizes three guardrails; each runbook copies all four steps, including steps that do not concern the guardrail (a branch-name runbook tells the agent to squash merge). A task that needs two of them reads the steps twice (412 tokens against 189 for the bodies).
+- **Maintenance cost.** One added step in `working-a-change` fails two of the two compiled git runbooks (three once the third guardrail is compiled); every source edit becomes a regeneration commit.
+- **Norm text carries over unedited.** The checkpoint norm ends "(see the procedure)", which points at nothing inside the runbook.
+- **On-demand loading rests on the `description`**, and a description derived from the guardrail title ("Use when the task involves: A gated action is preceded by a checkpoint") is a weak trigger. A good one needs authoring, so it would be hand-written source in a generated file.
+
+Judged against the guardrails:
+
+- `token-economy`: not met against bodies; the runbook restates the procedure's steps and the guardrail's norm in a longer file, and again in each git runbook.
+- `one-statement-one-job`: it constrains facts, guardrails and derivation-notes, not skills, so a runbook is not in breach. The restated steps are, though, the same statement in several files, which the guardrail exists to avoid.
 
 ## Open items (not part of these steps)
 
-- Whether a runbook should inline decisions' concrete values (a branch pattern) rather than name the decision: judged in step 3.
+- Whether a runbook should inline a decision's concrete values rather than name the decision: not tested, since the pack-rendered decisions are short and the value is already in the guardrail body.
 - How a runbook reaches each host (project-local skills for Kilo and OpenCode, plugin skills elsewhere) is decided only on a go.
 - The playbook form (0104) is not built.
