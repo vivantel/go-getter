@@ -97,3 +97,5 @@ id,title,tags,status
 0102-default-branch,"The default branch takes no direct work","practice-packs, git-hooks, guardrail",active
 0103-refs-trailers,"Refs trailers are encouraged","practice-packs, git-hooks, guardrail",active
 0105-behavior-layer-without-generated-runbooks,"Behavior is a layer over the four artifact types, with no generated runbook form","knowledge-management, roadmap",active
+0106-scanning-and-masking-share-one-pattern-library,"Secret scanning and PII masking share one pattern library, scan added lines only, and mask with per-session pseudonyms kept as salted hashes","governance, security, enforcement",active
+0107-secret-run-and-put-are-limited-to-approved-commands-and-sources,"secret run runs only commands approved for that secret, secret put takes stdin or a declared command, and sandbox snippets are printed, never written","governance, security, enforcement",active
