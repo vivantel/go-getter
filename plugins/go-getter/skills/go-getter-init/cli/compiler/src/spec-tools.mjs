@@ -1,6 +1,6 @@
 // Spec and change tools go-getter detects and tolerates (decision 0075). One row per tool; detect, refs, attribute and
 // conform read this table, so a second tool is a row and a test. go-getter adds no validation, format or pack for them.
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 export const SPEC_TOOLS = [
@@ -42,4 +42,25 @@ export function changesTouched(files, tools = SPEC_TOOLS) {
     if (c && !seen.has(c.folder)) seen.set(c.folder, c);
   }
   return [...seen.values()];
+}
+
+// The changes that exist on disk, live and archived: [{ tool, id, folder, archived }].
+export function listChanges(root, tools = SPEC_TOOLS) {
+  const found = [];
+  for (const tool of tools) {
+    const dir = path.join(root, tool.changes);
+    if (!existsSync(dir)) continue;
+    const entries = (d) => readdirSync(d, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort();
+    for (const name of entries(dir)) {
+      const live = changeOfPath(`${tool.changes}/${name}/`, tools);
+      if (live && name !== 'archive') found.push(live);
+    }
+    if (existsSync(path.join(dir, 'archive'))) {
+      for (const name of entries(path.join(dir, 'archive'))) {
+        const archived = changeOfPath(`${tool.changes}/archive/${name}/`, tools);
+        if (archived) found.push(archived);
+      }
+    }
+  }
+  return found;
 }

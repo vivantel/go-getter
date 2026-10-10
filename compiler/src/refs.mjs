@@ -8,6 +8,7 @@ import { ARTIFACT_TYPES } from './artifacts.mjs';
 import { parseRun } from './packs.mjs';
 import { matchesAny } from './glob.mjs';
 import { cleanGitEnv } from './git-env.mjs';
+import { changesTouched, listChanges } from './spec-tools.mjs';
 
 const ARTIFACT_PATH = /^docs\/(facts|decisions|guardrails|skills)\/(?:archive\/)?(?!INDEX\.md$)[^/]+\.md$/;
 const PATH_ARGS = ['path', 'paths', 'file', 'files', 'patterns'];
@@ -101,6 +102,16 @@ function leadingDate(v) {
   return m ? m[1] : null;
 }
 
+// The slug of the current branch (`type/slug` gives `slug`), or null when detached.
+function branchSlug(root) {
+  try {
+    const branch = git(root, 'branch', '--show-current').trim();
+    return branch ? branch.slice(branch.indexOf('/') + 1) : null;
+  } catch {
+    return null;
+  }
+}
+
 // Returns { must: [{path, id, reason}], nice: [{path, id, reason}] }.
 export function suggestRefs(root, { staged = false, base, today = new Date().toISOString().slice(0, 10) } = {}) {
   const byId = loadArtifacts(root);
@@ -122,6 +133,14 @@ export function suggestRefs(root, { staged = false, base, today = new Date().toI
     if (!a) continue;
     if (c.status === 'A') added.push(a);
     addArtifact(must, a, c.status === 'A' ? 'added in this diff' : c.status === 'R' ? `moved from ${c.from} in this diff` : 'changed in this diff');
+  }
+
+  // Spec-tool changes (decision 0075): a change folder the diff touches, found by path. The branch slug is only a hint.
+  const touched = changesTouched(changes.filter((c) => c.status !== 'D').map((c) => c.path));
+  for (const c of touched) add(must, c.folder, { path: c.folder, id: null, reason: 'change folder touched in this diff' });
+  const slug = branchSlug(root);
+  if (slug) {
+    for (const c of listChanges(root).filter((x) => x.id === slug)) add(nice, c.folder, { path: c.folder, id: null, reason: 'branch slug matches this change' });
   }
 
   // The plan step the change completes.

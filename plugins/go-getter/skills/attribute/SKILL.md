@@ -10,8 +10,8 @@ This skill only runs when explicitly invoked. Never apply its conventions to a p
 ## Writing a commit message
 
 1. Inspect the staged diff with `git diff --staged`, then run `go-getter refs --staged` (add `--json` to parse it). It prints candidate artifacts in two groups, each with a one-line reason:
-   - **Must-have** — artifacts added or changed in the diff, the plan step it completes, decisions whose pack output it regenerates, decisions and guardrails whose checks or restricted paths name a changed file, and decisions it supersedes.
-   - **Nice-to-have** — one hop from the must-haves: the decisions they are governed by or grounded in, related facts expiring within 30 days, and active siblings sharing a non-umbrella tag.
+   - **Must-have** — artifacts added or changed in the diff, a spec-tool change folder it touches (e.g. `openspec/changes/<id>`), the plan step it completes, decisions whose pack output it regenerates, decisions and guardrails whose checks or restricted paths name a changed file, and decisions it supersedes.
+   - **Nice-to-have** — a change whose id is the branch's slug, and one hop from the must-haves: the decisions they are governed by or grounded in, related facts expiring within 30 days, and active siblings sharing a non-umbrella tag.
    If the command is unavailable, propose candidates from what the diff touches.
 2. Show both groups to the user and confirm the list before committing — never guess silently; they may add, remove, or reject any. Propose the must-haves by default and the nice-to-haves only where the user agrees they apply.
 3. Draft the message:
@@ -19,7 +19,7 @@ This skill only runs when explicitly invoked. Never apply its conventions to a p
    - Blank line.
    - A body paragraph explaining the intent — not merely what changed.
    - Blank line.
-   - One `Refs: <repo-relative-path>` git trailer per confirmed artifact (e.g. `Refs: docs/decisions/0003-commit-trailer-traceability.md`). Never use an issue number or a prose mention in place of this trailer.
+   - One `Refs: <repo-relative-path>` git trailer per confirmed artifact (e.g. `Refs: docs/decisions/0003-commit-trailer-traceability.md`); a change folder is a valid target (`Refs: openspec/changes/add-dark-mode`). Never use an issue number or a prose mention in place of this trailer.
 
 ## Writing a PR description
 
