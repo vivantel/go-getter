@@ -12,6 +12,8 @@ import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
+import { piiConfig, sessionKeyOf, maskPii } from './secrets/mask.mjs';
+import { createPseudonymizer, cleanupSession, sweepPseudonyms } from './secrets/pseudonyms.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -255,23 +257,48 @@ export function redactText(text, values) {
   return { text: out, count };
 }
 
-// Redacts every string in a tool result, keeping its shape so the host accepts it as a replacement.
+// Redacts every string in a tool result, keeping its shape so the host accepts it as a replacement: restricted values and
+// secret patterns become REDACTED; where the project masks PII (decision 0106), email, card numbers, IBANs and the
+// classes it adds become per-session pseudonyms. `masked` counts what was replaced per kind, never what it was.
 export function evaluatePostTool(project, payload) {
   const response = payload.tool_response ?? payload.toolResponse ?? payload.tool_output ?? payload.toolResult;
   const values = restrictedValues(project);
+  const pii = piiConfig(project);
+  const masked = {};
   let redactions = 0;
+  let pseudonymizer = null;
   const walk = (v) => {
     if (typeof v === 'string') {
       const r = redactText(v, values);
       redactions += r.count;
-      return r.text;
+      if (r.count) masked.secret = (masked.secret ?? 0) + r.count;
+      if (!pii) return r.text;
+      pseudonymizer ??= createPseudonymizer(project, sessionKeyOf(payload));
+      const m = maskPii(r.text, { classes: pii.classes, pseudonymizer });
+      for (const [kind, n] of Object.entries(m.kinds)) {
+        masked[kind] = (masked[kind] ?? 0) + n;
+        redactions += n;
+      }
+      return m.text;
     }
     if (Array.isArray(v)) return v.map(walk);
     if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]));
     return v;
   };
-  const output = walk(response);
-  return { output, redactions, mcp: /^mcp__/.test(toolName(payload) ?? '') };
+  let output;
+  try {
+    output = walk(response);
+  } finally {
+    pseudonymizer?.close();
+  }
+  if (pii) sweepPseudonyms(project);
+  return { output, redactions, masked, mcp: /^mcp__/.test(toolName(payload) ?? '') };
+}
+
+// A session ended: its pseudonym map goes (a host that never sends this leaves the 24-hour sweep).
+export function evaluateSessionEnd(project, payload) {
+  cleanupSession(project, sessionKeyOf(payload));
+  return { ended: true };
 }
 
 // Host-specific post-tool answer: replace the result only when something was redacted. Only hosts with
@@ -347,7 +374,7 @@ export function payloadUsage(payload) {
 
 // Telemetry record for a hook event: metadata the host's payload carries (model, effort, tokens, cost), never tool
 // input or output. A post-tool event adds only the count of redactions.
-export function hookRecord(event, host, payload, decision, redactions) {
+export function hookRecord(event, host, payload, decision, redactions, masked) {
   const rec = { event };
   if (host) rec.host = host;
   const model = typeof payload.model === 'string' ? payload.model : payload.model?.id;
@@ -356,5 +383,6 @@ export function hookRecord(event, host, payload, decision, redactions) {
   Object.assign(rec, payloadUsage(payload));
   if (decision) rec.outcome = decision.deny ? 'denied' : 'allowed';
   if (FIELDS.redactions(redactions)) rec.redactions = redactions;
+  if (FIELDS.masked(masked)) rec.masked = masked;
   return rec;
 }

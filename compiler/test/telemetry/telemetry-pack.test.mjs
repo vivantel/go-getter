@@ -129,7 +129,8 @@ test('go-getter hook post-tool records the count of redactions and no content', 
   const [rec] = readLog(dir);
   assert.equal(rec.event, 'post-tool');
   assert.equal(rec.redactions, 2);
-  assert.deepEqual(Object.keys(rec).sort(), ['event', 'host', 'model', 'redactions', 'ts']);
+  assert.deepEqual(Object.keys(rec).sort(), ['event', 'host', 'masked', 'model', 'redactions', 'ts']);
+  assert.deepEqual(rec.masked, { secret: 2 }, 'counts per kind, never what was masked');
   assert.deepEqual(validateRecord(rec), []);
   assert.ok(validateRecord({ ts: rec.ts, event: 'post-tool', redactions: 'two' }).length);
   rmSync(dir, { recursive: true, force: true });
