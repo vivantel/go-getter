@@ -101,3 +101,6 @@ id,title,tags,status
 0107-secret-run-and-put-are-limited-to-approved-commands-and-sources,"secret run runs only commands approved for that secret, secret put takes stdin or a declared command, and sandbox snippets are printed, never written","governance, security, enforcement",active
 0108-secret-scan,"Secrets in added lines are scanned before a commit and a push","practice-packs, governance, security",active
 0109-scan-allow-paths,"The secret scan skips a declared list of paths","practice-packs, governance, security",active
+0110-checkpoint-trigger-gated-action,"A checkpoint is taken before a gated command","practice-packs, hooks",active
+0111-checkpoint-retention,"The 10 newest checkpoints are kept","practice-packs, hooks",active
+0112-gated-extra-patterns,"Project-specific commands that also need a human are listed","practice-packs, hooks",active

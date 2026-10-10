@@ -14,7 +14,7 @@ go-getter:
       run: builtin:checkpoint-before-gated triggers="gated-action" keep=10
     - tier: 1
       check: Where no hook runs, run `go-getter checkpoint create --label <what>` before a gated command
-  generated-by: checkpointing@0.1.0
+  generated-by: checkpointing@0.2.0
   pack-answer: creation
   pack-option: hook-and-instruction
 ---

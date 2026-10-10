@@ -13,6 +13,7 @@ import { SCHEMA, adoptedPacks, readManifest } from './manifest.mjs';
 import { gitSetting } from './reconcile.mjs';
 import { loadPack } from './packs.mjs';
 import { adoptedArtifacts, applyReconfigure, planReconfigure, currentAnswers } from './reconfigure.mjs';
+import { activeQuestions, renameAnswers, withFallbacks } from './render.mjs';
 
 const skipped = (name) => name === '.git' || name === 'node_modules';
 
@@ -25,6 +26,12 @@ function keepDate(project, artifact) {
   return old === undefined ? artifact : { ...artifact, content: stringifyFrontmatter({ ...data, date: old }, body) };
 }
 
+const compareVersions = (a, b) => {
+  const [x, y] = [a, b].map((v) => v.split('.').map(Number));
+  for (let i = 0; i < 3; i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) - (y[i] ?? 0);
+  return 0;
+};
+
 function reRender(project, root, date, notes) {
   for (const id of Object.keys(adoptedPacks(project))) {
     const packFile = path.join(root, 'src/packs', id, 'pack.json');
@@ -34,6 +41,17 @@ function reRender(project, root, date, notes) {
     }
     const pack = loadPack(packFile);
     const adopted = adoptedArtifacts(project, id);
+    // An answer no adopted artifact records cannot be re-rendered: guessing it could change the project's rules (a
+    // question the pack gained after the project adopted it is the one exception: it takes its default, 0085). So the
+    // pack is left as it is and the owner is told how to supply the answers.
+    const known = renameAnswers(pack, currentAnswers(adopted));
+    const adoptedAt = String(adopted[0]?.data['go-getter']?.['generated-by'] ?? '').split('@')[1] ?? '0.0.0';
+    const isNew = (q) => q.since && compareVersions(q.since, adoptedAt) > 0;
+    const missing = activeQuestions(pack, withFallbacks(pack, known)).filter((q) => known[q.id] === undefined && !isNew(q)).map((q) => q.id);
+    if (missing.length) {
+      notes.push(`pack ${id}: no recorded answer for ${missing.join(', ')}; left as it is. Run go-getter reconfigure ${id} --current, add those answers to an answers file and run go-getter reconfigure ${id} --answers <file>`);
+      continue;
+    }
     // Decisions an update adds are proposals (decision 0091): rendered as draft, for the owner to accept.
     const result = planReconfigure({ project, pack, answers: currentAnswers(adopted), date, detect: {}, draft: true });
     const artifacts = result.plan.artifacts.map((a) => keepDate(project, a));
