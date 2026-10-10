@@ -15,6 +15,7 @@ export const FIELDS = {
   model: ident,
   effort: ident,
   taskClass: ident,
+  trigger: ident,
   tokens: (v) => v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).every((k) => TOKEN_FIELDS.includes(k) && count(v[k])),
   cost: num,
   outcome: (v) => OUTCOMES.includes(v),

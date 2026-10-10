@@ -10,6 +10,7 @@ import { TIERS, EFFORTS } from './routing/policy.mjs';
 import { DATA_CLASSES } from './routing/eligibility.mjs';
 import { newWorktree } from './worktree.mjs';
 import { recordQuietly } from './telemetry/record.mjs';
+import { checkpointBeforeStep } from './checkpoint-trigger.mjs';
 import { cleanGitEnv } from './git-env.mjs';
 
 export const MARKERS = { ' ': 'pending', '~': 'in progress', x: 'done', '!': 'blocked', '>': 'moved' };
@@ -209,6 +210,7 @@ export function startStep(cwd, file, id, { worktree } = {}) {
     const copy = path.join(made.path, path.relative(repoRoot(path.dirname(file)), file));
     if (existsSync(copy)) target = copy;
   }
+  checkpointBeforeStep(repoRoot(cwd), id);
   writeMarker(target, id, '~');
   return { changed: true, file: target, worktree: made };
 }
