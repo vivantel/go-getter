@@ -5,6 +5,7 @@
     "checkpointing": "0.1.0",
     "context": "0.3.0",
     "cost-routing": "0.2.0",
+    "git-workflow": "0.1.0",
     "governance": "0.2.0",
     "hitl": "0.1.0",
     "orchestration": "0.1.0",
@@ -220,7 +221,7 @@
     "AGENTS.md": [
       {
         "kind": "block",
-        "hash": "sha256:27888a3e5949f6d74d7ffef8da4c67059c69196ef6147d912ad4131fbe8fe8c0"
+        "hash": "sha256:1f4a5c8d9eb214eae22fa720c10d1b3dbd04beb9625ef0118b2265280933fa89"
       }
     ],
     "git-config": [
