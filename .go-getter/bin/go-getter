@@ -25,8 +25,8 @@ fi
 if [ -f "$ROOT/.go-getter/cli/compiler/bin/go-getter.mjs" ]; then
   exec node "$ROOT/.go-getter/cli/compiler/bin/go-getter.mjs" "$@"
 fi
-ERR=$(mktemp 2>/dev/null) || exec npx --yes github:vivantel/go-getter#v0.1.0 "$@"
-npx --yes github:vivantel/go-getter#v0.1.0 "$@" 2>"$ERR"
+ERR=$(mktemp 2>/dev/null) || exec npx --yes github:vivantel/go-getter#v0.2.0 "$@"
+npx --yes github:vivantel/go-getter#v0.2.0 "$@" 2>"$ERR"
 CODE=$?
 cat "$ERR" >&2
 if [ "$CODE" -ne 0 ] && grep -q '^npm error' "$ERR"; then

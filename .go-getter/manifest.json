@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packs": {
     "checkpointing": "0.1.0",
     "context": "0.3.0",
@@ -35,7 +35,7 @@
       "hash": "sha256:0daa64fc1d6c0c5972cab3c29be8d66c73b0baa6aef7e4ada92ff986ae9c27ba"
     },
     ".go-getter/bin/go-getter": {
-      "hash": "sha256:745c823eaa34cf088da0e68ba55dc0e4b8d81d3d7c49ca83f40c8879d4b5701d",
+      "hash": "sha256:707282ef61d26581c0c4afa6a58be3615e63cc5b4ee7eaf28b0d9bb2aa3961ef",
       "mode": "755"
     },
     "CLAUDE.md": {
