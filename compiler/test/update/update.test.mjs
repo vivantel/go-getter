@@ -152,7 +152,7 @@ test('olderThan and drift compare versions numerically', () => {
 test('the session-start nudge names the drift for an older manifest and is silent for a current one', () => {
   const { dir } = fixture();
   assert.equal(sessionNudges(repo, dir).includes('go-getter update'), false);
-  withManifest(dir, { version: '0.0.0-old', packs: { context: '0.0.1' } });
+  withManifest(dir, { version: installedVersion, packs: { context: '0.0.1' } });
   const line = sessionNudges(repo, dir).split('\n').filter((l) => l.includes('go-getter update'));
   assert.equal(line.length, 1);
   assert.match(line[0], new RegExp(`^go-getter ${installedVersion.replace(/\./g, '\\.')} installed, `));

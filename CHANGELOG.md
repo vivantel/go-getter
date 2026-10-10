@@ -1,8 +1,32 @@
 # Changelog
 
-## [0.1.0] - 2026-10-05
+## [0.1.0] - 2026-10-10
 
 ### Added
+
+- A human-in-the-loop pack: irreversible and outward-facing shell commands (force-push, hard reset, `rm -rf`, pushes, pull requests, releases, publishing) need a human, through native ask rules on Claude Code, Kilo and OpenCode and a pre-tool hook hand-over on the other hosts.
+- A manifest of everything `apply` writes, with `update` and `apply --remove`, so upgrades and removal never overwrite or delete what the user edited or owns.
+- The `go-getter-init` skill carries its own copy of the CLI, so setup needs no network, npx or environment variable.
+- `apply` vendors the CLI into `.go-getter/cli` and the generated runner runs it before npx, so hooks and CI enforce where npm cannot fetch from GitHub.
+- Plan, watch, refs and CI-status commands (`plan status|next|start|done`, `watch`, `refs`, `ci status`), so plan steps, noisy watchers, candidate `Refs:` and a pushed branch's CI result no longer depend on the agent remembering.
+- Verification checks placed locally or in CI, with a CI job written for each, and a stop gate that holds a pushed branch with failing CI.
+- Tool-output redaction on Claude Code, Codex, Copilot, Gemini CLI and Kilo, and access modes for restricted paths, so DLP covers what an agent reads, not only what it writes.
+- Routing calibrated from telemetry and routed by host-accepted model values; host OpenTelemetry settings where project config accepts them (Gemini CLI).
+- A watcher-noise question in the context pack, and plan-step fields written by the `roadmap` and `refactor-plan` skills.
+
+### Fixed
+
+- The init interview now asks through the host's question tool when it has one, one question per message, instead of printing numbered options (seen on Kilo).
+- The generated runner uses a local CLI and says when npx cannot run, instead of failing without a word.
+- The pre-tool hook no longer denies questions, skill arguments and messages that only name a restricted pattern, and scans only the path-carrying fields of known tools.
+- Claude Code delegations are routed by model alias, not full id.
+- Git hook variables and the working directory no longer break enforcement, and the commit-subject guardrail and CI follow the default branch.
+
+### Documentation
+
+- The `go-getter:` frontmatter key is documented as go-getter's own format.
+- Each host has an honest install status (tested or static-only) instead of all seven being required, with the Claude Code smoke test recorded. Installs made before this release keep a stale Claude Code plugin cache because the version stayed 0.0.0: run `/plugin uninstall go-getter`, delete `~/.claude/plugins/cache/go-getter`, and reinstall.
+- Findings from adopting go-getter in a second repository, and the plans for manifest-based update and removal.
 
 - Behavior evals that catch compiler and renderer regressions across fixture repos without a model or an API key, and settle how evals authenticate on CI.
 - A release workflow that publishes only when the unit, golden-output, eval and deterministic-check jobs pass, a check that every generated manifest and the release tag carry the package version, and per-host install steps (untested until the install smoke test).
