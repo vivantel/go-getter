@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "governance",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "family": "harness",
   "components": [
     7
@@ -52,6 +52,38 @@
           "tradeoff": "No friction; depends on the agent complying."
         }
       ]
+    },
+    {
+      "id": "secret-scan",
+      "since": "0.3.0",
+      "prompt": "Are the lines a change adds scanned for secrets before a commit and a push?",
+      "options": [
+        {
+          "id": "on",
+          "label": "A git hook and CI scan added lines for keys, tokens and labelled secrets",
+          "tradeoff": "A pasted credential is stopped before it reaches the repository, host-independently; a rare false positive is silenced with a line marker or a path. Only added lines are read, so old history is not.",
+          "recommended": true
+        },
+        {
+          "id": "off",
+          "label": "No scanning",
+          "tradeoff": "No friction and no false positives; a committed secret is found only by the platform's own scanning or by chance."
+        }
+      ]
+    },
+    {
+      "id": "scan-allow-paths",
+      "type": "list",
+      "since": "0.3.0",
+      "pattern": "^[^\\s\",]+$",
+      "default": [],
+      "prompt": "Which paths does the secret scan skip entirely? (test fixtures with fake keys, documentation of token formats)",
+      "when": {
+        "question": "secret-scan",
+        "in": [
+          "on"
+        ]
+      }
     },
     {
       "id": "internal-data",
@@ -738,6 +770,100 @@
               }
             ],
             "body": "## Guardrail\n\nHandle restricted data only in host agents with an OS sandbox. Advisory (tier 1).\n"
+          }
+        ]
+      }
+    },
+    "secret-scan": {
+      "on": {
+        "decisions": [
+          {
+            "slug": "secret-scan",
+            "title": "Secrets in added lines are scanned before a commit and a push",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nA git hook before a commit, a git hook before a push and CI scan the lines a change adds for private keys, provider tokens, JWTs and labelled secret assignments, and fail with the file, line and kind (pack {{pack.id}}@{{pack.version}}). A line marked `go-getter:allow-secret` and the paths {{answer.scan-allow-paths}} are skipped.\n\n## Why\n\nA credential that reaches a repository must be rotated, and a pattern scan on the lines being added stops it without reading history (decision 0106).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "no-secrets-in-added-lines",
+            "title": "Added lines must not contain secrets",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.secret-scan}}",
+              "grounded-in": [
+                "{{id.decision.secret-scan}}",
+                "0106-scanning-and-masking-share-one-pattern-library"
+              ],
+              "derivation-note": "Given a committed credential must be rotated (0106), the lines a change adds must be checked for secrets before they leave the machine."
+            },
+            "enforcement": [
+              {
+                "tier": 3,
+                "check": "No added line holds a private key, provider token, JWT or labelled secret",
+                "run": "builtin:secret-scan allow=\"{{answer.scan-allow-paths}}\"",
+                "stages": [
+                  "pre-commit",
+                  "pre-push"
+                ]
+              },
+              {
+                "tier": 1,
+                "check": "Never paste a credential into a file; refer to it by environment variable name"
+              }
+            ],
+            "body": "## Guardrail\n\nAdded lines carry no private keys, provider tokens, JWTs or `password = <value>` assignments. A false positive is marked with `go-getter:allow-secret` on its line, or its path is added to the skipped paths ({{answer.scan-allow-paths}}). A leaked secret must be rotated; deleting the commit is not enough.\n"
+          }
+        ]
+      },
+      "off": {
+        "decisions": [
+          {
+            "slug": "secret-scan",
+            "title": "Secrets in added lines are not scanned",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nNo hook or CI step scans added lines for secrets (pack {{pack.id}}@{{pack.version}}); `no-secrets-in-public-repo` still checks file names.\n\n## Why\n\nThe project accepted the risk of a pasted credential for less friction (decision 0106).\n"
+          }
+        ]
+      }
+    },
+    "scan-allow-paths": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "scan-allow-paths",
+            "title": "The secret scan skips a declared list of paths",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "scan-allow-paths": "{{answer.scan-allow-paths}}"
+              }
+            },
+            "body": "## Decision\n\nThe secret scan skips the paths {{answer.scan-allow-paths}} (pack {{pack.id}}@{{pack.version}}); an empty list skips none.\n\n## Why\n\nFixtures and documentation hold fake keys on purpose, and a path is easier to review than a marker on every line (decision 0106).\n"
           }
         ]
       }

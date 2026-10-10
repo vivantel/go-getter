@@ -2,7 +2,7 @@
 id: prompt-logging-disabled
 title: Host prompt logging must stay disabled
 status: active
-date: 2026-10-05
+date: 2026-10-10
 tags: [practice-packs, governance, guardrail]
 governed-by: 0049-prompt-logging
 grounded-in: [0049-prompt-logging]
@@ -12,7 +12,7 @@ go-getter:
     - tier: 3
       check: Host settings files that exist have prompt logging switched off
       run: builtin:prompt-logging-off
-  generated-by: governance@0.2.0
+  generated-by: governance@0.3.0
   pack-answer: prompt-logging
   pack-option: disable-everywhere
 ---

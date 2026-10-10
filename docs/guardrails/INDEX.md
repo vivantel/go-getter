@@ -42,3 +42,4 @@ branch-names-follow-the-pattern,"Branch names must match the project pattern","p
 commit-subjects-are-conventional,"Commit subjects must follow Conventional Commits","practice-packs, git-hooks, guardrail",active
 changes-land-as-one-squashed-pull-request,"A change lands as one squashed pull request with green CI","practice-packs, git-hooks, guardrail",active
 no-commits-on-the-default-branch,"Work must not happen on the default branch","practice-packs, git-hooks, guardrail",active
+no-secrets-in-added-lines,"Added lines must not contain secrets","practice-packs, governance, security, guardrail",active
