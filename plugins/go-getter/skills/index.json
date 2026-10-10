@@ -163,6 +163,7 @@
         "cli/compiler/src/routing/policy.mjs",
         "cli/compiler/src/routing/registry.mjs",
         "cli/compiler/src/schema.mjs",
+        "cli/compiler/src/spec-tools.mjs",
         "cli/compiler/src/telemetry/otel.mjs",
         "cli/compiler/src/telemetry/record.mjs",
         "cli/compiler/src/telemetry/schema.mjs",

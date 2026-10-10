@@ -20,7 +20,7 @@ const none = { format: null, lint: null, typecheck: null, 'static-analysis': nul
 const cmds = (known) => ({ ...none, ...known });
 const empty = {
   languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], commands: none, nodeVersion: null, ci: [], monorepo: [],
-  hostAgents: [], agentFiles: [], knowledgeBase: false, sensitivePaths: [], git: { defaultBranch: null, defaultBranchKnown: false, remoteHost: null },
+  hostAgents: [], agentFiles: [], knowledgeBase: false, specTool: null, sensitivePaths: [], git: { defaultBranch: null, defaultBranchKnown: false, remoteHost: null },
 };
 
 test('empty directory', () => {

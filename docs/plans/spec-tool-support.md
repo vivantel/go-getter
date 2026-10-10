@@ -20,7 +20,7 @@ Working rules: `docs/skills/working-a-change.md` (branch `type/slug`, PR, squash
 
 ---
 
-### 1 Tool table and detection — [ ]
+### 1 Tool table and detection — [x]
 Class: implement · Needs: none · Check: `node --test compiler/test/spec-tools.test.mjs`
 Do: add `compiler/src/spec-tools.mjs` exporting the table (OpenSpec row: id, detection markers, live and archived change-folder patterns) and `detectSpecTool(root)`, `changeOfPath(path)` (returns `{ tool, id, folder, archived }` or `null`) and `changesTouched(paths)`. Report `specTool` from `compiler/src/detect.mjs`.
 Done-when: the test shows a fixture with `openspec/config.yaml` detected, one without `openspec/` not; `changeOfPath` resolves `openspec/changes/add-x/proposal.md`, `openspec/changes/add-x/specs/a/spec.md` and `openspec/changes/archive/2026-10-10-add-x/tasks.md` to the folder and id (the archived id without the date), and `openspec/specs/a/spec.md` to `null`; `go-getter detect` prints `specTool`.
