@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "checkpointing",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     9
@@ -184,6 +184,74 @@
               }
             ],
             "body": "## Guardrail\n\nBefore a gated command, run `go-getter checkpoint create --label <what>`. Advisory (tier 1): nothing takes it for you. Restore with `go-getter checkpoint restore`.\n"
+          }
+        ]
+      }
+    },
+    "triggers": {
+      "gated-action": {
+        "decisions": [
+          {
+            "slug": "checkpoint-trigger-gated-action",
+            "title": "A checkpoint is taken before a gated command",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nThe pre-tool hook takes a checkpoint before any command in the gated catalog (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nForce-pushes, hard resets and recursive deletes cannot be undone from the host, and a checkpoint costs a few kilobytes (decision 0097).\n"
+          }
+        ]
+      },
+      "plan-step": {
+        "decisions": [
+          {
+            "slug": "checkpoint-trigger-plan-step",
+            "title": "A checkpoint is taken before a plan step starts",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\n`go-getter plan start` takes a checkpoint before it marks a step in progress (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nEvery step can then be rolled back to its start, for one more snapshot per step (decision 0097).\n"
+          }
+        ]
+      }
+    },
+    "retention": {
+      "10": {
+        "decisions": [
+          {
+            "slug": "checkpoint-retention",
+            "title": "The 10 newest checkpoints are kept",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nCheckpoints beyond the 10 newest are pruned when a new one is taken (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nSize stays bounded with nothing to clean up by hand (decision 0097).\n"
+          }
+        ]
+      },
+      "all": {
+        "decisions": [
+          {
+            "slug": "checkpoint-retention",
+            "title": "Every checkpoint is kept",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nCheckpoints are never pruned automatically (pack {{pack.id}}@{{pack.version}}); `go-getter checkpoint prune` removes them by hand.\n\n## Why\n\nNothing is lost, at the price of refs and the objects they keep alive accumulating (decision 0097).\n"
           }
         ]
       }

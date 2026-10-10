@@ -1,0 +1,21 @@
+---
+id: 0110-checkpoint-trigger-gated-action
+title: A checkpoint is taken before a gated command
+status: active
+date: 2026-10-10
+tags: [practice-packs, hooks]
+track: process
+accepted-by: sergemso
+go-getter:
+  generated-by: checkpointing@0.2.0
+  pack-answer: triggers
+  pack-option: [gated-action]
+---
+
+## Decision
+
+The pre-tool hook takes a checkpoint before any command in the gated catalog (pack checkpointing@0.2.0).
+
+## Why
+
+Force-pushes, hard resets and recursive deletes cannot be undone from the host, and a checkpoint costs a few kilobytes (decision 0097).

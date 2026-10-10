@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "hitl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     8
@@ -227,6 +227,24 @@
               }
             ],
             "body": "## Guardrail\n\nAsk the user before irreversible or outward-facing commands. Advisory (tier 1): nothing blocks them.\n"
+          }
+        ]
+      }
+    },
+    "extra-patterns": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "gated-extra-patterns",
+            "title": "Project-specific commands that also need a human are listed",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nCommands matching the extra patterns [{{answer.extra-patterns}}] also need a human, on top of the gated classes (pack {{pack.id}}@{{pack.version}}); an empty list adds none.\n\n## Why\n\nThe catalog cannot know a project's own deploy or release commands, so the project names them (decision 0094).\n"
           }
         ]
       }

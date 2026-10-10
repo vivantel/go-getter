@@ -2,12 +2,12 @@
   "schema": 1,
   "version": "0.2.0",
   "packs": {
-    "checkpointing": "0.1.0",
+    "checkpointing": "0.2.0",
     "context": "0.3.0",
     "cost-routing": "0.2.0",
     "git-workflow": "0.1.0",
     "governance": "0.3.0",
-    "hitl": "0.1.0",
+    "hitl": "0.2.0",
     "orchestration": "0.1.0",
     "telemetry": "0.1.0",
     "verification-gate": "0.3.0"

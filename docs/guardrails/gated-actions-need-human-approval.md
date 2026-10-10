@@ -2,7 +2,7 @@
 id: gated-actions-need-human-approval
 title: Irreversible and outward-facing commands need a human
 status: active
-date: 2026-10-09
+date: 2026-10-10
 tags: [practice-packs, hooks, guardrail]
 governed-by: 0095-gated-actions
 grounded-in: [0095-gated-actions, 0043-human-escalation]
@@ -12,7 +12,7 @@ go-getter:
     - tier: 2
       check: Host ask rules and the pre-tool hook gate these commands
       run: builtin:gate-command classes=irreversible,outward extra=""
-  generated-by: hitl@0.1.0
+  generated-by: hitl@0.2.0
   pack-answer: gated-classes
   pack-option: both
 ---

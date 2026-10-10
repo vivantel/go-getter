@@ -6,7 +6,7 @@ date: 2026-10-10
 tags: [practice-packs, hooks, procedural]
 operationalizes: [checkpoint-before-gated-action]
 go-getter:
-  generated-by: checkpointing@0.1.0
+  generated-by: checkpointing@0.2.0
   pack-answer: creation
   pack-option: hook-and-instruction
 ---
