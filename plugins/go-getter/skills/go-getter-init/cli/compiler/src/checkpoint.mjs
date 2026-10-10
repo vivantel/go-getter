@@ -97,3 +97,21 @@ export function restorePlan(project, ref) {
   for (let i = 0; i + 1 < parts.length; i += 2) changes.push({ status: parts[i], path: parts[i + 1] });
   return { ref, changes, createdSince: changes.filter((c) => c.status === 'A').map((c) => c.path) };
 }
+
+// The checkpoint a name refers to: a full ref, `latest`, or the newest whose label or ref contains the name. Null when none.
+export function resolveCheckpoint(project, name) {
+  const all = listCheckpoints(project);
+  if (!name || name === 'latest') return all[0]?.ref ?? null;
+  return (all.find((c) => c.ref === name || c.ref === `${CHECKPOINT_REF}/${name}`) ?? all.find((c) => c.label === name) ?? all.find((c) => c.ref.includes(name)))?.ref ?? null;
+}
+
+// Puts back the files modified or deleted since `ref`, in the working tree only: the index, HEAD and branches stay as
+// they are, and files created since are left in place. Returns { restored, createdSince }, or null outside a git repository.
+export function restoreCheckpoint(project, ref) {
+  const root = toplevel(project);
+  if (!root) return null;
+  const plan = restorePlan(project, ref);
+  const paths = plan.changes.filter((c) => c.status !== 'A').map((c) => c.path);
+  if (paths.length) git(root, ['--literal-pathspecs', 'restore', `--source=${ref}`, '--worktree', '--pathspec-from-file=-', '--pathspec-file-nul'], { input: paths.join('\0') });
+  return { restored: paths, createdSince: plan.createdSince };
+}

@@ -115,6 +115,7 @@
         "cli/compiler/src/commands/apply.mjs",
         "cli/compiler/src/commands/build.mjs",
         "cli/compiler/src/commands/check.mjs",
+        "cli/compiler/src/commands/checkpoint.mjs",
         "cli/compiler/src/commands/ci.mjs",
         "cli/compiler/src/commands/coverage.mjs",
         "cli/compiler/src/commands/detect.mjs",
