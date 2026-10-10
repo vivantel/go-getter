@@ -1,9 +1,9 @@
-// go-getter runbook build <guardrail-id> [--check]: spike, plan docs/plans/runbook-spike.md (decision 0104).
+// go-getter runbook build <guardrail-or-procedure-id> [--check]: spike, plan docs/plans/runbook-spike.md (decision 0104).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { buildRunbook, checkRunbook, runbookPath } from '../runbook.mjs';
 
-const USAGE = 'usage: go-getter runbook build <guardrail-id> [--check]';
+const USAGE = 'usage: go-getter runbook build <guardrail-or-procedure-id> [--check]';
 
 export default function runbookCommand({ args }) {
   const [sub, id, ...rest] = args;
