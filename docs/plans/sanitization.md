@@ -60,7 +60,7 @@ Result, 2026-10-10 (facts 0003-0008, "Session identity"): the pseudonym map is n
 
 Step 7 registers the end event on the four hosts that document one (a delete of the session's map file) and relies on the 24-hour sweep for Kilo and for a killed process, which no host documents a guarantee for.
 
-### 6 PII detectors — [ ]
+### 6 PII detectors — [x]
 Class: implement · Needs: 1 · Check: `node --test compiler/test/pii.test.mjs`
 Do: add `compiler/src/secrets/pii.mjs` with `piiFindings(text, { classes })`: `email`; `card` (13-19 digits with optional spaces or hyphens, Luhn-valid); `iban` (country code, two check digits, up to 30 alphanumerics, mod-97 equal to 1); opt-in `phone` (E.164-like with a leading `+` and 8-15 digits) and `national-id` (US SSN `ddd-dd-dddd` with area, group and serial rules). Each returns `{ kind, index, length }`.
 Done-when: the test shows a Luhn-valid test card and a valid IBAN match; the same digits with a wrong checksum, a timestamp, a port, a version string and a UUID do not; `phone` and `national-id` match only when listed.
