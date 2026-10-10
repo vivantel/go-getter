@@ -11,6 +11,7 @@ import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
+import { redactionRegexes } from './secrets/patterns.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -188,20 +189,6 @@ export function evaluatePreTool(project, payload, host) {
 // Tier-2 tool-output redaction (decision 0072): `go-getter hook post-tool` replaces secrets in a tool result with
 // REDACTED where the host can replace output (capability hooks.rewriteOutput). Heuristic, like every hook layer.
 export const REDACTED = '[redacted by go-getter]';
-// Built-in patterns: private-key blocks (to the end marker, or the end of a truncated output) and token prefixes.
-const KEY_BLOCK = '-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\\s\\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)';
-const BUILTIN = [
-  KEY_BLOCK,
-  '\\b(?:AKIA|ASIA)[0-9A-Z]{16}\\b', // AWS access key id
-  '\\bAIza[0-9A-Za-z_-]{35}', // Google API key
-  '\\bgh[pousr]_[A-Za-z0-9]{36,}', // GitHub tokens
-  '\\bgithub_pat_[A-Za-z0-9_]{22,}',
-  '\\bglpat-[A-Za-z0-9_-]{20,}', // GitLab
-  '\\bxox[abposr]-[A-Za-z0-9-]{10,}', // Slack
-  '\\bnpm_[A-Za-z0-9]{36}', // npm
-  '\\bsk-ant-[A-Za-z0-9_-]{20,}', // Anthropic
-  '\\bsk_live_[A-Za-z0-9]{20,}', // Stripe
-].map((s) => new RegExp(s, 'g'));
 // A value shorter than this (`true`, `3000`) is left alone: redacting it would scramble ordinary output.
 const MIN_VALUE = 8;
 const MAX_FILE = 256 * 1024;
@@ -259,7 +246,7 @@ export function redactText(text, values) {
     count += parts.length - 1;
     out = parts.join(REDACTED);
   }
-  for (const re of BUILTIN) {
+  for (const re of redactionRegexes()) {
     out = out.replace(re, () => {
       count++;
       return REDACTED;

@@ -20,7 +20,7 @@ Working rules: `docs/skills/working-a-change.md` (branch `type/slug`, PR, squash
 
 ## S2 — Secret scanning (governance 0.3.0)
 
-### 1 Shared pattern library — [ ]
+### 1 Shared pattern library — [x]
 Class: implement · Needs: none · Check: `node --test compiler/test/secret-patterns.test.mjs compiler/test/apply.test.mjs`
 Do: add `compiler/src/secrets/patterns.mjs` exporting the private-key block and token patterns now inlined in `compiler/src/hook.mjs` (`KEY_BLOCK`, `BUILTIN`), JWTs (`eyJ…` three base64url parts) and labelled assignments (`secret|token|password|passwd|api[_-]?key` followed by `=` or `:` and a value of at least 16 non-space characters), each with a `kind` (`private-key`, `aws`, `google`, `github`, `gitlab`, `slack`, `npm`, `anthropic`, `stripe`, `jwt`, `assignment`) and a `findings(text)` function that returns `[{ kind, index, length }]`. `hook.mjs` redaction imports it; its behavior and output do not change.
 Done-when: the test shows each kind matched on a sample and not on a near miss (a 15-character value after `token=`, a hash, a lockfile integrity string); the existing redaction tests pass unchanged.
