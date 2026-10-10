@@ -91,3 +91,4 @@ id,title,tags,status
 0096-enforcement-runs-a-vendored-cli,"apply copies the CLI into the project and the generated runner runs that copy before npx","packaging, nodejs, generated-files, enforcement",active
 0097-checkpoints-are-hidden-git-refs-taken-before-gated-actions,"A checkpoint is a hidden git ref taken by the pre-tool hook before a gated action, and the last 10 are kept","practice-packs, harness, hooks, enforcement",active
 0098-checkpoint-before-gated-action,"Work is checkpointed before a gated action","practice-packs, hooks, guardrail",active
+0099-git-workflow-pack-covers-branches-commits-and-prs,"The git-workflow pack covers branches, commits and pull requests, and one change is one branch and one PR","practice-packs, git-hooks, milestones",active
