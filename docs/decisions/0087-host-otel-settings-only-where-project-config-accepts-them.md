@@ -11,8 +11,6 @@ governed-facts: [0022-telemetry-record-and-recorder]
 
 ## Decision
 
-Drafted by an agent while the owner was away (plan step C.2); awaiting sign-off.
-
 - For the `host-otel` recording or the `otlp` export answer (0030), `apply` writes OpenTelemetry settings into project files only with setting names from vendor docs and where the host reads them from the project: today Gemini CLI (`telemetry.enabled`, `target: local`, `otlpEndpoint`, `otlpProtocol: http`, `logPrompts: false`). Claude Code and Codex accept them only in user or managed config, and the other hosts document no export; for them `apply` writes nothing and reports the host unavailable with the reason.
 - The endpoint is the adopted OTLP endpoint, else `http://localhost:4318` (a local collector, so the `host-otel` answer exports nothing off the machine by itself).
 - Hook events take token and cost fields only from fields the host documents in its hook payload: today Claude Code's resumed `SessionStart` (`context_tokens`, `prompt_cache_likely_expired`, `estimated_cache_write_usd`). Gemini CLI's `AfterModel` total token count is not split by cache state and is not recorded.

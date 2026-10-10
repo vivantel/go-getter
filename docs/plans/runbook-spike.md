@@ -38,7 +38,7 @@ Class: implement · Needs: 3 · Check: `node --test compiler/test/runbook.test.m
 Do: let a procedure declare what it rests on with an optional `uses:` list in its frontmatter (a list of artifact ids, each optionally `id#Heading` to take one section of that artifact; a plain id takes its body). Add `go-getter runbook build <procedure-id>`: the runbook is the procedure's steps, then each `uses` item inlined under its title (the named section only for `id#Heading`), then the guardrails it `operationalizes` as a short "Norms" list (their body, no steps copied). A procedure with no `uses` and no `operationalizes` builds to its steps alone. `check runbooks` covers both kinds; the guardrail-id form from step 1 is removed if step 5 shows it adds nothing.
 Done-when: the test shows a procedure with two `uses` items (one with `#Heading`) inlines the item and only that section; a procedure serving three guardrails builds once, not three times; a procedure with neither field builds; a dangling `uses` id or a missing heading fails with the id; the drift check fails after a used fact changes.
 
-### 5 Measure it on the SOPs — [ ]
+### 5 Measure it on the SOPs — [x]
 Class: review · Needs: 4 · Check: `npm run check:runbooks`
 Do: add `uses:` to `adding-a-host-agent` (fact 0002 section on the components, decision 0009 tiers, decision 0087) and to `adding-a-practice-pack`, build their runbooks, and measure each against the procedure plus the cited items read separately, both whole and by cited section. Count what the section selector costs to write and keep (a heading rename breaks the build, which is the drift check working). Record the table under Findings.
 Done-when: Findings holds the table and a paragraph on whether a selective runbook beats reading the procedure and fetching what it cites, and on the cost of the `uses:` field.
@@ -81,6 +81,22 @@ The owner's hypothesis (2026-10-10): a runbook covers a procedure that may serve
 - **Confirmed, SOPs have concrete dependencies.** `adding-a-host-agent` rests on fact 0002 (the 12 components), decision 0009 (the tiers) and decision 0087 (OpenTelemetry), but cites them only in prose; `operationalizes` is guardrail-only, so a builder cannot follow them.
 - **Not confirmed, that inlining saves tokens.** Inlining those three in full takes the procedure from 478 to 1,467 tokens (bodies only), three times the size, for an agent that needs one list from fact 0002. A runbook can only win by inlining the cited part, which nothing marks today.
 - **Not testable here, the diagnosis runbook** (symptom, cause, fix): no example exists in this repo, and it is closer to the playbook form (0104) and the v0.4 debugging work.
+
+## Procedure-centric measurements
+
+Step 5, 2026-10-10: `uses:` added to `adding-a-host-agent` (fact 0002, decision 0009 `#Decision`, decision 0087 `#Decision`) and `adding-a-practice-pack` (fact 0002, guardrail `practice-ships-only-after-self-adoption`). Tokens are characters divided by 4. "Procedure" is its body alone; "Cited" is the procedure plus the bodies of what it cites, whole; "Files" is every file read with its frontmatter.
+
+| Procedure | Procedure | Cited | Files | Runbook (sections) | vs cited | vs files |
+|---|---|---|---|---|---|---|
+| `adding-a-host-agent` | 478 | 1,467 | 1,789 | 1,305 | -11% | -27% |
+| `adding-a-practice-pack` | 508 | 755 | 1,045 | 858 | +14% | -18% |
+
+- **The runbook inlines far more than the procedure needs.** What `adding-a-host-agent` actually uses is the 12-component list, the tier list and the first bullet of 0087: about 313 tokens. The runbook adds about 830, so roughly 60% of the inlined material is unused even with section selectors. A section is too coarse; a useful selector would be a line or list range.
+- **The section selector reaches few artifacts.** 24 of 32 facts have no `##` heading at all, and fact 0002 (the one both procedures need) is a flat list, so it was taken whole. Decisions all have `## Decision`, but that section is often most of the body.
+- **The saving against the files an agent reads today is metadata again** (-18% to -27%); against the cited bodies the gain is -11% in one case and a loss in the other, since the runbook adds headings and a generated-by line.
+- **A copy spreads a source defect.** Decision 0087 is `active` but its `## Decision` section still said "awaiting sign-off"; the runbook copied the sentence into a file loaded on demand. Fixing the source made `check runbooks` fail until the runbook was rebuilt, so the drift check works, but every source correction costs a regeneration commit.
+- **What a runbook does give:** one read in place of four, and a guarantee that the cited items are included. What it costs: the `uses:` list to write and keep (five lines here), regeneration commits, and the extra tokens above.
+- **The structured link is the part with value on its own.** `uses:` lets a check find a dangling citation (prose citations such as "fact 0002" cannot be checked) and flag a procedure whose cited artifact changed, without generating or committing a second copy.
 
 ## Open items (not part of these steps)
 
