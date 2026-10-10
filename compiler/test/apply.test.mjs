@@ -218,3 +218,23 @@ test('the workflow keeps its branch where the remote does not name one, and quot
   assert.match(ciWorkflow({ branch: 'release,v2' }), /branches: \["release,v2"\]/);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('apply vendors the CLI, the runner uses it with npx unavailable, and a go-getter checkout gets no copy', () => {
+  const dir = project();
+  const plan = planApply(dir, { hosts: HOSTS, skills: false });
+  const vendored = Object.keys(plan.outputs).filter((p) => p.startsWith('.go-getter/cli/'));
+  assert.ok(vendored.includes('.go-getter/cli/compiler/bin/go-getter.mjs'));
+  assert.ok(vendored.includes('.go-getter/cli/package.json'));
+  assert.ok(vendored.some((p) => p.startsWith('.go-getter/cli/src/packs/')));
+  assert.ok(!vendored.some((p) => /\/test\//.test(p)), 'tests are not copied');
+  writeApply(dir, plan);
+  const bin = path.join(dir, 'fake-bin');
+  mkdirSync(bin);
+  writeFileSync(path.join(bin, 'npx'), '#!/bin/sh\necho "npm error code EALLOWGIT" >&2\nexit 1\n', { mode: 0o755 });
+  const res = spawnSync('sh', ['.go-getter/bin/go-getter', 'check'], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GO_GETTER_CLI: '' } });
+  assert.doesNotMatch(res.stderr, /EALLOWGIT|not enforced/);
+  assert.match(res.stdout, /go-getter check: \d+\/\d+ passed/);
+  assert.deepEqual(diffApply(dir, planApply(dir, { hosts: HOSTS, skills: false })), [], 'a second run is clean');
+  rmSync(dir, { recursive: true, force: true });
+  assert.deepEqual(Object.keys(planApply(repoRoot, { hosts: ['claude-code'], skills: false }).outputs).filter((p) => p.startsWith('.go-getter/cli/')), []);
+});

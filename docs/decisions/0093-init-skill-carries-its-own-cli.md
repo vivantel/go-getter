@@ -15,7 +15,7 @@ Draft from the owner's review of the first install in a second repository (2026-
 - **Run**: the skill runs `node <skill-dir>/cli/compiler/bin/go-getter.mjs <command>` from the project root. No network, npx or environment variable is involved, and the CLI version equals the skill version.
 - **Real files, no symlinks**: the copy is a normal part of the skill, so it travels with it through every install route: plugin caches, remote skill indexes (which list the files) and a plain copy of the skill directory.
 - **Project-local skills**: `apply --skills` copies the skill with its `cli/`, so a host without a plugin install keeps a working skill. The bundled CLI finds the plugin's skills from its own location.
-- **Out of scope**: the generated runner `.go-getter/bin/go-getter` still reaches the CLI through npx (pinned to the release tag), so hooks and the pre-push check still fail without blocking where npm disables git fetches. Making enforcement self-contained is a separate step (plan v0.2, open questions).
+- **Out of scope**: the generated runner `.go-getter/bin/go-getter` runs a copy of the CLI that `apply` vendors into the project (0096), not the skill's.
 
 ## Why
 

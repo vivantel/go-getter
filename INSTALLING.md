@@ -114,7 +114,8 @@ npx --yes github:vivantel/go-getter apply --remove
 
 ## When npx cannot fetch from GitHub
 
-This affects only the hooks, not setup. The generated runner `.go-getter/bin/go-getter` (called by every host hook and the pre-push hook) runs the CLI through `npx --yes github:vivantel/go-getter`, pinned to the release tag of the version that wrote it (an unreleased build is unpinned). If npm refuses the fetch (for example `EALLOWGIT` where git dependencies are disabled), the hook fails without blocking, enforcement does not run for that call, and the runner says so. Two ways out:
+This affects only the hooks, not setup. `go-getter apply` copies the CLI into `.go-getter/cli/` (decision 0096), and the generated runner `.go-getter/bin/go-getter` (called by every host hook and the pre-push hook) runs that copy, so enforcement needs no network. The runner falls back to `npx --yes github:vivantel/go-getter`, pinned to the release tag of the version that wrote it, only when the copy is missing, for example in a project set up before 0096. If npm then refuses the fetch (for example `EALLOWGIT` where git dependencies are disabled), the hook fails without blocking, enforcement does not run for that call, and the runner says so. Ways out:
 
-- Set `GO_GETTER_CLI` to `compiler/bin/go-getter.mjs` of a go-getter checkout (in your shell profile, or in the host's `env` setting for the project). The runner then runs that file and never calls npx.
+- Run `go-getter apply` again from the bundled CLI to write the copy.
+- Set `GO_GETTER_CLI` to `compiler/bin/go-getter.mjs` of a go-getter checkout (in your shell profile, or in the host's `env` setting for the project). The runner runs that file before the copy and never calls npx.
 - Allow git fetches for npm, preferably for one command or session only: `npm_config_allow_git=all`.

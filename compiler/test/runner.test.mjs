@@ -64,3 +64,18 @@ test('a denial from the CLI passes through unchanged, with its stdin and no hint
   assert.doesNotMatch(res.stderr, /not enforced/);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('the CLI copy in .go-getter/cli runs before npx, and GO_GETTER_CLI before the copy', () => {
+  const { dir, run } = setup('0.1.0', 'echo npx-was-called >&2; exit 1');
+  const vendored = path.join(dir, '.go-getter/cli/compiler/bin');
+  spawnSync('mkdir', ['-p', vendored]);
+  writeFileSync(path.join(vendored, 'go-getter.mjs'), 'console.log(`vendored:${process.argv.slice(2).join(" ")}`);');
+  const res = run(['check']);
+  assert.equal(res.status, 0);
+  assert.equal(res.stdout.trim(), 'vendored:check');
+  assert.doesNotMatch(res.stderr, /npx-was-called/);
+  const override = path.join(dir, 'override.mjs');
+  writeFileSync(override, 'console.log("override");');
+  assert.equal(run(['check'], { GO_GETTER_CLI: override }).stdout.trim(), 'override');
+  rmSync(dir, { recursive: true, force: true });
+});

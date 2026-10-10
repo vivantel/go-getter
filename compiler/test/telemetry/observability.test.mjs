@@ -43,7 +43,7 @@ test('host-otel emits Gemini CLI settings and marks every other host unavailable
   const gemini = JSON.parse(plan.outputs['.gemini/settings.json'].content);
   assert.deepEqual(gemini.telemetry, { outfile: 'keep.log', enabled: true, target: 'local', otlpEndpoint: DEFAULT_ENDPOINT, otlpProtocol: 'http', logPrompts: false });
   assert.equal(gemini.ui.theme, 'x', 'unrelated settings are kept');
-  const others = Object.entries(plan.outputs).filter(([p, o]) => p !== '.gemini/settings.json' && 'content' in o);
+  const others = Object.entries(plan.outputs).filter(([p, o]) => p !== '.gemini/settings.json' && !p.startsWith('.go-getter/cli/') && 'content' in o);
   assert.ok(!others.some(([, o]) => /OTEL_|ENABLE_TELEMETRY|\[otel\]/.test(o.content)), 'nothing written for unavailable hosts');
   writeApply(dir, plan);
   assert.deepEqual(diffApply(dir, planApply(dir, { hosts: HOSTS, skills: false })), [], 'a second run is clean');
