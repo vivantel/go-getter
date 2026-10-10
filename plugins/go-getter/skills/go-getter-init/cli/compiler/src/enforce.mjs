@@ -9,6 +9,10 @@ import { cleanGitEnv } from './git-env.mjs';
 
 const BUILTIN_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'checks', 'builtin');
 
+// Where a tier-3 check runs. `ci` runs every entry; an entry with no `stages` runs before a push.
+export const STAGES = ['pre-commit', 'pre-push', 'ci'];
+export const inStage = (entry, stage) => !stage || stage === 'ci' || (entry.stages ?? ['pre-push']).includes(stage);
+
 export function collectEnforcement(project) {
   return readArtifacts(project, ['guardrails'])
     .filter((g) => g.data.status === 'active')
@@ -19,6 +23,7 @@ export function collectEnforcement(project) {
         tier: e.tier,
         check: e.check,
         run: e.run,
+        stages: Array.isArray(e.stages) ? e.stages.map(String) : undefined,
         parsed: e.run ? parseRun(e.run) : null,
       })),
     );
@@ -31,11 +36,12 @@ export async function runBuiltin(project, parsed) {
   return mod.default({ project, args: parsed.args });
 }
 
-export async function runTier3(project, { onlyGuardrail } = {}) {
+export async function runTier3(project, { onlyGuardrail, stage } = {}) {
   const results = [];
   for (const e of collectEnforcement(project)) {
     if (e.tier !== 3 || !e.parsed) continue;
     if (onlyGuardrail && e.guardrail !== onlyGuardrail) continue;
+    if (!inStage(e, stage)) continue;
     let result;
     if (e.parsed.kind === 'builtin') result = await runBuiltin(project, e.parsed);
     else {

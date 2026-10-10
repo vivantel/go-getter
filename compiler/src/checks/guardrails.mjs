@@ -14,6 +14,10 @@ export function guardrailProblems(guardrails) {
       if (![1, 2, 3].includes(e?.tier)) problems.push(`${g.file}: enforcement[${i}].tier must be 1, 2 or 3`);
       if (typeof e?.check !== 'string' || !e.check.trim()) problems.push(`${g.file}: enforcement[${i}].check is required`);
       if ([2, 3].includes(e?.tier) && (typeof e.run !== 'string' || !e.run.trim())) problems.push(`${g.file}: enforcement[${i}] tier ${e.tier} needs run`);
+      if (e?.stages !== undefined) {
+        const ok = Array.isArray(e.stages) && e.stages.length > 0 && e.stages.every((x) => ['pre-commit', 'pre-push'].includes(x));
+        if (e.tier !== 3 || !ok) problems.push(`${g.file}: enforcement[${i}].stages is for tier 3 and lists pre-commit and/or pre-push`);
+      }
     });
     if (entries.every((e) => e?.tier === 1) && !/advisory/i.test(g.body)) {
       problems.push(`${g.file}: tier-1-only guardrail must say it is advisory`);
