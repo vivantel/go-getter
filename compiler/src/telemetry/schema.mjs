@@ -7,6 +7,7 @@ const num = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 
 export const OUTCOMES = ['allowed', 'denied', 'pass', 'fail', 'blocked', 'escalated'];
 export const TOKEN_FIELDS = ['input', 'cacheRead', 'cacheWrite', 'output'];
+export const MASK_KINDS = ['secret', 'email', 'card', 'iban', 'phone', 'national-id'];
 
 export const FIELDS = {
   ts: (v) => typeof v === 'string' && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString() === v,
@@ -21,6 +22,8 @@ export const FIELDS = {
   outcome: (v) => OUTCOMES.includes(v),
   escalations: count,
   redactions: count,
+  // Counts per kind of what a post-tool event masked (kinds, never content).
+  masked: (v) => v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0 && Object.entries(v).every(([k, n]) => MASK_KINDS.includes(k) && count(n)),
 };
 
 export function validateRecord(record) {

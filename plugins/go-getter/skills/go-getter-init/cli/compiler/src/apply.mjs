@@ -214,8 +214,9 @@ const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 
 // Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook <event> --host <id>`.
 // `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: knowledge base present (session-start nudges).
+// `pii`: the project masks PII in tool output (post-tool hook, and a session-end hook where the host has one, decision 0106).
 // `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
-export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, read = (rel) => readJson(project, rel)) {
+export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, pii = false, read = (rel) => readJson(project, rel)) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the
   // runtime as --project. Without a runner the hook warns and lets the call through (fail open, decision 0019).
   // The script is wrapped in `sh -c '...'` so it also works for a host that executes the command without a shell;
@@ -230,53 +231,59 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   const caps = packageCapabilities();
   const canStop = (host) => stop && caps[host]?.hooks.blockStop === true;
   // Tool-output redaction rides on the restricted-path guardrails, where the host can replace output (hooks.rewriteOutput).
-  const canRedact = (host) => enabled && caps[host]?.hooks.rewriteOutput === true;
+  const canRedact = (host) => (enabled || pii) && caps[host]?.hooks.rewriteOutput === true;
+  // The pseudonym map is deleted when a session ends, on the hosts that document such an event (facts 0003-0008).
+  const canEnd = (host) => pii && canRedact(host);
   // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
-  const wanted = (rel) => enabled || session || stop || existsSync(path.join(project, rel));
+  const wanted = (rel, host) => enabled || session || stop || (pii && canRedact(host)) || existsSync(path.join(project, rel));
   const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
   const plain = (host, event) => ({ hooks: [{ type: 'command', command: cmd(host, event) }] });
   // Sets or removes each of go-getter's events: [keys, entry-or-null].
   const events = (obj, list) => list.reduce((acc, [keys, entry]) => setEvent(acc, keys, entry), obj);
   for (const host of hosts) {
-    if (host === 'claude-code' && wanted('.claude/settings.json')) {
+    if (host === 'claude-code' && wanted('.claude/settings.json', host)) {
       out['.claude/settings.json'] = json(events(read('.claude/settings.json'), [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
         [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
+        [['hooks', 'SessionEnd'], canEnd(host) ? plain(host, 'session-end') : null],
         [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
       ]));
     }
-    if (host === 'codex' && wanted('.codex/hooks.json')) {
+    if (host === 'codex' && wanted('.codex/hooks.json', host)) {
       out['.codex/hooks.json'] = json(events(read('.codex/hooks.json'), [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
         [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
+        [['hooks', 'SessionEnd'], canEnd(host) ? plain(host, 'session-end') : null],
         [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
       ]));
     }
-    if (host === 'gemini-cli' && wanted('.gemini/settings.json')) {
+    if (host === 'gemini-cli' && wanted('.gemini/settings.json', host)) {
       out['.gemini/settings.json'] = json(events(read('.gemini/settings.json'), [
         [['hooks', 'BeforeTool'], enabled ? ccLike(host) : null],
         [['hooks', 'AfterTool'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
+        [['hooks', 'SessionEnd'], canEnd(host) ? plain(host, 'session-end') : null],
         [['hooks', 'AfterAgent'], canStop(host) ? plain(host, 'stop') : null],
       ]));
     }
-    if (host === 'cursor' && wanted('.cursor/hooks.json')) {
+    if (host === 'cursor' && wanted('.cursor/hooks.json', host)) {
       out['.cursor/hooks.json'] = json({ version: 1, ...events(read('.cursor/hooks.json'), [
         [['hooks', 'preToolUse'], enabled ? { command: cmd(host) } : null],
         [['hooks', 'sessionStart'], session ? { command: cmd(host, 'session-start') } : null],
         [['hooks', 'stop'], canStop(host) ? { command: cmd(host, 'stop') } : null],
       ]) });
     }
-    if (host === 'copilot' && (enabled || session)) {
+    if (host === 'copilot' && (enabled || session || (pii && canRedact(host)))) {
       const hooks = {};
       if (enabled) hooks.preToolUse = [{ type: 'command', bash: cmd(host), timeoutSec: 30 }];
       if (canRedact(host)) hooks.postToolUse = [{ type: 'command', bash: cmd(host, 'post-tool'), timeoutSec: 30 }];
       if (session) hooks.sessionStart = [{ type: 'command', bash: cmd(host, 'session-start'), timeoutSec: 30 }];
+      if (canEnd(host)) hooks.sessionEnd = [{ type: 'command', bash: cmd(host, 'session-end'), timeoutSec: 30 }];
       out['.github/hooks/go-getter.json'] = json({ version: 1, hooks });
     }
-    if ((host === 'kilo' || host === 'opencode') && enabled) {
+    if ((host === 'kilo' || host === 'opencode') && (enabled || canRedact(host))) {
       out[caps[host].hooks.config] = {
         content: `// Generated by go-getter apply; do not edit. Routes tool calls through go-getter's hook runtime (tier 2).
 import { spawnSync } from 'node:child_process';
@@ -307,7 +314,7 @@ export const GoGetter = async () => ({
     const root = findRoot(process.cwd());
     if (!root) return;
     const res = spawnSync('sh', [path.join(root, RUNNER), 'hook', 'post-tool', '--host', '${host}', '--project', root], {
-      input: JSON.stringify({ tool_name: input.tool, tool_response: output.output }),
+      input: JSON.stringify({ tool_name: input.tool, tool_response: output.output, session_id: input.sessionID }),
       encoding: 'utf8',
     });
     try {
@@ -405,7 +412,9 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   const entries = collectEnforcement(project);
   const tier2 = entries.some((e) => e.tier === 2);
   const isGate = (e) => e.parsed?.kind === 'builtin' && e.parsed.id === 'verify-gate';
-  const preTool = entries.some((e) => e.tier === 2 && !isGate(e));
+  const isPii = (e) => e.parsed?.kind === 'builtin' && e.parsed.id === 'redact-pii';
+  const preTool = entries.some((e) => e.tier === 2 && !isGate(e) && !isPii(e));
+  const pii = entries.some((e) => e.tier === 2 && isPii(e));
   const stop = entries.some((e) => e.tier === 2 && isGate(e));
   const tier3 = entries.some((e) => e.tier === 3);
   const outputs = { [RUNNER]: { content: runnerScript(packageVersion(packageRoot)), mode: 0o755 } };
@@ -457,7 +466,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     names.add('AGENTS.md');
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
-  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, read);
+  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, pii, read);
   for (const p of Object.keys(hookOutputs)) if (SHARED_HOOK_FILES.includes(p)) remember(p);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {
