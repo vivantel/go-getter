@@ -96,3 +96,4 @@ id,title,tags,status
 0101-change-unit,"One change is one branch and one pull request","practice-packs, git-hooks, guardrail",active
 0102-default-branch,"The default branch takes no direct work","practice-packs, git-hooks, guardrail",active
 0103-refs-trailers,"Refs trailers are encouraged","practice-packs, git-hooks, guardrail",active
+0104-behavior-is-a-layer-over-knowledge-artifacts,"Behavior is a layer over the four artifact types, split into pure and derived, and derived forms are compiled from knowledge","knowledge-management, generated-files, roadmap",active
