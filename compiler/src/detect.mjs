@@ -1,6 +1,7 @@
 // Repository detection probes (plan 4.2): facts the init interview prefills instead of asking.
 // Output is deterministic: sorted arrays, null when unknown.
 import { defaultBranch } from './git-env.mjs';
+import { detectSpecTool } from './spec-tools.mjs';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -221,6 +222,7 @@ export function detect(root) {
     hostAgents,
     agentFiles,
     knowledgeBase: has(root, 'docs/decisions') || has(root, 'docs/facts'),
+    specTool: detectSpecTool(root),
     sensitivePaths: sorted(sensitivePaths),
     git: { defaultBranch: defaultBranchName, defaultBranchKnown: branch.known, remoteHost },
   };
