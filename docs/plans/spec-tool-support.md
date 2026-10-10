@@ -25,7 +25,7 @@ Class: implement · Needs: none · Check: `node --test compiler/test/spec-tools.
 Do: add `compiler/src/spec-tools.mjs` exporting the table (OpenSpec row: id, detection markers, live and archived change-folder patterns) and `detectSpecTool(root)`, `changeOfPath(path)` (returns `{ tool, id, folder, archived }` or `null`) and `changesTouched(paths)`. Report `specTool` from `compiler/src/detect.mjs`.
 Done-when: the test shows a fixture with `openspec/config.yaml` detected, one without `openspec/` not; `changeOfPath` resolves `openspec/changes/add-x/proposal.md`, `openspec/changes/add-x/specs/a/spec.md` and `openspec/changes/archive/2026-10-10-add-x/tasks.md` to the folder and id (the archived id without the date), and `openspec/specs/a/spec.md` to `null`; `go-getter detect` prints `specTool`.
 
-### 2 Refs and attribute — [ ]
+### 2 Refs and attribute — [x]
 Class: implement · Needs: 1 · Check: `node --test compiler/test/refs.test.mjs`
 Do: in `compiler/src/refs.mjs` add each touched change folder to the must-have group with the reason "change folder touched in this diff", and a branch-slug match to an existing change id to the nice-to-have group. Update `skills/attribute/SKILL.md` so a change folder is a valid `Refs:` target (repo-relative path), keeping the `Refs:` rule that no issue numbers replace the trailer; regenerate the plugin copy with `npm run build`.
 Done-when: the test shows a diff touching `openspec/changes/add-x/tasks.md` lists the folder as must-have, an archived change by its archive path, a branch `feat/add-y` with an untouched existing `add-y` lists it as nice-to-have only, and a repository without the tool is unchanged.
