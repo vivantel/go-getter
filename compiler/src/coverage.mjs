@@ -43,7 +43,10 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
     const inHost = Object.fromEntries(
       hosts.map((h) => [h, entries.some((e) => e.tier === 2) && (caps[h]?.tiers?.[String(c)] ?? 2) >= 2 ? 2 : null]),
     );
-    return { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers, inHost };
+    const row = { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers, inHost };
+    // The host's own restore command for what its native checkpoint covers (file edits), beside `go-getter checkpoint restore`.
+    if (c === 9) row.nativeRestore = Object.fromEntries(hosts.filter((h) => caps[h]?.checkpointRestore).map((h) => [h, caps[h].checkpointRestore]));
+    return row;
   });
 }
 
@@ -55,5 +58,9 @@ export function formatCoverage(rows, hosts = HOSTS) {
   const cell = (r, h) => (r.tiers[h] === 3 && r.inHost?.[h] === 2 ? 'hook+ci' : r.tiers[h] ? LABEL[r.tiers[h]] : '-');
   const body = rows.map((r) => [`${r.component} ${r.name}`, r.packs.length ? r.packs.join(', ') : 'none', ...hosts.map((h) => cell(r, h))]);
   const widths = header.map((_, i) => Math.max(...[header, ...body].map((row) => row[i].length)));
-  return [header, ...body].map((row) => row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd()).join('\n');
+  const table = [header, ...body].map((row) => row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd()).join('\n');
+  const checkpoints = rows.find((r) => r.component === 9);
+  if (!checkpoints?.packs.length) return table;
+  const native = Object.entries(checkpoints.nativeRestore ?? {}).map(([h, cmd]) => `${h} ${cmd}`);
+  return `${table}\n\nRestore (component 9): go-getter checkpoint restore on every host${native.length ? `; native, for file edits: ${native.join(', ')}` : ''}.`;
 }

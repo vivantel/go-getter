@@ -60,7 +60,7 @@
     "6": 1,
     "7": 2,
     "8": 2,
-    "9": 1,
+    "9": 2,
     "10": 2,
     "11": 2,
     "12": 1
@@ -69,6 +69,7 @@
     "Kilo Code CLI is a fork of OpenCode that uses kilo.json[c] and .kilo/ instead of opencode.json and .opencode/ (fact 0005); its plugin directory is .kilo/plugin/ (fact 0031); the other subdirectory names under .kilo/ are assumed to mirror OpenCode's and are unconfirmed.",
     "Plugins run under Bun; argument mutation for routing unconfirmed.",
     "Effort via model variants.",
-    "Remote skills: skills.urls serving plugins/go-getter/skills/index.json."
+    "Remote skills: skills.urls serving plugins/go-getter/skills/index.json.",
+    "Component 9 tier 2: the pre-tool hook takes the checkpoint before a gated command (decision 0097); the host has no native checkpoint."
   ]
 }

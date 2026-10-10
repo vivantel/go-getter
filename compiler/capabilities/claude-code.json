@@ -73,6 +73,7 @@
   },
   "sandbox": true,
   "checkpointing": true,
+  "checkpointRestore": "/rewind",
   "nodeAtRuntime": false,
   "tiers": {
     "3": 2,

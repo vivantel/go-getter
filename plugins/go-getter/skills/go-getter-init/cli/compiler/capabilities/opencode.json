@@ -60,13 +60,14 @@
     "6": 1,
     "7": 2,
     "8": 2,
-    "9": 1,
+    "9": 2,
     "10": 2,
     "11": 2,
     "12": 1
   },
   "notes": [
     "Plugins run under Bun; argument mutation for routing unconfirmed.",
-    "Effort via model variants."
+    "Effort via model variants.",
+    "Component 9 tier 2: the pre-tool hook takes the checkpoint before a gated command (decision 0097); the host has no native checkpoint."
   ]
 }

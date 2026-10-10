@@ -99,3 +99,15 @@ test('fact 0009 row for component 8 equals the capabilities tiers', () => {
   const order = ['claude-code', 'codex', 'kilo', 'opencode', 'cursor', 'gemini-cli', 'copilot'];
   assert.deepEqual(cells, order.map((h) => caps[h].tiers['8']));
 });
+
+test('component 9 shows a tier per host, and the restore line names the commands', () => {
+  const caps = loadCapabilities(root);
+  const rows = coverage(root, { checkpointing: loadPack(path.join(root, 'src/packs/checkpointing/pack.json')) }, caps);
+  const nine = rows.find((r) => r.component === 9);
+  assert.deepEqual(nine.packs, ['checkpointing@0.1.0']);
+  assert.deepEqual(nine.tiers, { 'claude-code': 2, codex: 2, kilo: 2, opencode: 2, cursor: 2, 'gemini-cli': 2, copilot: 1 });
+  assert.deepEqual(nine.nativeRestore, { 'claude-code': '/rewind', 'gemini-cli': '/restore' });
+  const text = formatCoverage(rows);
+  assert.match(text, /Restore \(component 9\): go-getter checkpoint restore on every host; native, for file edits: claude-code \/rewind, gemini-cli \/restore\./);
+  assert.doesNotMatch(formatCoverage(coverage(root, {}, caps)), /Restore \(component 9\)/);
+});

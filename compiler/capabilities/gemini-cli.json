@@ -59,6 +59,7 @@
   },
   "sandbox": true,
   "checkpointing": true,
+  "checkpointRestore": "/restore",
   "nodeAtRuntime": true,
   "tiers": {
     "3": 2,
