@@ -1,10 +1,11 @@
 ---
 id: 0087-host-otel-settings-only-where-project-config-accepts-them
 title: apply writes host OpenTelemetry settings only where a host's project config accepts them, and fills token and cost fields only from documented hook data
-status: draft
+status: active
 date: 2026-10-06
 tags: [observability, cost, enforcement]
 track: product
+accepted-by: sergemso
 governed-facts: [0022-telemetry-record-and-recorder]
 ---
 

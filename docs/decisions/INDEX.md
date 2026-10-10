@@ -19,7 +19,6 @@ id,title,tags,status
 0020-routing-runtime-mechanism,"Routing runs as compiled per-role defaults plus a delegation-time router hook, with hook-gated bounded escalation","model-routing, hooks, enforcement, cost",active
 0021-neutral-source-and-output-layout,"Neutral source, compiler and per-host output layout","architecture, compiler, generated-files, packaging",active
 0022-pack-schema-and-enforcement-run-grammar,"Practice packs are JSON files with questions, options and per-answer artifact templates; enforcement runs use a builtin-or-command grammar","practice-packs, interview, enforcement, configuration",active
-0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",active
 0024-dogfood-workflow-with-own-plugin,"This repo runs its knowledge-base workflow through its own go-getter plugin, with capture, conform and attribute on every PR","dogfooding, knowledge-management, git-hooks",active
 0025-shared-tier-2-hook-runtime,"Every host's hooks call one shared go-getter hook runtime instead of host-specific rule logic","enforcement, hooks, architecture",active
 0026-typed-pack-answers-and-detect-values,"Pack questions can take typed free-text and list answers, and templates can use detected values","practice-packs, interview, configuration",active
@@ -70,7 +69,7 @@ id,title,tags,status
 0071-verification-checks-run-locally-or-in-ci,"Each verification check runs locally, in CI or both, so thin dev machines run only the cheap ones","verification, ci, harness, practice-packs",active
 0072-restricted-paths-have-access-modes,"Restricted paths have access modes deny, use and sink, enforced in layers that state where they stop","governance, security, enforcement, hooks",active
 0075-spec-tools-are-detected-and-tolerated,"Spec and change tools such as OpenSpec are detected and tolerated, not wrapped by a pack","roadmap, tooling, practice-packs",active
-0076-watcher-noise,"Watchers are quiet","practice-packs, harness, cost",draft
+0076-watcher-noise,"Watchers are quiet","practice-packs, harness, cost",active
 0077-restricted-path-modes,"Restricted paths have an access mode, deny unless listed","practice-packs, governance, security",active
 0078-verification-format-command,"The verification format command is """"","practice-packs, verification, harness",active
 0079-verification-static-analysis-command,"The verification static-analysis command is """"","practice-packs, verification, harness",active
@@ -79,14 +78,14 @@ id,title,tags,status
 0082-verification-integration-command,"The verification integration command is """"","practice-packs, verification, harness",active
 0083-verification-e2e-command,"The verification e2e command is """"","practice-packs, verification, harness",active
 0084-verification-machine-profile,"Cheap checks run locally, slow checks only in CI (thin machine profile)","practice-packs, verification, harness, ci",active
-0085-pack-questions-added-later-declare-since,"A pack question added in a later version declares `since` and falls back to its default or recommended option","practice-packs, interview, configuration",draft
-0086-calibration-proposals-take-effect-when-activated,"Routing calibration proposals are draft decisions whose data routing reads only once a human activates them","model-routing, cost, observability",draft
-0087-host-otel-settings-only-where-project-config-accepts-them,"apply writes host OpenTelemetry settings only where a host's project config accepts them, and fills token and cost fields only from documented hook data","observability, cost, enforcement",draft
+0085-pack-questions-added-later-declare-since,"A pack question added in a later version declares `since` and falls back to its default or recommended option","practice-packs, interview, configuration",active
+0086-calibration-proposals-take-effect-when-activated,"Routing calibration proposals are draft decisions whose data routing reads only once a human activates them","model-routing, cost, observability",active
+0087-host-otel-settings-only-where-project-config-accepts-them,"apply writes host OpenTelemetry settings only where a host's project config accepts them, and fills token and cost fields only from documented hook data","observability, cost, enforcement",active
 0089-apply-records-ownership-in-a-manifest,"apply records what it owns in .go-getter/manifest.json and never overwrites or removes a modified owned item without --force","generated-files, enforcement, configuration",active
 0090-update-and-remove-work-from-the-manifest,"go-getter update re-renders from recorded answers, apply --remove undoes generated output outside docs, and drift is surfaced at session start and by apply --check","generated-files, configuration, dogfooding",active
 0091-decisions-activate-on-acceptance-or-adoption,"A decision stays draft until the owner accepts it or it is adopted, whichever comes first; committing it is not adoption","knowledge-management, dogfooding",active
 0092-pack-rendered-drafts-count-as-adopted,"update and reconfigure treat pack-rendered artifacts that are still draft as adopted","generated-files, configuration",active
-0093-init-skill-carries-its-own-cli,"The go-getter-init skill carries a copy of the CLI and runs it from its own directory, not through npx","packaging, nodejs, tooling, generated-files",draft
+0093-init-skill-carries-its-own-cli,"The go-getter-init skill carries a copy of the CLI and runs it from its own directory, not through npx","packaging, nodejs, tooling, generated-files",active
 0094-gated-actions-need-human-approval,"Irreversible and outward-facing commands need a human, through native ask rules where they can be tested and a hook hand-over elsewhere","harness, hooks, enforcement, practice-packs",active
 0095-gated-actions,"Gated actions need a human","practice-packs, hooks, guardrail",active
 0096-enforcement-runs-a-vendored-cli,"apply copies the CLI into the project and the generated runner runs that copy before npx","packaging, nodejs, generated-files, enforcement",active

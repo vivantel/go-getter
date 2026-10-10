@@ -20,7 +20,7 @@ tags: [host-agents, compiler, harness, procedural]
    
    Record what you could not confirm; do not drop it.
 2. **Write the capabilities manifest**, `compiler/capabilities/<host>.json`, from the fact: features present and the enforcement tier (0009) reachable per harness component.
-   Add the host to `compiler/src/telemetry/otel.mjs`: its project OpenTelemetry settings, or the reason it has none (draft 0087).
+   Add the host to `compiler/src/telemetry/otel.mjs`: its project OpenTelemetry settings, or the reason it has none (decision 0087).
 3. **Find symlink opportunities.** For each output, check whether the native file is byte-identical to one already emitted; if so, emit a symlink (with the copy-mode fallback).
 4. **Write the adapter**, `compiler/adapters/<host>.mjs`, emitting native files from neutral source. Where a feature is missing, fall back to the next tier down and mark the output advisory for that host.
 5. **Add golden output** for the host under the compiler tests and run `npm run check:generated`.

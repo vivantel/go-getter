@@ -1,10 +1,11 @@
 ---
 id: 0085-pack-questions-added-later-declare-since
 title: A pack question added in a later version declares `since` and falls back to its default or recommended option
-status: draft
+status: active
 date: 2026-10-06
 tags: [practice-packs, interview, configuration]
 track: process
+accepted-by: sergemso
 ---
 
 ## Decision

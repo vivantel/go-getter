@@ -1,4 +1,4 @@
-// Host OpenTelemetry settings (draft decision 0087): written for the `host-otel` recording or the `otlp` export answer,
+// Host OpenTelemetry settings (decision 0087): written for the `host-otel` recording or the `otlp` export answer,
 // only where the host's project config accepts them. Setting names come from vendor docs; any other host is reported
 // unavailable with the reason, and nothing is written for it.
 import { adoptedData } from '../governance.mjs';
