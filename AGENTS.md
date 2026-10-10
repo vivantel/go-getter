@@ -18,10 +18,10 @@ Decisions, facts, guardrails and procedures live in `docs/` in the knowledge-bas
 
 Read the guardrails in `docs/guardrails/` before changing code they govern.
 
-## Workflow (interim, until the git-workflow pack replaces it — decision 0068)
+## Workflow
 
-- Never push to `master`. Short-lived branch `type/slug` → PR → squash merge.
-- Conventional Commit titles; `Refs:` trailers to the `docs/` artifacts a change implements.
+Branches, commits and PRs follow `docs/skills/working-a-change.md` (pack `git-workflow`: `type/slug` branches, no work on `master`, Conventional Commit titles, squash merge with green CI). Add `Refs:` trailers to the `docs/` artifacts a change implements.
+
 - One git worktree per parallel task: `git worktree add ../go-getter-wt/<slug> -b <branch>`.
 
 Before every PR (use this repo's own go-getter plugin skills):

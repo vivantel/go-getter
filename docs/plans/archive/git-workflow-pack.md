@@ -26,13 +26,13 @@ Class: implement · Needs: 1 · Check: `npm run check:packs`
 Do: add `src/packs/git-workflow/pack.json` (id `git-workflow`, family sdlc, no components), questions `branch-pattern` (text, default `type/slug`), `default-branch` (protect / instruction only, protect recommended) and `refs` (encouraged recommended, required, off), each option with a tradeoff and exactly one recommended. Outputs: a decision per answer, guardrails `branch-names-follow-the-pattern` and `no-commits-on-the-default-branch` (tier 3 `builtin:branch-name`, `builtin:not-on-default-branch`; tier 1 instruction), a `refs-trailers` guardrail only when the answer is `required` (a `builtin:commit-message` check for the trailer), a host-neutral procedure `docs/skills/working-a-change.md`, and the golden fixture and an eval case as in `docs/skills/adding-a-practice-pack.md`.
 Done-when: `npm run check:packs` passes; the golden fixture shows the artifacts of the recommended path; `render-pack git-workflow --dry-run` lists them.
 
-### 3 Adopt it in this repo — [ ]
+### 3 Adopt it in this repo — [x]
 Class: implement · Needs: 2 · Check: `npm run check:self-adoption && npm run check:generated && npm test`
-Progress 2026-10-10: the pack was rendered here in step 2 (the self-adoption check requires it) and the hand-written `commit-subjects-are-conventional` was replaced by the pack's. Left: replace the interim sections.
+Progress 2026-10-10: done. The pack was rendered here in step 2 (the self-adoption check requires it), the hand-written `commit-subjects-are-conventional` was replaced by the pack's, and the interim sections of `AGENTS.md` and the v0.2 plan now point at `docs/skills/working-a-change.md`.
 Do: `go-getter render-pack git-workflow` here with the recommended answers (`accepted-by: sergemso`), then `apply` and `npm run build`. Replace the "Workflow (interim)" section of `AGENTS.md` and the working rules in the v0.2 plan with a pointer to the rendered procedure, keeping `AGENTS.md` within 150 lines. Reconcile `commit-subjects-are-conventional` with the pack (one statement, one job: keep one of the two) and keep decision 0024's local rule.
 Done-when: `check:self-adoption` reports 9 packs adopted; pushing a branch named `wip` through the pre-push hook fails; `apply --check` is clean.
 
-### 4 Docs, coverage and lint — [ ]
+### 4 Docs, coverage and lint — [x]
 Class: review · Needs: 3 · Check: `npm run check:plans`
 Do: add the pack to the README pack table and INSTALLING.md, run `go-getter:lint`, record the unconfirmed host behavior as facts, mark L.1 done in the v0.2 plan's backlog and move this plan to `docs/plans/archive/` with its INDEX row.
 Done-when: lint reports no new errors; the README lists nine packs; this plan is fully `[x]` and archived.
