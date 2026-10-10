@@ -4,9 +4,7 @@ title: Procedure for adding a practice pack
 status: active
 date: 2026-10-04
 tags: [practice-packs, interview, dogfooding, procedural]
-uses:
-  - 0002-agent-harness-and-host-agent-terminology
-  - practice-ships-only-after-self-adoption
+grounded-in: [0002-agent-harness-and-host-agent-terminology, practice-ships-only-after-self-adoption]
 ---
 
 ## Procedure

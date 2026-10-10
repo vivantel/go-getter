@@ -1,7 +1,8 @@
 ---
 id: 0104-behavior-is-a-layer-over-knowledge-artifacts
 title: Behavior is a layer over the four artifact types, split into pure and derived, and derived forms are compiled from knowledge
-status: active
+status: superseded
+superseded-by: 0105-behavior-layer-without-generated-runbooks
 date: 2026-10-10
 tags: [knowledge-management, generated-files, roadmap]
 track: product

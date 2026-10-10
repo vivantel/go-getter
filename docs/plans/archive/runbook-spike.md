@@ -43,7 +43,7 @@ Class: review · Needs: 4 · Check: `npm run check:runbooks`
 Do: add `uses:` to `adding-a-host-agent` (fact 0002 section on the components, decision 0009 tiers, decision 0087) and to `adding-a-practice-pack`, build their runbooks, and measure each against the procedure plus the cited items read separately, both whole and by cited section. Count what the section selector costs to write and keep (a heading rename breaks the build, which is the drift check working). Record the table under Findings.
 Done-when: Findings holds the table and a paragraph on whether a selective runbook beats reading the procedure and fetching what it cites, and on the cost of the `uses:` field.
 
-### 6 Go or no-go, and close — [ ]
+### 6 Go or no-go, and close — [x]
 Class: plan · Needs: 5 · Check: `npm run check:plans`
 Do: write the decision (go: what ships, in which release and for which artifacts; no-go: why and what is removed), and either remove the spike code and `docs/runbooks/` or keep it as the first slice; mark L.3 done in the v0.2 plan's backlog and archive this plan.
 Done-when: the decision is active and indexed; the spike's files match it; this plan is fully `[x]` and archived.
@@ -61,7 +61,7 @@ Measured 2026-10-10 on the three runbooks. Tokens are characters divided by 4 (a
 | `commit-subjects-are-conventional` | 445 | 123 | 193 | -57% | +57% |
 | both git guardrails in one task | 747 | 189 | 412 | -45% | +118% |
 
-- **The saving is the frontmatter, not the compilation.** A guardrail file is about three quarters metadata (`enforcement`, `derivation-note`, `grounded-in`: 929 of 1,234 characters for the checkpoint guardrail). Dropping it gives the whole saving; the runbook then adds a generated-by line, headings and a "Grounded in" list, so against bodies it costs 35-46% more.
+- **The saving is the frontmatter, not the compilation.** A guardrail file is about three quarters metadata (`enforcement`, `derivation-note`, `grounded-in`: 929 of 1,234 characters for the checkpoint guardrail). Dropping it gives the whole saving; the runbook then adds a generated-by line, headings and a "Grounded in" list, so against bodies it costs 46-57% more.
 - **No fact was inlined.** All three guardrails are grounded in decisions only (pack output cites the pack's own decision), and decisions are named, not copied, so the runbook's central claim, concrete facts next to the norm, never happened in these pairs. The concrete value that matters (the branch pattern) was already in the guardrail body.
 - **The many-to-many link duplicates.** `working-a-change` operationalizes three guardrails; each runbook copies all four steps, including steps that do not concern the guardrail (a branch-name runbook tells the agent to squash merge). A task that needs two of them reads the steps twice (412 tokens against 189 for the bodies).
 - **Maintenance cost.** One added step in `working-a-change` fails two of the two compiled git runbooks (three once the third guardrail is compiled); every source edit becomes a regeneration commit.
@@ -102,5 +102,9 @@ Step 5, 2026-10-10: `uses:` added to `adding-a-host-agent` (fact 0002, decision 
 
 - Whether a runbook should inline a decision's concrete values rather than name the decision: not tested, since the pack-rendered decisions are short and the value is already in the guardrail body.
 - How a runbook reaches each host (project-local skills for Kilo and OpenCode, plugin skills elsewhere) is decided only on a go.
-- The playbook form (0104) is not built; a diagnosis runbook (symptom, cause, fix) belongs there and needs a real example first.
+- The playbook form (0104, now 0105) is not built; a diagnosis runbook (symptom, cause, fix) belongs there and needs a real example first.
 - Whether `uses:` belongs on every procedure or only runbook-bound ones is decided in step 6.
+
+## Outcome
+
+2026-10-10, no-go: decision `0105-behavior-layer-without-generated-runbooks` supersedes 0104. The builder, the three guardrail runbooks, the two procedure runbooks, `check runbooks` and its CI lines are removed; procedures may carry `grounded-in`. Follow-ups are in the v0.2 plan. Corrected here: the Findings prose said guardrail runbooks cost "35-46%" more than the bodies; the table's 46%, 46% and 57% are right.
