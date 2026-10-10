@@ -100,6 +100,10 @@ go-getter checkpoint restore <label> --yes      # puts back modified and deleted
 
 Restore leaves files created since the checkpoint in place and lists them; remove them yourself if unwanted. Claude Code (`/rewind`) and Gemini CLI (`/restore`) also have their own commands for file edits, which do not undo what a shell command did. Copilot gets no automatic checkpoint until its hook payload is confirmed; there the agent is instructed to run `go-getter checkpoint create`.
 
+## Git workflow
+
+A project that adopts the `git-workflow` pack gets branch, commit and pull request rules: branches named `type/slug` (or your own pattern), no commits or pushes on the default branch, Conventional Commit subjects, and one squash-merged pull request per change with green CI. The pre-commit and pre-push git hooks and the CI job check the branch name and the default branch; `Refs:` trailers can be required, encouraged or off. Branch protection and required checks on your hosting platform are yours to set: go-getter cannot write them. A push from a feature branch to the default branch's name (`git push origin feat:main`) is not detected.
+
 ## Updating
 
 `apply` records what it generated in `.go-getter/manifest.json` (commit it): the go-getter version, each adopted pack and version, a hash for every file it owns, and the keys, hook entries or marked block it owns in shared files with the value each replaced.

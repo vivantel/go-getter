@@ -14,7 +14,7 @@ One plugin, seven host agents — see [INSTALLING.md](INSTALLING.md). Then ask y
 
 ## What it sets up
 
-Eight harness packs, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
+Eight harness packs and one SDLC pack, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
 
 | Pack | Component | What you choose |
 |---|---|---|
@@ -26,6 +26,7 @@ Eight harness packs, each a short guided interview with a recommended default pe
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
 | `cost-routing` | 11 Cost & model routing | task classes, starting tiers, escalation bound, headless spend cap, prompt-cache lifetime |
 | `telemetry` | 12 Observability | a metadata-only step log, its retention and export |
+| `git-workflow` | SDLC (no component) | the branch name pattern, whether the default branch is protected by a git hook and CI, whether `Refs:` trailers are required, encouraged or off; Conventional Commit subjects, squash merge with green CI and one change per branch and pull request are fixed |
 
 ### Harness coverage
 
