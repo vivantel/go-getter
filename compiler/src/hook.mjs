@@ -10,6 +10,7 @@ import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
+import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 
 const METADATA = new Set(['session_id', 'transcript_path', 'cwd', 'hook_event_name', 'permission_mode', 'model', 'model_id', 'model_params', 'conversation_id', 'generation_id', 'cursor_version', 'workspace_roots', 'user_email', 'turn_id', 'tool_use_id', 'agent_id', 'agent_type', 'prompt_id', 'scratchpad_dir', 'effort']);
 
@@ -163,7 +164,9 @@ function gatedCommand(entry, payload, host) {
 // `deny` paths, except a `use` path in the command of `go-getter secret run` and a `sink` path in `go-getter secret put`.
 export function evaluatePreTool(project, payload, host) {
   let exempt;
-  for (const e of collectEnforcement(project)) {
+  const enforcement = collectEnforcement(project);
+  checkpointBeforeCommand(project, enforcement, shellCommand(payload), host); // best effort, before the decision, never changes it
+  for (const e of enforcement) {
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin') continue;
     if (e.parsed.id === 'gate-command') {
       const gated = gatedCommand(e, payload, host);
