@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "packs": {
     "context": "0.3.0",
     "cost-routing": "0.2.0",
@@ -34,7 +34,7 @@
       "hash": "sha256:0daa64fc1d6c0c5972cab3c29be8d66c73b0baa6aef7e4ada92ff986ae9c27ba"
     },
     ".go-getter/bin/go-getter": {
-      "hash": "sha256:c53e41e4679868fa29a1e92e81302f05e2d976c86fe90e4180eaf9a300c2ed52",
+      "hash": "sha256:745c823eaa34cf088da0e68ba55dc0e4b8d81d3d7c49ca83f40c8879d4b5701d",
       "mode": "755"
     },
     "CLAUDE.md": {
