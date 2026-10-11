@@ -121,4 +121,4 @@ id,title,tags,status
 0132-governance-splits-into-three-packs-and-existing-adoptions-are-relabelled,"governance splits into restricted-data, sanitization and data-policy, and update relabels existing adoptions instead of asking again","practice-packs, compiler, configuration",active
 0133-verification-coverage-command,"The verification coverage command is """"","practice-packs, verification, harness",active
 0134-verification-coverage-bar,"Coverage must meet what the coverage command enforces","practice-packs, verification, harness",active
-0135-gated-run-grants,"Outward commands a run or a remembered approval may allow are listed","practice-packs, hooks",draft
+0135-gated-run-grants,"Outward commands a run or a remembered approval may allow are listed","practice-packs, hooks",active
