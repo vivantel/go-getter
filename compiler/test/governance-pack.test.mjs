@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -184,6 +184,21 @@ test('every mode is denied to reads, writes and go-getter commands other than se
 test('only a call that is exactly go-getter secret run (use) or put (sink) is exempt', () => {
   const dir = modeProject(['use:vault/', 'sink:inbox/']);
   const shell = (command) => call(dir, 'Bash', { command });
+  // A go-getter on PATH, as a user-level install has: the hook recognises go-getter by what a call runs (decision 0126).
+  const bin = mkdtempSync(path.join(tmpdir(), 'gg-gov-bin-'));
+  symlinkSync(path.join(root, 'compiler/bin/go-getter.mjs'), path.join(bin, 'go-getter'));
+  const savedPath = process.env.PATH;
+  process.env.PATH = `${bin}${path.delimiter}${savedPath}`;
+  try {
+    exemptCases(dir, shell);
+  } finally {
+    process.env.PATH = savedPath;
+    rmSync(bin, { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+function exemptCases(dir, shell) {
   assert.equal(shell(`go-getter secret run ${FILES.use}`), false);
   assert.equal(shell(`go-getter secret run --file ${path.join(dir, FILES.use)} -- node app.js`), false);
   assert.equal(shell(`go-getter secret put ${FILES.sink}`), false);
@@ -196,16 +211,17 @@ test('only a call that is exactly go-getter secret run (use) or put (sink) is ex
   const f = FILES.use;
   for (const command of [
     `go-getter secret run ${f}; cat ${f}`, `go-getter secret run ${f} && cat ${f}`, `go-getter secret run ${f} | tee out`,
-    `go-getter secret run ${f} > out`, `go-getter secret run ${f}\ncat ${f}`, `go-getter secret run "${f}"`,
-    `go-getter secret run $(cat ${f})`, `go-getter secret run \`cat ${f}\``, ` go-getter secret run ${f}`,
-    `npx go-getter secret run ${f}`, `echo go-getter secret run ${f}`, `go-getter secret runner ${f}`,
-    `go-getter watch -- go-getter secret run ${f}`, `X=1 go-getter secret run ${f}`, `go-getter  secret run ${f}`,
+    `go-getter secret run ${f} > out`, `go-getter secret run ${f}\ncat ${f}`,
+    `go-getter secret run $(cat ${f})`, `go-getter secret run \`cat ${f}\``, `go-getter secret run "$(cat ${f})"`,
+    `echo go-getter secret run ${f}`, `go-getter secret runner ${f}`, `go-getter-x secret run ${f}`,
+    `go-getter watch -- go-getter secret run ${f}`, `X=1 go-getter secret run ${f}`,
   ]) assert.equal(shell(command), true, command);
+  // spellings that are the same call: quoting, extra spaces, npx, the project runner's own entry (decision 0126)
+  for (const command of [`go-getter secret run "${f}"`, ` go-getter secret run ${f}`, `go-getter  secret run ${f}`, `npx go-getter secret run ${f}`]) assert.equal(shell(command), false, command);
   // only a shell tool, and only paths in its command
   assert.equal(call(dir, 'Read', { file_path: f, command: `go-getter secret run ${f}` }), true);
   assert.equal(call(dir, 'Bash', { command: `go-getter secret run ${f}`, cwd: FILES.deny }), true);
-  rmSync(dir, { recursive: true, force: true });
-});
+}
 
 test('without modes, secret run and put are denied too; the tier-3 check rejects every mode', async () => {
   let dir = modeProject([]);

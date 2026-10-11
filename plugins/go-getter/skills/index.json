@@ -152,6 +152,7 @@
         "cli/compiler/src/glob.mjs",
         "cli/compiler/src/governance.mjs",
         "cli/compiler/src/hook.mjs",
+        "cli/compiler/src/invocation.mjs",
         "cli/compiler/src/manifest.mjs",
         "cli/compiler/src/packs.mjs",
         "cli/compiler/src/plan.mjs",

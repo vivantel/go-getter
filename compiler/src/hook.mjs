@@ -10,6 +10,7 @@ import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
+import { goGetterCommand } from './invocation.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
 import { piiConfig, sessionKeyOf, maskPii } from './secrets/mask.mjs';
@@ -120,21 +121,22 @@ export function pathMode(project, file) {
   return patterns.length ? modeOf(file, patterns, restrictedModes(project)) : 'deny';
 }
 
-// `run` or `put` when the call is a shell command that is exactly `go-getter secret run|put <args>`: one simple command
-// of plain words (no quoting, expansion, chaining or redirection), so nothing else runs in it. Never a substring match.
+// `run` or `put` when the call is a shell command that is exactly one simple command running `go-getter secret run|put <args>`, from
+// wherever go-getter is installed (the project runner, a user-level install, npx, `node <entry>`; decision 0126): no pipe,
+// list, redirect, substitution or expansion, so nothing else runs in it, and quoted arguments are fine. Never a substring match.
 const SECRET_MODE = { run: 'use', put: 'sink' };
-const WORD = '[A-Za-z0-9_./=:@%+,-]+';
-export function secretSubcommand(payload) {
+export function secretSubcommand(payload, project = process.cwd()) {
   if (TOOLS[toolName(payload)?.toLowerCase()] !== 'shell') return undefined;
   const command = toolInput(payload)?.command;
-  if (typeof command !== 'string' || !new RegExp(`^${WORD}( ${WORD})*$`).test(command)) return undefined;
-  const [bin, group, sub] = command.split(' ');
-  return bin === 'go-getter' && group === 'secret' && Object.hasOwn(SECRET_MODE, sub) ? sub : undefined;
+  if (typeof command !== 'string') return undefined;
+  const call = goGetterCommand(command, { cwd: project });
+  const [group, sub] = call?.args ?? [];
+  return group === 'secret' && Object.hasOwn(SECRET_MODE, sub) ? sub : undefined;
 }
 
 // What a `go-getter secret run|put` call may name: paths of its mode in its command. Null for any other call.
 function exemption(project, payload) {
-  const sub = secretSubcommand(payload);
+  const sub = secretSubcommand(payload, project);
   if (!sub) return null;
   const command = toolInput(payload).command;
   return { mode: SECRET_MODE[sub], modes: restrictedModes(project), names: new Set(candidatePaths({ tool_name: 'bash', tool_input: { command } }, project)) };

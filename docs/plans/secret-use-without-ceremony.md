@@ -18,7 +18,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 Recognise go-getter by what a call runs — [ ]
+### 1 Recognise go-getter by what a call runs — [x]
 Issue: #103
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/invocation.test.mjs compiler/test/hook-commands.test.mjs`
 Do: add `compiler/src/invocation.mjs` with a shell tokenizer (quotes, escapes, heredocs, one simple command versus a pipeline, list or substitution) and `goGetterCall(words, project)`, which says whether a command is a go-getter call and which subcommand: first word `go-getter` on `PATH`, `.go-getter/bin/go-getter` (relative or absolute), a path under the home directory whose real path is a go-getter entry, `npx` of go-getter, or `node <entry>` where the entry belongs to a go-getter package. Replace the plain-word, bare-`go-getter` check of `secretSubcommand` in `compiler/src/hook.mjs` with it, so quoted arguments are accepted and every install location works.
