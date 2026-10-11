@@ -51,7 +51,7 @@ Issue: #137
 Class: implement · Effort: high · Needs: 2 · Check: `npm test && npm run check:packs && npm run check:generated`
 Do: create the three packs from `src/packs/governance/pack.json`, keeping question ids, defaults, recommended options and `since` values, with golden files, each declaring `replaces` for `governance`; delete `src/packs/governance/` (decision 0132). Adopt the new packs in this repository (regenerate `docs/` decisions and guardrails, `AGENTS.md`, host files), update `INSTALLING.md`, the README pack table and the interview skill, and note it in the changelog.
 Done-when: tests and checks pass, a project adopted at each released governance version (rebuilt from the pack at each tag) updates to the new packs with the same answers and nothing asked again, this repository's adoption renders the same guardrails and settings as before the split, and `go-getter update` on a fixture project adopted at 0.5.0 gives the same enforcement.
-Result, 2026-10-11: three packs at 0.6.0, `governance` deleted, this repository re-adopted by `go-getter update` (only `generated-by` and the manifest changed; no host file or AGENTS.md diff). `compiler/test/governance-split.test.mjs` rebuilds an adoption at each released governance version (0.2.0, 0.5.0) and updates it. Known gap, not caused by the split: the `provider` answer of `internal-data: single-provider` is recorded by no artifact, so `update` cannot re-render that pack for such a project (it says so and leaves it).
+Result, 2026-10-11: three packs at 0.6.0, `governance` deleted, this repository re-adopted by `go-getter update` (only `generated-by` and the manifest changed; no host file or AGENTS.md diff). `compiler/test/governance-split.test.mjs` rebuilds an adoption at each released governance version (0.2.0, 0.5.0) and updates it. Known gap, not caused by the split: the `provider` answer of `internal-data: single-provider` is recorded by no artifact, so `update` cannot re-render that pack for such a project (it says so and leaves it). Fixed in step 7.
 
 ### 4 Neutral gated-command ids with a provider table ‖ — [x]
 Issue: #138
@@ -72,3 +72,10 @@ Issue: #140
 Class: implement · Effort: low · Needs: 3, 4, 5 · Check: `npm run check:neutral && npm run check:self-adoption`
 Do: state in the README and `INSTALLING.md` which packs are harness (domain-neutral) and which are practice packs for software work, from the `family` already in each `pack.json`; scan harness pack prompts, options and generated text for software-only or provider-only wording and fix what is found; record the result in the plan.
 Done-when: the docs name the two families, the scan finds no software-only or provider-only wording in a harness pack, and the checks pass.
+
+### 7 Recover the provider answer on update — [x]
+Issue: #147
+Class: implement · Effort: low · Needs: 3 · Check: `node --test compiler/test/governance-split.test.mjs compiler/test/pack-answers-roundtrip.test.mjs`
+Do: the `provider` answer of `internal-data: single-provider` is recorded by no `pack-answer` artifact, so `update` reports "no recorded answer for provider" and leaves `data-policy` (and before the split `governance`) as it is. Its value is already in the internal-data decision (`go-getter.model-registry.providers[0].id`): read it back in `currentAnswers` (`compiler/src/reconfigure.mjs`) so the pack re-renders. Found while testing step 3.
+Done-when: a project adopted at `governance` 0.2.0 and 0.5.0 with `internal-data: single-provider` updates to the new packs with the provider kept and nothing asked, a second update changes nothing, and a project that chose another option is unaffected.
+Result, 2026-10-11: `currentAnswers` reads the provider from the internal-data decision's registry; the test in `governance-split.test.mjs` fails without the change.
