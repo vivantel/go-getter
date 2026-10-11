@@ -51,6 +51,10 @@ Automatic for Gemini API key and Vertex AI users; unavailable for OAuth users. S
 ## Node availability
 Requires Node.js ≥ 20 at runtime (npm, Homebrew, MacPorts, conda, npx installs).
 
+## Pre-tool hook approval prompt (accessed 2026-10-11)
+
+The BeforeTool hook documents `decision: allow | deny` (with `block` as an alias for `deny`). A GitHub issue reports that the code also accepts `decision: "ask"` and forces the normal interactive confirmation even for auto-approved tools, but it is undocumented (google-gemini/gemini-cli#28046); non-JSON output is reported to default to allow. **Not confirmed** from the vendor reference: go-getter denies and hands over; adopt `ask` once the reference lists it.
+
 ## Not confirmed
 - `gemini-extension.json` field list and whether extensions can ship policies or settings.
 - SKILL.md frontmatter beyond the Agent Skills basics.
@@ -59,3 +63,5 @@ Requires Node.js ≥ 20 at runtime (npm, Homebrew, MacPorts, conda, npx installs
 
 ## Sources (accessed 2026-10-04)
 https://geminicli.com/docs/core/subagents · https://geminicli.com/docs/hooks · https://geminicli.com/docs/extensions · https://geminicli.com/docs/reference/policy-engine · https://geminicli.com/docs/cli/model-routing · https://geminicli.com/docs/cli/telemetry · https://geminicli.com/docs/get-started/installation · https://geminicli.com/docs/cli/token-caching · https://geminicli.com/docs/cli/skills · https://geminicli.com/docs/cli/custom-commands · https://geminicli.com/docs/cli/gemini-md · https://geminicli.com/docs/cli/checkpointing
+- https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md (accessed 2026-10-11)
+- https://github.com/google-gemini/gemini-cli/issues/28046 (accessed 2026-10-11)

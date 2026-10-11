@@ -51,9 +51,15 @@ OpenTelemetry via `CLAUDE_CODE_ENABLE_TELEMETRY=1` + `OTEL_*` exporters, read fr
 ## Node availability
 Not guaranteed: the native installer, Homebrew, WinGet and apt/dnf/apk ship a native binary; npm install (Node ≥22) also runs a native binary. Node is not required to run Claude Code.
 
+## Pre-tool hook approval prompt (accessed 2026-10-11)
+
+A PreToolUse hook can ask the human. Its output is `hookSpecificOutput` with `hookEventName: "PreToolUse"` and `permissionDecision` of `allow`, `deny`, `ask` or `defer`; `ask` shows the permission prompt with the hook's reason (labelled with where the hook came from) and also forces a prompt in auto mode. Several hooks combine as deny, then defer, then ask, then allow. A top-level `permissionDecision` outside `hookSpecificOutput` is ignored without an error. Where nobody can answer (a `-p` run), the call is refused and the reason goes to the model. **Confirmed** from the vendor reference; whether a prompt the human approves is remembered for the next identical call is not documented, so go-getter records its own approval.
+
 ## Not confirmed
 - Whether plugin-shipped hooks can enforce permissions equivalent to settings `permissions.deny` (plugins cannot ship `permissions`).
 - Interactive-session spend cap without a gateway.
 
 ## Sources (accessed 2026-10-04)
 https://code.claude.com/docs/en/sub-agents.md · https://code.claude.com/docs/en/hooks.md · https://code.claude.com/docs/en/model-config.md · https://code.claude.com/docs/en/prompt-caching.md · https://code.claude.com/docs/en/monitoring-usage.md · https://code.claude.com/docs/en/permissions.md · https://code.claude.com/docs/en/skills.md · https://code.claude.com/docs/en/plugins/manifest-reference.md · https://code.claude.com/docs/en/setup.md · https://code.claude.com/docs/en/headless.md · https://code.claude.com/docs/en/cli-reference.md · https://code.claude.com/docs/en/checkpointing.md · https://code.claude.com/docs/en/sandboxing.md
+- https://code.claude.com/docs/en/hooks (PreToolUse decision control) (accessed 2026-10-11)
+- https://code.claude.com/docs/en/hooks-guide (accessed 2026-10-11)

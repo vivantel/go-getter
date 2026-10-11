@@ -51,6 +51,10 @@ Server-side automatic caching; `cached_input_tokens` reported in `exec --json`. 
 ## Node availability
 Native installers (macOS/Linux/Windows) and Homebrew exist alongside `npm i -g @openai/codex`; Node is not required by the native installs.
 
+## Pre-tool hook approval prompt (accessed 2026-10-11)
+
+A PreToolUse hook cannot ask. The documented output supports `deny` and an `allow` that exists to carry `updatedInput`; `ask` is parsed but unsupported, and Codex then marks the hook failed and **runs the tool call anyway**, so returning `ask` would allow it. A bare `allow` is rejected; a plain pass-through is empty output. The PermissionRequest hook runs only when Codex was already about to prompt, so it cannot force one. go-getter must therefore deny and hand over (a person runs `go-getter approvals add`), never return `ask`. **Confirmed** from the vendor hooks page; a feature request for native `ask` is open (openai/codex#28437).
+
 ## Not confirmed
 - Checkpoint/rollback support.
 - Whether project-scoped hooks need a trusted project, as project config does.
@@ -59,3 +63,5 @@ Native installers (macOS/Linux/Windows) and Homebrew exist alongside `npm i -g @
 
 ## Sources (accessed 2026-10-04)
 https://learn.chatgpt.com/docs/agent-configuration/subagents.md · https://learn.chatgpt.com/docs/hooks.md · https://learn.chatgpt.com/docs/config-file/config-reference.md · https://learn.chatgpt.com/docs/build-skills.md · https://developers.openai.com/plugins/build/plugins · https://learn.chatgpt.com/docs/codex/cli.md · https://learn.chatgpt.com/docs/non-interactive-mode.md · https://learn.chatgpt.com/docs/sandboxing.md · https://learn.chatgpt.com/docs/agent-configuration/rules.md
+- https://developers.openai.com/codex/hooks (accessed 2026-10-11)
+- https://github.com/openai/codex/issues/28437 (accessed 2026-10-11)

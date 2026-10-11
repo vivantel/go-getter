@@ -50,6 +50,10 @@ No OpenTelemetry export or cost metric documented.
 ## Node availability
 OpenCode plugins run under Bun. Kilo installs from npm (`@kilocode/cli`), so Node is present where Kilo is installed that way.
 
+## Pre-tool hook approval prompt (accessed 2026-10-11)
+
+Throwing from the `tool.execute.before` plugin hook blocks a call, which is well supported; the plugin docs also describe a `permission.ask` hook whose output status is `allow`, `deny` or `ask`, but a reported bug says it is declared and never invoked in some builds (anomalyco/opencode#47674, linked to #7006) and the V2 plugin guide replaces it, so it cannot be relied on to prompt. **Not confirmed** for prompting on either host (Kilo shares OpenCode's plugin API, fact 0005 above); go-getter denies and hands over there. Hooks registered from the OpenCode desktop app's plugin folder were reported as never invoked, while the CLI works.
+
 ## Not confirmed
 - OpenCode's own install methods and whether Node is needed at runtime.
 - Kilo's exact agent and command directory names under `.kilo/` (assumed to mirror `.opencode/`); its plugin directory is `.kilo/plugin/` (fact 0031).
@@ -58,3 +62,5 @@ OpenCode plugins run under Bun. Kilo installs from npm (`@kilocode/cli`), so Nod
 
 ## Sources (accessed 2026-10-04)
 https://opencode.ai/docs/agents/ · https://opencode.ai/docs/permissions/ · https://opencode.ai/docs/plugins/ · https://opencode.ai/docs/config/ · https://opencode.ai/docs/commands/ · https://opencode.ai/docs/rules/ · https://opencode.ai/docs/skills/ · https://opencode.ai/docs/models/ · https://kilo.ai/docs/cli
+- https://opencode.ai/docs/plugins/ (accessed 2026-10-11)
+- https://github.com/anomalyco/opencode/issues/47674 (accessed 2026-10-11)
