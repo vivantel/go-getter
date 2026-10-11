@@ -12,6 +12,8 @@ Using a secret file without seeing its values works with no setup in the common 
 - **Approvals**: a per-user record outside git, per project, bound to the command plus a hash of the files it runs and their local imports, expiring only when the hash changes (steps 3, 4). First use is one host prompt, then remembered (steps 5a, 5). The committed `use-commands` answer remains the shared list.
 - **The tracker write verbs** are gated by identity, so the pack no longer asks for command spellings (step 6).
 
+Result 2026-10-11: all steps done and merged (issues #103 to #110). Dogfooded on this machine: the Jira live check ran through `secret run` with the project runner (no `PATH` symlink, no answer edit), asked once and was silent afterwards, and editing its script marked the approval stale. Two findings fixed on the way: a prompt can wait minutes, so a pending record lasts 30 minutes, and a `PATH` symlink had hidden tests that relied on it.
+
 Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter:capture`, `go-getter:conform`, `go-getter:attribute`. Guardrails to read first: `restricted-paths-denied`, `no-runtime-dependencies`, `telemetry-records-metadata-only`, `owned-files-never-clobbered`, `no-secrets-in-added-lines`. This work touches restricted paths: tests use temporary directories and fake values, never a real credential, and a shell call in a session must not name a restricted path or a key-like word in its text (the pre-tool hook denies the whole call until step 2 is merged; write such text with a file tool). The user-level store is under the home directory: tests point it at a temporary one through an environment variable and never touch the real one.
 
 **Rules the design fixes (do not re-decide):** approvals are personal, per project, outside git; the hash covers the command's files and their local imports and nothing else; no expiry by clock; one prompt on first use; a host that cannot prompt hands over; the shared committed list stays and is a union with personal approvals; a command is exempt only as one simple command (no pipeline, no substitution), quoted arguments allowed; the project-local install wins over a user-level one.
@@ -60,7 +62,7 @@ Class: implement · Needs: 1 · Check: `npm run check:packs && npm run check:sel
 Do: `apply` generates the ask rules for `plan issue create|comment|close` for every recognised spelling of go-getter in the project (the project runner, `go-getter`, `npx`, `node <entry>` as present), so the tracker pack's `write-commands` question is removed (pack 0.3.0, the answer file stays readable) and the hook gates by identity on hosts without native rules. Adopt it here.
 Done-when: tests show the rules for each spelling present, a lookalike not gated, an old answer file rendering without error, and `apply --check` clean here.
 
-### 7 Secret use: dogfood, docs and close — [ ]
+### 7 Secret use: dogfood, docs and close — [x]
 Issue: #110
 Class: review · Needs: 2, 5, 6 · Check: `npm run check:plans && npm run check:guardrails`
 Do: with no symlink and no answer edit, run the Jira live check through `secret run` (first use prompts once, the second run is silent, an edit to the script asks again); describe approvals, the shared list, recognised installs and operand matching in INSTALLING.md and the README; note in 0072 and 0107 that 0126 refines them; run the full `go-getter:lint` skill; mark L.13 done in `docs/plans/backlog.md` and archive this plan.

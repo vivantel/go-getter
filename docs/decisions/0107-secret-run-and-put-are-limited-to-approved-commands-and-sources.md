@@ -10,6 +10,8 @@ accepted-by: sergemso
 
 ## Decision
 
+> Refined by decision 0126: a command's use of a secret file may also be approved once per user (bound to its code), go-getter is recognised wherever it is installed, and the hook reads what a command opens (added in place, decision 0067).
+
 Refines 0072 for slice S4. It activates the recorded `use` and `sink` modes.
 
 - **`go-getter secret run`** passes a `use` path to a command without the model seeing it: `--from <dotenv>` sets its KEY=VALUE entries in the child's environment; `--file <path>` copies the file to a 0600 temporary file, passes its path in an environment variable and deletes it afterwards. It runs only commands on that path's allowlist, a pack answer pairing each `use` pattern with the commands that may receive it, and refuses when none is declared. The child's output is scrubbed of the values and the shared patterns (0106) before it is printed.
