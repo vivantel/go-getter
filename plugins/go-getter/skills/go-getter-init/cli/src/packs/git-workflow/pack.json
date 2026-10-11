@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "git-workflow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "family": "sdlc",
   "title": "Git workflow",
   "summary": "How a change moves from a branch to the default branch: branch names, working on the default branch, Refs trailers, and the fixed rules of Conventional Commit subjects, squash merge and green CI.",
@@ -226,7 +226,7 @@
                 "check": "Never commit or push to the default branch; create a `type/slug` branch first"
               }
             ],
-            "body": "## Guardrail\n\nNever commit or push on the default branch; work on a branch and open a pull request. A git hook refuses it when the checked-out branch is the default branch. A push from another branch to the default branch's name (`git push origin feat:main`) is not detected.\n"
+            "body": "## Guardrail\n\nNever commit or push on the default branch; work on a branch and open a pull request. A git hook refuses a commit on the default branch and a push of it: before a push the refs being pushed decide, so a tag or another branch may go from any checkout and `git push origin feat:main` is refused.\n"
           }
         ]
       },

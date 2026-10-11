@@ -14,7 +14,7 @@ go-getter:
       run: builtin:branch-name pattern="^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$" allow="main,master"
     - tier: 1
       check: Name a new branch `type/slug` before the first commit
-  generated-by: git-workflow@0.1.0
+  generated-by: git-workflow@0.1.1
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
 ---

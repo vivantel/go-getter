@@ -87,3 +87,19 @@ test('in CI only a pull request head counts', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('before a push the pushed refs decide, not the checked-out branch', () => {
+  const dir = repo('main');
+  try {
+    const run = (pushRefs) => withEnv(local, () => notOnDefaultBranch({ project: dir, args: {}, pushRefs }));
+    assert.equal(run(['refs/tags/v1.0.0']).ok, true, 'a tag push from the default branch passes');
+    assert.equal(run(['refs/heads/feat/x']).ok, true);
+    assert.equal(run(['refs/heads/main']).ok, false);
+    assert.equal(run(['refs/heads/feat/x', 'refs/heads/main']).ok, false);
+    assert.equal(run(undefined).ok, false, 'without refs the checked-out branch is used');
+    git(dir, 'checkout', '-q', '-b', 'feat/y');
+    assert.equal(run(['refs/heads/main']).ok, false, 'feat:main is now detected');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

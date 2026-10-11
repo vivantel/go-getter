@@ -29,21 +29,21 @@ export function collectEnforcement(project) {
     );
 }
 
-export async function runBuiltin(project, parsed) {
+export async function runBuiltin(project, parsed, extra = {}) {
   const file = path.join(BUILTIN_DIR, `${parsed.id}.mjs`);
   if (!existsSync(file)) return { ok: false, message: `unknown builtin check "${parsed.id}"` };
   const mod = await import(file);
-  return mod.default({ project, args: parsed.args });
+  return mod.default({ project, args: parsed.args, ...extra });
 }
 
-export async function runTier3(project, { onlyGuardrail, stage } = {}) {
+export async function runTier3(project, { onlyGuardrail, stage, pushRefs } = {}) {
   const results = [];
   for (const e of collectEnforcement(project)) {
     if (e.tier !== 3 || !e.parsed) continue;
     if (onlyGuardrail && e.guardrail !== onlyGuardrail) continue;
     if (!inStage(e, stage)) continue;
     let result;
-    if (e.parsed.kind === 'builtin') result = await runBuiltin(project, e.parsed);
+    if (e.parsed.kind === 'builtin') result = await runBuiltin(project, e.parsed, { pushRefs });
     else {
       try {
         // Under a git hook GIT_DIR pins every git command to the hooked repository; a check that runs `git init` (the telemetry tests) would re-initialise it as bare.

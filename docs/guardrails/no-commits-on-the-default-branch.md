@@ -14,11 +14,11 @@ go-getter:
       run: builtin:not-on-default-branch
     - tier: 1
       check: Never commit or push to the default branch; create a `type/slug` branch first
-  generated-by: git-workflow@0.1.0
+  generated-by: git-workflow@0.1.1
   pack-answer: default-branch
   pack-option: protect
 ---
 
 ## Guardrail
 
-Never commit or push on the default branch; work on a branch and open a pull request. A git hook refuses it when the checked-out branch is the default branch. A push from another branch to the default branch's name (`git push origin feat:main`) is not detected.
+Never commit or push on the default branch; work on a branch and open a pull request. A git hook refuses a commit on the default branch and a push of it: before a push the refs being pushed decide, so a tag or another branch may go from any checkout and `git push origin feat:main` is refused.
