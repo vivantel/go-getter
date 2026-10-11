@@ -65,7 +65,7 @@ test('the output is scrubbed of the value on stdout and stderr, and the exit cod
   }
 });
 
-test('refusals: an unapproved command, a path that is not a use path, no approved commands, outside the project, a symlink out, a missing file', () => {
+test('refusals: an unapproved command, a path that is not restricted, no approved commands, outside the project, a symlink out, a missing file', () => {
   const dir = project();
   const none = project({ commands: '' });
   const outside = mkdtempSync(path.join(tmpdir(), 'gg-secret-outside-'));
@@ -74,9 +74,9 @@ test('refusals: an unapproved command, a path that is not a use path, no approve
     symlinkSync(path.join(outside, 'x.env'), path.join(dir, '.env.link'));
     const cases = [
       [dir, ['--from', '.env.local', '--', 'node', 'other.js'], /"node other.js" is not approved/],
-      [dir, ['--from', '.env', '--', 'node', 'print.js'], /not a use path \(its mode is deny\)/],
-      [dir, ['--from', 'print.js', '--', 'node', 'print.js'], /not a use path/],
-      [none, ['--from', '.env.local', '--', 'node', 'print.js'], /no command is approved/],
+      [dir, ['--from', '.env', '--', 'node', 'print.js'], /is not approved to use/],
+      [dir, ['--from', 'print.js', '--', 'node', 'print.js'], /not a restricted path/],
+      [none, ['--from', '.env.local', '--', 'node', 'print.js'], /is not approved to use/],
       [dir, ['--from', '../etc/passwd', '--', 'node', 'print.js'], /cannot be read|outside the project/],
       [dir, ['--from', path.join(outside, 'x.env'), '--', 'node', 'print.js'], /outside the project/],
       [dir, ['--from', '.env.link', '--', 'node', 'print.js'], /outside the project/],
@@ -101,7 +101,7 @@ test('a pattern in use-commands must itself be a use pattern: a deny pattern wit
   try {
     const r = run(dir, '--from', '.env.local', '--', 'node', 'print.js');
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /not a use path/);
+    assert.match(r.stderr, /is not approved to use/);
   } finally {
     cleanup(dir);
   }

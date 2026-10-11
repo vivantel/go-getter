@@ -3,6 +3,7 @@
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import os from 'node:os';
 import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
 import { FIELDS } from './telemetry/schema.mjs';
@@ -10,8 +11,11 @@ import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
-import { goGetterCommand } from './invocation.mjs';
-import { shellOperands } from './shell.mjs';
+import { goGetterCommand, goGetterCall } from './invocation.mjs';
+import { shellOperands, commandWords } from './shell.mjs';
+import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
+import { approved as personallyApproved, addPending, storeDir, relativeSecretPath } from './secrets/approvals.mjs';
+import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
 import { piiConfig, sessionKeyOf, maskPii } from './secrets/mask.mjs';
@@ -147,17 +151,38 @@ export function secretSubcommand(payload, project = process.cwd()) {
   return group === 'secret' && Object.hasOwn(SECRET_MODE, sub) ? sub : undefined;
 }
 
-// What a `go-getter secret run|put` call may name: paths of its mode in its command. Null for any other call.
+// The secret path and the command of a `go-getter secret run` call, or null: { path, words }.
+function runCall(command, project) {
+  const call = goGetterCommand(command, { cwd: project });
+  const [group, sub, ...rest] = call?.args ?? [];
+  if (group !== 'secret' || sub !== 'run') return null;
+  const parsed = parseRunArgs(rest);
+  if (parsed.error) return null;
+  try {
+    return { path: relativeSecretPath(project, parsed.from ?? parsed.file), words: parsed.command };
+  } catch {
+    return null;
+  }
+}
+
+// What a `go-getter secret run|put` call may name: paths of its mode in its command. Null for any other call. For `run`, the
+// secret path itself is allowed only when the command is approved to use it (the project's shared list for a `use` path, or the
+// user's own approval while the command's code is unchanged, decision 0126); an unapproved first use is asked or handed over.
 function exemption(project, payload) {
   const sub = secretSubcommand(payload, project);
   if (!sub) return null;
   const command = toolInput(payload).command;
-  return { mode: SECRET_MODE[sub], modes: restrictedModes(project), names: new Set(candidatePaths({ tool_name: 'bash', tool_input: { command } }, project)) };
+  const modes = restrictedModes(project);
+  const call = sub === 'run' ? runCall(command, project) : null;
+  const approved = Boolean(call && (sharedApproved(project, call.path, call.words.join(' '), modes) || personallyApproved(project, call.words, call.path)));
+  return { mode: SECRET_MODE[sub], modes, names: new Set(candidatePaths({ tool_name: 'bash', tool_input: { command } }, project)), call, approved };
 }
 
 // Hosts with a native ask rule prompt the human themselves (decision 0094), so the hook gates only the others (and, on every host, the `/regex/` extras, which have no native rule).
 let capabilities;
 const hasNativeAsk = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.permissions?.ask);
+// Whether the host's pre-tool hook can ask the person to approve a call (facts 0003 to 0008): only where the capability says so.
+const canPrompt = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.hooks?.askPreTool);
 
 // The command of a shell tool call as text: a Codex-style argv of `sh -c <script>` is its script.
 function shellCommand(payload) {
@@ -198,8 +223,46 @@ function gatedCommand(entry, payload, host) {
 
 // A `use` path may be named only by a call that is exactly `go-getter secret run`, and a `sink` path only by one that is
 // exactly `go-getter secret put` (decisions 0072 and 0107); every other call that names one is denied like a `deny` path.
+// Why a call may not change or open the user's approvals, or null: only a person adds or revokes one (a forged approval would let
+// any command use a secret), and the store is not for tools to open.
+function approvalsStoreRefusal(project, payload) {
+  const command = shellCommand(payload);
+  if (typeof command === 'string') {
+    for (const words of commandWords(command) ?? []) {
+      const call = goGetterCall(words, { cwd: project });
+      if (call?.args[0] === 'approvals' && ['add', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do with a secret, so a person runs it; ask the user to run it themselves`;
+    }
+  }
+  const store = storeDir();
+  for (const token of candidatePaths(payload, project)) {
+    const abs = token.startsWith('~/') ? path.join(os.homedir(), token.slice(2)) : path.resolve(project, token);
+    if (abs === store || abs.startsWith(`${store}${path.sep}`)) return 'blocked: the approvals store is changed by a person only; go-getter approvals list shows it';
+  }
+  return null;
+}
+
+// The first use of a secret by a command that is not approved: ask the person where the host can (leaving a pending record that
+// `secret run` promotes if the person says yes), otherwise hand over.
+function firstUse(project, call, host, guardrail) {
+  const text = call.words.join(' ');
+  if (!canPrompt(host)) {
+    return { deny: true, reason: `blocked by guardrail ${guardrail}: "${text}" is not approved to use ${call.path}; ask the user to approve it by running: go-getter approvals add ${call.path} -- ${text}` };
+  }
+  let files = [];
+  try {
+    addPending(project, call.words, call.path);
+    files = fileSet(call.words, project).files;
+  } catch {
+    // a pending record that cannot be written means the run will be refused, which is safe
+  }
+  const shown = files.slice(0, 6).join(', ') + (files.length > 6 ? `, and ${files.length - 6} more` : '');
+  return { deny: false, ask: true, reason: `go-getter would run "${text}" with ${call.path} in its environment (values are scrubbed from its output and never shown to the agent).${files.length ? ` It runs ${files.length} file${files.length === 1 ? '' : 's'}: ${shown}.` : ''} Approving also remembers it until those files change.` };
+}
+
 export function evaluatePreTool(project, payload, host) {
   let exempt;
+  const forged = approvalsStoreRefusal(project, payload);
+  if (forged) return { deny: true, reason: forged };
   const enforcement = collectEnforcement(project);
   checkpointBeforeCommand(project, enforcement, shellCommand(payload), host); // best effort, before the decision, never changes it
   for (const e of enforcement) {
@@ -213,8 +276,14 @@ export function evaluatePreTool(project, payload, host) {
       const patterns = patternsOf(e.parsed.args);
       const hits = candidatePaths(payload, project).filter((p) => matchesAny(p, patterns));
       if (hits.length && exempt === undefined) exempt = exemption(project, payload);
-      const allowed = (p) => exempt && exempt.names.has(p) && modeOf(p, patterns, exempt.modes) === exempt.mode;
+      const allowed = (p) => {
+        if (!exempt || !exempt.names.has(p)) return false;
+        // the secret itself: only for an approved command, and never a path whose mode is sink (written, not read)
+        if (exempt.call && p === exempt.call.path) return exempt.approved && modeOf(p, patterns, exempt.modes) !== 'sink';
+        return modeOf(p, patterns, exempt.modes) === exempt.mode;
+      };
       const hit = hits.find((p) => !allowed(p));
+      if (hit && exempt?.call && hit === exempt.call.path && modeOf(hit, patterns, exempt.modes) !== 'sink' && hits.every((h) => h === hit || allowed(h))) return firstUse(project, exempt.call, host, e.guardrail);
       if (hit) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${toolName(payload) ?? 'tool call'} names "${hit}", a denied path` };
     }
   }
@@ -357,6 +426,9 @@ export function respondPostTool(host, result) {
 
 // Host-specific answer: exit 2 + stderr where that blocks; Copilot reads a JSON decision.
 export function respond(host, decision) {
+  if (decision.ask && host === 'claude-code') {
+    return { code: 0, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: decision.reason } }), stderr: '' };
+  }
   if (!decision.deny) return { code: 0, stdout: '', stderr: '' };
   if (host === 'copilot') return { code: 0, stdout: JSON.stringify({ permissionDecision: 'deny', permissionDecisionReason: decision.reason }), stderr: '' };
   return { code: 2, stdout: '', stderr: decision.reason };

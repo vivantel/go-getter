@@ -42,7 +42,7 @@ function write(data, env) {
   renameSync(tmp, file);
 }
 
-const normalisePath = (project, secretPath) => {
+export const relativeSecretPath = (project, secretPath) => {
   const abs = path.resolve(project, secretPath);
   const rel = path.relative(realpathSync(project), existsSync(abs) ? realpathSync(abs) : abs);
   return rel.split(path.sep).join('/');
@@ -62,7 +62,7 @@ export function list(project, env = process.env) {
 // hash still matches the code on disk.
 export function approved(project, words, secretPath, env = process.env) {
   if (!Array.isArray(words) || !words.length) return false;
-  const rel = normalisePath(project, secretPath);
+  const rel = relativeSecretPath(project, secretPath);
   const entry = (read(env).projects[keyOf(project)] ?? []).find((e) => e.path === rel && e.command.length === words.length && e.command.every((w, i) => w === words[i]));
   return Boolean(entry) && fileSet(words, project).hash === entry.hash;
 }
@@ -70,7 +70,7 @@ export function approved(project, words, secretPath, env = process.env) {
 // Records (or refreshes) the approval of `words` for `secretPath` against the code on disk now. Returns the entry.
 export function add(project, words, secretPath, { host, now = () => new Date(), env = process.env } = {}) {
   if (!Array.isArray(words) || !words.length || words.some((w) => typeof w !== 'string')) throw new Error('an approval needs a command');
-  const rel = normalisePath(project, secretPath);
+  const rel = relativeSecretPath(project, secretPath);
   const data = read(env);
   const key = keyOf(project);
   const entry = { id: idOf(project, words, rel), command: words, path: rel, hash: fileSet(words, project).hash, approvedAt: now().toISOString(), ...(host ? { host } : {}) };
@@ -90,4 +90,49 @@ export function revoke(project, { id, all = false } = {}, env = process.env) {
   else delete data.projects[key];
   write(data, env);
   return before.length - kept.length;
+}
+
+// --- pending approvals -----------------------------------------------------------------------------------------------------
+// When the pre-tool hook asks the person to approve a command's first use of a secret, it leaves a short-lived, single-use
+// record here; `secret run` turns it into a lasting approval when the call goes ahead (the person said yes) and refuses when
+// there is none, so a call the hook never saw cannot approve itself. It is keyed like an approval and holds no value.
+export const PENDING_TTL_MS = 2 * 60 * 1000;
+const pendingFile = (env) => path.join(storeDir(env), 'pending.json');
+
+function readPending(env, now) {
+  try {
+    const data = JSON.parse(readFileSync(pendingFile(env), 'utf8'));
+    return (Array.isArray(data?.items) ? data.items : []).filter((i) => Date.parse(i.createdAt) + PENDING_TTL_MS > now.getTime());
+  } catch {
+    return [];
+  }
+}
+
+function writePending(items, env) {
+  const dir = storeDir(env);
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  chmodSync(dir, 0o700);
+  const tmp = `${pendingFile(env)}.${process.pid}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify({ version: VERSION, items }, null, 2)}\n`, { mode: 0o600 });
+  chmodSync(tmp, 0o600);
+  renameSync(tmp, pendingFile(env));
+}
+
+export function addPending(project, words, secretPath, { now = () => new Date(), env = process.env } = {}) {
+  const rel = relativeSecretPath(project, secretPath);
+  const item = { project: keyOf(project), command: words, path: rel, hash: fileSet(words, project).hash, createdAt: now().toISOString() };
+  const others = readPending(env, now()).filter((i) => !(i.project === item.project && i.path === rel && i.command.join('\0') === words.join('\0')));
+  writePending([...others, item], env);
+  return item;
+}
+
+// True once, if the hook left an unexpired record for exactly this command and path and the code still hashes to what it saw.
+export function takePending(project, words, secretPath, { now = () => new Date(), env = process.env } = {}) {
+  const rel = relativeSecretPath(project, secretPath);
+  const items = readPending(env, now());
+  const at = items.findIndex((i) => i.project === keyOf(project) && i.path === rel && i.command.join('\0') === words.join('\0') && i.hash === fileSet(words, project).hash);
+  if (at < 0) return false;
+  items.splice(at, 1);
+  writePending(items, env);
+  return true;
 }

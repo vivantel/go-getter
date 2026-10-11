@@ -8,9 +8,12 @@ import { chmodSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync
 import os from 'node:os';
 import path from 'node:path';
 import { matchesAny } from '../glob.mjs';
-import { adoptedData } from '../governance.mjs';
-import { pathMode, restrictedModes } from '../hook.mjs';
+import { restrictedModes, restrictedPatterns } from '../hook.mjs';
 import { redactionRegexes } from './patterns.mjs';
+import { useCommands, parseRunArgs, sharedApproved, USAGE } from './use.mjs';
+import { approved as personallyApproved, add as approve, takePending } from './approvals.mjs';
+
+export { useCommands };
 
 export const REDACTED = '[redacted by go-getter]';
 // A value shorter than this (`true`, `3000`) is left in the output: scrubbing it would scramble ordinary text.
@@ -19,7 +22,6 @@ const MIN_VALUE = 8;
 const MAX_PENDING = 1024 * 1024;
 const COPY_PREFIX = 'gg-secret-';
 const STALE_COPY_MS = 24 * 60 * 60 * 1000;
-const USAGE = 'usage: go-getter secret run (--from <dotenv-file> | --file <path> [--env <NAME>]) -- <command> [args...]';
 
 // The KEY=VALUE entries of a dotenv file: comments, `export `, single and double quotes, and a quoted value over several
 // lines. Returns [[key, value]] in file order.
@@ -43,33 +45,6 @@ export function dotenvEntries(text) {
     }
   }
   return entries;
-}
-
-// "<pattern>|<command>" entries of the `use-commands` answer ("a|b c, d|e"): the commands approved for each pattern.
-export function useCommands(project) {
-  const out = [];
-  for (const entry of String(adoptedData(project, 'use-commands') ?? '').split(/,\s+/)) {
-    const at = entry.indexOf('|');
-    if (at > 0 && entry.slice(at + 1).trim()) out.push({ pattern: entry.slice(0, at).trim(), command: entry.slice(at + 1).trim() });
-  }
-  return out;
-}
-
-function parseArgs(args) {
-  const dash = args.indexOf('--');
-  if (dash === -1) return { error: 'the command to run follows "--"' };
-  const head = args.slice(0, dash);
-  const command = args.slice(dash + 1);
-  const opts = {};
-  for (let i = 0; i < head.length; i++) {
-    if (['--from', '--file', '--env'].includes(head[i]) && head[i + 1] && !head[i + 1].startsWith('--')) opts[head[i].slice(2)] = head[++i];
-    else return { error: `unknown or incomplete argument "${head[i]}"` };
-  }
-  if (Boolean(opts.from) === Boolean(opts.file)) return { error: 'give exactly one of --from and --file' };
-  if (opts.env && !opts.file) return { error: '--env goes with --file' };
-  if (opts.env && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(opts.env)) return { error: '--env must be a variable name' };
-  if (!command.length) return { error: 'the command to run follows "--"' };
-  return { ...opts, command };
 }
 
 // Scrubs `text` of every value (longest first) and of the shared secret patterns.
@@ -121,21 +96,25 @@ function sweepStaleCopies() {
   }
 }
 
-// Why a call is refused, or null. Never names a value.
-function refusal(project, rel, commandText) {
-  const mode = pathMode(project, rel);
-  if (mode !== 'use') return `"${rel}" is not a use path (its mode is ${mode}); only a path listed as use:<pattern> in the restricted-modes answer can be passed to a command`;
-  const modes = restrictedModes(project);
-  const approved = useCommands(project).filter((u) => modes.get(u.pattern) === 'use' && matchesAny(rel, [u.pattern]));
-  if (!approved.length) return `no command is approved for "${rel}": add "<pattern>|<command>" to the use-commands answer (a human decides which commands may receive a secret)`;
-  if (!approved.some((u) => u.command === commandText)) return `"${commandText}" is not approved for "${rel}"; approved: ${approved.map((u) => `"${u.command}"`).join(', ')}`;
-  return null;
+// Why a call is refused, or null. A command may use a restricted path when the project's shared list names it (for a `use` path),
+// when the user approved it and its code is unchanged (decision 0126), or when the pre-tool hook just asked the person and left
+// a pending record, which is then promoted to an approval. Never names a value.
+function refusal(project, rel, words) {
+  if (!matchesAny(rel, restrictedPatterns(project))) return `"${rel}" is not a restricted path of this project, so there is nothing to pass to a command`;
+  const text = words.join(' ');
+  if (sharedApproved(project, rel, text, restrictedModes(project))) return null;
+  if (personallyApproved(project, words, rel)) return null;
+  if (takePending(project, words, rel)) {
+    approve(project, words, rel, { host: process.env.GO_GETTER_HOST });
+    return null;
+  }
+  return `"${text}" is not approved to use "${rel}". Run it through the agent host so the person is asked once (it is remembered while the command's code is unchanged), or a person runs: go-getter approvals add ${rel} -- ${text}`;
 }
 
 // Runs the command, writing its scrubbed output through `out` and `err` as it arrives; resolves { code }, or { refused }
 // with the reason (and runs nothing).
 export async function runSecret(project, args, { env = process.env, out = (t) => process.stdout.write(t), err = (t) => process.stderr.write(t) } = {}) {
-  const parsed = parseArgs(args);
+  const parsed = parseRunArgs(args);
   if (parsed.error) return { refused: `${parsed.error}\n${USAGE}`, usage: true };
   const given = parsed.from ?? parsed.file;
   let real;
@@ -149,8 +128,7 @@ export async function runSecret(project, args, { env = process.env, out = (t) =>
   } catch {
     return { refused: `"${given}" cannot be read` };
   }
-  const commandText = parsed.command.join(' ');
-  const why = refusal(project, rel, commandText);
+  const why = refusal(project, rel, parsed.command);
   if (why) return { refused: why };
 
   // Signals are caught before anything is created, so a copy on disk is always removed: a signal that arrives before the

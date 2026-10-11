@@ -10,6 +10,7 @@ import { planRender, applyRender } from '../src/render.mjs';
 import { runTier3, collectEnforcement } from '../src/enforce.mjs';
 import { planApply, writeApply, diffApply } from '../src/apply.mjs';
 import { evaluatePreTool, restrictedModes } from '../src/hook.mjs';
+import { add as approve } from '../src/secrets/approvals.mjs';
 import { loadCapabilities } from '../src/capabilities.mjs';
 import { coverage, formatCoverage } from '../src/coverage.mjs';
 import { loadRegistry } from '../src/routing/registry.mjs';
@@ -188,11 +189,16 @@ test('only a call that is exactly go-getter secret run (use) or put (sink) is ex
   const bin = mkdtempSync(path.join(tmpdir(), 'gg-gov-bin-'));
   symlinkSync(path.join(root, 'compiler/bin/go-getter.mjs'), path.join(bin, 'go-getter'));
   const savedPath = process.env.PATH;
+  const savedHome = process.env.GO_GETTER_HOME;
   process.env.PATH = `${bin}${path.delimiter}${savedPath}`;
+  process.env.GO_GETTER_HOME = path.join(bin, 'home'); // the user's approvals, for this test only
   try {
+    approve(dir, ['node', 'app.js'], FILES.use); // the person approved this command to use the file (decision 0126)
     exemptCases(dir, shell);
   } finally {
     process.env.PATH = savedPath;
+    if (savedHome === undefined) delete process.env.GO_GETTER_HOME;
+    else process.env.GO_GETTER_HOME = savedHome;
     rmSync(bin, { recursive: true, force: true });
     rmSync(dir, { recursive: true, force: true });
   }
@@ -200,7 +206,8 @@ test('only a call that is exactly go-getter secret run (use) or put (sink) is ex
 
 function exemptCases(dir, shell) {
   assert.equal(shell(`go-getter secret run ${FILES.use}`), false);
-  assert.equal(shell(`go-getter secret run --file ${path.join(dir, FILES.use)} -- node app.js`), false);
+  assert.equal(shell(`go-getter secret run --file ${path.join(dir, FILES.use)} -- node app.js`), false, 'an approved command');
+  assert.equal(shell(`go-getter secret run --file ${path.join(dir, FILES.use)} -- node other.js`), true, 'an unapproved command is handed over');
   assert.equal(shell(`go-getter secret put ${FILES.sink}`), false);
   // the wrong mode, a deny path, or a deny path beside an exempt one
   assert.equal(shell(`go-getter secret put ${FILES.use}`), true);
