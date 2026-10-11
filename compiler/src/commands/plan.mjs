@@ -4,7 +4,7 @@
 import path from 'node:path';
 import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot } from '../plan.mjs';
 import { trackerSource } from '../trackers/index.mjs';
-import { planIssue, relPlan, VERBS } from '../trackers/github-write.mjs';
+import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
 
 const USAGE = `usage: go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]`;

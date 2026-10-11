@@ -52,7 +52,7 @@ Class: implement · Effort: high · Needs: 3 · Check: `node --test compiler/tes
 Do: add the verbs on the GitHub source. Each takes `--dry-run` (prints the request without sending), refuses when the answer is `off`, records only the verb and `pass|fail|blocked` in telemetry, never the issue text, and takes the issue body only from the plan step's text. `create` writes `Issue:` onto the step. A comment and a body pass through the secret patterns first and are refused if a finding exists.
 Done-when: the tests show a dry run sending nothing, `off` refusing, a body containing a fake token refused, a GitHub create calling the stub once and writing `Issue:`, a close making `plan status` show the step done with no mismatch, and telemetry holding no issue text.
 
-### 6j Write verbs for Jira — [ ] ‖
+### 6j Write verbs for Jira — [x] ‖
 Issue: #80
 Class: implement · Needs: 4, 6 · Check: `node --test compiler/test/tracker-write.test.mjs compiler/test/tracker-jira.test.mjs`
 Do: add `create`, `comment` and `close` to the Jira source under the same rules as step 6. `close` takes the single transition into the done category; with none or several it refuses and lists them, unless the configuration names one.

@@ -1,5 +1,5 @@
 // The GitHub tracker (decision 0117): reads an issue's state through `gh` for the overlay in overlay.mjs. Reading only; the
-// write verbs are in github-write.mjs. Everything an issue returns is untrusted text (0119).
+// write verbs are in write.mjs. Everything an issue returns is untrusted text (0119).
 import { execFile, execFileSync } from 'node:child_process';
 import { cleanGitEnv } from '../git-env.mjs';
 import { parseRef } from './refs.mjs';
