@@ -22,7 +22,8 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 ### 1 WorkSource interface and the file source — [ ]
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/plan.test.mjs compiler/test/worksource.test.mjs`
 Do: define the WorkSource contract in `compiler/src/trackers/worksource.mjs` and move `plan.mjs`'s reading and marker writing behind a file source implementing it, with no change to `plan status|next|start|done` output. Add a contract test that runs any source against the same cases (list order, get by id, create, set state, comment, an unknown id) and run it on the file source.
-Done-when: the existing plan tests pass unchanged; the contract test passes for the file source; `check:plans` is clean on every plan in `docs/plans/`.
+The interface obeys decision 0119: arguments and results are plain data, with no callbacks and no shared state, and the contract test checks that a call's input and output survive a JSON round trip. Tracker text never becomes a command: `Check:` stays in the plan file.
+Done-when: the existing plan tests pass unchanged; the contract test passes for the file source and shows every call's input and output unchanged by a JSON round trip; `check:plans` is clean on every plan in `docs/plans/`.
 
 ### 2 Issue references and the `Issue:` field — [ ]
 Class: implement · Needs: 1 · Check: `node --test compiler/test/tracker-refs.test.mjs compiler/test/plan.test.mjs`

@@ -110,3 +110,4 @@ id,title,tags,status
 0116-sink-sources,"The sources allowed to fill a sink path are listed","practice-packs, governance, security",active
 0117-tracker-backed-plans,"An optional tracker pack makes issues the source of truth for plan steps, with writes through go-getter's own verbs only","roadmap, practice-packs, tooling",active
 0118-extension-architecture-core-and-edges,"go-getter keeps a small core and moves the open-ended edges behind interfaces that can later become helper processes","architecture, roadmap, compiler",active
+0119-helper-contract-v0,"A helper is a pinned executable behind a JSON contract; its output is untrusted data and MCP is only a possible backend","architecture, roadmap, enforcement",active

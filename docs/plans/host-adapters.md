@@ -24,7 +24,8 @@ Done-when: the fact lists every per-host branch with file and line, and the inte
 ### 2 Registry, conformance test and the Claude Code adapter — [ ]
 Class: implement · Effort: high · Needs: 1 · Check: `npm run check:generated && npm test`
 Do: add the adapter registry and a conformance test that runs every registered adapter through the interface (outputs are deterministic, owned files are marked, a missing capability is reported and never guessed). Move Claude Code's code behind an adapter module; `apply`, `agents`, `hook` and `coverage` reach it through the registry. Leave every other host on its present code through a wrapper adapter.
-Done-when: no golden file changes; the conformance test passes for the Claude Code adapter and the wrapper; `go-getter apply --check` is clean in this repository.
+The registry obeys decision 0119: an adapter takes and returns plain data, with no callbacks and no shared state, and the conformance test checks a JSON round trip.
+Done-when: no golden file changes; the conformance test passes for the Claude Code adapter and the wrapper and shows inputs and outputs unchanged by a JSON round trip; `go-getter apply --check` is clean in this repository.
 
 ### 3 OpenCode and Kilo adapters — [ ] ‖
 Class: implement · Effort: high · Needs: 2 · Check: `npm run check:generated && npm test`
