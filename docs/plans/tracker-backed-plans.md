@@ -41,7 +41,7 @@ Class: implement · Effort: high · Needs: 2 · Check: `node --test compiler/tes
 Do: add `compiler/src/trackers/jira.mjs` for `list` and `get` over the REST API with Node's `fetch`, Basic authorization from the environment variables named in its configuration (default `JIRA_EMAIL`, `JIRA_API_TOKEN`), state by status category, the same cache and stale rule as step 3. Add an Atlassian token kind to `compiler/src/secrets/patterns.mjs` so redaction and scanning cover it. A missing variable fails naming the variable, never a value. Tests run a local HTTP server.
 Done-when: the contract test passes for the Jira source against the local server; a status named anything maps by category; a missing variable names it and leaks nothing; a fake Atlassian token in output is redacted and in an added line is flagged by `secret-scan`.
 
-### 5 Issues as `Refs:` targets — [ ] ‖
+### 5 Issues as `Refs:` targets — [x] ‖
 Issue: #79
 Class: implement · Needs: 2 · Check: `node --test compiler/test/refs.test.mjs compiler/test/commit-trailer.test.mjs`
 Do: `go-getter refs`, the attribute skill and the conform skill list a step's issue, and an issue the branch slug names (`feat/123-title`, `feat/PROJ-123-title`), as a `Refs:` target; the commit-trailer check accepts `#123` and `PROJ-123` as trailer values. Nothing is fetched.
