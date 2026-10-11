@@ -3,7 +3,7 @@
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
 import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot } from '../plan.mjs';
-import { githubSource } from '../trackers/github.mjs';
+import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/github-write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
 
@@ -82,7 +82,7 @@ export default async function planCommand({ args }) {
   try {
     const file = resolvePlan(cwd, opts.plan);
     const rel = path.relative(cwd, file);
-    const source = githubSource(file, { project: repoRoot(cwd), name: rel });
+    const source = trackerSource(file, { project: repoRoot(cwd), name: rel });
     if (sub === 'start') {
       const known = await callSource(source, 'list');
       const states = known.ok ? new Map(known.result.steps.map((s) => [s.id, s.state])) : undefined;

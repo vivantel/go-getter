@@ -42,6 +42,11 @@ test('a shell result loses a planted token and a private-key block, and other te
   rmSync(dir, { recursive: true, force: true });
 });
 
+test('an Atlassian API token in tool output is redacted', () => {
+  const token = `ATATT3xFfGF0${'a1B2c3D4e5'.repeat(5)}`;
+  assert.deepEqual(redactText(`curl failed with ${token} in the header`, new Set()), { text: `curl failed with ${REDACTED} in the header`, count: 1 });
+});
+
 test('values of KEY=value lines of restricted files are redacted; short values and other files are not', () => {
   const dir = project();
   assert.deepEqual([...restrictedValues(dir)], [DB_VALUE]);
