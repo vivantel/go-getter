@@ -93,10 +93,12 @@ export function revoke(project, { id, all = false } = {}, env = process.env) {
 }
 
 // --- pending approvals -----------------------------------------------------------------------------------------------------
-// When the pre-tool hook asks the person to approve a command's first use of a secret, it leaves a short-lived, single-use
+// When the pre-tool hook asks the person to approve a command's first use of a secret, it leaves a single-use
 // record here; `secret run` turns it into a lasting approval when the call goes ahead (the person said yes) and refuses when
 // there is none, so a call the hook never saw cannot approve itself. It is keyed like an approval and holds no value.
-export const PENDING_TTL_MS = 2 * 60 * 1000;
+// Long enough for a person to answer a prompt they were not watching; the record is single use and exact, and anything that can run
+// a script can read a secret file directly anyway, so a longer window adds no capability.
+export const PENDING_TTL_MS = 30 * 60 * 1000;
 const pendingFile = (env) => path.join(storeDir(env), 'pending.json');
 
 function readPending(env, now) {

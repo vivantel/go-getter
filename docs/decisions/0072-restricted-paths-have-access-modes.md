@@ -13,6 +13,8 @@ fitness-functions:
 
 ## Decision
 
+> Refined by decision 0126: a command's use of a secret file may also be approved once per user (bound to its code), go-getter is recognised wherever it is installed, and the hook reads what a command opens (added in place, decision 0067).
+
 Refines 0045 and 0046 without changing what they commit to (the default mode is today's behavior, so 0046 stays true): a restricted path gets one mode.
 
 - `deny` (the default, today's behavior): not read, written, used or committed.
