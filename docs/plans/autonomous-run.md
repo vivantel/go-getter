@@ -19,7 +19,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 Run record and `go-getter run` — [ ]
+### 1 Run record and `go-getter run` — [x]
 Issue: #126
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/run-record.test.mjs`
 Do: add a per-user run store beside the approvals store (same location rules, 0700 directory, 0600 file, atomic replace, damaged file reads as empty) and `go-getter run start <plan> [--through N] | status | end`. A record holds the plan, step range, start time, timeout, spend cap, and the granted shapes; `start` refuses when a run is active for the project. The hook refuses a call that runs `run start|end` or opens the store (same rule as `approvals add`), so only a human starts a run.
