@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { planIssue, writeMode, describeRequest } from '../src/trackers/github-write.mjs';
+import { planIssue, writeMode, describeRequest } from '../src/trackers/write.mjs';
 import { readLog, LOG } from '../src/telemetry/record.mjs';
 import { cleanGitEnv } from '../src/git-env.mjs';
 import { installGh } from './support/gh-stub.mjs';

@@ -9,7 +9,7 @@ import { planRender, applyRender, activeQuestions, withFallbacks } from '../src/
 import { collectEnforcement } from '../src/enforce.mjs';
 import { gateEntries, nativeRules, matchGated } from '../src/gate.mjs';
 import { loadCapabilities } from '../src/capabilities.mjs';
-import { writeMode } from '../src/trackers/github-write.mjs';
+import { writeMode } from '../src/trackers/write.mjs';
 import { adoptedData } from '../src/governance.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
