@@ -205,7 +205,7 @@ function lex(text, start = 0, stop = null, depth = 0) {
 const base = (word) => word.split('/').pop();
 
 // The command name of `words` after wrappers (`env A=b`, `sudo`, `xargs`, ...) and leading assignments, and the words after it.
-function commandOf(words) {
+export function commandOf(words) {
   let k = 0;
   while (k < words.length) {
     if (ASSIGNMENT.test(words[k])) k++;
@@ -297,6 +297,16 @@ export function shellOperands(command) {
     const out = [];
     collect(lex(String(command)).commands, out, 0, true);
     return out.filter((s) => s !== '');
+  } catch (err) {
+    if (err instanceof Unreadable) return null;
+    throw err;
+  }
+}
+
+// The words of each top-level command of `text` (a script line, an npm script), or null when it cannot be read.
+export function commandWords(text) {
+  try {
+    return lex(String(text)).commands.map((c) => c.words).filter((w) => w.length);
   } catch (err) {
     if (err instanceof Unreadable) return null;
     throw err;

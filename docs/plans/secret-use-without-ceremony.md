@@ -30,7 +30,7 @@ Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/tes
 Do: replace the text scan of `candidatePaths` in `compiler/src/hook.mjs` with the tokenizer: a restricted path counts only as an operand or redirect target of a command that runs, and a quoted string, a heredoc body, an `echo` argument or a commit message is only text. Keep every existing real case (a read, a redirect, a copy, an `rm`) denied. Add the cases that were falsely denied (a Python or shell heredoc containing a key-like attribute, a commit message naming a dotenv file, an `echo`).
 Done-when: tests show the false-denial corpus allowed and every previously denied real access still denied.
 
-### 3 Hash a command's files and their local imports — [ ]
+### 3 Hash a command's files and their local imports — [x]
 Issue: #105
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/command-fileset.test.mjs`
 Do: add `compiler/src/secrets/fileset.mjs`: from a command's words, the project files it runs (a script argument, an `npm run` script's command, a `sh` file), then the local files they import (static `import`, `require` and dynamic import of a literal for JavaScript; `source` and `.` for shell; best effort for other languages), inside the project, with a depth and size cap and a symlink-out refusal. `fileSetHash(command, project)` is a SHA-256 over the sorted relative paths and content hashes; a command with no resolvable file hashes its words only and is reported as such.

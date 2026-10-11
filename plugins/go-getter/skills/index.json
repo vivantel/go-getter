@@ -169,6 +169,7 @@
         "cli/compiler/src/routing/registry.mjs",
         "cli/compiler/src/sandbox.mjs",
         "cli/compiler/src/schema.mjs",
+        "cli/compiler/src/secrets/fileset.mjs",
         "cli/compiler/src/secrets/mask.mjs",
         "cli/compiler/src/secrets/patterns.mjs",
         "cli/compiler/src/secrets/pii.mjs",
