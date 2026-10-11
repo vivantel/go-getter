@@ -113,6 +113,13 @@ function modeOf(file, patterns, modes) {
   return found.size === 1 ? [...found][0] : 'deny';
 }
 
+// The access mode of a project file (a path relative to the project root): `deny` unless every restricted pattern it
+// matches is `use` (or every one is `sink`). A file no restricted pattern matches is `deny` too: it is not a secret to pass.
+export function pathMode(project, file) {
+  const patterns = restrictedPatterns(project).filter((p) => matchesAny(file, [p]));
+  return patterns.length ? modeOf(file, patterns, restrictedModes(project)) : 'deny';
+}
+
 // `run` or `put` when the call is a shell command that is exactly `go-getter secret run|put <args>`: one simple command
 // of plain words (no quoting, expansion, chaining or redirection), so nothing else runs in it. Never a substring match.
 const SECRET_MODE = { run: 'use', put: 'sink' };

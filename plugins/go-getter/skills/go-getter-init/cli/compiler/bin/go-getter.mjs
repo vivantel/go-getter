@@ -23,7 +23,7 @@ async function main() {
     case undefined:
     case '--help':
     case 'help':
-      console.log('usage: go-getter <build|check <name>|detect|render-pack|apply|update|plan|checkpoint|refs|route|routing calibrate|verify|ci status|watch|eval> [args]');
+      console.log('usage: go-getter <build|check <name>|detect|render-pack|apply|update|plan|checkpoint|refs|secret|route|routing calibrate|verify|ci status|watch|eval> [args]');
       return 0;
     case 'check': {
       const [name, ...rest] = args;
