@@ -24,9 +24,13 @@ function parseArgs(sub, rest) {
 }
 
 // `plan issue <verb> <id> [plan] [flags]`: { verb, id, plan, dryRun, text, stdin, reason } or null.
-function parseIssueArgs(rest) {
-  const [verb, ...more] = rest;
-  const o = { verb, dryRun: false, stdin: false };
+// `--dry-run` may come first (`plan issue --dry-run create 6`): the host's ask rules match a write as `plan issue <verb> ...`
+// from the verb on, so a dry run spelled this way never prompts and no write can be spelled to escape the rule. Any other
+// flag comes after the verb.
+function parseIssueArgs(args) {
+  const lead = args[0] === '--dry-run';
+  const [verb, ...more] = lead ? args.slice(1) : args;
+  const o = { verb, dryRun: lead, stdin: false };
   const positional = [];
   for (let i = 0; i < more.length; i++) {
     const value = () => (more[i + 1] !== undefined ? more[++i] : null);

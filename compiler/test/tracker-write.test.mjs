@@ -198,6 +198,11 @@ test('plan issue on the command line: usage errors exit 2, a dry run prints and 
     assert.equal(run('delete', '1').status, 2);
     assert.equal(run('comment', '2', '--text').status, 2);
     assert.equal(run('comment', '2', '--text', 'a', '--stdin').status, 2);
+    const lead = run('--dry-run', 'comment', '2', '--text', 'hi');
+    assert.equal(lead.status, 0, lead.stderr);
+    assert.match(lead.stdout, /^would comment on acme\/app#7/);
+    assert.deepEqual(p.gh.calls(), [], 'a leading --dry-run sends nothing');
+    assert.equal(run('--text', 'x', 'comment', '2').status, 2, 'any other flag before the verb is a usage error');
     const dry = run('create', '1', 'docs/plans/p.md', '--dry-run');
     assert.equal(dry.status, 0, dry.stderr);
     assert.match(dry.stdout, /^would create an issue in acme\/app \(writes: ask\)\ntitle: First step/);
