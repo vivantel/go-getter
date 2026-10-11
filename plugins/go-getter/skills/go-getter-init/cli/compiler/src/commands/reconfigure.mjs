@@ -2,7 +2,7 @@
 // --current prints the answers currently recorded in this project's artifacts (the interview's defaults).
 import path from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
-import { loadPack } from '../packs.mjs';
+import { loadPack, retiredPackNote } from '../packs.mjs';
 import { planReconfigure, applyReconfigure, adoptedArtifacts, currentAnswers } from '../reconfigure.mjs';
 
 export default function reconfigureCommand({ root, args }) {
@@ -22,6 +22,8 @@ export default function reconfigureCommand({ root, args }) {
   }
   packFile ??= path.join(root, 'src/packs', id ?? '', 'pack.json');
   if (!existsSync(packFile)) {
+    const note = retiredPackNote(root, id);
+    if (note) console.error(`reconfigure: ${note}`);
     console.error('usage: go-getter reconfigure <pack-id> --answers <file> [--dry-run] | --current');
     return 2;
   }

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.2] - 2026-10-11
 
 ### Changed
 
@@ -11,8 +11,16 @@
 ### Fixed
 
 - Harness pack wording no longer names a hosting provider or pull requests as the place of review (`hitl` 0.4.0, `context` 0.3.1). The README and `INSTALLING.md` say which packs are harness and which are practice, and a test keeps the line.
-
 - `go-getter update` can re-render a project that chose `internal-data: single-provider`: the provider answer is read back from the internal-data decision, where before no artifact recorded it and the pack was left as it was.
+
+### Documentation
+
+- Which packs are harness and which are practice is stated in the README and `INSTALLING.md`; harness packs name no hosting provider (a test keeps it so).
+- Decisions 0129 to 0132 settle pack boundaries, neutral ids, how existing adoptions move to the split packs and the order of the next work (0131); 0133 and 0134 record the coverage command and bar.
+
+### Upgrading
+
+Run `go-getter update` in a project that adopted `governance`: it moves the project to `restricted-data`, `sanitization` and `data-policy` with the same answers and enforcement and asks nothing. `render-pack governance` and `reconfigure governance` say the pack was split and name the three; an old answers file works unchanged for each of them (answers a pack does not ask are ignored). A project adopted at `governance` 0.2.0 is not offered `sanitization`; run `go-getter-init` to adopt it.
 
 ## [0.3.1] - 2026-10-11
 

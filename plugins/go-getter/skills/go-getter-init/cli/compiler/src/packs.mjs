@@ -155,3 +155,14 @@ export function validateAllPacks(root, files = listPackFiles(root)) {
     validatePack(schema, pack, { dirName: path.basename(path.dirname(file)), knownPacks }).map((e) => `${path.relative(root, file)}: ${e}`),
   );
 }
+
+// The packs that took over a retired pack (`replaces`, decision 0132): ids, for a message that says where it went.
+export function successorsOf(root, retiredId) {
+  return listPackFiles(root).map((file) => loadPack(file)).filter((p) => p.replaces?.pack === retiredId).map((p) => p.id);
+}
+
+// "<id> was split into a, b and c; ..." when `id` is a retired pack, else null.
+export function retiredPackNote(root, id) {
+  const now = id ? successorsOf(root, id) : [];
+  return now.length ? `pack "${id}" was split into ${now.join(', ')}; run this command for each with the same answers file (answers a pack does not ask are ignored)` : null;
+}
