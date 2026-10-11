@@ -1,8 +1,8 @@
 // go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan]:
 // read a Markdown plan's steps and move one through its markers (decision 0069, plan A.2).
 import path from 'node:path';
-import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep } from '../plan.mjs';
-import { fileSource } from '../trackers/file-source.mjs';
+import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot } from '../plan.mjs';
+import { githubSource } from '../trackers/github.mjs';
 import { callSource } from '../trackers/worksource.mjs';
 
 const USAGE = 'usage: go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan]';
@@ -32,8 +32,11 @@ export default async function planCommand({ args }) {
   try {
     const file = resolvePlan(cwd, opts.plan);
     const rel = path.relative(cwd, file);
+    const source = githubSource(file, { project: repoRoot(cwd), name: rel });
     if (sub === 'start') {
-      const r = startStep(cwd, file, opts.id, { worktree: opts.worktree });
+      const known = await callSource(source, 'list');
+      const states = known.ok ? new Map(known.result.steps.map((s) => [s.id, s.state])) : undefined;
+      const r = startStep(cwd, file, opts.id, { worktree: opts.worktree, states });
       if (r.worktree) console.log(`${r.worktree.path} (${r.worktree.branch})`);
       console.log(r.changed ? `${opts.id}: [~] in ${path.relative(cwd, r.file)}` : `${opts.id}: already in progress`);
       return 0;
@@ -47,7 +50,7 @@ export default async function planCommand({ args }) {
       console.error(`${opts.id}: check failed (${r.check}); marker unchanged\n${r.output}`);
       return 1;
     }
-    const listed = await callSource(fileSource(file, { name: rel }), 'list');
+    const listed = await callSource(source, 'list');
     if (!listed.ok) {
       console.error(listed.error.code === 'invalid-plan' ? 'plan: the plan does not parse:' : `plan: ${listed.error.message}`);
       for (const p of listed.error.problems ?? []) console.error(`  ${p}`);

@@ -179,6 +179,7 @@
         "cli/compiler/src/telemetry/record.mjs",
         "cli/compiler/src/telemetry/schema.mjs",
         "cli/compiler/src/trackers/file-source.mjs",
+        "cli/compiler/src/trackers/github.mjs",
         "cli/compiler/src/trackers/refs.mjs",
         "cli/compiler/src/trackers/worksource.mjs",
         "cli/compiler/src/update.mjs",
