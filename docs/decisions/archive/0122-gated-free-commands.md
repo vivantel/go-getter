@@ -1,7 +1,8 @@
 ---
 id: 0122-gated-free-commands
 title: Outward-facing commands that run without asking are listed
-status: active
+status: superseded
+superseded-by: 0127-gated-free-commands
 date: 2026-10-11
 tags: [practice-packs, hooks]
 track: process

@@ -80,7 +80,7 @@ test('free lists outward catalog ids that run without a human; irreversible ones
   assert.deepEqual(ids('git push origin feat/x', {}), ['git-push']);
   assert.deepEqual(ids('git push --force origin feat/x', { free: ['git-push'] }), ['git-push-force'], 'force-push still asks');
   assert.deepEqual(ids('git push --delete origin old', { free: ['git-push'] }), ['git-push-delete']);
-  assert.deepEqual(ids('gh pr merge 5', { free: ['git-push'] }), ['gh-pr'], 'other outward commands still ask');
+  assert.deepEqual(ids('gh pr merge 5', { free: ['git-push'] }), ['gh-pr-merge'], 'other outward commands still ask');
   const gate = (run) => [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: run } }];
   const names = (args) => gateEntries(gate(args)).map((e) => e.id);
   assert.equal(names({ classes: 'irreversible,outward' }).includes('git-push'), true);
@@ -88,4 +88,26 @@ test('free lists outward catalog ids that run without a human; irreversible ones
   assert.equal(names({ classes: 'irreversible,outward', free: 'git-push' }).includes('git-push-force'), true);
   assert.throws(() => gateEntries(gate({ classes: 'irreversible,outward', free: 'rm-rf' })), /free must name outward/);
   assert.throws(() => gateEntries(gate({ classes: 'irreversible,outward', free: 'nope' })), /free must name outward/);
+});
+
+test('pull request commands are three catalog ids: freeing merge leaves create and close asking, and the old gh-pr id still means all three', async () => {
+  const { matchGated, gateEntries, nativeRules, normaliseFree } = await import('../src/gate.mjs');
+  const ids = (cmd, o) => matchGated(cmd, o).map((e) => e.id);
+  assert.deepEqual(ids('gh pr create --fill', {}), ['gh-pr-create']);
+  assert.deepEqual(ids('gh pr merge 5', {}), ['gh-pr-merge']);
+  assert.deepEqual(ids('gh pr close 5', {}), ['gh-pr-close']);
+  assert.deepEqual(ids('gh pr merge --squash 5', { free: ['gh-pr-merge'] }), []);
+  assert.deepEqual(ids('gh pr create', { free: ['gh-pr-merge'] }), ['gh-pr-create']);
+  assert.deepEqual(ids('gh pr close 5', { free: ['gh-pr-merge'] }), ['gh-pr-close']);
+  assert.deepEqual(ids('gh pr view 5', {}), []);
+  for (const cmd of ['gh pr create', 'gh pr merge 5', 'gh pr close 5']) assert.deepEqual(ids(cmd, { free: ['gh-pr'] }), [], `the old id frees ${cmd}`);
+  assert.deepEqual(normaliseFree(['git-push', 'gh-pr']), ['git-push', 'gh-pr-create', 'gh-pr-merge', 'gh-pr-close']);
+  const gate = (args) => [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args } }];
+  const entries = gateEntries(gate({ classes: 'irreversible,outward', free: 'git-push,gh-pr-merge' }));
+  assert.ok(!entries.some((e) => ['git-push', 'gh-pr-merge'].includes(e.id)));
+  assert.ok(entries.some((e) => e.id === 'gh-pr-create') && entries.some((e) => e.id === 'gh-pr-close'));
+  const caps = (await import('../src/capabilities.mjs')).loadCapabilities(new URL('../..', import.meta.url).pathname);
+  const rules = nativeRules('claude-code', entries, caps);
+  assert.ok(rules.includes('Bash(gh pr create *)') && rules.includes('Bash(gh pr close *)') && !rules.includes('Bash(gh pr merge *)'));
+  assert.doesNotThrow(() => gateEntries(gate({ classes: 'irreversible,outward', free: 'gh-pr' })));
 });
