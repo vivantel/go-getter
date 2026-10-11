@@ -71,12 +71,12 @@ Done-when: `check:packs` and `check:self-adoption` pass; a project answering `ji
 
 ### 8 Move this repository's plan to GitHub Issues — [x]
 Issue: #82
-Class: implement · Needs: 7 · Check: `node compiler/bin/go-getter.mjs plan next docs/plans/tracker-backed-plans.md | grep -q ' #[0-9]'`
+Class: implement · Needs: 7 · Check: `node compiler/bin/go-getter.mjs plan next docs/plans/archive/tracker-backed-plans.md | grep -q ' #[0-9]'`
 **Creating issues is outward-facing: needs the owner's go-ahead, after reading the dry run.**
 Do: run `go-getter plan issue --dry-run create <step>` for every pending step of the plans in `docs/plans/` (the open backlog items are steps of `docs/plans/backlog.md`) and show it to the owner; check no text carries non-public information. On approval create the issues, which writes `Issue:` onto each step, and change the "Remaining work" paragraph of `AGENTS.md` (outside the generated block) to say that open work is the repository's issues and the plan files hold the step text. A step already done stays in the file only.
 Done-when: `go-getter plan next` names a pending step from its issue; every pending step has `Issue:`; closing one issue with `go-getter plan issue close` makes `plan status` show it done; `go-getter:lint` finds no stale pointer to the old workflow.
 
-### 9 Tracker plan: docs, lint and close — [ ]
+### 9 Tracker plan: docs, lint and close — [x]
 Issue: #83
 Class: review · Needs: 7j, 8 · Check: `npm run check:plans && npm run check:guardrails`
 Do: describe the tracker pack in README and INSTALLING.md (what is read, what is written, how credentials are supplied, the stale label, that hierarchy is not synced), run the full `go-getter:lint` skill, mark L.7 done in the v0.2 plan backlog and archive this plan.
