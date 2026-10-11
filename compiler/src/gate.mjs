@@ -207,7 +207,8 @@ export function gateEntries(enforcement) {
   const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => {
     const args = gateArgs(e.parsed.args);
     const bad = args.classes.filter((c) => !GATE_CLASSES.includes(c));
-    if (!args.classes.length || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
+    // A gate may list only project commands (`extra`) and no class, as the tracker pack's does for the write verbs.
+    if ((!args.classes.length && !args.extra.length) || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
     const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');
     if (unfree.length) throw new Error(`guardrail ${e.guardrail}: gate-command free must name outward catalog commands, not ${unfree.join(', ')}`);
     for (const x of args.extra.filter(isRegexExtra)) {
