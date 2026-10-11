@@ -12,3 +12,4 @@ id,title,tags,status
 0121-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0125-tracker-write-commands,"The commands that write to the tracker are listed","practice-packs, roadmap",deprecated
 0122-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
+0068-post-v0.1-milestone-sequence,"v0.2 hardens the agent core in three waves; git workflow and spec workflow follow in v0.3","milestones, roadmap, harness",superseded
