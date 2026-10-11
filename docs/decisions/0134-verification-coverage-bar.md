@@ -1,10 +1,11 @@
 ---
 id: 0134-verification-coverage-bar
 title: Coverage must meet what the coverage command enforces
-status: draft
+status: active
 date: 2026-10-11
 tags: [practice-packs, verification, harness]
 track: process
+accepted-by: sergemso
 go-getter:
   verify-coverage-bar: command
   generated-by: verification-gate@0.4.0

@@ -119,5 +119,5 @@ id,title,tags,status
 0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops,"An autonomous run is a plan range the operator starts, with approve-once for outward commands, preconditions checked at use and bounded stops","hooks, enforcement, roadmap, practice-packs",active
 0131-pack-boundaries-then-the-run-approvals-then-mcp,"Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers","milestones, roadmap, harness",active
 0132-governance-splits-into-three-packs-and-existing-adoptions-are-relabelled,"governance splits into restricted-data, sanitization and data-policy, and update relabels existing adoptions instead of asking again","practice-packs, compiler, configuration",active
-0133-verification-coverage-command,"The verification coverage command is """"","practice-packs, verification, harness",draft
-0134-verification-coverage-bar,"Coverage must meet what the coverage command enforces","practice-packs, verification, harness",draft
+0133-verification-coverage-command,"The verification coverage command is """"","practice-packs, verification, harness",active
+0134-verification-coverage-bar,"Coverage must meet what the coverage command enforces","practice-packs, verification, harness",active
