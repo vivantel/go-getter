@@ -112,7 +112,7 @@ id,title,tags,status
 0118-extension-architecture-core-and-edges,"go-getter keeps a small core and moves the open-ended edges behind interfaces that can later become helper processes","architecture, roadmap, compiler",active
 0119-helper-contract-v0,"A helper is a pinned executable behind a JSON contract; its output is untrusted data and MCP is only a possible backend","architecture, roadmap, enforcement",active
 0120-gated-commands-may-be-freed-by-name,"A project may let named outward-facing commands run without a human; irreversible ones never","practice-packs, hooks, enforcement",active
-0122-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
 0123-plans-in-github,"Plan steps live in GitHub Issues","practice-packs, roadmap",active
 0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",active
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
+0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active

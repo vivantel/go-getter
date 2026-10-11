@@ -58,9 +58,15 @@ const ENTRIES = [
   { id: 'git-push', class: 'outward', description: 'publishes commits to a remote',
     pattern: new RegExp(`^${GIT}push${END}`),
     examples: { match: ['git push', 'git push origin main', 'git -C app push'], noMatch: ['git status', 'git pull', 'git stash push', 'echo "git push"'] } },
-  { id: 'gh-pr', class: 'outward', description: 'opens, merges or closes a pull request',
-    pattern: /^gh\s+pr\s+(?:create|merge|close)(?=\s|$)/,
-    examples: { match: ['gh pr create --fill', 'gh pr merge 5', 'gh pr close 5'], noMatch: ['gh pr view 5', 'gh pr list'] } },
+  { id: 'gh-pr-create', class: 'outward', description: 'opens a pull request',
+    pattern: /^gh\s+pr\s+create(?=\s|$)/,
+    examples: { match: ['gh pr create --fill', 'gh pr create'], noMatch: ['gh pr view 5', 'gh pr list', 'gh pr merge 5'] } },
+  { id: 'gh-pr-merge', class: 'outward', description: 'merges a pull request',
+    pattern: /^gh\s+pr\s+merge(?=\s|$)/,
+    examples: { match: ['gh pr merge 5', 'gh pr merge --squash --delete-branch 5'], noMatch: ['gh pr checks 5', 'gh pr create --fill'] } },
+  { id: 'gh-pr-close', class: 'outward', description: 'closes a pull request',
+    pattern: /^gh\s+pr\s+close(?=\s|$)/,
+    examples: { match: ['gh pr close 5'], noMatch: ['gh pr view 5', 'gh pr merge 5'] } },
   { id: 'gh-release-create', class: 'outward', description: 'publishes a release',
     pattern: /^gh\s+release\s+create(?=\s|$)/,
     examples: { match: ['gh release create v1'], noMatch: ['gh release list', 'gh release view v1'] } },
@@ -92,7 +98,9 @@ const NATIVE = {
   'rm-rf': [...around('rm', '-rf*', '-fr*', '-Rf*', '-fR*', '-r -f*', '-f -r*', '--recursive --force*', '--force --recursive*')],
   'sql-destructive': ['psql', 'mysql', 'sqlite3'].flatMap(sql),
   'git-push': ['git push *'],
-  'gh-pr': ['gh pr create *', 'gh pr merge *', 'gh pr close *'],
+  'gh-pr-create': ['gh pr create *'],
+  'gh-pr-merge': ['gh pr merge *'],
+  'gh-pr-close': ['gh pr close *'],
   'gh-release-create': ['gh release create *'],
   'git-tag-create': ['git tag *'],
   'package-publish': ['npm publish *', 'pnpm publish *', 'yarn publish *', 'yarn npm publish *'],
@@ -152,10 +160,15 @@ const parseExtra = (spec) => {
 };
 
 // The catalog entries (and project `extra` patterns, which are outward commands and ignore `classes`) that `command` matches.
+// An answer that names `gh-pr` (the id before it was split into create, merge and close) means all three.
+const ALIASES = { 'gh-pr': ['gh-pr-create', 'gh-pr-merge', 'gh-pr-close'] };
+export const normaliseFree = (ids = []) => ids.flatMap((id) => ALIASES[id] ?? [id]);
+
 // `free` lists catalog ids the project lets run without a human (outward entries only, `gateEntries` rejects others).
 export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [] } = {}) {
   if (typeof command !== 'string' || !command.trim()) return [];
-  const wanted = CATALOG.filter((e) => classes.includes(e.class) && !free.includes(e.id));
+  const freed = normaliseFree(free);
+  const wanted = CATALOG.filter((e) => classes.includes(e.class) && !freed.includes(e.id));
   const extras = extra.map(String).filter((s) => s.trim()).map(parseExtra);
   const hits = new Set();
   const found = [];
@@ -204,7 +217,7 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
 // `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
-export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: list(args.free), goGetter: list(args['go-getter']) });
+export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: normaliseFree(list(args.free)), goGetter: list(args['go-getter']) });
 
 // The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script
 // of a checkout. A call spelled any other way is still recognised by the hook, which reads what it runs (invocation.mjs).
