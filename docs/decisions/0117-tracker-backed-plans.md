@@ -12,12 +12,12 @@ accepted-by: sergemso
 
 A `tracker` pack lets a project keep plan steps in an issue tracker. It is optional: the first question asks whether plans live in files, in the tracker, or both, and defaults to files. A project that answers files sees no change.
 
-- **First tracker:** GitHub Issues, read and written through `gh`. A table beside `spec-tools.mjs` holds the detection (a GitHub remote), the reference forms (`#123`, `owner/repo#123`, a URL) and the `gh` calls, so a second tracker is a row and a test.
+- **First tracker:** GitHub Issues, read and written through `gh`. `plan` reads steps through the WorkSource interface of 0118, and the file source and the GitHub source are its two implementations, the GitHub one in its own module in-process (detection by remote, reference forms `#123`, `owner/repo#123` and a URL, the `gh` calls). It may become a helper process under 0118 when a second tracker exists.
 - **Step id:** the issue number. A plan from before the pack keeps its ids unless renumbered.
 - **Source of truth:** for a step with an issue, the issue's state decides, and `plan status|next` show it. A step without one stays file-driven. When the file and the issue disagree, the disagreement is reported and neither is changed. Without `gh` or the network, the last state read is shown and labelled stale.
 - **Refs:** `refs`, `attribute` and `conform` list a step's issue, or one the branch slug names, as a `Refs:` target, as they list an OpenSpec change folder (0075).
 - **Writes:** `plan` verbs only (create an issue from a step, comment, close). The pack answer is `off`, `ask` or `allow`, defaulting to `ask`. The answer governs only these verbs; raw `gh issue *` and `gh api` stay gated by `gated-actions-need-human-approval` whatever the answer. Every verb has a dry run that prints what it would send, and records the verb and the outcome (never the issue text) in telemetry.
-- **Hierarchy:** none. Sub-issues and task lists are not synced. A later `plan import #N` may read an epic once and write a plan file; after that nothing stays linked.
+- **Hierarchy:** none in the first version (a source may later declare a `hierarchy` capability, 0118). Sub-issues and task lists are not synced. A later `plan import #N` may read an epic once and write a plan file; after that nothing stays linked.
 - **Autonomous runs:** whether `allow` writes apply to an unattended run is decided with L.8, not here.
 
 Supersedes the wording of backlog item L.7 ("no two-way sync, no state of its own"). It does not change 0075.
