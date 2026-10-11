@@ -178,6 +178,8 @@
         "cli/compiler/src/telemetry/otel.mjs",
         "cli/compiler/src/telemetry/record.mjs",
         "cli/compiler/src/telemetry/schema.mjs",
+        "cli/compiler/src/trackers/file-source.mjs",
+        "cli/compiler/src/trackers/worksource.mjs",
         "cli/compiler/src/update.mjs",
         "cli/compiler/src/verify.mjs",
         "cli/compiler/src/watch.mjs",

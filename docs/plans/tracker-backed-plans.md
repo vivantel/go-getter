@@ -19,7 +19,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 WorkSource interface and the file source — [ ]
+### 1 WorkSource interface and the file source — [x]
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/plan.test.mjs compiler/test/worksource.test.mjs`
 Do: define the WorkSource contract in `compiler/src/trackers/worksource.mjs` and move `plan.mjs`'s reading and marker writing behind a file source implementing it, with no change to `plan status|next|start|done` output. Add a contract test that runs any source against the same cases (list order, get by id, create, set state, comment, an unknown id) and run it on the file source.
 The interface obeys decision 0119: arguments and results are plain data, with no callbacks and no shared state, and the contract test checks that a call's input and output survive a JSON round trip. Tracker text never becomes a command: `Check:` stays in the plan file.
