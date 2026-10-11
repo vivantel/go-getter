@@ -68,5 +68,14 @@
     "Per-path read deny exists in permission profiles for sandboxed commands; project-level support unconfirmed (fact 0031).",
     "Checkpointing unconfirmed.",
     "Component 9 tier 2: the pre-tool hook takes the checkpoint before a gated command (decision 0097); the host has no native checkpoint."
+  ],
+  "secretLevers": [
+    {
+      "kind": "profile-deny-glob",
+      "scope": "a permission profile",
+      "fact": "0031",
+      "confirmed": false,
+      "note": "Applies to sandboxed commands only. Not confirmed: that a project config file loads permission profiles."
+    }
   ]
 }

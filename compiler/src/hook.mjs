@@ -204,7 +204,7 @@ const MAX_FILE = 256 * 1024;
 const SKIP_DIRS = new Set(['.git', 'node_modules']);
 
 // Restricted patterns of the adopted tier-2 deny-path guardrails.
-function restrictedPatterns(project) {
+export function restrictedPatterns(project) {
   return collectEnforcement(project)
     .filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'deny-path')
     .flatMap((e) => patternsOf(e.parsed.args));
