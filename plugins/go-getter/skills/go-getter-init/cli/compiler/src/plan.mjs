@@ -145,7 +145,12 @@ export function resolvePlan(root, arg) {
 export function planStatus(plan) {
   const counts = Object.fromEntries(Object.values(MARKERS).map((m) => [m, 0]));
   for (const s of plan.steps) counts[s.state]++;
-  return { file: plan.file, total: plan.steps.length, counts, steps: plan.steps.map(({ id, title, state }) => ({ id, title, status: state })) };
+  return {
+    file: plan.file,
+    total: plan.steps.length,
+    counts,
+    steps: plan.steps.map(({ id, title, state, mismatch, issueState }) => ({ id, title, status: state, ...(mismatch ? { mismatch } : {}), ...(issueState?.stale ? { stale: issueState.fetchedAt ?? true } : {}) })),
+  };
 }
 
 // Pending steps whose Needs are all done, in plan order, at most 4. `parallel` marks an option the plan
@@ -167,7 +172,10 @@ export function nextSteps(plan, max = MAX_OPTIONS) {
 export function formatStatus(status) {
   const c = status.counts;
   const lines = [`${status.file}: ${c.done}/${status.total} done, ${c['in progress']} in progress, ${c.blocked} blocked, ${c.moved} moved, ${c.pending} pending`];
-  for (const s of status.steps) if (s.status !== 'done') lines.push(`[${STATE_MARKER[s.status]}] ${s.id} ${s.title}`);
+  for (const s of status.steps) {
+    const note = [s.mismatch ? `mismatch: ${s.mismatch}` : null, s.stale ? `issue state ${s.stale === true ? 'unknown' : `as of ${s.stale}`}, stale` : null].filter(Boolean).join('; ');
+    if (s.status !== 'done' || s.mismatch) lines.push(`[${STATE_MARKER[s.status]}] ${s.id} ${s.title}${note ? ` (${note})` : ''}`);
+  }
   return lines.join('\n');
 }
 
@@ -190,7 +198,7 @@ export function setMarker(text, step, marker) {
   return lines.join('\n');
 }
 
-function repoRoot(dir) {
+export function repoRoot(dir) {
   try {
     return execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: dir, env: cleanGitEnv(process.env), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   } catch {
@@ -210,11 +218,12 @@ const writeMarker = (file, id, marker) => writeFileSync(file, setMarker(readFile
 
 // Sets a pending or blocked step to `[~]` once its Needs are done. With `worktree` (a slug) it first creates the task's
 // worktree (`go-getter worktree new`) and sets the marker in that worktree's copy of the plan, so it lands with the step's branch.
-export function startStep(cwd, file, id, { worktree } = {}) {
+export function startStep(cwd, file, id, { worktree, states } = {}) {
   const { plan, step } = findStep(file, id);
   if (step.marker === 'x' || step.marker === '>') throw new Error(`step ${id} is ${MARKERS[step.marker]}`);
   if (step.marker === '~' && !worktree) return { changed: false, file };
-  const open = step.needs.filter((n) => plan.steps.find((s) => s.id === n)?.marker !== 'x');
+  // `states` (step id -> state) comes from the work source, so a step whose issue is still open is not done.
+  const open = step.needs.filter((n) => (states?.get(n) ?? plan.steps.find((s) => s.id === n)?.state) !== 'done');
   if (open.length) throw new Error(`step ${id} needs ${open.join(', ')}, not done yet`);
   let target = file;
   let made;
