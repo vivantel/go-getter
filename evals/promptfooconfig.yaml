@@ -69,8 +69,8 @@ tests:
       - *init-ok
       - type: javascript
         value: "JSON.parse(output).created.some((f) => f.startsWith('.claude/agents/'))"
-  - description: "pack governance"
-    vars: { label: pack-governance, fixture: sensitive, packs: governance, hosts: claude-code }
+  - description: "packs restricted-data, sanitization and data-policy (the former governance pack)"
+    vars: { label: pack-governance, fixture: sensitive, packs: "restricted-data,sanitization,data-policy", hosts: claude-code }
     assert:
       - *init-ok
       - type: javascript
