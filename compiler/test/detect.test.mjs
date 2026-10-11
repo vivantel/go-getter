@@ -16,7 +16,7 @@ function fixture(files) {
 }
 
 // Every check of the catalog (decision 0071), unknown.
-const none = { format: null, lint: null, typecheck: null, 'static-analysis': null, build: null, test: null, unit: null, integration: null, e2e: null };
+const none = { format: null, lint: null, typecheck: null, 'static-analysis': null, build: null, test: null, unit: null, integration: null, e2e: null, coverage: null };
 const cmds = (known) => ({ ...none, ...known });
 const empty = {
   languages: [], packageManagers: [], testFrameworks: [], linters: [], typecheckers: [], commands: none, nodeVersion: null, ci: [], monorepo: [],

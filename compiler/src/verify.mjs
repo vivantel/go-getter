@@ -17,6 +17,14 @@ const DEFAULT_MAX_ESCALATIONS = 2;
 const TIMEOUT_MS = 10 * 60 * 1000;
 const TAIL_LINES = 15;
 
+// `export GO_GETTER_COVERAGE_BAR=...; ` for the coverage command: the bar kind, and the minimum for a threshold.
+function coverageEnv(project) {
+  const bar = String(adoptedData(project, 'verify-coverage-bar') ?? 'command').trim();
+  const min = String(adoptedData(project, 'verify-coverage-min') ?? '').trim();
+  const vars = [`GO_GETTER_COVERAGE_BAR=${bar}`, ...(bar === 'threshold' && /^\d{1,3}$/.test(min) ? [`GO_GETTER_COVERAGE_MIN=${min}`] : [])];
+  return `export ${vars.join(' ')}; `;
+}
+
 // The test command of the "affected tests" scope takes the place of the test command.
 // Each check runs where the machine profile places it (decision 0071): `commands` are the `local` and `both` checks
 // the gate runs, `ci` the `ci` and `both` checks CI runs. A profile adopted before 0071 has no placement: all local.
@@ -26,8 +34,13 @@ export function verifyConfig(project) {
   let commands = Object.fromEntries(CHECKS.map((c) => [c, command(`verify-${c}-command`)]));
   if (scope === 'tests-only') commands = { test: commands.test };
   if (scope === 'affected-tests') commands = { test: command('verify-affected-command') };
+  // The coverage command gets its bar as environment variables (decision 0129):
+  // exported first so the command can use them in its own arguments.
+  if (commands.coverage) commands = { ...commands, coverage: `${coverageEnv(project)}${commands.coverage}` };
   const placement = adoptedData(project, 'verify-where') ?? {};
-  const where = (name) => placement[name] ?? 'local';
+  const profile = adoptedData(project, 'verify-profile') ?? null;
+  // A profile adopted before coverage was a check has no placement for it: it follows the profile (slow checks run in CI).
+  const where = (name) => placement[name] ?? (name === 'coverage' && ['thin', 'ci-only'].includes(profile) ? 'ci' : 'local');
   const pick = (places) => Object.fromEntries(Object.entries(commands).filter(([name, v]) => v && places.includes(where(name))));
   const escalations = Number.parseInt(adoptedData(project, 'max-escalations'), 10);
   return {

@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction; worktree creation is refused beyond the limit
-  generated-by: orchestration@0.1.0
+  generated-by: orchestration@0.1.1
   pack-answer: max-concurrent
   pack-option: "3"
 ---

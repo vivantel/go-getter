@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "orchestration",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "family": "harness",
   "components": [
     10
@@ -33,7 +33,7 @@
     },
     {
       "id": "reviewer",
-      "prompt": "What may the reviewer change?",
+      "prompt": "What may the reviewer change? (Only the role's access is set here; what a review step must pass is the review bar of the verification-gate pack.)",
       "when": {
         "question": "roster",
         "in": [

@@ -19,7 +19,7 @@ Eight harness packs and one SDLC pack, each a short guided interview with a reco
 | Pack | Component | What you choose |
 |---|---|---|
 | `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
-| `verification-gate` | 6 Verification loops | which checks mean "done" and where each runs (locally or in CI), the review bar, whether failing checks block completion |
+| `verification-gate` | 6 Verification loops | which checks mean "done" (including a coverage command and bar) and where each runs (locally or in CI), the review bar, whether failing checks block completion |
 | `restricted-data` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, how secrets are used and where they may be written, which hosts may handle restricted data |
 | `sanitization` | 7 Guardrails & DLP | whether the lines a change adds are scanned for secrets, which paths the scan skips, whether personal data in tool output is masked |
 | `data-policy` | 7 Guardrails & DLP | which providers may see internal and confidential data, prompt logging |

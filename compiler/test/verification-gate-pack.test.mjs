@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -68,7 +68,7 @@ test('a thin profile runs lint and typecheck locally but not build or e2e', asyn
   const config = verifyConfig(dir);
   assert.equal(config.profile, 'thin');
   assert.deepEqual(Object.keys(config.commands), ['lint', 'typecheck', 'test', 'unit']);
-  assert.deepEqual(Object.keys(config.ci), ['static-analysis', 'build', 'test', 'unit', 'integration', 'e2e']);
+  assert.deepEqual(Object.keys(config.ci), ['static-analysis', 'build', 'test', 'unit', 'integration', 'e2e', 'coverage']);
   const { ok, results } = await verify(dir, 'implement');
   assert.equal(ok, true, 'the failing build and e2e commands are left to CI');
   assert.deepEqual(results.map((r) => r.name), ['lint', 'typecheck', 'test', 'unit']);
@@ -77,8 +77,8 @@ test('a thin profile runs lint and typecheck locally but not build or e2e', asyn
 
 test('a full profile runs every check locally and a ci-only profile none', async () => {
   for (const [profile, local, ci] of [
-    ['full', ['lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e'], []],
-    ['ci-only', [], ['lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e']],
+    ['full', ['lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e', 'coverage'], []],
+    ['ci-only', [], ['lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e', 'coverage']],
   ]) {
     const dir = project();
     adopt(dir, answersFor({ ...allCommands, 'machine-profile': profile }));
@@ -409,4 +409,53 @@ test('CI jobs of a project without Node run the command only; other CI providers
   const run = spawnSync('node', [bin, 'coverage', '--project', gitlab], { encoding: 'utf8' });
   assert.match(run.stdout, /note: verification checks placed in CI \(build, test, e2e\)/);
   done(gitlab);
+});
+
+// Coverage and review each have one owner (decision 0129).
+test('the coverage command runs with its bar in the environment, wherever the profile places it', async () => {
+  const cases = [
+    [{ 'coverage-bar': 'threshold', 'coverage-threshold': '80' }, 'test "$GO_GETTER_COVERAGE_BAR" = threshold && test "$GO_GETTER_COVERAGE_MIN" -eq 80', true],
+    [{ 'coverage-bar': 'threshold', 'coverage-threshold': '70' }, 'test "$GO_GETTER_COVERAGE_MIN" -ge 80', false],
+    [{ 'coverage-bar': 'no-regression' }, 'test "$GO_GETTER_COVERAGE_BAR" = no-regression && test -z "$GO_GETTER_COVERAGE_MIN"', true],
+    [{ 'coverage-bar': 'command' }, 'test "$GO_GETTER_COVERAGE_BAR" = command', true],
+  ];
+  for (const [bar, command, passes] of cases) {
+    const dir = project();
+    adopt(dir, answersFor({ 'machine-profile': 'full', 'coverage-command': command, ...bar }));
+    assert.deepEqual(Object.keys(verifyConfig(dir).commands), ['lint', 'test', 'coverage'], 'full profile: coverage runs locally');
+    fix(dir);
+    assert.equal((await verify(dir, 'implement')).ok, passes, `${JSON.stringify(bar)}: ${command}`);
+    done(dir);
+  }
+});
+
+test('coverage runs in CI only on the thin and ci-only profiles, including a profile adopted before coverage existed', () => {
+  for (const profile of ['thin', 'ci-only']) {
+    const dir = project();
+    adopt(dir, answersFor({ 'machine-profile': profile, 'coverage-command': PASS }));
+    assert.ok('coverage' in verifyConfig(dir).ci && !('coverage' in verifyConfig(dir).commands), profile);
+    // A 0.3.0 profile decision has no placement for coverage.
+    const file = path.join(dir, 'docs/decisions', readdirSync(path.join(dir, 'docs/decisions')).find((f) => /machine-profile/.test(f)));
+    writeFileSync(file, readFileSync(file, 'utf8').replace(/^\s*coverage: ci\n/m, ''));
+    assert.ok(!/coverage:/.test(readFileSync(file, 'utf8')), 'the placement is gone');
+    assert.ok('coverage' in verifyConfig(dir).ci && !('coverage' in verifyConfig(dir).commands), `${profile} without a stored placement`);
+    done(dir);
+  }
+});
+
+test('a project that does not answer the coverage questions gets no coverage check', () => {
+  const dir = project();
+  adopt(dir, answersFor({ 'machine-profile': 'full' }));
+  const config = verifyConfig(dir);
+  assert.ok(!('coverage' in config.commands) && !('coverage' in config.ci));
+  done(dir);
+});
+
+test('verification-gate and orchestration share no question, and each prompt points at the other owner', () => {
+  const orchestration = loadPack(path.join(root, 'src/packs/orchestration/pack.json'));
+  const own = new Set(pack.questions.map((q) => q.id));
+  assert.deepEqual(orchestration.questions.filter((q) => own.has(q.id)).map((q) => q.id), []);
+  assert.match(pack.questions.find((q) => q.id === 'review-bar').prompt, /owns the review bar; .*orchestration pack/);
+  assert.match(orchestration.questions.find((q) => q.id === 'reviewer').prompt, /review bar of the verification-gate pack/);
+  assert.ok(!orchestration.questions.some((q) => /coverage|review bar/i.test(q.id)), 'orchestration asks nothing about coverage or the review bar');
 });

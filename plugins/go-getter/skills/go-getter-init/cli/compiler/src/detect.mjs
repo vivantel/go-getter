@@ -48,7 +48,7 @@ function git(root, args) {
 }
 
 // Check catalog of decision 0071: the commands each check runs, inferred from conventions; null when unknown.
-export const CHECKS = ['format', 'lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e'];
+export const CHECKS = ['format', 'lint', 'typecheck', 'static-analysis', 'build', 'test', 'unit', 'integration', 'e2e', 'coverage'];
 // Package scripts and Makefile targets per check, first match wins; non-mutating variants come first.
 const SCRIPTS = {
   format: ['format:check', 'check:format', 'fmt:check', 'format', 'fmt'],
@@ -59,6 +59,7 @@ const SCRIPTS = {
   unit: ['test:unit', 'unit'],
   integration: ['test:integration', 'integration', 'test:int'],
   e2e: ['test:e2e', 'e2e'],
+  coverage: ['test:coverage', 'coverage', 'test:cov'],
 };
 const TARGETS = {
   format: ['format', 'fmt'],
@@ -70,6 +71,7 @@ const TARGETS = {
   unit: ['unit', 'test-unit'],
   integration: ['integration', 'test-integration'],
   e2e: ['e2e', 'test-e2e'],
+  coverage: ['coverage', 'test-coverage'],
 };
 
 function detectCommands(root, { pkg, deps, pyproject, packageManagers, languages }) {

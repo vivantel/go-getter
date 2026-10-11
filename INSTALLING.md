@@ -106,6 +106,10 @@ A project that adopts the `sanitization` pack scans the lines each commit, push 
 
 `go-getter sandbox` prints the secret settings of each host that has them (Claude Code, Codex, Gemini CLI, Copilot), built from your restricted paths and marked `confirmed` or `not confirmed`. Copy them into your user settings yourself; `apply` never writes them, and Claude Code ignores `mask` entries in a repository's settings. Prompts are not masked.
 
+## Verification and review
+
+The `verification-gate` pack owns what counts as done: the check commands (format, lint, typecheck, static analysis, build, tests and coverage), where each runs, and the review bar. The `orchestration` pack owns only the reviewer role (its access, read-only by default); it asks nothing about what a review must pass. The coverage command is run where the machine profile places it (CI only on the thin and CI-only profiles); go-getter does not read coverage reports, it passes the bar to the command in `GO_GETTER_COVERAGE_BAR` (`command`, `threshold` or `no-regression`) and `GO_GETTER_COVERAGE_MIN`, and the check fails when the command exits non-zero.
+
 ## Git workflow
 
 A project that adopts the `git-workflow` pack gets branch, commit and pull request rules: branches named `type/slug` (or your own pattern), no commits or pushes on the default branch, Conventional Commit subjects, and one squash-merged pull request per change with green CI. The pre-commit and pre-push git hooks and the CI job check the branch name and the default branch; `Refs:` trailers can be required, encouraged or off. Branch protection and required checks on your hosting platform are yours to set: go-getter cannot write them. Before a push the hook reads the refs being pushed, so a tag can be pushed from any checkout and `git push origin feat:main` is refused.
