@@ -108,3 +108,4 @@ id,title,tags,status
 0114-pii-extra,"The locale-bound types masked in tool output are listed","practice-packs, governance, security",active
 0115-use-commands,"The commands approved to receive a use path are listed","practice-packs, governance, security",active
 0116-sink-sources,"The sources allowed to fill a sink path are listed","practice-packs, governance, security",active
+0117-tracker-backed-plans,"An optional tracker pack makes issues the source of truth for plan steps, with writes through go-getter's own verbs only","roadmap, practice-packs, tooling",active
