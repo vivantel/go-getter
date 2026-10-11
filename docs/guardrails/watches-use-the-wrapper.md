@@ -14,7 +14,7 @@ go-getter:
     - tier: 2
       check: Pre-tool hook wraps the host watcher command in `go-getter watch` where the host allows
       run: builtin:wrap-watch
-  generated-by: context@0.3.0
+  generated-by: context@0.3.1
   pack-answer: watcher-noise
   pack-option: quiet
 ---

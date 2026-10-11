@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "context",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "family": "harness",
   "components": [
     4
@@ -284,7 +284,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Procedures follow the delivery decision; reviewed in PRs"
+                "check": "Procedures follow the delivery decision; reviewed with the change"
               }
             ],
             "body": "## Guardrail\n\nKeep procedures in skills, not in the always-loaded instruction file.\nAdvisory (tier 1 only).\n"
@@ -343,7 +343,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Procedures follow the delivery decision; reviewed in PRs"
+                "check": "Procedures follow the delivery decision; reviewed with the change"
               }
             ],
             "body": "## Guardrail\n\nReference procedures with a one-line pointer to the doc; do not inline them.\nAdvisory (tier 1 only).\n"
@@ -387,7 +387,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Noisy work follows the placement decision; reviewed in PRs"
+                "check": "Noisy work follows the placement decision; reviewed with the change"
               }
             ],
             "body": "## Guardrail\n\nDelegate noisy work to a subagent only when the cost model says the handoff is cheaper.\nAdvisory (tier 1 only).\n"
@@ -429,7 +429,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Noisy work follows the placement decision; reviewed in PRs"
+                "check": "Noisy work follows the placement decision; reviewed with the change"
               }
             ],
             "body": "## Guardrail\n\nDelegate noisy work (search, logs, test output) to a subagent.\nAdvisory (tier 1 only).\n"
@@ -593,7 +593,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Compaction follows the timing decision; reviewed in PRs"
+                "check": "Compaction follows the timing decision; reviewed with the change"
               }
             ],
             "body": "## Guardrail\n\nCompact context at task boundaries, not mid-task.\nAdvisory (tier 1 only).\n"
@@ -652,7 +652,7 @@
             "enforcement": [
               {
                 "tier": 1,
-                "check": "Compaction follows the timing decision; reviewed in PRs"
+                "check": "Compaction follows the timing decision; reviewed with the change"
               }
             ],
             "body": "## Guardrail\n\nStart a fresh session for each task.\nAdvisory (tier 1 only).\n"

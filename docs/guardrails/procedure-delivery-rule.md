@@ -10,8 +10,8 @@ derivation-note: Given the delivery decision, procedures placed elsewhere cost t
 go-getter:
   enforcement:
     - tier: 1
-      check: Procedures follow the delivery decision; reviewed in PRs
-  generated-by: context@0.3.0
+      check: Procedures follow the delivery decision; reviewed with the change
+  generated-by: context@0.3.1
   pack-answer: procedures
   pack-option: skills-on-demand
 ---

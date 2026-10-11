@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Harness pack wording no longer names a hosting provider or pull requests as the place of review (`hitl` 0.4.0, `context` 0.3.1). The README and `INSTALLING.md` say which packs are harness and which are practice, and a test keeps the line.
+
 - `go-getter update` can re-render a project that chose `internal-data: single-provider`: the provider answer is read back from the internal-data decision, where before no artifact recorded it and the pack was left as it was.
 
 ## [0.3.1] - 2026-10-11

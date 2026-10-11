@@ -3,7 +3,7 @@
   "version": "0.3.1",
   "packs": {
     "checkpointing": "0.2.0",
-    "context": "0.3.0",
+    "context": "0.3.1",
     "cost-routing": "0.2.0",
     "data-policy": "0.6.0",
     "git-workflow": "0.1.1",

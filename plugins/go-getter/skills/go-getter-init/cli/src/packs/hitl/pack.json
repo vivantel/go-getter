@@ -55,7 +55,7 @@
     {
       "id": "free-commands",
       "type": "list",
-      "prompt": "Which outward-facing commands may run without asking? A catalog id such as git-push (plain pushes; force-push and branch deletion still ask), pr-merge (merging a pull request; opening and closing one still ask) or comment-post. The ids name the action; the hosting provider (GitHub) supplies its commands. The earlier gh-pr, gh-pr-create, gh-pr-merge, gh-pr-close, gh-release-create and gh-comment still work.",
+      "prompt": "Which outward-facing commands may run without asking? A catalog id such as git-push (plain pushes; force-push and branch deletion still ask), pr-merge (merging a pull request; opening and closing one still ask) or comment-post. The ids name the action; the hosting provider (GitHub) supplies its commands. The earlier GitHub-named ids (gh-pr, gh-pr-merge and the like) still work.",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
       "default": [],
       "since": "0.3.0",

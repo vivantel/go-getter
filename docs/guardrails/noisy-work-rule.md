@@ -10,8 +10,8 @@ derivation-note: Given the placement decision, noise kept in the wrong context i
 go-getter:
   enforcement:
     - tier: 1
-      check: Noisy work follows the placement decision; reviewed in PRs
-  generated-by: context@0.3.0
+      check: Noisy work follows the placement decision; reviewed with the change
+  generated-by: context@0.3.1
   pack-answer: noisy-work
   pack-option: delegate-when-cheaper
 ---

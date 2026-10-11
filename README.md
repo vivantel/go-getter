@@ -14,7 +14,7 @@ One plugin, seven host agents — see [INSTALLING.md](INSTALLING.md). Then ask y
 
 ## What it sets up
 
-Eight harness packs and one SDLC pack, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
+Ten harness packs and two SDLC (practice) packs, each a short guided interview with a recommended default per question; every answer becomes a decision or guardrail in `docs/`, and `go-getter apply` generates the enforcement per host agent.
 
 | Pack | Component | What you choose |
 |---|---|---|
@@ -28,8 +28,10 @@ Eight harness packs and one SDLC pack, each a short guided interview with a reco
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
 | `cost-routing` | 11 Cost & model routing | task classes, starting tiers, escalation bound, headless spend cap, prompt-cache lifetime |
 | `telemetry` | 12 Observability | a metadata-only step log, its retention and export |
-| `git-workflow` | SDLC (no component) | the branch name pattern, whether the default branch is protected by a git hook and CI, whether `Refs:` trailers are required, encouraged or off; Conventional Commit subjects, squash merge with green CI and one change per branch and pull request are fixed |
-| `tracker` | SDLC (no component) | whether plan steps live in the plan files, GitHub Issues or Jira, how Jira is reached (the site, and the names of the variables holding the credentials), and whether go-getter may create, comment on and close issues (off, ask or allow) |
+| `git-workflow` | SDLC practice (no component) | the branch name pattern, whether the default branch is protected by a git hook and CI, whether `Refs:` trailers are required, encouraged or off; Conventional Commit subjects, squash merge with green CI and one change per branch and pull request are fixed |
+| `tracker` | SDLC practice (no component) | whether plan steps live in the plan files, GitHub Issues or Jira, how Jira is reached (the site, and the names of the variables holding the credentials), and whether go-getter may create, comment on and close issues (off, ask or allow) |
+
+**Harness packs** (the `family` in each `pack.json` is `harness`) configure the twelve components around a host agent. They assume a shell and git as the substrate (checkpoints are hidden git refs, orchestration uses worktrees) and name no hosting provider or language: hosting commands come from a provider table (GitHub first), and `verification-gate` runs whatever check commands the project gives it. **Practice packs** (`family` is `sdlc`: `git-workflow`, `tracker`) set up software-delivery habits (branch names, commit and pull request rules, where plan steps live) and may name GitHub or Jira. A test keeps hosting-provider wording out of harness packs.
 
 ### Harness coverage
 
