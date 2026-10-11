@@ -11,7 +11,7 @@ go-getter:
     confidential:
       enabled: true
       requires-zdr: false
-  generated-by: governance@0.1.0
+  generated-by: data-policy@0.1.0
   pack-answer: confidential-zdr
   pack-option: zdr-not-required
 ---

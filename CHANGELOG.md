@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- The `governance` pack is split into `restricted-data`, `sanitization` and `data-policy` (0.6.0, decision 0132), one concern each. Question ids, defaults and answers are unchanged. `go-getter update` moves a project adopted at any `governance` version to the three packs without asking again: it relabels the old decisions and guardrails (`generated-by`) and re-renders; rules and host files stay the same.
+
 ## [0.3.1] - 2026-10-11
 
 ### Added

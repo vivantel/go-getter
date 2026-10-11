@@ -9,7 +9,7 @@ accepted-by: sergemso
 go-getter:
   restricted-data-hosts:
     rule: blocking-hook
-  generated-by: governance@0.1.0
+  generated-by: restricted-data@0.1.0
   pack-answer: restricted-hosts
   pack-option: hook-hosts
 ---

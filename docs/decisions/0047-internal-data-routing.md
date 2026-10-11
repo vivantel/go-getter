@@ -19,7 +19,7 @@ go-getter:
       - id: google
         terms: paid-no-training
         zdr: false
-  generated-by: governance@0.1.0
+  generated-by: data-policy@0.1.0
   pack-answer: internal-data
   pack-option: approved-cloud
 ---

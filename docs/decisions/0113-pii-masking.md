@@ -7,7 +7,7 @@ tags: [practice-packs, governance, security]
 track: process
 accepted-by: sergemso
 go-getter:
-  generated-by: governance@0.4.0
+  generated-by: sanitization@0.4.0
   pack-answer: pii-masking
   pack-option: on
 ---

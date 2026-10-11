@@ -20,7 +20,9 @@ Eight harness packs and one SDLC pack, each a short guided interview with a reco
 |---|---|---|
 | `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
 | `verification-gate` | 6 Verification loops | which checks mean "done" and where each runs (locally or in CI), the review bar, whether failing checks block completion |
-| `governance` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, whether the lines a change adds are scanned for secrets, whether personal data in tool output is masked, which providers may see internal and confidential data, prompt logging |
+| `restricted-data` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, how secrets are used and where they may be written, which hosts may handle restricted data |
+| `sanitization` | 7 Guardrails & DLP | whether the lines a change adds are scanned for secrets, which paths the scan skips, whether personal data in tool output is masked |
+| `data-policy` | 7 Guardrails & DLP | which providers may see internal and confidential data, prompt logging |
 | `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns, outward commands that may run unasked |
 | `checkpointing` | 9 Checkpointing | whether work is saved to a hidden git ref before a gated command or a plan step, who takes it (the pre-tool hook or the agent), how many are kept |
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
@@ -41,7 +43,7 @@ How each rule ends up enforced, per component and host agent, once all eight pac
 | 4 Context management | `context` | ci | ci | ci | ci | ci | ci | ci |
 | 5 Memory | — | - | - | - | - | - | - | - |
 | 6 Verification loops | `verification-gate` | hook | hook | advisory | advisory | hook | hook | advisory |
-| 7 Guardrails & DLP | `governance` | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci |
+| 7 Guardrails & DLP | `restricted-data`, `sanitization`, `data-policy` | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci |
 | 8 Human-in-the-loop | `hitl` | hook | hook | hook | hook | hook | hook | advisory |
 | 9 Checkpointing | `checkpointing` | hook | hook | hook | hook | hook | hook | advisory |
 | 10 Multi-agent orchestration | `orchestration` | advisory | advisory | advisory | advisory | advisory | advisory | advisory |
@@ -54,7 +56,7 @@ Known gaps (hosts without a blocking stop hook, unconfirmed hook shapes, routing
 
 ## Sanitization
 
-The `governance` pack (0.5.0) keeps secrets and personal data away from the model and out of commits:
+The `sanitization` pack (0.6.0) keeps secrets and personal data away from the model and out of commits:
 
 - **Scanning.** The lines a commit, push or pull request *adds* are scanned for private keys, common token formats, JWTs and labelled `password=…` values; a finding names file, line and kind, never the value. Skip a line with `go-getter:allow-secret` or a path with the `scan-allow-paths` answer. No entropy detection; a token format that is not listed is missed.
 - **Masking.** Tool output has secrets replaced by `[redacted by go-getter]` and, if you opt in, email addresses, card numbers and IBANs by stable per-session names (`[email-1]`). Phone and national-ID formats are an opt-in list. Prompts and file writes are never masked, and Cursor and OpenCode cannot replace tool output at all.

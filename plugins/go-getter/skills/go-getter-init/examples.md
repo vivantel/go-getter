@@ -14,4 +14,4 @@ User picks 1 and accepts the recommended defaults for the rest of the pack. The 
 
 ## Detection replaces a question
 
-The governance pack asks which paths are restricted. Detection found `.env` and `config/secrets/`, so the agent says: "I found `.env` and `config/secrets/`; I'll classify them as restricted — correct?" and only asks further if the user adds paths.
+The restricted-data pack asks which paths are restricted. Detection found `.env` and `config/secrets/`, so the agent says: "I found `.env` and `config/secrets/`; I'll classify them as restricted — correct?" and only asks further if the user adds paths.

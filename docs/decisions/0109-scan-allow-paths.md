@@ -8,7 +8,7 @@ track: process
 accepted-by: sergemso
 go-getter:
   scan-allow-paths: compiler/test/**
-  generated-by: governance@0.3.0
+  generated-by: sanitization@0.3.0
   pack-answer: scan-allow-paths
   pack-option: [compiler/test/**]
 ---

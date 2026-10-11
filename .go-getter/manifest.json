@@ -5,10 +5,12 @@
     "checkpointing": "0.2.0",
     "context": "0.3.0",
     "cost-routing": "0.2.0",
+    "data-policy": "0.6.0",
     "git-workflow": "0.1.1",
-    "governance": "0.5.0",
     "hitl": "0.3.1",
     "orchestration": "0.1.0",
+    "restricted-data": "0.6.0",
+    "sanitization": "0.6.0",
     "telemetry": "0.1.0",
     "tracker": "0.3.0",
     "verification-gate": "0.3.0"
