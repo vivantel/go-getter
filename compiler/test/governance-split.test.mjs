@@ -1,5 +1,5 @@
 // A project adopted at any released `governance` version moves to the three packs that replaced it (decision 0132):
-// the pack is rebuilt from git at each release tag, adopted with the recommended answers, then updated.
+// the pack as released is adopted with the recommended answers, then updated.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
@@ -17,16 +17,9 @@ import { collectEnforcement } from '../src/enforce.mjs';
 import { GOVERNANCE_IDS } from './support/governance-packs.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 1 << 26 });
-const releases = git('tag', '--list', 'v*').split('\n').filter(Boolean).flatMap((tag) => {
-  try {
-    return [{ tag, pack: JSON.parse(git('show', `${tag}:src/packs/governance/pack.json`)) }];
-  } catch {
-    return []; // a release from before the pack existed
-  }
-});
-// One entry per governance version: the pack at its latest tag.
-const versions = [...new Map(releases.map((r) => [r.pack.version, r])).values()];
+// The retired pack at each release that shipped it, copied from git (`git show v0.2.0:src/packs/governance/pack.json`,
+// `git show v0.3.1:...`). The set is closed: no later governance version exists. Files, not tags, so a shallow checkout works.
+const versions = ['0.2.0', '0.5.0'].map((version) => ({ pack: JSON.parse(readFileSync(path.join(root, `compiler/test/fixtures/governance/${version}.json`), 'utf8')) }));
 
 const TAGS = '# Tags\n\npractice-packs — x\ngovernance — x\nsecurity — x\nmodel-routing — x\nenforcement — x\nobservability — x\nguardrail — x\n';
 const answersOf = (pack) => ({
@@ -49,12 +42,12 @@ const snapshot = (dir) => Object.fromEntries(['decisions', 'guardrails'].flatMap
 // The rules a project enforces, without the provenance label that the update rewrites.
 const enforcement = (dir) => JSON.stringify(collectEnforcement(dir).map((e) => ({ ...e, 'generated-by': undefined })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
 
-test('the released governance versions are found in git history', () => {
-  assert.ok(versions.length >= 2, `found ${versions.map((v) => v.pack.version)}; fetch the tags (git fetch --tags)`);
+test('the fixtures are the released governance versions', () => {
+  assert.deepEqual(versions.map((v) => v.pack.version), ['0.2.0', '0.5.0']);
 });
 
-for (const { tag, pack } of versions) {
-  test(`a project adopted at governance ${pack.version} (${tag}) updates to the new packs with the same answers and enforcement`, () => {
+for (const { pack } of versions) {
+  test(`a project adopted at governance ${pack.version} (fixture) updates to the new packs with the same answers and enforcement`, () => {
     const dir = adopted(pack);
     try {
       assert.deepEqual(adoptedPacks(dir), { governance: pack.version });
