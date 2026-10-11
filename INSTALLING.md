@@ -100,6 +100,12 @@ go-getter checkpoint restore <label> --yes      # puts back modified and deleted
 
 Restore leaves files created since the checkpoint in place and lists them; remove them yourself if unwanted. Claude Code (`/rewind`) and Gemini CLI (`/restore`) also have their own commands for file edits, which do not undo what a shell command did. Copilot gets no automatic checkpoint until its hook payload is confirmed; there the agent is instructed to run `go-getter checkpoint create`.
 
+## Sanitization
+
+A project that adopts the `governance` pack scans the lines each commit, push and pull request adds for secrets (`go-getter:allow-secret` on a line, or the `scan-allow-paths` answer, skips them) and masks secrets, and optionally personal data, in tool output on every host except Cursor and OpenCode. Paths marked `use` in the pack's answers are reachable only through `go-getter secret run --from <file> -- <command>` with a command you listed for that path; `sink` paths are written by `go-getter secret put <path> --stdin` or a command you declared. Neither is a sandbox: an approved command can still send the value elsewhere.
+
+`go-getter sandbox` prints the secret settings of each host that has them (Claude Code, Codex, Gemini CLI, Copilot), built from your restricted paths and marked `confirmed` or `not confirmed`. Copy them into your user settings yourself; `apply` never writes them, and Claude Code ignores `mask` entries in a repository's settings. Prompts are not masked.
+
 ## Git workflow
 
 A project that adopts the `git-workflow` pack gets branch, commit and pull request rules: branches named `type/slug` (or your own pattern), no commits or pushes on the default branch, Conventional Commit subjects, and one squash-merged pull request per change with green CI. The pre-commit and pre-push git hooks and the CI job check the branch name and the default branch; `Refs:` trailers can be required, encouraged or off. Branch protection and required checks on your hosting platform are yours to set: go-getter cannot write them. A push from a feature branch to the default branch's name (`git push origin feat:main`) is not detected.
