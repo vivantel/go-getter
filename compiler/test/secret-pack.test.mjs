@@ -48,7 +48,7 @@ test('answers rendered by the pack reach secret run and put end to end', () => {
     assert.equal(run.stdout.trim(), 'got [redacted by go-getter]; len 21');
     const refused = cli_(dir, 'run', '--from', 'config/dev.secrets', '--', 'node', 'unlisted.js');
     assert.equal(refused.status, 1);
-    assert.match(refused.stderr, /not approved.*"node check.js", "node other.js"/);
+    assert.match(refused.stderr, /"node unlisted.js" is not approved to use/);
     const put = cli_(dir, 'put', 'config/out.secrets', '--from-command', 'vault');
     assert.equal(put.status, 0, put.stderr);
     assert.equal(readFileSync(path.join(dir, 'config/out.secrets'), 'utf8'), `${VALUE}-written\n`);
@@ -61,7 +61,7 @@ test('answers rendered by the pack reach secret run and put end to end', () => {
 test('with the answers left empty, nothing is approved: run and put both refuse', () => {
   const dir = project({ ...base(), 'use-commands': [], 'sink-sources': [] });
   try {
-    assert.match(cli_(dir, 'run', '--from', 'config/dev.secrets', '--', 'node', 'check.js').stderr, /no command is approved/);
+    assert.match(cli_(dir, 'run', '--from', 'config/dev.secrets', '--', 'node', 'check.js').stderr, /is not approved to use/);
     assert.match(cli_(dir, 'put', 'config/out.secrets', '--from-command', 'vault').stderr, /no source is declared/);
     assert.equal(existsSync(path.join(dir, 'config/out.secrets')), false);
   } finally {
@@ -75,7 +75,7 @@ test('an answer file from before 0.5.0 renders with nothing approved', () => {
   delete old['sink-sources'];
   const dir = project(old);
   try {
-    assert.match(cli_(dir, 'run', '--from', 'config/dev.secrets', '--', 'node', 'check.js').stderr, /no command is approved/);
+    assert.match(cli_(dir, 'run', '--from', 'config/dev.secrets', '--', 'node', 'check.js').stderr, /is not approved to use/);
   } finally {
     cleanup(dir);
   }

@@ -51,6 +51,7 @@
       "properties": {
         "config": { "type": "string" },
         "blockPreTool": { "type": "boolean" },
+        "askPreTool": { "type": "boolean" },
         "rewriteToolInput": { "type": "boolean" },
         "rewriteOutput": { "type": "boolean" },
         "blockStop": { "type": "boolean" },

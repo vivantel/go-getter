@@ -27,6 +27,7 @@
   "hooks": {
     "config": ".claude/settings.json",
     "blockPreTool": true,
+    "askPreTool": true,
     "rewriteToolInput": true,
     "rewriteOutput": true,
     "blockStop": true,
