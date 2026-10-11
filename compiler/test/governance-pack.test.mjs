@@ -213,11 +213,11 @@ function exemptCases(dir, shell) {
     `go-getter secret run ${f}; cat ${f}`, `go-getter secret run ${f} && cat ${f}`, `go-getter secret run ${f} | tee out`,
     `go-getter secret run ${f} > out`, `go-getter secret run ${f}\ncat ${f}`,
     `go-getter secret run $(cat ${f})`, `go-getter secret run \`cat ${f}\``, `go-getter secret run "$(cat ${f})"`,
-    `echo go-getter secret run ${f}`, `go-getter secret runner ${f}`, `go-getter-x secret run ${f}`,
+    `go-getter secret runner ${f}`, `go-getter-x secret run ${f}`,
     `go-getter watch -- go-getter secret run ${f}`, `X=1 go-getter secret run ${f}`,
   ]) assert.equal(shell(command), true, command);
   // spellings that are the same call: quoting, extra spaces, npx, the project runner's own entry (decision 0126)
-  for (const command of [`go-getter secret run "${f}"`, ` go-getter secret run ${f}`, `go-getter  secret run ${f}`, `npx go-getter secret run ${f}`]) assert.equal(shell(command), false, command);
+  for (const command of [`go-getter secret run "${f}"`, ` go-getter secret run ${f}`, `go-getter  secret run ${f}`, `npx go-getter secret run ${f}`, `echo go-getter secret run ${f}`]) assert.equal(shell(command), false, command);
   // only a shell tool, and only paths in its command
   assert.equal(call(dir, 'Read', { file_path: f, command: `go-getter secret run ${f}` }), true);
   assert.equal(call(dir, 'Bash', { command: `go-getter secret run ${f}`, cwd: FILES.deny }), true);

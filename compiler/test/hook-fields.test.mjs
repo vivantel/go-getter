@@ -47,6 +47,8 @@ test('prose fields of known tools are not scanned for restricted names', () => {
   ]) {
     assert.equal(evaluatePreTool(dir, payload).deny, false, JSON.stringify(payload));
   }
+  // text that only mentions a restricted path is not a use of it (decision 0126)
+  for (const command of [`git commit -m "drop ${ENV}"`, `echo ${ENV}`, `echo "see ${ENV}"`]) assert.equal(evaluatePreTool(dir, call('Bash', { command })).deny, false, command);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -58,7 +60,6 @@ test('reads, writes and shell commands naming a restricted path stay denied on e
     call('Write', { file_path: `deploy/${ENV}`, content: 'X=1' }),
     call('Edit', { file_path: `certs/${PEM}`, old_string: 'a', new_string: 'b' }),
     call('Bash', { command: `cat ${ENV} | head`, description: 'show config' }),
-    call('Bash', { command: `git commit -m "drop ${ENV}"` }),
     call('Grep', { pattern: 'KEY', path: ENV }),
     call('Grep', { pattern: 'KEY', glob: `**/${ENV}` }),
     call('Glob', { pattern: `**/${PEM}` }),
