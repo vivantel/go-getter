@@ -51,6 +51,17 @@ Component 7 also reports where tool output is masked (secrets, and personal data
 
 Known gaps (hosts without a blocking stop hook, unconfirmed hook shapes, routing that is advisory where a host has no model lever) are listed under "Known enforcement debt" in the [plan](docs/plans/v0.2-agent-core-hardening.md). Plan-guided work, watcher noise, access modes for restricted paths, local and CI checks, calibration, observability export, human-in-the-loop gates and checkpointing come in v0.2; the git workflow and spec workflow in v0.3; testing practices and memory in v0.4.
 
+## Sanitization
+
+The `governance` pack (0.5.0) keeps secrets and personal data away from the model and out of commits:
+
+- **Scanning.** The lines a commit, push or pull request *adds* are scanned for private keys, common token formats, JWTs and labelled `password=…` values; a finding names file, line and kind, never the value. Skip a line with `go-getter:allow-secret` or a path with the `scan-allow-paths` answer. No entropy detection; a token format that is not listed is missed.
+- **Masking.** Tool output has secrets replaced by `[redacted by go-getter]` and, if you opt in, email addresses, card numbers and IBANs by stable per-session names (`[email-1]`). Phone and national-ID formats are an opt-in list. Prompts and file writes are never masked, and Cursor and OpenCode cannot replace tool output at all.
+- **`go-getter secret run|put`.** A path in `use` mode reaches a command without the model seeing it (`secret run --from <file> -- <command>`); a path in `sink` mode is filled from stdin or a declared command (`secret put`). Only the commands you pair with each path may run, and their output is scrubbed. A secret still reaches a process that could send it elsewhere, so `use` is advisory without a network-restricted sandbox.
+- **`go-getter sandbox [--host <h>]`** prints each host's own secret settings built from your restricted paths, marked confirmed or not confirmed, for you to put in your user settings. It writes nothing, and `apply` never writes them. Cursor, Kilo and OpenCode have no such lever.
+
+Not covered: prompts, secrets already in history, values re-encoded by an approved command, and hosts without a blocking pre-tool hook.
+
 ## Develop
 
 `npm test` (unit), `npm run build` and `npm run check:generated` (golden output), `npm run eval` (behavior evals), `npm run check:*` (guardrails). Releases are gated on all three layers ([decision 0013](docs/decisions/0013-layered-verification-gate.md)). Decisions and guardrails live in [`docs/`](docs/decisions/); the plan and its status are in [`docs/plans/`](docs/plans/v0.2-agent-core-hardening.md) (`go-getter plan status|next|start|done`).

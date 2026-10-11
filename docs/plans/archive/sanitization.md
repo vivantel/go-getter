@@ -97,7 +97,7 @@ Class: implement · Needs: 11 · Check: `node --test compiler/test/sandbox.test.
 Do: add `go-getter sandbox [--host <h>]` (`compiler/src/commands/sandbox.mjs`). For each host with a documented lever it prints a labelled snippet built from the adopted restricted paths and `use` patterns: Claude Code `sandbox.credentials` deny entries (and `mask` for `use` patterns, user settings only), Codex permission-profile `deny` globs, Gemini CLI `security.environmentVariableRedaction`, Copilot `--secret-env-vars` names; each line marked `confirmed` or `not confirmed` from facts 0027 and 0031, and hosts without a lever say so. It writes no file and `apply` is unchanged. Neutral source names no host in shared text (hosts live in the capabilities data).
 Done-when: the test shows a snippet per documented host from a fixture project, the unconfirmed marker on lines the facts mark unconfirmed, a message for a host with no lever, `--host` filtering, and that no file is written.
 
-### 13 Docs, lint and close — [ ]
+### 13 Docs, lint and close — [x]
 Class: review · Needs: 12 · Check: `npm run check:plans`
 Do: add a Sanitization section to README and INSTALLING.md (scanning and its marker, PII masking and its limits, `secret run|put`, `sandbox`, what is not covered), run the full `go-getter:lint` skill, mark L.4 done in the v0.2 plan's backlog and archive this plan.
 Done-when: lint reports no new errors; this plan is fully `[x]` and archived.
