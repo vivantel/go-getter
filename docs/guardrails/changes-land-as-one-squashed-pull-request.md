@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Merge a pull request only when its CI checks pass, and squash it into one commit on the default branch
-  generated-by: git-workflow@0.1.0
+  generated-by: git-workflow@0.1.1
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
 ---

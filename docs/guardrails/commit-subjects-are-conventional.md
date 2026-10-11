@@ -12,7 +12,7 @@ go-getter:
     - tier: 3
       check: Every non-merge commit not yet on the default branch has a Conventional Commits subject
       run: "builtin:commit-message pattern=\"^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)(\\([a-z0-9-]+\\))?!?: .+\""
-  generated-by: git-workflow@0.1.0
+  generated-by: git-workflow@0.1.1
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
 ---

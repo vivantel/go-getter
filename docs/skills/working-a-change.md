@@ -6,7 +6,7 @@ date: 2026-10-10
 tags: [practice-packs, git-hooks, procedural]
 operationalizes: [branch-names-follow-the-pattern, commit-subjects-are-conventional, changes-land-as-one-squashed-pull-request]
 go-getter:
-  generated-by: git-workflow@0.1.0
+  generated-by: git-workflow@0.1.1
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
 ---
