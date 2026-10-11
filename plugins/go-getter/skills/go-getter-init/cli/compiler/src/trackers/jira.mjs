@@ -3,7 +3,7 @@
 // are never written, printed or recorded, and no message here contains one. Everything an issue returns is untrusted (0119).
 //
 // A Jira status is read by its status category, not its name: `new` is open, `indeterminate` is in progress, `done` is done.
-// Configuration, from the adopted tracker pack's decision (`go-getter.tracker-jira`):
+// Configuration, from the adopted tracker pack's decisions (see `jiraConfig`):
 //   { site, 'email-env', 'token-env', auth?: 'basic' | 'bearer', 'done-transition'? }
 // `site` is the Jira base URL (https; http only to a loopback address, for tests); `email-env` and `token-env` name the
 // variables holding the account email and API token (`bearer` sends a personal access token and needs no email).
@@ -23,14 +23,22 @@ export const DEFAULT_TOKEN_ENV = 'JIRA_API_TOKEN';
 // A problem whose message is safe to show (it names a variable or a setting, never a value).
 const problem = (message) => Object.assign(new Error(message), { safe: true });
 
-export const jiraConfig = (project) => {
-  const c = adoptedData(project, 'tracker-jira');
-  return c && typeof c === 'object' && !Array.isArray(c) ? c : null;
-};
+// The tracker pack records each Jira setting as its own decision (`go-getter.tracker-jira-<setting>`); null when the project
+// has no Jira site answer at all. An empty answer means not set.
+export function jiraConfig(project) {
+  const site = adoptedData(project, 'tracker-jira-site');
+  if (site === undefined) return null;
+  const get = (setting) => {
+    const v = adoptedData(project, `tracker-jira-${setting}`);
+    return v === undefined || v === '' ? undefined : v;
+  };
+  return { site, auth: get('auth'), 'email-env': get('email-env'), 'token-env': get('token-env'), project: get('project'), 'issue-type': get('issue-type'), 'done-transition': get('done-transition') };
+}
 
 // The validated site, headers builder inputs and names; throws a safe problem when the configuration cannot be used.
 export function checkConfig(config, env = process.env) {
   if (!config) throw problem('Jira is not configured: answer the tracker pack with jira');
+  if (!config.site) throw problem('the Jira site is not set: answer jira-site in the tracker pack');
   let site;
   try {
     site = new URL(String(config.site));

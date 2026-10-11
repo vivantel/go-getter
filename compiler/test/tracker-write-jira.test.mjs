@@ -57,8 +57,8 @@ function project(mode, server, extra = {}, tracker = 'jira') {
   writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN);
   writeFileSync(path.join(dir, 'docs/decisions/0001-telemetry.md'), '---\nid: 0001-telemetry\ntitle: Telemetry\nstatus: active\ndate: 2026-10-05\ntags: [x]\ngo-getter:\n  telemetry-recording: metadata-log\n---\n\nx\n');
   const cfg = { site: server.url, project: 'PROJ', 'email-env': 'GG_TEST_EMAIL', 'token-env': 'GG_TEST_TOKEN', ...extra };
-  const yaml = Object.entries(cfg).map(([k, v]) => `    ${k}: ${JSON.stringify(v)}`).join('\n');
-  writeFileSync(path.join(dir, 'docs/decisions/0002-tracker.md'), `---\nid: 0002-tracker\ntitle: Tracker\nstatus: active\ndate: 2026-10-11\ntags: [x]\ngo-getter:\n  tracker: ${tracker}\n  tracker-writes: ${mode}\n  tracker-jira:\n${yaml}\n---\n\nx\n`);
+  const yaml = Object.entries(cfg).map(([k, v]) => `  tracker-jira-${k}: ${JSON.stringify(v)}`).join('\n');
+  writeFileSync(path.join(dir, 'docs/decisions/0002-tracker.md'), `---\nid: 0002-tracker\ntitle: Tracker\nstatus: active\ndate: 2026-10-11\ntags: [x]\ngo-getter:\n  tracker: ${tracker}\n  tracker-writes: ${mode}\n${yaml}\n---\n\nx\n`);
   const savedEmail = process.env.GG_TEST_EMAIL;
   const savedToken = process.env.GG_TEST_TOKEN;
   process.env.GG_TEST_EMAIL = EMAIL;
