@@ -111,3 +111,6 @@ id,title,tags,status
 0117-tracker-backed-plans,"An optional tracker pack makes issues the source of truth for plan steps, with writes through go-getter's own verbs only","roadmap, practice-packs, tooling",active
 0118-extension-architecture-core-and-edges,"go-getter keeps a small core and moves the open-ended edges behind interfaces that can later become helper processes","architecture, roadmap, compiler",active
 0119-helper-contract-v0,"A helper is a pinned executable behind a JSON contract; its output is untrusted data and MCP is only a possible backend","architecture, roadmap, enforcement",active
+0120-gated-commands-may-be-freed-by-name,"A project may let named outward-facing commands run without a human; irreversible ones never","practice-packs, hooks, enforcement",active
+0121-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
+0122-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active

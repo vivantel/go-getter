@@ -122,7 +122,6 @@
       "Bash(sqlite3 *truncate*)",
       "Bash(sqlite3 *DELETE FROM*)",
       "Bash(sqlite3 *delete from*)",
-      "Bash(git push *)",
       "Bash(gh pr create *)",
       "Bash(gh pr merge *)",
       "Bash(gh pr close *)",

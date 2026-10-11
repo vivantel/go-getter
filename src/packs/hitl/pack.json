@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "hitl",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "family": "harness",
   "components": [
     8
@@ -16,7 +16,7 @@
         {
           "id": "both",
           "label": "Irreversible and outward-facing commands",
-          "tradeoff": "Pushes, pull requests, releases and destructive commands always ask; more prompts, and a feature-branch push is not told from a default-branch push.",
+          "tradeoff": "Pushes, pull requests, releases and destructive commands always ask; more prompts, and a feature-branch push is not told from a default-branch push; free-commands lets chosen ones (git-push) through.",
           "recommended": true
         },
         {
@@ -48,6 +48,21 @@
         "in": [
           "both",
           "irreversible",
+          "outward"
+        ]
+      }
+    },
+    {
+      "id": "free-commands",
+      "type": "list",
+      "prompt": "Which outward-facing commands may run without asking? A catalog id such as git-push (plain pushes; force-push and branch deletion still ask) or gh-comment.",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "default": [],
+      "since": "0.3.0",
+      "when": {
+        "question": "gated-classes",
+        "in": [
+          "both",
           "outward"
         ]
       }
@@ -92,7 +107,7 @@
               {
                 "tier": 2,
                 "check": "Host ask rules and the pre-tool hook gate these commands",
-                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\""
+                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\""
               }
             ],
             "body": "## Guardrail\n\nShell commands of the irreversible and outward-facing classes need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
@@ -180,7 +195,7 @@
               {
                 "tier": 2,
                 "check": "Host ask rules and the pre-tool hook gate these commands",
-                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\""
+                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\""
               }
             ],
             "body": "## Guardrail\n\nShell commands of the outward-facing class need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
@@ -245,6 +260,24 @@
               "track": "process"
             },
             "body": "## Decision\n\nCommands matching the extra patterns [{{answer.extra-patterns}}] also need a human, on top of the gated classes (pack {{pack.id}}@{{pack.version}}); an empty list adds none.\n\n## Why\n\nThe catalog cannot know a project's own deploy or release commands, so the project names them (decision 0094).\n"
+          }
+        ]
+      }
+    },
+    "free-commands": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "gated-free-commands",
+            "title": "Outward-facing commands that run without asking are listed",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nThe commands [{{answer.free-commands}}] run without a human, though they are outward-facing (pack {{pack.id}}@{{pack.version}}); an empty list frees none. Irreversible commands and every other outward-facing command still need a human.\n\n## Why\n\nA plain push to a feature branch is reversible, and a push to the default branch is stopped by a git hook or branch protection, so asking for each one adds friction without protection (decision 0120).\n"
           }
         ]
       }

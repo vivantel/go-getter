@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,7 +47,7 @@ test('the both answer yields a tier-2 gate-command guardrail grounded in decisio
   const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'gated-actions-need-human-approval');
   assert.equal(entries.length, 1);
   assert.equal(entries[0].tier, 2);
-  assert.equal(entries[0].run, 'builtin:gate-command classes=irreversible,outward extra=""');
+  assert.equal(entries[0].run, 'builtin:gate-command classes=irreversible,outward extra="" free=""');
   const text = readFileSync(path.join(dir, 'docs/guardrails/gated-actions-need-human-approval.md'), 'utf8');
   assert.match(text, /grounded-in: \[\d{4}-gated-actions, 0043-human-escalation\]/);
   assert.match(text, /governed-by: \d{4}-gated-actions/);
@@ -65,7 +65,7 @@ test('narrower answers narrow the classes; extra patterns reach the gate; adviso
     rmSync(dir, { recursive: true, force: true });
     return e;
   };
-  assert.equal(run({ 'gated-classes': 'outward' })[0].run, 'builtin:gate-command classes=outward extra=""');
+  assert.equal(run({ 'gated-classes': 'outward' })[0].run, 'builtin:gate-command classes=outward extra="" free=""');
   assert.equal(run({ 'gated-classes': 'irreversible' })[0].run, 'builtin:gate-command classes=irreversible extra=""');
   const withExtra = run({ 'extra-patterns': ['make deploy', '/kubectl .*prod/'] })[0];
   assert.equal(withExtra.parsed.args.extra, 'make deploy, /kubectl .*prod/');
@@ -102,4 +102,19 @@ test('each narrower answer renders readable text and no dangling extra-patterns 
     assert.ok(plan.artifacts.every((a) => !/Extra patterns/.test(a.content)), answer);
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('free-commands lets a chosen outward command through: no ask rule for it, the others stay', async () => {
+  const { nativeRules } = await import('../src/gate.mjs');
+  const { loadCapabilities } = await import('../src/capabilities.mjs');
+  const dir = project();
+  adopt(dir, { ...recommended, 'free-commands': ['git-push'] });
+  const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'gated-actions-need-human-approval');
+  assert.match(entries[0].run, /free="git-push"/);
+  const rules = nativeRules('claude-code', gateEntries(entries), loadCapabilities(root));
+  assert.equal(rules.includes('Bash(git push *)'), false);
+  assert.ok(rules.includes('Bash(git push --force*)') && rules.includes('Bash(git push --delete*)'), 'force-push and delete still ask');
+  assert.ok(rules.includes('Bash(gh pr merge *)'), 'a merge still asks');
+  assert.ok(readFileSync(path.join(dir, 'docs/decisions', readdirSync(path.join(dir, 'docs/decisions')).find((f) => /gated-free-commands/.test(f))), 'utf8').includes('[git-push]'));
+  rmSync(dir, { recursive: true, force: true });
 });

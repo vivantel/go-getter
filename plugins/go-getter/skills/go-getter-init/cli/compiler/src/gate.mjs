@@ -150,9 +150,10 @@ const parseExtra = (spec) => {
 };
 
 // The catalog entries (and project `extra` patterns, which are outward commands and ignore `classes`) that `command` matches.
-export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [] } = {}) {
+// `free` lists catalog ids the project lets run without a human (outward entries only, `gateEntries` rejects others).
+export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [] } = {}) {
   if (typeof command !== 'string' || !command.trim()) return [];
-  const wanted = CATALOG.filter((e) => classes.includes(e.class));
+  const wanted = CATALOG.filter((e) => classes.includes(e.class) && !free.includes(e.id));
   const extras = extra.map(String).filter((s) => s.trim()).map(parseExtra);
   const hits = new Set();
   const found = [];
@@ -198,7 +199,7 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
-export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra) });
+export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: list(args.free) });
 
 // The entries the tier-2 `builtin:gate-command` enforcement entries gate (from `collectEnforcement`): catalog entries of
 // their classes, then their `extra` patterns.
@@ -207,6 +208,8 @@ export function gateEntries(enforcement) {
     const args = gateArgs(e.parsed.args);
     const bad = args.classes.filter((c) => !GATE_CLASSES.includes(c));
     if (!args.classes.length || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
+    const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');
+    if (unfree.length) throw new Error(`guardrail ${e.guardrail}: gate-command free must name outward catalog commands, not ${unfree.join(', ')}`);
     for (const x of args.extra.filter(isRegexExtra)) {
       try {
         new RegExp(x.slice(1, x.lastIndexOf('/')), x.slice(x.lastIndexOf('/') + 1));
@@ -216,8 +219,9 @@ export function gateEntries(enforcement) {
     }
     return args;
   });
-  const classes = new Set(gates.flatMap((g) => g.classes));
-  return [...CATALOG.filter((e) => classes.has(e.class)), ...extraEntries([...new Set(gates.flatMap((g) => g.extra))])];
+  // An entry is gated when some gate covers its class and does not free it.
+  const gated = CATALOG.filter((e) => gates.some((g) => g.classes.includes(e.class) && !g.free.includes(e.id)));
+  return [...gated, ...extraEntries([...new Set(gates.flatMap((g) => g.extra))])];
 }
 
 // OpenCode globs as automata, to reason about every command a glob matches rather than a sample of them. A glob is a token

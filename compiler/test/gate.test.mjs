@@ -72,3 +72,20 @@ test('extra patterns are command prefixes or /regex/ and ignore classes', () => 
   assert.deepEqual(ids('make deploy', { classes: ['irreversible'], extra: ['make deploy'] }), ['extra:make deploy']);
   assert.deepEqual(ids('make test', { extra: ['make deploy', ''] }), []);
 });
+
+test('free lists outward catalog ids that run without a human; irreversible ones cannot be freed', async () => {
+  const { matchGated, gateEntries } = await import('../src/gate.mjs');
+  const ids = (cmd, o) => matchGated(cmd, o).map((e) => e.id);
+  assert.deepEqual(ids('git push origin feat/x', { free: ['git-push'] }), []);
+  assert.deepEqual(ids('git push origin feat/x', {}), ['git-push']);
+  assert.deepEqual(ids('git push --force origin feat/x', { free: ['git-push'] }), ['git-push-force'], 'force-push still asks');
+  assert.deepEqual(ids('git push --delete origin old', { free: ['git-push'] }), ['git-push-delete']);
+  assert.deepEqual(ids('gh pr merge 5', { free: ['git-push'] }), ['gh-pr'], 'other outward commands still ask');
+  const gate = (run) => [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: run } }];
+  const names = (args) => gateEntries(gate(args)).map((e) => e.id);
+  assert.equal(names({ classes: 'irreversible,outward' }).includes('git-push'), true);
+  assert.equal(names({ classes: 'irreversible,outward', free: 'git-push' }).includes('git-push'), false);
+  assert.equal(names({ classes: 'irreversible,outward', free: 'git-push' }).includes('git-push-force'), true);
+  assert.throws(() => gateEntries(gate({ classes: 'irreversible,outward', free: 'rm-rf' })), /free must name outward/);
+  assert.throws(() => gateEntries(gate({ classes: 'irreversible,outward', free: 'nope' })), /free must name outward/);
+});
