@@ -11,6 +11,7 @@ import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { goGetterCommand } from './invocation.mjs';
+import { shellOperands } from './shell.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
 import { piiConfig, sessionKeyOf, maskPii } from './secrets/mask.mjs';
@@ -79,6 +80,14 @@ export function candidatePaths(payload, project) {
   if (kind && source && typeof source === 'object' && !Array.isArray(source)) {
     source = Object.fromEntries(Object.entries(source).filter(([k]) => !PROSE[kind].includes(k)));
   }
+  // A shell command is read for what it really names (decision 0126); one that cannot be read is scanned as text, below.
+  let operands = null;
+  if (kind === 'shell') {
+    const command = shellText(payload);
+    operands = typeof command === 'string' ? shellOperands(command) : null;
+    if (operands && source && typeof source === 'object' && !Array.isArray(source)) source = Object.fromEntries(Object.entries(source).filter(([k]) => k !== 'command' && k !== 'cmd'));
+    else if (operands && typeof source === 'string') source = undefined;
+  }
   const strings = [];
   const walk = (v) => {
     if (typeof v === 'string') strings.push(v);
@@ -87,6 +96,10 @@ export function candidatePaths(payload, project) {
   };
   walk(source);
   const tokens = new Set();
+  for (const raw of operands ?? []) {
+    const rel = path.isAbsolute(raw) && project ? path.relative(project, raw) : raw;
+    tokens.add(rel.replace(/^\.\//, ''));
+  }
   for (const s of strings) {
     for (const raw of s.split(/[\s"'`;|&<>()=,]+/)) {
       if (!raw) continue;
@@ -153,6 +166,17 @@ function shellCommand(payload) {
   const command = typeof input === 'string' ? input : input?.command ?? input?.cmd;
   if (Array.isArray(command)) return /^-\w*c$/.test(command[1] ?? '') ? String(command.at(-1)) : command.join(' ');
   return typeof command === 'string' ? command : undefined;
+}
+
+// A shell call's command as text for reading it word by word: a Codex-style argv keeps its words (each quoted), except
+// `sh -c <script>`, which is its script.
+function shellText(payload) {
+  if (TOOLS[toolName(payload)?.toLowerCase()] !== 'shell') return undefined;
+  const input = toolInput(payload);
+  const command = typeof input === 'string' ? input : input?.command ?? input?.cmd;
+  if (!Array.isArray(command)) return typeof command === 'string' ? command : undefined;
+  if (/^-\w*c$/.test(command[1] ?? '')) return String(command.at(-1));
+  return command.map((w) => `'${String(w).replace(/'/g, `'\\''`)}'`).join(' ');
 }
 
 // `{ command, class }` when a `gate-command` entry gates this call on this host, else null. Without a known host the call
