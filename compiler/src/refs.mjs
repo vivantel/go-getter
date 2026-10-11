@@ -9,6 +9,8 @@ import { parseRun } from './packs.mjs';
 import { matchesAny } from './glob.mjs';
 import { cleanGitEnv } from './git-env.mjs';
 import { changesTouched, listChanges } from './spec-tools.mjs';
+import { parsePlan, planFiles } from './plan.mjs';
+import { parseRef, refId } from './trackers/refs.mjs';
 
 const ARTIFACT_PATH = /^docs\/(facts|decisions|guardrails|skills)\/(?:archive\/)?(?!INDEX\.md$)[^/]+\.md$/;
 const PATH_ARGS = ['path', 'paths', 'file', 'files', 'patterns'];
@@ -112,6 +114,60 @@ function branchSlug(root) {
   }
 }
 
+// The issue a branch slug names, as a reference: `123-title` is GitHub #123; `PROJ-123-title` is Jira. A lower-case Jira key
+// (branch names are often lower-case) counts only when the project already names that Jira project in a plan's `Issue:` field,
+// so `fix-2-typos` is not read as the issue FIX-2. Returns { text, reason } or null.
+function slugIssue(slug, jiraProjects) {
+  if (!slug) return null;
+  const number = /^([1-9][0-9]{0,4})(?:-|$)/.exec(slug);
+  if (number && !/^\d{4}-\d{2}-\d{2}/.test(slug)) return { text: `#${number[1]}`, reason: 'branch slug names this issue' };
+  const jira = /^([A-Za-z][A-Za-z0-9_]+)-([1-9][0-9]{0,8})(?:-|$)/.exec(slug);
+  if (!jira) return null;
+  const project = jira[1].toUpperCase();
+  if (jira[1] !== project && !jiraProjects.has(project)) return null;
+  const ref = parseRef(`${project}-${jira[2]}`);
+  return ref ? { text: ref.text, reason: 'branch slug names this issue' } : null;
+}
+
+// The Jira project keys that plans' `Issue:` fields already use.
+function jiraProjectsIn(root) {
+  const projects = new Set();
+  for (const f of planFiles(root)) {
+    try {
+      for (const step of parsePlan(readFileSync(path.join(root, f), 'utf8'), f).steps) if (step.issueRef?.tracker === 'jira') projects.add(step.issueRef.text.replace(/-\d+$/, ''));
+    } catch {
+      // an unreadable plan names no project
+    }
+  }
+  return projects;
+}
+
+// The plan file's text on the new side of the diff, and the issue of each step whose lines the diff changes.
+function touchedIssues(root, file, { staged, base }) {
+  let text;
+  try {
+    text = staged ? git(root, 'show', `:${file}`) : base ? git(root, 'show', `HEAD:${file}`) : readFileSync(path.join(root, file), 'utf8');
+  } catch {
+    return [];
+  }
+  const changed = new Set();
+  for (const m of diffText(root, file, { staged, base }).matchAll(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm)) {
+    const start = Number(m[1]);
+    const count = m[2] === undefined ? 1 : Number(m[2]);
+    if (count === 0) changed.add(start);
+    for (let n = start; n < start + count; n++) changed.add(n);
+  }
+  const lines = text.split('\n');
+  const plan = parsePlan(text, file);
+  return plan.steps.flatMap((step) => {
+    if (!step.issueRef) return [];
+    let end = step.line;
+    while (end < lines.length && !/^#{1,3}\s/.test(lines[end]) && !/^---\s*$/.test(lines[end])) end++;
+    for (let n = step.line; n <= end; n++) if (changed.has(n)) return [{ id: step.id, ref: step.issueRef }];
+    return [];
+  });
+}
+
 // Returns { must: [{path, id, reason}], nice: [{path, id, reason}] }.
 export function suggestRefs(root, { staged = false, base, today = new Date().toISOString().slice(0, 10) } = {}) {
   const byId = loadArtifacts(root);
@@ -142,6 +198,15 @@ export function suggestRefs(root, { staged = false, base, today = new Date().toI
   if (slug) {
     for (const c of listChanges(root).filter((x) => x.id === slug)) add(nice, c.folder, { path: c.folder, id: null, reason: 'branch slug matches this change' });
   }
+
+  // The issue of a plan step the diff touches (decision 0117): its reference is the target, never fetched.
+  for (const c of changes) {
+    if (c.status === 'D' || !/^docs\/plans\/.+\.md$/.test(c.path)) continue;
+    for (const t of touchedIssues(root, c.path, { staged, base })) add(must, `issue:${refId(t.ref)}`, { path: t.ref.text, id: null, reason: `issue of step ${t.id} touched in this diff` });
+  }
+  // An issue the branch slug names is only a hint.
+  const named = slugIssue(slug, jiraProjectsIn(root));
+  if (named) add(nice, `issue:${refId(parseRef(named.text))}`, { path: named.text, id: null, reason: named.reason });
 
   // The plan step the change completes.
   for (const c of changes) {
