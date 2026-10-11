@@ -67,11 +67,12 @@ Do: add to `verification-gate` the questions for a coverage command and a covera
 Done-when: golden tests pass, a project without the new answers renders as before, and the two packs share no question about the same thing.
 Result, 2026-10-11: `coverage-command`, `coverage-bar` (command | threshold | no-regression) and `coverage-threshold` in `verification-gate` 0.4.0; `coverage` is a check kind (detect, placement: CI on thin and ci-only, also for profiles adopted earlier) and the bar reaches the command as `GO_GETTER_COVERAGE_BAR`/`_MIN`. go-getter does not parse coverage reports (the command enforces the bar). Both packs' prompts name the review-bar owner; no question is shared (tested). This repository's update added draft decisions 0133 and 0134 for the owner to accept.
 
-### 6 Say what is harness and what is practice — [ ]
+### 6 Say what is harness and what is practice — [x]
 Issue: #140
 Class: implement · Effort: low · Needs: 3, 4, 5 · Check: `npm run check:neutral && npm run check:self-adoption`
 Do: state in the README and `INSTALLING.md` which packs are harness (domain-neutral) and which are practice packs for software work, from the `family` already in each `pack.json`; scan harness pack prompts, options and generated text for software-only or provider-only wording and fix what is found; record the result in the plan.
 Done-when: the docs name the two families, the scan finds no software-only or provider-only wording in a harness pack, and the checks pass.
+Result, 2026-10-11: scan of the ten harness packs. Provider-only wording fixed: `hitl` (gh-* id list shortened to one sentence), `context` ("reviewed in PRs" to "reviewed with the change", 0.3.1). Left on purpose and documented: git and a shell are the substrate (checkpointing, orchestration worktrees, hitl's git commands), `data-policy` names the model providers it can restrict to, and `verification-gate` runs the project's own software checks (lint, typecheck, e2e), so it is the harness pack closest to software work. README and `INSTALLING.md` name the families; `compiler/test/pack-families.test.mjs` keeps hosting-provider wording out of harness packs.
 
 ### 7 Recover the provider answer on update — [x]
 Issue: #147
@@ -79,3 +80,4 @@ Class: implement · Effort: low · Needs: 3 · Check: `node --test compiler/test
 Do: the `provider` answer of `internal-data: single-provider` is recorded by no `pack-answer` artifact, so `update` reports "no recorded answer for provider" and leaves `data-policy` (and before the split `governance`) as it is. Its value is already in the internal-data decision (`go-getter.model-registry.providers[0].id`): read it back in `currentAnswers` (`compiler/src/reconfigure.mjs`) so the pack re-renders. Found while testing step 3.
 Done-when: a project adopted at `governance` 0.2.0 and 0.5.0 with `internal-data: single-provider` updates to the new packs with the provider kept and nothing asked, a second update changes nothing, and a project that chose another option is unaffected.
 Result, 2026-10-11: `currentAnswers` reads the provider from the internal-data decision's registry; the test in `governance-split.test.mjs` fails without the change.
+

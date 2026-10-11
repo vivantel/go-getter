@@ -106,6 +106,10 @@ A project that adopts the `sanitization` pack scans the lines each commit, push 
 
 `go-getter sandbox` prints the secret settings of each host that has them (Claude Code, Codex, Gemini CLI, Copilot), built from your restricted paths and marked `confirmed` or `not confirmed`. Copy them into your user settings yourself; `apply` never writes them, and Claude Code ignores `mask` entries in a repository's settings. Prompts are not masked.
 
+## Harness and practice packs
+
+`go-getter-init` asks about two families of packs. Harness packs (context, verification-gate, restricted-data, sanitization, data-policy, hitl, checkpointing, orchestration, cost-routing, telemetry) set up the agent harness and work for any project with a shell and git. Practice packs (git-workflow, tracker) set up software-delivery habits and may assume GitHub or Jira. You can adopt the harness without the practice packs.
+
 ## Verification and review
 
 The `verification-gate` pack owns what counts as done: the check commands (format, lint, typecheck, static analysis, build, tests and coverage), where each runs, and the review bar. The `orchestration` pack owns only the reviewer role (its access, read-only by default); it asks nothing about what a review must pass. The coverage command is run where the machine profile places it (CI only on the thin and CI-only profiles); go-getter does not read coverage reports, it passes the bar to the command in `GO_GETTER_COVERAGE_BAR` (`command`, `threshold` or `no-regression`) and `GO_GETTER_COVERAGE_MIN`, and the check fails when the command exits non-zero.

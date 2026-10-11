@@ -10,8 +10,8 @@ derivation-note: Given the timing decision, compacting at other moments loses de
 go-getter:
   enforcement:
     - tier: 1
-      check: Compaction follows the timing decision; reviewed in PRs
-  generated-by: context@0.3.0
+      check: Compaction follows the timing decision; reviewed with the change
+  generated-by: context@0.3.1
   pack-answer: compaction
   pack-option: task-boundaries
 ---
