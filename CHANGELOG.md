@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.3.0] - 2026-10-11
+
+### Added
+
+- A git-workflow pack: it asks for the branch name pattern, how the default branch is protected and whether `Refs:` trailers are required, encouraged or off. Conventional commit subjects, squash merge with green CI and one change per branch and pull request are fixed rules. A new check fails work done on the default branch; this repository adopts the pack.
+- Spec-tool support: OpenSpec is detected through a tool table; a change folder the diff touches is a must-have `Refs:` target, and `conform` accepts a change folder as a target.
+- Secret scanning: a shared pattern library serves output redaction and `builtin:secret-scan`, which fails on secrets in the lines a change adds (file, line and kind, never the value). Tier-3 checks can run at the `pre-commit` and `pre-push` stages, and `apply` writes `.githooks/pre-commit` when asked. Governance 0.3.0 asks whether to scan and which paths to skip.
+- PII masking: email addresses, payment cards and IBANs (and, when listed, phone numbers and national ids) in tool output are replaced with per-session pseudonyms such as `[email-1]`. The map holds salted hashes, never values, and is deleted when the session ends. Governance 0.4.0 asks about it, and `go-getter coverage` names the hosts that cannot replace tool output.
+- `go-getter secret run` passes a secret file to an approved command without the model seeing it, scrubbing the output; `go-getter secret put` fills a sink path from stdin or a declared source. Governance 0.5.0 asks which commands and sources are approved (none by default).
+- `go-getter sandbox` prints, per host, the settings snippet that restricts secret paths, marked confirmed or not confirmed. It writes no file.
+
+### Fixed
+
+- `go-getter update` failed in projects that adopted the checkpointing pack because some answers were recorded nowhere it reads. Checkpointing 0.2.0 and hitl 0.2.0 record every answer, and `update` leaves a pack alone when an existing question has no recorded answer.
+
+### Documentation
+
+- README and INSTALLING.md describe the git-workflow pack, spec-tool support and sanitization.
+- Decisions 0099 (git-workflow pack), 0105 (no generated runbook form, after a measured spike), 0106 and 0107 (scanning, masking, `secret run` and `put`).
+
 ## [0.2.0] - 2026-10-10
 
 ### Added
