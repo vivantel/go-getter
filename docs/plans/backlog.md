@@ -37,3 +37,9 @@ Issue: #94
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: `plan next`, `refs` and `coverage` as tools a host can call; a surface only, with no change to the helper contract (decision 0119). Low priority.
 Done-when: the interview is recorded and a plan with steps exists for it.
+
+### L.13 Secret use without ceremony — [ ]
+Issue: #101
+Class: plan · Needs: none · Check: `npm run check:plans`
+Do: interview the owner, then plan. An agent must be able to use a secret file (a dotenv file, say) without seeing its values, with no setup in the common case; go-getter exists to enable agents, not to wall them off. Measured friction (2026-10-11): the pre-tool hook denies a whole shell call that merely mentions a restricted path or a key-like word in its text (a dozen false denials); `secret run` is accepted only when the first word is exactly `go-getter` (so a symlink on PATH) and the rest is unquoted plain words; each command needs its own exact-text `use-commands` entry set by editing pack answers; ask rules for the tracker write verbs list command spellings by hand. Requirements to settle: the common case works with zero setup; approving a command is one prompt that is remembered, not an answer edit; matching reads what a command opens and not words in its text; go-getter is recognised wherever it is installed (per project in `.go-getter/bin`, per user on PATH or under the home directory, `npx`, `node <entry>`), project-local first, everywhere a feature recognises a go-getter call; the property kept is that the agent never sees the value (scrubbed output, no echo).
+Done-when: the interview is recorded and a decision and a plan with steps exist for it.
