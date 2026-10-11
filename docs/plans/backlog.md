@@ -17,7 +17,7 @@ Done-when: the interview is recorded and a plan with steps exists for it.
 ### L.8 Autonomous run contract — [ ]
 Issue: #91
 Class: plan · Needs: none · Check: `npm run check:plans`
-Do: interview the owner, then write the contract: proceeding on a plan while the operator is away, built from what exists (`plan next`, the verify gate, checkpoints, `watch`, the router, the 3-agent cap); what may be merged (green pull requests on this repository), what stays human (tags, releases, publishing, force-push), and when the run stops (red CI, a guardrail denial, a spend cap, a step that needs the owner), with a report at the end. A contract and its enforcement, not a flag that bypasses gates. Whether the tracker pack's `allow` writes apply to an unattended run is decided here (decision 0118). Evidence: about 20 "yes" confirmations in one session on steps whose order was already fixed.
+Do: interview the owner, then write the contract: proceeding on a plan while the operator is away, built from what exists (`plan next`, the verify gate, checkpoints, `watch`, the router, the 3-agent cap); what may be merged (green pull requests on this repository), what stays human (tags, releases, publishing, force-push), and when the run stops (red CI, a guardrail denial, a spend cap, a step that needs the owner), with a report at the end. A contract and its enforcement, not a flag that bypasses gates; per decision 0129 it is a profile (a named set of answers over `hitl`, `cost-routing` and `orchestration` plus the run rules it adds), not a new pack. Whether the tracker pack's `allow` writes apply to an unattended run is decided here (decision 0118). Evidence: about 20 "yes" confirmations in one session on steps whose order was already fixed.
 Done-when: the interview is recorded and a decision and a plan with steps exist for it.
 
 ### L.9 Third-party packs and helpers — [ ]
@@ -37,6 +37,16 @@ Issue: #94
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: `plan next`, `refs` and `coverage` as tools a host can call; a surface only, with no change to the helper contract (decision 0119). Low priority.
 Done-when: the interview is recorded and a plan with steps exists for it.
+
+### L.14 Pack boundaries and neutral ids — [ ]
+Class: plan · Needs: none · Check: `npm run check:plans`
+Do: plan the work of decision 0129 items 1 to 3: split `governance` into path and secret use, sanitization, and data policy, with answer migration (old answer files keep rendering); provider-neutral gated-command ids with `gh-pr-*` as aliases; fold coverage, debugging and review into `verification-gate` and `orchestration`. Runs before L.11 and L.10 build on the old shapes.
+Done-when: a plan with steps exists, one step per pack change, each with its done-when.
+
+### L.15 Retrieval pack, virage first — [ ]
+Class: plan · Needs: L.11 · Check: `npm run check:plans`
+Do: first record a fact on virage's integration surface (MCP tool names, hook behaviour, which host files `virage update` and its agent plugins write; each marked confirmed or not). Then interview the owner and plan the `retrieval` pack of decision 0129 item 4, with a detect-and-coexist slice that can ship before the pack.
+Done-when: the fact exists, the interview is recorded and a plan with steps exists for it.
 
 ### L.13 Secret use without ceremony — [x]
 Issue: #101
