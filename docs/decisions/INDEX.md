@@ -106,3 +106,5 @@ id,title,tags,status
 0112-gated-extra-patterns,"Project-specific commands that also need a human are listed","practice-packs, hooks",active
 0113-pii-masking,"Personal data in tool output is masked with per-session pseudonyms","practice-packs, governance, security",active
 0114-pii-extra,"The locale-bound types masked in tool output are listed","practice-packs, governance, security",active
+0115-use-commands,"The commands approved to receive a use path are listed","practice-packs, governance, security",active
+0116-sink-sources,"The sources allowed to fill a sink path are listed","practice-packs, governance, security",active

@@ -170,8 +170,8 @@ function gatedCommand(entry, payload, host) {
   return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
 }
 
-// `use` and `sink` stay inactive until `go-getter secret run|put` exist (decision 0072): their paths are denied like
-// `deny` paths, except a `use` path in the command of `go-getter secret run` and a `sink` path in `go-getter secret put`.
+// A `use` path may be named only by a call that is exactly `go-getter secret run`, and a `sink` path only by one that is
+// exactly `go-getter secret put` (decisions 0072 and 0107); every other call that names one is denied like a `deny` path.
 export function evaluatePreTool(project, payload, host) {
   let exempt;
   const enforcement = collectEnforcement(project);
@@ -210,8 +210,8 @@ function restrictedPatterns(project) {
     .flatMap((e) => patternsOf(e.parsed.args));
 }
 
-// Values of the `KEY=value` lines of every restricted file in the project. All modes count: `use` and `sink` are
-// inactive (treated as `deny`) until `go-getter secret run|put` exist, and no mode may show a value to the model.
+// Values of the `KEY=value` lines of every restricted file in the project. All modes count: the model sees no value of a
+// `use` or `sink` file either, since `secret run` scrubs a command's output and `secret put` prints none.
 export function restrictedValues(project, patterns = restrictedPatterns(project)) {
   const values = new Set();
   if (!patterns.length) return values;

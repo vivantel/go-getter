@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "governance",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "family": "harness",
   "components": [
     7
@@ -27,7 +27,7 @@
     {
       "id": "restricted-modes",
       "type": "list",
-      "prompt": "Which restricted path patterns get a mode other than deny? use:<pattern> lets a go-getter tool pass the content to a process without the agent reading it; sink:<pattern> lets a go-getter tool write it from a declared source without reading it back. Until go-getter secret run and put exist, both stay denied like deny.",
+      "prompt": "Which restricted path patterns get a mode other than deny? use:<pattern> lets go-getter secret run pass the content to an approved command without the agent reading it; sink:<pattern> lets go-getter secret put write it from a declared source without reading it back. Every other path stays denied.",
       "pattern": "^(use|sink):[^\\s\",]+$",
       "default": []
     },
@@ -116,6 +116,22 @@
           "on"
         ]
       }
+    },
+    {
+      "id": "use-commands",
+      "type": "list",
+      "since": "0.5.0",
+      "default": [],
+      "pattern": "^[^\\s\",|]+\\|[^\",]+$",
+      "prompt": "Which commands may receive each use path? One entry per command, as <pattern>|<command>, for example config/dev.secrets|npm test. go-getter secret run refuses any other command, and refuses all when none is listed. An approved command runs your project's own code, which an agent can edit: approve commands whose scripts you review, since a script that encodes the secret before printing it gets past output scrubbing."
+    },
+    {
+      "id": "sink-sources",
+      "type": "list",
+      "since": "0.5.0",
+      "default": [],
+      "pattern": "^[^\\s\",|]+\\|[A-Za-z0-9_-]+\\|[^\",]+$",
+      "prompt": "Where may each sink path get its value from? One entry per source, as <pattern>|<name>|<command>, for example config/dev.secrets|vault|op read op://vault/dev. go-getter secret put --from-command <name> runs the command (split on spaces, no shell); the agent names a source and never supplies a command."
     },
     {
       "id": "internal-data",
@@ -259,7 +275,7 @@
                 "restricted-modes": "{{answer.restricted-modes}}"
               }
             },
-            "body": "## Decision\n\nA restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack {{pack.id}}@{{pack.version}}). Until `go-getter secret run` and `go-getter secret put` exist, `use` and `sink` paths are denied like `deny` paths, except to a call that is exactly `go-getter secret run` (for `use`) or `go-getter secret put` (for `sink`).\n\n## Why\n\nAgents need secrets they can use or fill without reading them, and no other go-getter command may be the exemption, since one that runs a user-supplied command would leak the content (decision 0072).\n"
+            "body": "## Decision\n\nA restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack {{pack.id}}@{{pack.version}}). A `use` path may be passed to an approved command by a call that is exactly `go-getter secret run`, and a `sink` path may be written from a declared source by a call that is exactly `go-getter secret put`; every other call that names one is denied like a `deny` path.\n\n## Why\n\nAgents need secrets they can use or fill without reading them, and no other go-getter command may be the exemption, since one that runs a user-supplied command would leak the content (decision 0072).\n"
           }
         ]
       }
@@ -986,6 +1002,50 @@
               }
             },
             "body": "## Decision\n\nThe types masked in addition to email, card numbers and IBANs are [{{answer.pii-extra}}] (pack {{pack.id}}@{{pack.version}}); an empty list adds none.\n\n## Why\n\nPhone and national-id formats are locale-bound and match ordinary numbers, so the project opts in (decision 0106).\n"
+          }
+        ]
+      }
+    },
+    "use-commands": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "use-commands",
+            "title": "The commands approved to receive a use path are listed",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "use-commands": "{{answer.use-commands}}"
+              }
+            },
+            "body": "## Decision\n\nOnly the commands [{{answer.use-commands}}] may receive a use path through `go-getter secret run`, each for its own pattern (pack {{pack.id}}@{{pack.version}}); with none listed `secret run` refuses every command.\n\n## Why\n\nScrubbing an exact value cannot catch a re-encoded one, so a human decides which commands may hold a secret (decision 0107).\n"
+          }
+        ]
+      }
+    },
+    "sink-sources": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "sink-sources",
+            "title": "The sources allowed to fill a sink path are listed",
+            "tags": [
+              "practice-packs",
+              "governance",
+              "security"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "sink-sources": "{{answer.sink-sources}}"
+              }
+            },
+            "body": "## Decision\n\n`go-getter secret put` may fill a sink path only from standard input or from the declared sources [{{answer.sink-sources}}], each for its own pattern (pack {{pack.id}}@{{pack.version}}); the agent names a source and never supplies a command.\n\n## Why\n\nA secret manager with a command-line tool is reached through a declared command, with no platform code and no keychain (decision 0107).\n"
           }
         ]
       }

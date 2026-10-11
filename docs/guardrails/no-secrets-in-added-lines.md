@@ -2,7 +2,7 @@
 id: no-secrets-in-added-lines
 title: Added lines must not contain secrets
 status: active
-date: 2026-10-10
+date: 2026-10-11
 tags: [practice-packs, governance, security, guardrail]
 governed-by: 0108-secret-scan
 grounded-in: [0108-secret-scan, 0106-scanning-and-masking-share-one-pattern-library]
@@ -15,7 +15,7 @@ go-getter:
       stages: [pre-commit, pre-push]
     - tier: 1
       check: Never paste a credential into a file; refer to it by environment variable name
-  generated-by: governance@0.4.0
+  generated-by: governance@0.5.0
   pack-answer: secret-scan
   pack-option: on
 ---

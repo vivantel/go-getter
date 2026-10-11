@@ -2,7 +2,7 @@
 id: pii-masked-in-tool-output
 title: Personal data is masked in tool output
 status: active
-date: 2026-10-10
+date: 2026-10-11
 tags: [practice-packs, governance, security, guardrail]
 governed-by: 0113-pii-masking
 grounded-in: [0113-pii-masking, 0106-scanning-and-masking-share-one-pattern-library]
@@ -14,7 +14,7 @@ go-getter:
       run: builtin:redact-pii classes="email,card,iban,"
     - tier: 1
       check: Do not paste personal data into prompts or files; a prompt and a file write are never masked
-  generated-by: governance@0.4.0
+  generated-by: governance@0.5.0
   pack-answer: pii-masking
   pack-option: on
 ---
