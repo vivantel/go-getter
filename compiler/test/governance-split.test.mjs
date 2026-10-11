@@ -22,18 +22,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const versions = ['0.2.0', '0.5.0'].map((version) => ({ pack: JSON.parse(readFileSync(path.join(root, `compiler/test/fixtures/governance/${version}.json`), 'utf8')) }));
 
 const TAGS = '# Tags\n\npractice-packs — x\ngovernance — x\nsecurity — x\nmodel-routing — x\nenforcement — x\nobservability — x\nguardrail — x\n';
-const answersOf = (pack) => ({
+const answersOf = (pack, overrides = {}) => ({
   ...Object.fromEntries(pack.questions.filter((q) => q.options).map((q) => [q.id, q.options.find((o) => o.recommended).id])),
   'restricted-paths': ['.env', '*.pem', 'secrets/'],
   'restricted-modes': [],
+  ...overrides,
 });
 
-function adopted(pack) {
+function adopted(pack, overrides) {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-gov-split-'));
   mkdirSync(path.join(dir, 'docs/skills'), { recursive: true });
   writeFileSync(path.join(dir, 'docs/skills/tags.md'), TAGS);
   execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
-  applyRender({ root: dir, plan: planRender({ root: dir, pack, answers: answersOf(pack), acceptedBy: 't', date: '2026-10-05', detect: {} }) });
+  applyRender({ root: dir, plan: planRender({ root: dir, pack, answers: answersOf(pack, overrides), acceptedBy: 't', date: '2026-10-05', detect: {} }) });
   applyPlan(dir, planApply(dir));
   return dir;
 }
@@ -41,6 +42,24 @@ function adopted(pack) {
 const snapshot = (dir) => Object.fromEntries(['decisions', 'guardrails'].flatMap((d) => readdirSync(path.join(dir, 'docs', d)).map((f) => [`${d}/${f}`, readFileSync(path.join(dir, 'docs', d, f), 'utf8')])));
 // The rules a project enforces, without the provenance label that the update rewrites.
 const enforcement = (dir) => JSON.stringify(collectEnforcement(dir).map((e) => ({ ...e, 'generated-by': undefined })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
+
+for (const { pack } of versions) {
+  test(`the provider of internal-data: single-provider is kept when governance ${pack.version} updates (issue 147)`, () => {
+    const dir = adopted(pack, { 'internal-data': 'single-provider', provider: 'openai' });
+    try {
+      const { notes } = runUpdate(dir, { root, date: '2026-10-11' });
+      assert.deepEqual(notes.filter((n) => /no recorded answer|taken over/.test(n)), []);
+      const policy = adoptedArtifacts(dir, 'data-policy');
+      assert.equal(currentAnswers(policy).provider, 'openai');
+      assert.match(readFileSync(path.join(dir, policy.find((a) => a.data['go-getter']['pack-answer'] === 'internal-data').file), 'utf8'), /openai/);
+      const before = snapshot(dir);
+      runUpdate(dir, { root, date: '2026-10-12' });
+      assert.deepEqual(snapshot(dir), before, 'a second update changes nothing');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+}
 
 test('the fixtures are the released governance versions', () => {
   assert.deepEqual(versions.map((v) => v.pack.version), ['0.2.0', '0.5.0']);

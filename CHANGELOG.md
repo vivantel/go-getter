@@ -8,6 +8,10 @@
 - Gated-command ids name the action, not the host: `pr-create`, `pr-merge`, `pr-close`, `release-create`, `comment-post` (decision 0129). A provider table (GitHub first) supplies each action's commands and native ask rules, chosen by `provider=` on `gate-command` (default `github`; an unknown one is refused with the known list). `gh-pr`, `gh-pr-create`, `gh-pr-merge`, `gh-pr-close`, `gh-release-create` and `gh-comment` are still accepted in `free-commands`. `hitl` is 0.4.0 with neutral wording; generated ask rules are unchanged.
 - Coverage and review each have one owner. `verification-gate` 0.4.0 asks for a coverage command and a bar (what the command enforces, a minimum percentage, or no drop below the base branch), runs the command where the machine profile places it and passes the bar in `GO_GETTER_COVERAGE_BAR` and `GO_GETTER_COVERAGE_MIN`; projects that do not answer get no coverage check. `verification-gate` states that it owns the review bar and `orchestration` (0.1.1) only the reviewer role.
 
+### Fixed
+
+- `go-getter update` can re-render a project that chose `internal-data: single-provider`: the provider answer is read back from the internal-data decision, where before no artifact recorded it and the pack was left as it was.
+
 ## [0.3.1] - 2026-10-11
 
 ### Added

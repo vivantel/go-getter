@@ -18,6 +18,12 @@ export function currentAnswers(artifacts) {
   for (const a of artifacts) {
     const g = a.data['go-getter'];
     if (g['pack-answer'] && g['pack-option'] !== undefined) answers[g['pack-answer']] ??= g['pack-option'];
+    // `provider` (asked only for internal-data: single-provider) has no decision of its own: the internal-data decision
+    // holds it as the registry's one provider.
+    if (g['pack-answer'] === 'internal-data' && g['pack-option'] === 'single-provider') {
+      const id = g['model-registry']?.providers?.[0]?.id;
+      if (typeof id === 'string' && id) answers.provider ??= id;
+    }
   }
   return answers;
 }
