@@ -14,7 +14,8 @@ import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
-import { approved as personallyApproved, addPending, storeDir, relativeSecretPath } from './secrets/approvals.mjs';
+import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape } from './secrets/approvals.mjs';
+import { shapeAllowance } from './runs/shapes.mjs';
 import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
@@ -257,7 +258,7 @@ function approvalsStoreRefusal(project, payload) {
   if (typeof command === 'string') {
     for (const words of commandWords(command) ?? []) {
       const call = goGetterCall(words, { cwd: project });
-      if (call?.args[0] === 'approvals' && ['add', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do with a secret, so a person runs it; ask the user to run it themselves`;
+      if (call?.args[0] === 'approvals' && ['add', 'allow', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
       // A run changes what an agent may do without asking (decision 0130): a person starts and ends it.
       if (call?.args[0] === 'run' && ['start', 'end'].includes(call.args[1])) return `blocked: go-getter run ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
     }
@@ -288,6 +289,47 @@ function firstUse(project, call, host, guardrail) {
   return { deny: false, ask: true, reason: `go-getter would run "${text}" with ${call.path} in its environment (values are scrubbed from its output and never shown to the agent).${files.length ? ` It runs ${files.length} file${files.length === 1 ? '' : 's'}: ${shown}.` : ''} Approving also remembers it until those files change.` };
 }
 
+// Outward shapes a remembered approval or an active run may allow (decision 0130). Null when this call is not governed that way
+// (another command is gated too, the host cannot ask, or no shape is grantable): the ordinary gate applies. `{ allow: true }`
+// when every outward command in the call is a grantable shape that is allowed now; otherwise, on a host whose hook can ask, a
+// prompt naming why (first use of the shape, or the precondition that failed).
+function shapeGate(project, entry, payload, host) {
+  if (!host) return null;
+  const command = shellCommand(payload);
+  const args = gateArgs(entry.parsed.args);
+  if (typeof command !== 'string' || !command || !args.grantable.length) return null;
+  let hits;
+  try {
+    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, provider: args.provider });
+  } catch {
+    return null;
+  }
+  if (!hits.length || hits.some((h) => !args.grantable.includes(h.id))) return null;
+  const verdicts = hits.map((h) => ({ id: h.id, ...shapeAllowance(project, h.id, command) }));
+  if (verdicts.every((v) => v.allowed)) return { allow: true };
+  if (!canPrompt(host)) return null;
+  const text = command.length > 200 ? `${command.slice(0, 200)}…` : command;
+  const failed = verdicts.find((v) => v.reason);
+  if (failed) return { deny: false, ask: true, reason: `go-getter: "${text}" is allowed without asking, but ${failed.reason}. Approve this one?` };
+  // First use: remember the shape if the person says yes (the post-tool hook promotes it once the call ran).
+  for (const v of verdicts.filter((x) => x.firstUse)) {
+    try {
+      addPendingShape(project, v.id, command);
+    } catch {
+      // not remembered: the person is asked again next time, which is safe
+    }
+  }
+  const ids = verdicts.filter((v) => v.firstUse).map((v) => v.id).join(', ');
+  return { deny: false, ask: true, reason: `go-getter: approve "${text}"? Approving remembers ${ids} for this project until revoked (go-getter approvals revoke), and its preconditions (green checks, default branch, a step of the run) are checked at each use.` };
+}
+
+// After a call the hook asked about has run, the person said yes: remember its shape.
+function promoteShapes(project, payload) {
+  const command = shellCommand(payload);
+  if (typeof command !== 'string' || !command) return;
+  for (let id = takePendingShape(project, command); id; id = takePendingShape(project, command)) addShape(project, id, {});
+}
+
 export function evaluatePreTool(project, payload, host) {
   let exempt;
   const forged = approvalsStoreRefusal(project, payload);
@@ -297,7 +339,9 @@ export function evaluatePreTool(project, payload, host) {
   for (const e of enforcement) {
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin') continue;
     if (e.parsed.id === 'gate-command') {
-      const gated = gatedCommand(e, payload, host);
+      const shaped = shapeGate(project, e, payload, host);
+      if (shaped && !shaped.allow) return shaped;
+      const gated = shaped?.allow ? null : gatedCommand(e, payload, host);
       if (gated) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" is an ${gated.class} command and needs a human; ask the user to run it themselves` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
@@ -394,6 +438,11 @@ export function redactText(text, values) {
 // secret patterns become REDACTED; where the project masks PII (decision 0106), email, card numbers, IBANs and the
 // classes it adds become per-session pseudonyms. `masked` counts what was replaced per kind, never what it was.
 export function evaluatePostTool(project, payload) {
+  try {
+    promoteShapes(project, payload);
+  } catch {
+    // remembering is best effort
+  }
   const response = payload.tool_response ?? payload.toolResponse ?? payload.tool_output ?? payload.toolResult;
   const values = restrictedValues(project);
   const pii = piiConfig(project);

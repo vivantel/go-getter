@@ -47,7 +47,7 @@ test('the both answer yields a tier-2 gate-command guardrail grounded in decisio
   const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'gated-actions-need-human-approval');
   assert.equal(entries.length, 1);
   assert.equal(entries[0].tier, 2);
-  assert.equal(entries[0].run, 'builtin:gate-command classes=irreversible,outward extra="" free=""');
+  assert.equal(entries[0].run, 'builtin:gate-command classes=irreversible,outward extra="" free="" grantable="git-push, pr-create, pr-merge, pr-close"');
   const text = readFileSync(path.join(dir, 'docs/guardrails/gated-actions-need-human-approval.md'), 'utf8');
   assert.match(text, /grounded-in: \[\d{4}-gated-actions, 0043-human-escalation\]/);
   assert.match(text, /governed-by: \d{4}-gated-actions/);
@@ -65,7 +65,7 @@ test('narrower answers narrow the classes; extra patterns reach the gate; adviso
     rmSync(dir, { recursive: true, force: true });
     return e;
   };
-  assert.equal(run({ 'gated-classes': 'outward' })[0].run, 'builtin:gate-command classes=outward extra="" free=""');
+  assert.equal(run({ 'gated-classes': 'outward' })[0].run, 'builtin:gate-command classes=outward extra="" free="" grantable="git-push, pr-create, pr-merge, pr-close"');
   assert.equal(run({ 'gated-classes': 'irreversible' })[0].run, 'builtin:gate-command classes=irreversible extra=""');
   const withExtra = run({ 'extra-patterns': ['make deploy', '/kubectl .*prod/'] })[0];
   assert.equal(withExtra.parsed.args.extra, 'make deploy, /kubectl .*prod/');
@@ -108,7 +108,7 @@ test('free-commands lets a chosen outward command through: no ask rule for it, t
   const { nativeRules } = await import('../src/gate.mjs');
   const { loadCapabilities } = await import('../src/capabilities.mjs');
   const dir = project();
-  adopt(dir, { ...recommended, 'free-commands': ['git-push'] });
+  adopt(dir, { ...recommended, 'free-commands': ['git-push'], 'run-grants': [] });
   const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'gated-actions-need-human-approval');
   assert.match(entries[0].run, /free="git-push"/);
   const rules = nativeRules('claude-code', gateEntries(entries), loadCapabilities(root));
@@ -117,4 +117,23 @@ test('free-commands lets a chosen outward command through: no ask rule for it, t
   assert.ok(rules.includes('Bash(gh pr merge *)'), 'a merge still asks');
   assert.ok(readFileSync(path.join(dir, 'docs/decisions', readdirSync(path.join(dir, 'docs/decisions')).find((f) => /gated-free-commands/.test(f))), 'utf8').includes('[git-push]'));
   rmSync(dir, { recursive: true, force: true });
+});
+
+test('run-grants lists the shapes a run or a remembered approval may allow; the hook, not a static ask rule, decides them', async () => {
+  const { nativeRules } = await import('../src/gate.mjs');
+  const { loadCapabilities } = await import('../src/capabilities.mjs');
+  const dir = project();
+  adopt(dir, recommended);
+  const entries = collectEnforcement(dir).filter((e) => e.guardrail === 'gated-actions-need-human-approval');
+  assert.match(entries[0].run, /grantable="git-push, pr-create, pr-merge, pr-close"/);
+  const rules = nativeRules('claude-code', gateEntries(entries), loadCapabilities(root));
+  for (const glob of ['Bash(gh pr merge *)', 'Bash(gh pr create *)', 'Bash(gh pr close *)', 'Bash(git push *)']) assert.equal(rules.includes(glob), false, glob);
+  for (const glob of ['Bash(gh release create *)', 'Bash(git tag *)', 'Bash(npm publish *)', 'Bash(git push --force*)']) assert.ok(rules.includes(glob), `${glob} still asks`);
+  const text = readFileSync(path.join(dir, 'docs/decisions', readdirSync(path.join(dir, 'docs/decisions')).find((f) => /gated-run-grants/.test(f))), 'utf8');
+  assert.match(text, /Tags, releases, publishing and history rewrites always need a human/);
+  rmSync(dir, { recursive: true, force: true });
+  const bare = project();
+  adopt(bare, { ...recommended, 'run-grants': [] });
+  assert.match(collectEnforcement(bare).find((e) => e.guardrail === 'gated-actions-need-human-approval').run, /grantable=""/);
+  rmSync(bare, { recursive: true, force: true });
 });

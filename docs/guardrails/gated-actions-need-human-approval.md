@@ -11,8 +11,8 @@ go-getter:
   enforcement:
     - tier: 2
       check: Host ask rules and the pre-tool hook gate these commands
-      run: builtin:gate-command classes=irreversible,outward extra="" free="git-push, gh-pr-merge"
-  generated-by: hitl@0.4.0
+      run: builtin:gate-command classes=irreversible,outward extra="" free="git-push, gh-pr-merge" grantable="git-push, pr-create, pr-merge, pr-close"
+  generated-by: hitl@0.5.0
   pack-answer: gated-classes
   pack-option: both
 ---

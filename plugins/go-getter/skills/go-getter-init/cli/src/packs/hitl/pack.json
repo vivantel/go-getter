@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "hitl",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "family": "harness",
   "components": [
     8
@@ -66,6 +66,26 @@
           "outward"
         ]
       }
+    },
+    {
+      "id": "run-grants",
+      "type": "list",
+      "prompt": "Which outward commands may an autonomous run or a remembered approval allow without asking? Only these are decided at use, by their preconditions (merge: green checks, the default branch as base, and in a run a pull request tied to a step of the run); the rest keep asking. Tags, releases and publishing can never be listed. Where the host's hook can ask it asks the first time and remembers; elsewhere a person starts a run or runs go-getter approvals allow <id>.",
+      "pattern": "^(git-push|pr-create|pr-merge|pr-close|comment-post)$",
+      "default": [
+        "git-push",
+        "pr-create",
+        "pr-merge",
+        "pr-close"
+      ],
+      "since": "0.5.0",
+      "when": {
+        "question": "gated-classes",
+        "in": [
+          "both",
+          "outward"
+        ]
+      }
     }
   ],
   "outputs": {
@@ -107,7 +127,7 @@
               {
                 "tier": 2,
                 "check": "Host ask rules and the pre-tool hook gate these commands",
-                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\""
+                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\" grantable=\"{{answer.run-grants}}\""
               }
             ],
             "body": "## Guardrail\n\nShell commands of the irreversible and outward-facing classes need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
@@ -195,7 +215,7 @@
               {
                 "tier": 2,
                 "check": "Host ask rules and the pre-tool hook gate these commands",
-                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\""
+                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\" grantable=\"{{answer.run-grants}}\""
               }
             ],
             "body": "## Guardrail\n\nShell commands of the outward-facing class need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
@@ -278,6 +298,27 @@
               "track": "process"
             },
             "body": "## Decision\n\nThe commands [{{answer.free-commands}}] run without a human, though they are outward-facing (pack {{pack.id}}@{{pack.version}}); an empty list frees none. Irreversible commands and every other outward-facing command still need a human.\n\n## Why\n\nA plain push to a feature branch is reversible, and a push to the default branch is stopped by a git hook or branch protection, so asking for each one adds friction without protection (decision 0120).\n"
+          }
+        ]
+      }
+    },
+    "run-grants": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "gated-run-grants",
+            "title": "Outward commands a run or a remembered approval may allow are listed",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "run-grants": "{{answer.run-grants}}"
+              }
+            },
+            "body": "## Decision\n\nThe outward commands [{{answer.run-grants}}] may run without a prompt when an autonomous run grants them or a person approved them once, and only while their preconditions hold at that use (pack {{pack.id}}@{{pack.version}}); an empty list grants none. Tags, releases, publishing and history rewrites always need a human.\n\n## Why\n\nConfirming each merge of a plan whose order is fixed is friction without protection when required checks and branch protection already bound the work; the preconditions keep a remembered approval from outliving the conditions that made it safe (decision 0130).\n"
           }
         ]
       }

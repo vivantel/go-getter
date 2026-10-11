@@ -25,7 +25,7 @@ Class: implement · Effort: high · Needs: none · Check: `node --test compiler/
 Do: add a per-user run store beside the approvals store (same location rules, 0700 directory, 0600 file, atomic replace, damaged file reads as empty) and `go-getter run start <plan> [--through N] | status | end`. A record holds the plan, step range, start time, timeout, spend cap, and the granted shapes; `start` refuses when a run is active for the project. The hook refuses a call that runs `run start|end` or opens the store (same rule as `approvals add`), so only a human starts a run.
 Done-when: tests show start, status and end, expiry at the timeout, refusal of a second run, and the hook denying an agent's attempt to start a run or write the store.
 
-### 2 Approve-once for outward shapes with preconditions — [ ]
+### 2 Approve-once for outward shapes with preconditions — [x]
 Issue: #127
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/outward-approval.test.mjs`
 Do: let a catalog id in `compiler/src/gate.mjs` be approved by a remembered per-user approval (first use asks on a host whose hook can ask) or by the active run record (any host). Add per-shape preconditions run at each use: `pr-merge` needs green required checks, the default branch as base and a pull request tied to a step in the run's range; a failure asks again or ends the run. `hitl` gains a question for the shapes a run may grant, with a recommended default.

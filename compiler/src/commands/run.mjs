@@ -7,6 +7,7 @@ import { activeRun, lastRun, startRun, endRun, DEFAULT_HOURS } from '../runs/rec
 import { readPlan, repoRoot } from '../plan.mjs';
 import { CATALOG, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
+import { adoptedData } from '../governance.mjs';
 
 const USAGE = 'usage: go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | end';
 const OUTWARD = CATALOG.filter((e) => e.class === 'outward').map((e) => e.id);
@@ -58,7 +59,8 @@ export default function runCommand({ args }) {
       const last = o.through === undefined ? ids.length - 1 : ids.indexOf(o.through);
       const steps = plan.steps.slice(0, last + 1).filter((s) => ['pending', 'in progress', 'blocked'].includes(s.state)).map((s) => s.id);
       if (!steps.length) throw new Error('no step is left to do in that range');
-      const grants = normaliseFree(o.grants);
+      // Without --grant, the shapes the project's hitl answer lists.
+      const grants = normaliseFree(o.grants.length ? o.grants : [].concat(adoptedData(project, 'run-grants') ?? []));
       const bad = grants.filter((g) => !OUTWARD.includes(g));
       if (bad.length) throw new Error(`--grant takes outward catalog ids (${OUTWARD.join(', ')}), not ${bad.join(', ')}`);
       const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd: loadPolicy(project)?.spendCapUsd ?? null, grants });

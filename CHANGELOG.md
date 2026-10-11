@@ -4,6 +4,7 @@
 
 ### Added
 
+- Outward commands can be allowed without a prompt by an autonomous run or a remembered approval, and only while their preconditions hold at that use (decision 0130). `hitl` 0.5.0 asks which shapes (`git-push`, `pr-create`, `pr-merge`, `pr-close`, `comment-post`; default the first four) and, on a host whose hook can ask (Claude Code), the hook asks the first time and remembers the shape (`go-getter approvals list`, `allow <shape>`, `revoke <shape>`). A merge needs green checks, the default branch as base and, in a run, a pull request that names an issue of a step in the run's range. Tags, releases and publishing can never be allowed. On a host with a native ask rule and no hook prompt (Kilo, OpenCode) the rule keeps prompting; on a host with neither (Codex, Gemini CLI, Copilot) a run or `approvals allow` is what lets a command through.
 - `go-getter run start <plan> [--through N] [--hours H] [--grant <id>] | status | end` records an autonomous run (decision 0130): a plan range a person starts, kept per user outside git beside the approvals store, expiring at its timeout (8 hours by default), one at a time per project. The pre-tool hook refuses an agent's `run start` and `run end` and any call that opens the store. The record does not yet change what a gate allows; that is the next step of the autonomous-run plan.
 
 ## [0.3.2] - 2026-10-11

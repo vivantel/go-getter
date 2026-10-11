@@ -36,6 +36,9 @@ if (process.argv[1] === SELF) {
     process.exit(1);
   }
   const flag = (name) => args[args.indexOf(name) + 1];
+  // Pull requests: data.prs [{ number, state, isDraft, baseRefName, title, body, checks: [{ name, bucket }] }], data.currentPr (the
+  // number a bare `pr view` means) and data.defaultBranch for `repo view`.
+  const pr = () => (data.prs ?? []).find((p) => String(p.number) === (args[2] && !args[2].startsWith('--') ? args[2] : String(data.currentPr)));
   const repo = flag('--repo') ?? data.repo;
   const inRepo = (data.issues ?? []).filter((i) => (i.repo ?? data.repo) === repo).map(({ repo: _r, ...issue }) => issue);
   if (args[0] === 'issue' && args[1] === 'view') {
@@ -63,6 +66,17 @@ if (process.argv[1] === SELF) {
     issue.stateReason = flag('--reason') === 'not planned' ? 'NOT_PLANNED' : 'COMPLETED';
     writeFileSync(process.env.GG_GH_DATA, JSON.stringify(data));
     console.log(`Closed issue ${repo}#${args[2]}`);
+  } else if (args[0] === 'pr' && args[1] === 'view') {
+    const p = pr();
+    if (!p) process.exit(1);
+    const { checks: _c, ...rest } = p;
+    console.log(JSON.stringify(rest));
+  } else if (args[0] === 'pr' && args[1] === 'checks') {
+    const p = pr();
+    if (!p) process.exit(1);
+    console.log(JSON.stringify(p.checks ?? []));
+  } else if (args[0] === 'repo' && args[1] === 'view') {
+    console.log(JSON.stringify({ defaultBranchRef: { name: data.defaultBranch ?? 'main' } }));
   } else {
     console.error(`gh stub: unsupported ${args.join(' ')}`);
     process.exit(2);

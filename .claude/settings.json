@@ -122,8 +122,6 @@
       "Bash(sqlite3 *truncate*)",
       "Bash(sqlite3 *DELETE FROM*)",
       "Bash(sqlite3 *delete from*)",
-      "Bash(gh pr create *)",
-      "Bash(gh pr close *)",
       "Bash(gh release create *)",
       "Bash(git tag *)",
       "Bash(npm publish *)",
