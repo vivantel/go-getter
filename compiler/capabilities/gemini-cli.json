@@ -76,5 +76,14 @@
     "Workspace-tier policies are currently disabled; user tier is ~/.gemini/policies.",
     "Telemetry logPrompts defaults to true and must be disabled for DLP.",
     "Prompt caching only with API key or Vertex AI auth."
+  ],
+  "secretLevers": [
+    {
+      "kind": "env-redaction",
+      "scope": "settings",
+      "fact": "0031",
+      "confirmed": false,
+      "note": "Best effort, off by default. Not confirmed: that workspace settings apply."
+    }
   ]
 }

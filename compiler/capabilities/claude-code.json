@@ -89,5 +89,9 @@
     "Plugins cannot ship permissions settings; project-local .claude/settings.json carries permissions and hooks.",
     "Endpoints must speak the Anthropic Messages API.",
     "Checkpointing covers file-tool edits only."
+  ],
+  "secretLevers": [
+    { "kind": "credentials-deny", "scope": "any settings file", "fact": "0027", "confirmed": true, "note": "Entry field names are not given in fact 0027; check the host's sandboxing page." },
+    { "kind": "credentials-mask", "scope": "user or managed settings only", "fact": "0027", "confirmed": true, "note": "Needs network.tlsTerminate. Ignored in a repository's settings." }
   ]
 }

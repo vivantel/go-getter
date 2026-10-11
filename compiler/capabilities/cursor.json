@@ -71,5 +71,6 @@
     "Non-zero hook exits other than 2 fail open.",
     "CLI permissions may not apply to the IDE agent (unconfirmed).",
     "Component 9 tier 2: the pre-tool hook takes the checkpoint before a gated command (decision 0097); the host has no native checkpoint."
-  ]
+  ],
+  "secretLevers": []
 }

@@ -66,5 +66,14 @@
     "Sandbox = cloud agent firewall.",
     "Node needed only for npm installs (>=22).",
     "Component 9 stays tier 1 until Copilot's hook payload is confirmed (as for component 8)."
+  ],
+  "secretLevers": [
+    {
+      "kind": "secret-env-vars",
+      "scope": "command-line flag",
+      "fact": "0031",
+      "confirmed": true,
+      "note": "Redacts named variables from shell and MCP environments."
+    }
   ]
 }

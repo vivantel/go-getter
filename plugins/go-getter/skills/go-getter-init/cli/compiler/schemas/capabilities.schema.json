@@ -138,6 +138,21 @@
       }
     },
     "sandbox": { "type": "boolean" },
+    "secretLevers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "scope", "fact", "confirmed"],
+        "properties": {
+          "kind": { "enum": ["credentials-deny", "credentials-mask", "profile-deny-glob", "env-redaction", "secret-env-vars"] },
+          "scope": { "type": "string" },
+          "fact": { "type": "string", "pattern": "^\\d{4}$" },
+          "confirmed": { "type": "boolean" },
+          "note": { "type": "string" }
+        }
+      }
+    },
     "checkpointing": { "type": "boolean" },
     "checkpointRestore": { "type": "string" },
     "nodeAtRuntime": { "type": "boolean" },
