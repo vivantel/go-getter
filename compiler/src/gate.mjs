@@ -58,28 +58,38 @@ const ENTRIES = [
   { id: 'git-push', class: 'outward', description: 'publishes commits to a remote',
     pattern: new RegExp(`^${GIT}push${END}`),
     examples: { match: ['git push', 'git push origin main', 'git -C app push'], noMatch: ['git status', 'git pull', 'git stash push', 'echo "git push"'] } },
-  { id: 'gh-pr-create', class: 'outward', description: 'opens a pull request',
-    pattern: /^gh\s+pr\s+create(?=\s|$)/,
-    examples: { match: ['gh pr create --fill', 'gh pr create'], noMatch: ['gh pr view 5', 'gh pr list', 'gh pr merge 5'] } },
-  { id: 'gh-pr-merge', class: 'outward', description: 'merges a pull request',
-    pattern: /^gh\s+pr\s+merge(?=\s|$)/,
-    examples: { match: ['gh pr merge 5', 'gh pr merge --squash --delete-branch 5'], noMatch: ['gh pr checks 5', 'gh pr create --fill'] } },
-  { id: 'gh-pr-close', class: 'outward', description: 'closes a pull request',
-    pattern: /^gh\s+pr\s+close(?=\s|$)/,
-    examples: { match: ['gh pr close 5'], noMatch: ['gh pr view 5', 'gh pr merge 5'] } },
-  { id: 'gh-release-create', class: 'outward', description: 'publishes a release',
-    pattern: /^gh\s+release\s+create(?=\s|$)/,
-    examples: { match: ['gh release create v1'], noMatch: ['gh release list', 'gh release view v1'] } },
+  { id: 'pr-create', class: 'outward', description: 'opens a pull request', provided: true },
+  { id: 'pr-merge', class: 'outward', description: 'merges a pull request', provided: true },
+  { id: 'pr-close', class: 'outward', description: 'closes a pull request', provided: true },
+  { id: 'release-create', class: 'outward', description: 'publishes a release', provided: true },
   { id: 'git-tag-create', class: 'outward', description: 'creates a tag',
     pattern: new RegExp(`^${GIT}tag(?!${ARGS}\\s+(?:${LIST_FLAGS})(?=\\s|=|$))(?=(?:\\s+-\\S+)*\\s+[^\\s-])`),
     examples: { match: ['git tag v1', 'git tag -a v1 -m "release"', 'git tag -s v1'], noMatch: ['git tag', 'git tag -l', 'git tag --list "v*"', 'git tag -d v1'] } },
   { id: 'package-publish', class: 'outward', description: 'publishes a package',
     pattern: /^(?:npm|pnpm|yarn)(?:\s+-\S+)*(?:\s+npm)?\s+publish(?=\s|$)/,
     examples: { match: ['npm publish', 'pnpm publish --no-git-checks', 'yarn npm publish'], noMatch: ['npm install', 'npm run publish-docs', 'npm pack'] } },
-  { id: 'gh-comment', class: 'outward', description: 'posts a comment on an issue or pull request',
-    pattern: /^gh\s+(?:issue|pr)\s+comment(?=\s|$)/,
-    examples: { match: ['gh issue comment 3 -b hi', 'gh pr comment 5 -b hi'], noMatch: ['gh issue view 3', 'gh pr checks'] } },
+  { id: 'comment-post', class: 'outward', description: 'posts a comment on an issue or pull request', provided: true },
 ];
+
+// What each hosting provider supplies for the entries marked `provided`: the command pattern, examples and native ask globs
+// (decision 0129). The entries name the action; a project picks the provider with `provider=` on `gate-command` (default
+// github). A provider that does not offer an action is a gap to fill here, not a silent miss.
+const PROVIDERS = {
+  github: {
+    'pr-create': { pattern: /^gh\s+pr\s+create(?=\s|$)/, native: ['gh pr create *'],
+      examples: { match: ['gh pr create --fill', 'gh pr create'], noMatch: ['gh pr view 5', 'gh pr list', 'gh pr merge 5'] } },
+    'pr-merge': { pattern: /^gh\s+pr\s+merge(?=\s|$)/, native: ['gh pr merge *'],
+      examples: { match: ['gh pr merge 5', 'gh pr merge --squash --delete-branch 5'], noMatch: ['gh pr checks 5', 'gh pr create --fill'] } },
+    'pr-close': { pattern: /^gh\s+pr\s+close(?=\s|$)/, native: ['gh pr close *'],
+      examples: { match: ['gh pr close 5'], noMatch: ['gh pr view 5', 'gh pr merge 5'] } },
+    'release-create': { pattern: /^gh\s+release\s+create(?=\s|$)/, native: ['gh release create *'],
+      examples: { match: ['gh release create v1'], noMatch: ['gh release list', 'gh release view v1'] } },
+    'comment-post': { pattern: /^gh\s+(?:issue|pr)\s+comment(?=\s|$)/, native: ['gh issue comment *', 'gh pr comment *'],
+      examples: { match: ['gh issue comment 3 -b hi', 'gh pr comment 5 -b hi'], noMatch: ['gh issue view 3', 'gh pr checks'] } },
+  },
+};
+export const PROVIDER_IDS = Object.keys(PROVIDERS);
+export const DEFAULT_PROVIDER = 'github';
 
 // Command globs of each entry for the hosts' native ask rules (`*` matches any text; a trailing ` *` also matches the bare
 // command). Native rules see one command at a time, after the host splits compound commands. They cannot tell `rm -rf /tmp/x`
@@ -98,15 +108,21 @@ const NATIVE = {
   'rm-rf': [...around('rm', '-rf*', '-fr*', '-Rf*', '-fR*', '-r -f*', '-f -r*', '--recursive --force*', '--force --recursive*')],
   'sql-destructive': ['psql', 'mysql', 'sqlite3'].flatMap(sql),
   'git-push': ['git push *'],
-  'gh-pr-create': ['gh pr create *'],
-  'gh-pr-merge': ['gh pr merge *'],
-  'gh-pr-close': ['gh pr close *'],
-  'gh-release-create': ['gh release create *'],
   'git-tag-create': ['git tag *'],
   'package-publish': ['npm publish *', 'pnpm publish *', 'yarn publish *', 'yarn npm publish *'],
-  'gh-comment': ['gh issue comment *', 'gh pr comment *'],
 };
-export const CATALOG = ENTRIES.map((e) => ({ ...e, native: NATIVE[e.id] }));
+// The catalog with the provider's commands filled in.
+export function catalogFor(provider = DEFAULT_PROVIDER) {
+  const table = PROVIDERS[provider];
+  if (!table) throw new Error(`unknown gate provider "${provider}"; known: ${PROVIDER_IDS.join(', ')}`);
+  return ENTRIES.map(({ provided, ...e }) => {
+    if (!provided) return { ...e, native: NATIVE[e.id] };
+    const p = table[e.id];
+    if (!p) throw new Error(`gate provider "${provider}" has no command for ${e.id}`);
+    return { ...e, ...p };
+  });
+}
+export const CATALOG = catalogFor();
 
 // Splits into command segments, each as `{ raw, masked }` of equal length; masked has quoted text (quotes included) as 'X'.
 function segments(command) {
@@ -160,15 +176,23 @@ const parseExtra = (spec) => {
 };
 
 // The catalog entries (and project `extra` patterns, which are outward commands and ignore `classes`) that `command` matches.
-// An answer that names `gh-pr` (the id before it was split into create, merge and close) means all three.
-const ALIASES = { 'gh-pr': ['gh-pr-create', 'gh-pr-merge', 'gh-pr-close'] };
+// The GitHub-named ids from before the ids were neutral stay accepted: `gh-pr-*`, `gh-release-create`, `gh-comment`, and
+// `gh-pr` (the id before it was split into create, merge and close), which means all three.
+const ALIASES = {
+  'gh-pr': ['pr-create', 'pr-merge', 'pr-close'],
+  'gh-pr-create': ['pr-create'],
+  'gh-pr-merge': ['pr-merge'],
+  'gh-pr-close': ['pr-close'],
+  'gh-release-create': ['release-create'],
+  'gh-comment': ['comment-post'],
+};
 export const normaliseFree = (ids = []) => ids.flatMap((id) => ALIASES[id] ?? [id]);
 
 // `free` lists catalog ids the project lets run without a human (outward entries only, `gateEntries` rejects others).
-export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [] } = {}) {
+export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [], provider = DEFAULT_PROVIDER } = {}) {
   if (typeof command !== 'string' || !command.trim()) return [];
   const freed = normaliseFree(free);
-  const wanted = CATALOG.filter((e) => classes.includes(e.class) && !freed.includes(e.id));
+  const wanted = catalogFor(provider).filter((e) => classes.includes(e.class) && !freed.includes(e.id));
   const extras = extra.map(String).filter((s) => s.trim()).map(parseExtra);
   const hits = new Set();
   const found = [];
@@ -217,7 +241,7 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
 // `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
-export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: normaliseFree(list(args.free)), goGetter: list(args['go-getter']) });
+export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: normaliseFree(list(args.free)), goGetter: list(args['go-getter']), provider: String(args.provider ?? DEFAULT_PROVIDER).trim() });
 
 // The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script
 // of a checkout. A call spelled any other way is still recognised by the hook, which reads what it runs (invocation.mjs).
@@ -237,6 +261,7 @@ export function gateEntries(enforcement, { project } = {}) {
     if ((!args.classes.length && !args.extra.length && !args.goGetter.length) || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
     const badSub = args.goGetter.filter((sub) => !/^[a-z][a-z-]*(?: [a-z][a-z-]*)*$/.test(sub));
     if (badSub.length) throw new Error(`guardrail ${e.guardrail}: gate-command go-getter must be subcommand words, not ${badSub.join(', ')}`);
+    if (!PROVIDER_IDS.includes(args.provider)) throw new Error(`guardrail ${e.guardrail}: gate-command provider must be one of ${PROVIDER_IDS.join(', ')}, not ${args.provider}`);
     const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');
     if (unfree.length) throw new Error(`guardrail ${e.guardrail}: gate-command free must name outward catalog commands, not ${unfree.join(', ')}`);
     for (const x of args.extra.filter(isRegexExtra)) {
@@ -249,10 +274,11 @@ export function gateEntries(enforcement, { project } = {}) {
     return args;
   });
   // An entry is gated when some gate covers its class and does not free it.
-  const gated = CATALOG.filter((e) => gates.some((g) => g.classes.includes(e.class) && !g.free.includes(e.id)));
+  const gated = gates.flatMap((g) => catalogFor(g.provider).filter((e) => g.classes.includes(e.class) && !g.free.includes(e.id)));
+  const gatedOnce = [...new Map(gated.map((e) => [e.id, e])).values()];
   // Subcommands gated by what the call runs: native globs for the usual spellings, for hosts whose hook cannot ask.
   const identity = [...new Set(gates.flatMap((g) => g.goGetter))].map((sub) => ({ id: `go-getter:${sub}`, class: 'outward', identity: sub.split(' '), native: goGetterSpellings(project).map((sp) => `${sp} ${sub} *`) }));
-  return [...gated, ...extraEntries([...new Set(gates.flatMap((g) => g.extra))]), ...identity];
+  return [...gatedOnce, ...extraEntries([...new Set(gates.flatMap((g) => g.extra))]), ...identity];
 }
 
 // OpenCode globs as automata, to reason about every command a glob matches rather than a sample of them. A glob is a token

@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "hitl",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "family": "harness",
   "components": [
     8
@@ -55,7 +55,7 @@
     {
       "id": "free-commands",
       "type": "list",
-      "prompt": "Which outward-facing commands may run without asking? A catalog id such as git-push (plain pushes; force-push and branch deletion still ask), gh-pr-merge (merging a pull request; opening and closing one still ask) or gh-comment.",
+      "prompt": "Which outward-facing commands may run without asking? A catalog id such as git-push (plain pushes; force-push and branch deletion still ask), pr-merge (merging a pull request; opening and closing one still ask) or comment-post. The ids name the action; the hosting provider (GitHub) supplies its commands. The earlier gh-pr, gh-pr-create, gh-pr-merge, gh-pr-close, gh-release-create and gh-comment still work.",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
       "default": [],
       "since": "0.3.0",

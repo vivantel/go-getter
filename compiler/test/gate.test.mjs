@@ -80,7 +80,7 @@ test('free lists outward catalog ids that run without a human; irreversible ones
   assert.deepEqual(ids('git push origin feat/x', {}), ['git-push']);
   assert.deepEqual(ids('git push --force origin feat/x', { free: ['git-push'] }), ['git-push-force'], 'force-push still asks');
   assert.deepEqual(ids('git push --delete origin old', { free: ['git-push'] }), ['git-push-delete']);
-  assert.deepEqual(ids('gh pr merge 5', { free: ['git-push'] }), ['gh-pr-merge'], 'other outward commands still ask');
+  assert.deepEqual(ids('gh pr merge 5', { free: ['git-push'] }), ['pr-merge'], 'other outward commands still ask');
   const gate = (run) => [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: run } }];
   const names = (args) => gateEntries(gate(args)).map((e) => e.id);
   assert.equal(names({ classes: 'irreversible,outward' }).includes('git-push'), true);
@@ -93,21 +93,51 @@ test('free lists outward catalog ids that run without a human; irreversible ones
 test('pull request commands are three catalog ids: freeing merge leaves create and close asking, and the old gh-pr id still means all three', async () => {
   const { matchGated, gateEntries, nativeRules, normaliseFree } = await import('../src/gate.mjs');
   const ids = (cmd, o) => matchGated(cmd, o).map((e) => e.id);
-  assert.deepEqual(ids('gh pr create --fill', {}), ['gh-pr-create']);
-  assert.deepEqual(ids('gh pr merge 5', {}), ['gh-pr-merge']);
-  assert.deepEqual(ids('gh pr close 5', {}), ['gh-pr-close']);
-  assert.deepEqual(ids('gh pr merge --squash 5', { free: ['gh-pr-merge'] }), []);
-  assert.deepEqual(ids('gh pr create', { free: ['gh-pr-merge'] }), ['gh-pr-create']);
-  assert.deepEqual(ids('gh pr close 5', { free: ['gh-pr-merge'] }), ['gh-pr-close']);
+  assert.deepEqual(ids('gh pr create --fill', {}), ['pr-create']);
+  assert.deepEqual(ids('gh pr merge 5', {}), ['pr-merge']);
+  assert.deepEqual(ids('gh pr close 5', {}), ['pr-close']);
+  assert.deepEqual(ids('gh pr merge --squash 5', { free: ['pr-merge'] }), []);
+  assert.deepEqual(ids('gh pr create', { free: ['pr-merge'] }), ['pr-create']);
+  assert.deepEqual(ids('gh pr close 5', { free: ['pr-merge'] }), ['pr-close']);
   assert.deepEqual(ids('gh pr view 5', {}), []);
   for (const cmd of ['gh pr create', 'gh pr merge 5', 'gh pr close 5']) assert.deepEqual(ids(cmd, { free: ['gh-pr'] }), [], `the old id frees ${cmd}`);
-  assert.deepEqual(normaliseFree(['git-push', 'gh-pr']), ['git-push', 'gh-pr-create', 'gh-pr-merge', 'gh-pr-close']);
+  assert.deepEqual(normaliseFree(['git-push', 'gh-pr']), ['git-push', 'pr-create', 'pr-merge', 'pr-close']);
   const gate = (args) => [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args } }];
-  const entries = gateEntries(gate({ classes: 'irreversible,outward', free: 'git-push,gh-pr-merge' }));
-  assert.ok(!entries.some((e) => ['git-push', 'gh-pr-merge'].includes(e.id)));
-  assert.ok(entries.some((e) => e.id === 'gh-pr-create') && entries.some((e) => e.id === 'gh-pr-close'));
+  const entries = gateEntries(gate({ classes: 'irreversible,outward', free: 'git-push,pr-merge' }));
+  assert.ok(!entries.some((e) => ['git-push', 'pr-merge'].includes(e.id)));
+  assert.ok(entries.some((e) => e.id === 'pr-create') && entries.some((e) => e.id === 'pr-close'));
   const caps = (await import('../src/capabilities.mjs')).loadCapabilities(new URL('../..', import.meta.url).pathname);
   const rules = nativeRules('claude-code', entries, caps);
   assert.ok(rules.includes('Bash(gh pr create *)') && rules.includes('Bash(gh pr close *)') && !rules.includes('Bash(gh pr merge *)'));
   assert.doesNotThrow(() => gateEntries(gate({ classes: 'irreversible,outward', free: 'gh-pr' })));
+});
+
+test('the gated actions are neutral ids and every GitHub-named id is still accepted', async () => {
+  const { matchGated, gateEntries, normaliseFree } = await import('../src/gate.mjs');
+  const ids = (cmd, o) => matchGated(cmd, o).map((e) => e.id);
+  const commands = { 'pr-create': 'gh pr create', 'pr-merge': 'gh pr merge 5', 'pr-close': 'gh pr close 5', 'release-create': 'gh release create v1', 'comment-post': 'gh issue comment 3 -b hi' };
+  for (const [id, cmd] of Object.entries(commands)) assert.deepEqual(ids(cmd, {}), [id], `${cmd} is ${id}`);
+  const aliases = { 'gh-pr-create': 'pr-create', 'gh-pr-merge': 'pr-merge', 'gh-pr-close': 'pr-close', 'gh-release-create': 'release-create', 'gh-comment': 'comment-post' };
+  const gate = (args) => [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args } }];
+  for (const [old, id] of Object.entries(aliases)) {
+    assert.deepEqual(normaliseFree([old]), [id]);
+    assert.deepEqual(ids(commands[id], { free: [old] }), [], `${old} frees ${id}`);
+    assert.ok(!gateEntries(gate({ classes: 'irreversible,outward', free: old })).some((e) => e.id === id), `${old} frees ${id} in the gate`);
+  }
+  assert.deepEqual(ids('gh pr comment 5 -b hi', {}), ['comment-post']);
+});
+
+test('every provider command has examples that match and do not match, and an unknown provider is refused', async () => {
+  const { CATALOG, catalogFor, PROVIDER_IDS, matchGated, gateEntries } = await import('../src/gate.mjs');
+  for (const provider of PROVIDER_IDS) {
+    for (const e of catalogFor(provider).filter((x) => ['pr-create', 'pr-merge', 'pr-close', 'release-create', 'comment-post'].includes(x.id))) {
+      assert.ok(e.native.length, `${provider} ${e.id} has native globs`);
+      for (const cmd of e.examples.match) assert.ok(e.pattern.test(cmd), `${provider} ${e.id} matches ${cmd}`);
+      for (const cmd of e.examples.noMatch) assert.ok(!e.pattern.test(cmd), `${provider} ${e.id} does not match ${cmd}`);
+    }
+  }
+  assert.equal(CATALOG.length, catalogFor('github').length);
+  assert.throws(() => catalogFor('gitlab'), /unknown gate provider "gitlab"; known: github/);
+  assert.throws(() => matchGated('gh pr merge 5', { provider: 'gitlab' }), /unknown gate provider "gitlab"/);
+  assert.throws(() => gateEntries([{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'outward', provider: 'gitlab' } } }]), /guardrail g: gate-command provider must be one of github, not gitlab/);
 });
