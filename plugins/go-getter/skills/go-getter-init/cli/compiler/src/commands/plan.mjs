@@ -1,8 +1,9 @@
 // go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan]:
 // read a Markdown plan's steps and move one through its markers (decision 0069, plan A.2).
 import path from 'node:path';
-import { readFileSync } from 'node:fs';
-import { parsePlan, resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep } from '../plan.mjs';
+import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep } from '../plan.mjs';
+import { fileSource } from '../trackers/file-source.mjs';
+import { callSource } from '../trackers/worksource.mjs';
 
 const USAGE = 'usage: go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan]';
 
@@ -20,7 +21,7 @@ function parseArgs(sub, rest) {
   return { ...flags, id: ids ? positional[0] : undefined, plan: positional[ids] };
 }
 
-export default function planCommand({ args }) {
+export default async function planCommand({ args }) {
   const [sub, ...rest] = args;
   const opts = ['status', 'next', 'start', 'done'].includes(sub) ? parseArgs(sub, rest) : null;
   if (!opts) {
@@ -46,12 +47,13 @@ export default function planCommand({ args }) {
       console.error(`${opts.id}: check failed (${r.check}); marker unchanged\n${r.output}`);
       return 1;
     }
-    const plan = parsePlan(readFileSync(file, 'utf8'), rel);
-    if (plan.problems.length) {
-      console.error('plan: the plan does not parse:');
-      for (const p of plan.problems) console.error(`  ${p}`);
+    const listed = await callSource(fileSource(file, { name: rel }), 'list');
+    if (!listed.ok) {
+      console.error(listed.error.code === 'invalid-plan' ? 'plan: the plan does not parse:' : `plan: ${listed.error.message}`);
+      for (const p of listed.error.problems ?? []) console.error(`  ${p}`);
       return 1;
     }
+    const plan = { file: rel, steps: listed.result.steps };
     const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
     console.log(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
     return 0;
