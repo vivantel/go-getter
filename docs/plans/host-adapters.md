@@ -2,7 +2,7 @@
 
 **Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
 
-Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.10 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0118-extension-architecture-core-and-edges.md`, whose host-adapter paragraph fixes the design; read it first. Runs in parallel with `docs/plans/tracker-backed-plans.md`, which has priority.
+Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.10 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0118-extension-architecture-core-and-edges.md`, whose host-adapter paragraph fixes the design; read it first. Runs in parallel with `docs/plans/archive/tracker-backed-plans.md`, which has priority.
 
 ## What you are building (read first)
 
