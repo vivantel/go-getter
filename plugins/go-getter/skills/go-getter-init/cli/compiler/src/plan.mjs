@@ -1,7 +1,7 @@
 // Plan reader (decision 0069, plan A.2): parses a Markdown plan's steps deterministically and offers the next ones.
 // A step is `### <id> <title> — [<marker>]` followed by field lines: one metadata line `Class: … · Needs: … · Check: …`
 // and text lines such as `Do:` and `Done-when:`. Every field is optional; other lines are prose and ignored.
-// `start` and `done` are the only writers, and change nothing but the step's marker.
+// `start` and `done` write only a step's marker; the file WorkSource (trackers/file-source.mjs) also sets a marker and appends steps.
 import path from 'node:path';
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -14,6 +14,7 @@ import { checkpointBeforeStep } from './checkpoint-trigger.mjs';
 import { cleanGitEnv } from './git-env.mjs';
 
 export const MARKERS = { ' ': 'pending', '~': 'in progress', x: 'done', '!': 'blocked', '>': 'moved' };
+export const STATE_MARKER = Object.fromEntries(Object.entries(MARKERS).map(([marker, state]) => [state, marker]));
 export const PLAN_DIR = path.join('docs', 'plans');
 const META = { Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES, Needs: null, Check: null };
 export const ID = /^[0-9A-Za-z]+(\.[0-9A-Za-z]+)*$/;
@@ -153,8 +154,7 @@ export function nextSteps(plan, max = MAX_OPTIONS) {
 export function formatStatus(status) {
   const c = status.counts;
   const lines = [`${status.file}: ${c.done}/${status.total} done, ${c['in progress']} in progress, ${c.blocked} blocked, ${c.moved} moved, ${c.pending} pending`];
-  const mark = Object.fromEntries(Object.entries(MARKERS).map(([k, v]) => [v, k]));
-  for (const s of status.steps) if (s.status !== 'done') lines.push(`[${mark[s.status]}] ${s.id} ${s.title}`);
+  for (const s of status.steps) if (s.status !== 'done') lines.push(`[${STATE_MARKER[s.status]}] ${s.id} ${s.title}`);
   return lines.join('\n');
 }
 

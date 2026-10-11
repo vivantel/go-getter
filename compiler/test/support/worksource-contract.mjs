@@ -20,7 +20,10 @@ export function runWorkSourceContract(name, make) {
       made.cleanup?.();
     }
   };
-  const roundTrips = (value) => assert.ok(isPlainData(value), `not plain data: ${JSON.stringify(value)}`);
+  const roundTrips = (value) => {
+    assert.ok(isPlainData(value), `not plain data: ${JSON.stringify(value)}`);
+    assert.deepEqual(JSON.parse(JSON.stringify(value)), value, 'changed by a JSON round trip');
+  };
   const call = async (source, op, args) => {
     roundTrips({ op, args });
     const answer = await callSource(source, op, args);
@@ -65,6 +68,21 @@ export function runWorkSourceContract(name, make) {
       assert.deepEqual([r.result.step.state, r.result.step.needs], ['pending', ['2']]);
       assert.equal((await call(source, 'list', {})).result.steps.at(-1).id, '4');
       assert.equal((await call(source, 'create', { id: '5', title: 'Bad', needs: ['nope'] })).error.code, 'invalid-args');
+    }));
+
+  test(`${name}: create refuses titles the plan grammar would misread`, () =>
+    withSource(async (source) => {
+      if (!source.ops.includes('create')) return;
+      for (const title of ['Foo —  [x]', 'Foo — [x]', 'Bar ‖', 'two\nlines', '']) assert.equal((await call(source, 'create', { id: '9', title })).error?.code, 'invalid-args', JSON.stringify(title));
+      assert.equal((await call(source, 'create', { id: '9', title: 'Ok', doneWhen: '' })).error?.code, 'invalid-args');
+      assert.equal((await call(source, 'list', {})).result.steps.length, SEED.length, 'nothing was written');
+    }));
+
+  test(`${name}: comment, when listed, answers ok for a known step and unknown-step otherwise`, () =>
+    withSource(async (source) => {
+      if (!source.ops.includes('comment')) return;
+      assert.equal((await call(source, 'comment', { id: '2', text: 'note' })).ok, true);
+      assert.equal((await call(source, 'comment', { id: '99', text: 'note' })).error.code, 'unknown-step');
     }));
 
   test(`${name}: an op the source does not list is unsupported, one it lists works`, () =>

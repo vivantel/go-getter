@@ -3,12 +3,26 @@
 // and its answer are plain JSON data (no callbacks, no shared state), an op the source does not list is `unsupported`,
 // and nothing a source returns is run as a command.
 //
-// Ops: list {} -> { steps }; get { id } -> { step }; create { id?, title, class?, needs?, doneWhen? } -> { step };
+// Ops: list {} -> { steps }; get { id } -> { step }; create { id?, title, class?, needs?, doneWhen? } -> { step } (id is
+// required where a source cannot assign one, as the file source cannot; a tracker assigns its own);
 // setState { id, state } -> { step }; comment { id, text } -> {}.
 // A step is plain data: { id, title, state, parallel, class, needs, fields, check?, doneWhen?, issue?, effort?, tier?, data? }.
 export const OPS = ['list', 'get', 'create', 'setState', 'comment'];
 export const STATES = ['pending', 'in progress', 'done', 'blocked', 'moved'];
 export const ERROR_CODES = ['unknown-op', 'unsupported', 'invalid-args', 'unknown-step', 'invalid-plan', 'unavailable'];
+
+// What an answer must hold for its op; anything else is `unavailable`, since a source's data is untrusted.
+export function isStep(s) {
+  return Boolean(s) && typeof s === 'object' && typeof s.id === 'string' && s.id !== '' && typeof s.title === 'string' && STATES.includes(s.state) && typeof s.parallel === 'boolean' &&
+    typeof s.class === 'string' && Array.isArray(s.needs) && s.needs.every((n) => typeof n === 'string') && Boolean(s.fields) && typeof s.fields === 'object' && !Array.isArray(s.fields);
+}
+const RESULT_OK = {
+  list: (r) => Array.isArray(r.steps) && r.steps.every(isStep),
+  get: (r) => isStep(r.step),
+  create: (r) => isStep(r.step),
+  setState: (r) => isStep(r.step),
+  comment: () => true,
+};
 
 export const ok = (result = {}) => ({ ok: true, result });
 export const fail = (code, message, extra = {}) => ({ ok: false, error: { code, message, ...extra } });
@@ -39,6 +53,7 @@ export async function callSource(source, op, args = {}) {
     return fail('unavailable', String(err?.message ?? err).split('\n')[0]);
   }
   if (!answer || typeof answer.ok !== 'boolean' || !isPlainData(answer)) return fail('unavailable', `source "${source.id}" answered ${op} with data that is not plain JSON`);
+  if (answer.ok && !(answer.result && typeof answer.result === 'object' && RESULT_OK[op](answer.result))) return fail('unavailable', `source "${source.id}" answered ${op} with a result of the wrong shape`);
   if (!answer.ok && !ERROR_CODES.includes(answer.error?.code)) return fail('unavailable', `source "${source.id}" answered ${op} with an unknown error code`);
   return answer;
 }

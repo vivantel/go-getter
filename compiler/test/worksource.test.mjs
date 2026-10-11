@@ -50,3 +50,12 @@ test('a source that throws or answers with non-JSON data is unavailable, never a
   assert.equal(isPlainData({ a: [1, 'x', null, { b: true }] }), true);
   assert.equal(isPlainData({ a: undefined }), false);
 });
+
+test('an answer of the wrong shape is unavailable', async () => {
+  const step = { id: '1', title: 'T', state: 'done', parallel: false, class: 'implement', needs: [], fields: {} };
+  const answering = (op, result) => ({ id: 'bad', ops: [op], handle: () => ({ ok: true, ...(result === undefined ? {} : { result }) }) });
+  for (const [op, result] of [['list', undefined], ['list', { steps: [{ ...step, needs: undefined }] }], ['list', { steps: [{ ...step, state: 'finished' }] }], ['get', { step: { ...step, title: 7 } }], ['get', {}]]) {
+    assert.equal((await callSource(answering(op, result), op, op === 'list' ? {} : { id: '1' })).error?.code, 'unavailable', `${op} ${JSON.stringify(result)}`);
+  }
+  assert.equal((await callSource(answering('list', { steps: [step] }), 'list')).ok, true);
+});
