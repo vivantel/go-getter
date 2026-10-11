@@ -2,7 +2,7 @@
 // pre-tool hook lets exactly those two calls name a use or sink path.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,6 +84,11 @@ test('an answer file from before 0.5.0 renders with nothing approved', () => {
 test('the hook lets exactly secret run on a use path and secret put on a sink path name them', () => {
   const dir = project();
   const denied = (command) => evaluatePreTool(dir, call(command), 'claude-code').deny;
+  // A go-getter on PATH, as a user-level install has (the hook recognises go-getter by what a call runs, decision 0126).
+  const bin = mkdtempSync(path.join(tmpdir(), 'gg-secret-bin-'));
+  symlinkSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs'), path.join(bin, 'go-getter'));
+  const savedPath = process.env.PATH;
+  process.env.PATH = `${bin}${path.delimiter}${savedPath}`;
   try {
     assert.equal(denied('go-getter secret run --from config/dev.secrets -- node check.js'), false);
     assert.equal(denied('go-getter secret put config/out.secrets --from-command vault'), false);
@@ -94,9 +99,13 @@ test('the hook lets exactly secret run on a use path and secret put on a sink pa
     assert.equal(denied('go-getter secret put config/dev.secrets --from-command vault'), true, 'put on a use path');
     assert.equal(denied('go-getter verify config/dev.secrets'), true, 'another go-getter command');
     assert.equal(denied('go-getter secret run --from config/dev.secrets -- node check.js | cat'), true, 'a pipeline');
-    assert.equal(denied('go-getter secret run --from config/dev.secrets -- sh -c "cat config/dev.secrets"'), true, 'quoting');
+    assert.equal(denied('go-getter secret run --from config/dev.secrets -- node check.js "a b"'), false, 'a quoted argument is fine');
+    assert.equal(denied(`go-getter secret run --from config/dev.secrets -- sh -c 'cat config/out.secrets'`), true, 'a sink path named inside quotes');
+    assert.equal(denied('go-getter secret run --from config/dev.secrets -- node check.js $(cat config/out.secrets)'), true, 'a substitution');
     assert.equal(denied('go-getter secret get config/dev.secrets'), true, 'an unknown subcommand');
   } finally {
+    process.env.PATH = savedPath;
+    rmSync(bin, { recursive: true, force: true });
     cleanup(dir);
   }
 });
