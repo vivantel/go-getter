@@ -2,7 +2,7 @@
 id: restricted-data-hosts-rule
 title: Restricted data is handled only on hosts with a blocking pre-tool hook
 status: active
-date: 2026-10-10
+date: 2026-10-11
 tags: [practice-packs, governance, guardrail]
 governed-by: 0050-restricted-data-hosts
 grounded-in: [0050-restricted-data-hosts]
@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction; the coverage report shows the tier per host
-  generated-by: governance@0.4.0
+  generated-by: governance@0.5.0
   pack-answer: restricted-hosts
   pack-option: hook-hosts
 ---

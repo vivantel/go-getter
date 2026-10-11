@@ -15,7 +15,7 @@ go-getter:
 
 ## Decision
 
-A restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack governance@0.2.0). Until `go-getter secret run` and `go-getter secret put` exist, `use` and `sink` paths are denied like `deny` paths, except to a call that is exactly `go-getter secret run` (for `use`) or `go-getter secret put` (for `sink`).
+A restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack governance@0.2.0). A `use` path may be passed to an approved command by a call that is exactly `go-getter secret run`, and a `sink` path may be written from a declared source by a call that is exactly `go-getter secret put`; every other call that names one is denied like a `deny` path (`secret run` and `put` exist since governance 0.5.0; this sentence was corrected in place, decision 0067).
 
 ## Why
 
