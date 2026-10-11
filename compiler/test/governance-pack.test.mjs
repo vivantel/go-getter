@@ -18,7 +18,7 @@ import { eligibleModels } from '../src/routing/eligibility.mjs';
 import { restrictedDataHosts, promptLoggingTargets } from '../src/governance.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const pack = loadPack(path.join(root, 'src/packs/governance/pack.json'));
+import { pack, governancePacks, GOVERNANCE_IDS, adoptGovernance, planGovernance } from './support/governance-packs.mjs';
 const answersFor = (overrides = {}) => ({
   ...Object.fromEntries(pack.questions.filter((q) => q.options).map((q) => [q.id, q.options.find((o) => o.recommended).id])),
   'restricted-paths': ['.env', '.env.*', '*.pem', 'secrets/'],
@@ -36,19 +36,24 @@ function project() {
   return dir;
 }
 
-const adopt = (dir, answers = answersFor()) => applyRender({ root: dir, plan: planRender({ root: dir, pack, answers, acceptedBy: 't', date: '2026-10-05' }) });
+const adopt = (dir, answers = answersFor()) => adoptGovernance(dir, answers);
 
-test('the governance pack is valid and covers component 7', () => {
-  assert.deepEqual(validatePack(loadPackSchema(root), pack, { dirName: 'governance' }), []);
-  assert.deepEqual(pack.components, [7]);
+test('the three governance packs are valid, cover component 7 and take over every question of the old pack', () => {
+  for (const p of governancePacks) {
+    assert.deepEqual(validatePack(loadPackSchema(root), p, { dirName: p.id }), []);
+    assert.deepEqual(p.components, [7]);
+    assert.deepEqual(p.replaces, { pack: 'governance', questions: p.questions.map((q) => q.id) });
+  }
+  assert.deepEqual(governancePacks.map((p) => p.id), GOVERNANCE_IDS);
+  assert.equal(pack.questions.length, 14);
 });
 
 test('every answer of every choice question renders', () => {
   for (const q of pack.questions.filter((x) => x.options)) {
     for (const o of q.options) {
       const dir = project();
-      const plan = planRender({ root: dir, pack, answers: answersFor({ [q.id]: o.id, ...(o.id === 'single-provider' ? { provider: 'openai' } : {}) }), acceptedBy: 't', date: '2026-10-05' });
-      assert.ok(plan.artifacts.some((a) => a.kind === 'decisions'), `${q.id}=${o.id} records a decision`);
+      const plans = planGovernance({ root: dir, answers: answersFor({ [q.id]: o.id, ...(o.id === 'single-provider' ? { provider: 'openai' } : {}) }), acceptedBy: 't', date: '2026-10-05' });
+      assert.ok(plans.flatMap((p) => p.artifacts).some((a) => a.kind === 'decisions'), `${q.id}=${o.id} records a decision`);
       rmSync(dir, { recursive: true, force: true });
     }
   }
@@ -56,8 +61,8 @@ test('every answer of every choice question renders', () => {
 
 test('the provider question is asked only for the single-provider answer', () => {
   const dir = project();
-  assert.throws(() => planRender({ root: dir, pack, answers: answersFor({ 'internal-data': 'single-provider' }), acceptedBy: 't' }), /no answer for question "provider"/);
-  assert.throws(() => planRender({ root: dir, pack, answers: answersFor({ 'internal-data': 'single-provider', provider: 'acme' }), acceptedBy: 't' }), /does not match the pattern/);
+  assert.throws(() => planGovernance({ root: dir, answers: answersFor({ 'internal-data': 'single-provider' }), acceptedBy: 't' }), /no answer for question "provider"/);
+  assert.throws(() => planGovernance({ root: dir, answers: answersFor({ 'internal-data': 'single-provider', provider: 'acme' }), acceptedBy: 't' }), /does not match the pattern/);
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -146,12 +151,12 @@ test('the registry built from the adopted decisions keeps ineligible models out'
 test('coverage shows the DLP tier per host', () => {
   const dir = project();
   adopt(dir);
-  const rows = coverage(dir, { governance: pack }, loadCapabilities(root));
+  const rows = coverage(dir, Object.fromEntries(governancePacks.map((p) => [p.id, p])), loadCapabilities(root));
   const dlp = rows.find((r) => r.component === 7);
-  assert.deepEqual(dlp.packs, [`governance@${pack.version}`]);
+  assert.deepEqual(dlp.packs, [...GOVERNANCE_IDS].sort().map((id) => `${id}@${pack.version}`));
   assert.ok(Object.values(dlp.tiers).every((t) => t === 3));
   assert.ok(Object.values(dlp.inHost).every((t) => t === 2));
-  assert.match(formatCoverage(rows), new RegExp(`^7 Guardrails & DLP\\s+governance@${pack.version.replace(/\./g, '\\.')}\\s+hook\\+ci\\s+hook\\+ci`, 'm'));
+  assert.match(formatCoverage(rows), new RegExp(`^7 Guardrails & DLP\\s+data-policy@${pack.version.replace(/\./g, '\\.')}, restricted-data@\\S+, sanitization@\\S+\\s+hook\\+ci\\s+hook\\+ci`, 'm'));
   rmSync(dir, { recursive: true, force: true });
 });
 

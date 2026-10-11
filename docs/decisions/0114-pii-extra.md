@@ -8,7 +8,7 @@ track: process
 accepted-by: sergemso
 go-getter:
   pii-extra: ""
-  generated-by: governance@0.4.0
+  generated-by: sanitization@0.4.0
   pack-answer: pii-extra
   pack-option: []
 ---

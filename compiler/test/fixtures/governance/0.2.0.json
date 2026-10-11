@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "governance",
-  "version": "0.5.0",
+  "version": "0.2.0",
   "family": "harness",
   "components": [
     7
@@ -27,7 +27,7 @@
     {
       "id": "restricted-modes",
       "type": "list",
-      "prompt": "Which restricted path patterns get a mode other than deny? use:<pattern> lets go-getter secret run pass the content to an approved command without the agent reading it; sink:<pattern> lets go-getter secret put write it from a declared source without reading it back. Every other path stays denied.",
+      "prompt": "Which restricted path patterns get a mode other than deny? use:<pattern> lets a go-getter tool pass the content to a process without the agent reading it; sink:<pattern> lets a go-getter tool write it from a declared source without reading it back. Until go-getter secret run and put exist, both stay denied like deny.",
       "pattern": "^(use|sink):[^\\s\",]+$",
       "default": []
     },
@@ -52,86 +52,6 @@
           "tradeoff": "No friction; depends on the agent complying."
         }
       ]
-    },
-    {
-      "id": "secret-scan",
-      "since": "0.3.0",
-      "prompt": "Are the lines a change adds scanned for secrets before a commit and a push?",
-      "options": [
-        {
-          "id": "on",
-          "label": "A git hook and CI scan added lines for keys, tokens and labelled secrets",
-          "tradeoff": "A pasted credential is stopped before it reaches the repository, host-independently; a rare false positive is silenced with a line marker or a path. Only added lines are read, so old history is not.",
-          "recommended": true
-        },
-        {
-          "id": "off",
-          "label": "No scanning",
-          "tradeoff": "No friction and no false positives; a committed secret is found only by the platform's own scanning or by chance."
-        }
-      ]
-    },
-    {
-      "id": "scan-allow-paths",
-      "type": "list",
-      "since": "0.3.0",
-      "pattern": "^[^\\s\",]+$",
-      "default": [],
-      "prompt": "Which paths does the secret scan skip entirely? (test fixtures with fake keys, documentation of token formats)",
-      "when": {
-        "question": "secret-scan",
-        "in": [
-          "on"
-        ]
-      }
-    },
-    {
-      "id": "pii-masking",
-      "since": "0.4.0",
-      "prompt": "Is personal data masked in tool output before the agent reads it?",
-      "options": [
-        {
-          "id": "on",
-          "label": "Email addresses, card numbers and IBANs become per-session pseudonyms in tool output",
-          "tradeoff": "The agent keeps what it needs (two addresses stay distinguishable as [email-1] and [email-2]) without seeing the data; on hosts that cannot replace tool output nothing is masked (the coverage report lists them), and prompts and file writes are never masked.",
-          "recommended": true
-        },
-        {
-          "id": "off",
-          "label": "No masking",
-          "tradeoff": "Tool output reaches the agent as it is; no pseudonym state to keep, and no chance of a masked value confusing a command."
-        }
-      ]
-    },
-    {
-      "id": "pii-extra",
-      "type": "list",
-      "since": "0.4.0",
-      "pattern": "^(phone|national-id)$",
-      "default": [],
-      "prompt": "Which locale-bound types are masked as well? phone (a leading + and 8-15 digits) and national-id (US social security numbers). They match more ordinary numbers than the defaults do.",
-      "when": {
-        "question": "pii-masking",
-        "in": [
-          "on"
-        ]
-      }
-    },
-    {
-      "id": "use-commands",
-      "type": "list",
-      "since": "0.5.0",
-      "default": [],
-      "pattern": "^[^\\s\",|]+\\|[^\",]+$",
-      "prompt": "Which commands may receive each use path? One entry per command, as <pattern>|<command>, for example config/dev.secrets|npm test. go-getter secret run refuses any other command, and refuses all when none is listed. An approved command runs your project's own code, which an agent can edit: approve commands whose scripts you review, since a script that encodes the secret before printing it gets past output scrubbing."
-    },
-    {
-      "id": "sink-sources",
-      "type": "list",
-      "since": "0.5.0",
-      "default": [],
-      "pattern": "^[^\\s\",|]+\\|[A-Za-z0-9_-]+\\|[^\",]+$",
-      "prompt": "Where may each sink path get its value from? One entry per source, as <pattern>|<name>|<command>, for example config/dev.secrets|vault|op read op://vault/dev. go-getter secret put --from-command <name> runs the command (split on spaces, no shell); the agent names a source and never supplies a command."
     },
     {
       "id": "internal-data",
@@ -275,7 +195,7 @@
                 "restricted-modes": "{{answer.restricted-modes}}"
               }
             },
-            "body": "## Decision\n\nA restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack {{pack.id}}@{{pack.version}}). A `use` path may be passed to an approved command by a call that is exactly `go-getter secret run`, and a `sink` path may be written from a declared source by a call that is exactly `go-getter secret put`; every other call that names one is denied like a `deny` path.\n\n## Why\n\nAgents need secrets they can use or fill without reading them, and no other go-getter command may be the exemption, since one that runs a user-supplied command would leak the content (decision 0072).\n"
+            "body": "## Decision\n\nA restricted path pattern listed in `go-getter.restricted-modes` as `use:<pattern>` or `sink:<pattern>` has that mode; every other one is `deny` (pack {{pack.id}}@{{pack.version}}). Until `go-getter secret run` and `go-getter secret put` exist, `use` and `sink` paths are denied like `deny` paths, except to a call that is exactly `go-getter secret run` (for `use`) or `go-getter secret put` (for `sink`).\n\n## Why\n\nAgents need secrets they can use or fill without reading them, and no other go-getter command may be the exemption, since one that runs a user-supplied command would leak the content (decision 0072).\n"
           }
         ]
       }
@@ -818,234 +738,6 @@
               }
             ],
             "body": "## Guardrail\n\nHandle restricted data only in host agents with an OS sandbox. Advisory (tier 1).\n"
-          }
-        ]
-      }
-    },
-    "secret-scan": {
-      "on": {
-        "decisions": [
-          {
-            "slug": "secret-scan",
-            "title": "Secrets in added lines are scanned before a commit and a push",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process"
-            },
-            "body": "## Decision\n\nA git hook before a commit, a git hook before a push and CI scan the lines a change adds for private keys, provider tokens, JWTs and labelled secret assignments, and fail with the file, line and kind (pack {{pack.id}}@{{pack.version}}). A line marked `go-getter:allow-secret` and the paths {{answer.scan-allow-paths}} are skipped.\n\n## Why\n\nA credential that reaches a repository must be rotated, and a pattern scan on the lines being added stops it without reading history (decision 0106).\n"
-          }
-        ],
-        "guardrails": [
-          {
-            "slug": "no-secrets-in-added-lines",
-            "title": "Added lines must not contain secrets",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security",
-              "guardrail"
-            ],
-            "frontmatter": {
-              "governed-by": "{{id.decision.secret-scan}}",
-              "grounded-in": [
-                "{{id.decision.secret-scan}}",
-                "0106-scanning-and-masking-share-one-pattern-library"
-              ],
-              "derivation-note": "Given a committed credential must be rotated (0106), the lines a change adds must be checked for secrets before they leave the machine."
-            },
-            "enforcement": [
-              {
-                "tier": 3,
-                "check": "No added line holds a private key, provider token, JWT or labelled secret",
-                "run": "builtin:secret-scan allow=\"{{answer.scan-allow-paths}}\"",
-                "stages": [
-                  "pre-commit",
-                  "pre-push"
-                ]
-              },
-              {
-                "tier": 1,
-                "check": "Never paste a credential into a file; refer to it by environment variable name"
-              }
-            ],
-            "body": "## Guardrail\n\nAdded lines carry no private keys, provider tokens, JWTs or `password = <value>` assignments. A false positive is marked with `go-getter:allow-secret` on its line, or its path is added to the skipped paths ({{answer.scan-allow-paths}}). A leaked secret must be rotated; deleting the commit is not enough.\n"
-          }
-        ]
-      },
-      "off": {
-        "decisions": [
-          {
-            "slug": "secret-scan",
-            "title": "Secrets in added lines are not scanned",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process"
-            },
-            "body": "## Decision\n\nNo hook or CI step scans added lines for secrets (pack {{pack.id}}@{{pack.version}}); `no-secrets-in-public-repo` still checks file names.\n\n## Why\n\nThe project accepted the risk of a pasted credential for less friction (decision 0106).\n"
-          }
-        ]
-      }
-    },
-    "scan-allow-paths": {
-      "*": {
-        "decisions": [
-          {
-            "slug": "scan-allow-paths",
-            "title": "The secret scan skips a declared list of paths",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process",
-              "go-getter": {
-                "scan-allow-paths": "{{answer.scan-allow-paths}}"
-              }
-            },
-            "body": "## Decision\n\nThe secret scan skips the paths {{answer.scan-allow-paths}} (pack {{pack.id}}@{{pack.version}}); an empty list skips none.\n\n## Why\n\nFixtures and documentation hold fake keys on purpose, and a path is easier to review than a marker on every line (decision 0106).\n"
-          }
-        ]
-      }
-    },
-    "pii-masking": {
-      "on": {
-        "decisions": [
-          {
-            "slug": "pii-masking",
-            "title": "Personal data in tool output is masked with per-session pseudonyms",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process"
-            },
-            "body": "## Decision\n\nWhere the host can replace tool output, the post-tool hook replaces email addresses, payment card numbers and IBANs, and the types in [{{answer.pii-extra}}], with names such as `[email-1]`: the same value keeps its name within a session (pack {{pack.id}}@{{pack.version}}). Secrets keep the single marker `[redacted by go-getter]`.\n\n## Why\n\nAn agent that does not need personal data should not read it, and a stable name lets it tell two values apart (decision 0106).\n"
-          }
-        ],
-        "guardrails": [
-          {
-            "slug": "pii-masked-in-tool-output",
-            "title": "Personal data is masked in tool output",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security",
-              "guardrail"
-            ],
-            "frontmatter": {
-              "governed-by": "{{id.decision.pii-masking}}",
-              "grounded-in": [
-                "{{id.decision.pii-masking}}",
-                "0106-scanning-and-masking-share-one-pattern-library"
-              ],
-              "derivation-note": "Given the agent must not read personal data it does not need (0106), tool output that carries it must be masked before the agent sees it, where the host allows."
-            },
-            "enforcement": [
-              {
-                "tier": 2,
-                "check": "The post-tool hook masks email, card numbers, IBANs and the listed types in tool output",
-                "run": "builtin:redact-pii classes=\"email,card,iban,{{answer.pii-extra}}\""
-              },
-              {
-                "tier": 1,
-                "check": "Do not paste personal data into prompts or files; a prompt and a file write are never masked"
-              }
-            ],
-            "body": "## Guardrail\n\nTool output that carries email addresses, card numbers or IBANs (and [{{answer.pii-extra}}]) reaches the agent with each value replaced by a per-session name. Hosts that cannot replace tool output show it unmasked (the coverage report lists them); prompts and file writes are never masked, so personal data is not pasted into either.\n"
-          }
-        ]
-      },
-      "off": {
-        "decisions": [
-          {
-            "slug": "pii-masking",
-            "title": "Personal data in tool output is not masked",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process"
-            },
-            "body": "## Decision\n\nTool output reaches the agent unmasked (pack {{pack.id}}@{{pack.version}}); secrets are still redacted where restricted paths are enforced.\n\n## Why\n\nThe project accepted the exposure for less machinery and no pseudonym state (decision 0106).\n"
-          }
-        ]
-      }
-    },
-    "pii-extra": {
-      "*": {
-        "decisions": [
-          {
-            "slug": "pii-extra",
-            "title": "The locale-bound types masked in tool output are listed",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process",
-              "go-getter": {
-                "pii-extra": "{{answer.pii-extra}}"
-              }
-            },
-            "body": "## Decision\n\nThe types masked in addition to email, card numbers and IBANs are [{{answer.pii-extra}}] (pack {{pack.id}}@{{pack.version}}); an empty list adds none.\n\n## Why\n\nPhone and national-id formats are locale-bound and match ordinary numbers, so the project opts in (decision 0106).\n"
-          }
-        ]
-      }
-    },
-    "use-commands": {
-      "*": {
-        "decisions": [
-          {
-            "slug": "use-commands",
-            "title": "The commands approved to receive a use path are listed",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process",
-              "go-getter": {
-                "use-commands": "{{answer.use-commands}}"
-              }
-            },
-            "body": "## Decision\n\nOnly the commands [{{answer.use-commands}}] may receive a use path through `go-getter secret run`, each for its own pattern (pack {{pack.id}}@{{pack.version}}); with none listed `secret run` refuses every command.\n\n## Why\n\nScrubbing an exact value cannot catch a re-encoded one, so a human decides which commands may hold a secret (decision 0107).\n"
-          }
-        ]
-      }
-    },
-    "sink-sources": {
-      "*": {
-        "decisions": [
-          {
-            "slug": "sink-sources",
-            "title": "The sources allowed to fill a sink path are listed",
-            "tags": [
-              "practice-packs",
-              "governance",
-              "security"
-            ],
-            "frontmatter": {
-              "track": "process",
-              "go-getter": {
-                "sink-sources": "{{answer.sink-sources}}"
-              }
-            },
-            "body": "## Decision\n\n`go-getter secret put` may fill a sink path only from standard input or from the declared sources [{{answer.sink-sources}}], each for its own pattern (pack {{pack.id}}@{{pack.version}}); the agent names a source and never supplies a command.\n\n## Why\n\nA secret manager with a command-line tool is reached through a declared command, with no platform code and no keychain (decision 0107).\n"
           }
         ]
       }

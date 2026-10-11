@@ -7,7 +7,7 @@ tags: [practice-packs, governance, enforcement]
 track: process
 accepted-by: sergemso
 go-getter:
-  generated-by: governance@0.1.0
+  generated-by: restricted-data@0.1.0
   pack-answer: enforcement
   pack-option: hook-and-never-committed
 ---

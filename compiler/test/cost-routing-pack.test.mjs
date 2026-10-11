@@ -18,13 +18,15 @@ import { loadCapabilities } from '../src/capabilities.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const bin = path.join(root, 'compiler/bin/go-getter.mjs');
 const load = (id) => loadPack(path.join(root, `src/packs/${id}/pack.json`));
-const packs = Object.fromEntries(['cost-routing', 'governance', 'orchestration', 'telemetry'].map((id) => [id, load(id)]));
+const packs = Object.fromEntries(['cost-routing', 'orchestration', 'telemetry'].map((id) => [id, load(id)]));
 const pack = packs['cost-routing'];
 // Answers for questions behind a `when` are harmless: the renderer ignores them while they are inactive.
 const recommended = (p) => Object.fromEntries(p.questions.map((q) => [q.id, q.options ? q.options.find((o) => o.recommended).id : q.default]).filter(([, v]) => v !== undefined));
 const answersFor = (overrides = {}) => ({ ...recommended(pack), ...overrides });
 const FACTS = ['0011-model-pricing-anthropic', '0012-model-pricing-openai', '0013-model-pricing-google', '0024-model-tiers-and-host-providers'];
 const ALL_HOSTS = ['claude-code', 'codex', 'kilo', 'opencode', 'cursor', 'gemini-cli', 'copilot'];
+
+import { pack as governance3, adoptGovernance as adoptGovernancePacks } from './support/governance-packs.mjs';
 
 function project({ governance = {}, adoptGovernance = true, routing = answersFor(), withRouting = true } = {}) {
   const dir = realpathSync(mkdtempSync(path.join(tmpdir(), 'gg-routing-')));
@@ -36,7 +38,7 @@ function project({ governance = {}, adoptGovernance = true, routing = answersFor
   const adopt = (p, answers) => applyRender({ root: dir, plan: planRender({ root: dir, pack: p, answers, acceptedBy: 't', date: '2026-10-05' }) });
   adopt(packs.orchestration, recommended(packs.orchestration));
   adopt(packs.telemetry, { recording: 'metadata-log', retention: '30', export: 'none' });
-  if (adoptGovernance) adopt(packs.governance, { ...recommended(packs.governance), 'restricted-paths': ['secrets/'], ...governance });
+  if (adoptGovernance) adoptGovernancePacks(dir, { ...recommended(governance3), 'restricted-paths': ['secrets/'], ...governance });
   if (withRouting) adopt(pack, routing);
   return dir;
 }

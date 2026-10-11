@@ -8,7 +8,7 @@ track: process
 accepted-by: sergemso
 go-getter:
   use-commands: ""
-  generated-by: governance@0.5.0
+  generated-by: restricted-data@0.5.0
   pack-answer: use-commands
   pack-option: []
 ---

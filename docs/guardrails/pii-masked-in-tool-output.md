@@ -14,7 +14,7 @@ go-getter:
       run: builtin:redact-pii classes="email,card,iban,"
     - tier: 1
       check: Do not paste personal data into prompts or files; a prompt and a file write are never masked
-  generated-by: governance@0.5.0
+  generated-by: sanitization@0.6.0
   pack-answer: pii-masking
   pack-option: on
 ---

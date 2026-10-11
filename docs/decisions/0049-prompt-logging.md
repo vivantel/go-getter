@@ -9,7 +9,7 @@ accepted-by: sergemso
 go-getter:
   prompt-logging:
     scope: all
-  generated-by: governance@0.1.0
+  generated-by: data-policy@0.1.0
   pack-answer: prompt-logging
   pack-option: disable-everywhere
 ---

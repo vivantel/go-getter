@@ -13,7 +13,7 @@ import { evaluatePreTool } from '../src/hook.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'compiler/bin/go-getter.mjs');
-const pack = loadPack(path.join(root, 'src/packs/governance/pack.json'));
+import { pack, adoptGovernance } from './support/governance-packs.mjs';
 const VALUE = 'Pack-Secret-123456789';
 
 const base = () => ({
@@ -33,7 +33,7 @@ function project(answers = base()) {
   writeFileSync(path.join(dir, 'check.js'), 'console.log(`got ${process.env.DB_PASSWORD}; len ${process.env.DB_PASSWORD.length}`);');
   writeFileSync(path.join(dir, 'emit.js'), `process.stdout.write('${VALUE}-written\\n');`);
   execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
-  applyRender({ root: dir, plan: planRender({ root: dir, pack, answers, acceptedBy: 't', date: '2026-10-11' }) });
+  adoptGovernance(dir, answers, { date: '2026-10-11' });
   return dir;
 }
 const cli_ = (dir, ...args) => spawnSync(process.execPath, [cli, 'secret', ...args], { cwd: dir, encoding: 'utf8' });

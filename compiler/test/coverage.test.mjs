@@ -112,14 +112,16 @@ test('component 9 shows a tier per host, and the restore line names the commands
   assert.doesNotMatch(formatCoverage(coverage(root, {}, caps)), /Restore \(component 9\)/);
 });
 
+const governanceByIds = Object.fromEntries(['restricted-data', 'sanitization', 'data-policy'].map((id) => [id, loadPack(path.join(root, `src/packs/${id}/pack.json`))]));
+
 test('component 7 says where tool output is masked: secrets, personal data, and the hosts that cannot replace output', () => {
   const caps = loadCapabilities(root);
-  const row = coverage(root, { governance: loadPack(path.join(root, 'src/packs/governance/pack.json')) }, caps).find((r) => r.component === 7);
+  const row = coverage(root, governanceByIds, caps).find((r) => r.component === 7);
   const replace = HOSTS.filter((h) => caps[h].hooks.rewriteOutput === true);
   assert.deepEqual(row.outputMasking.secrets, replace);
   assert.deepEqual(row.outputMasking.pii, replace);
   assert.deepEqual(row.outputMasking.none.sort(), ['cursor', 'opencode']);
-  const text = formatCoverage(coverage(root, { governance: loadPack(path.join(root, 'src/packs/governance/pack.json')) }, caps));
+  const text = formatCoverage(coverage(root, governanceByIds, caps));
   assert.match(text, /Tool-output masking \(component 7\): secrets on claude-code, codex, kilo, gemini-cli, copilot; personal data on claude-code, codex, kilo, gemini-cli, copilot; not on opencode, cursor \(the host cannot replace tool output\)\./);
 });
 

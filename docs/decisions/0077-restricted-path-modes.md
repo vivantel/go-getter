@@ -8,7 +8,7 @@ track: process
 accepted-by: sergemso
 go-getter:
   restricted-modes: ""
-  generated-by: governance@0.2.0
+  generated-by: restricted-data@0.2.0
   pack-answer: restricted-modes
   pack-option: []
 ---
