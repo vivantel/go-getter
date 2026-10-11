@@ -10,7 +10,7 @@
     "hitl": "0.3.0",
     "orchestration": "0.1.0",
     "telemetry": "0.1.0",
-    "tracker": "0.2.0",
+    "tracker": "0.3.0",
     "verification-gate": "0.3.0"
   },
   "files": {
@@ -219,16 +219,7 @@
           "Bash(yarn publish *)",
           "Bash(yarn npm publish *)",
           "Bash(gh issue comment *)",
-          "Bash(gh pr comment *)",
-          "Bash(go-getter plan issue create *)",
-          "Bash(go-getter plan issue comment *)",
-          "Bash(go-getter plan issue close *)",
-          "Bash(.go-getter/bin/go-getter plan issue create *)",
-          "Bash(.go-getter/bin/go-getter plan issue comment *)",
-          "Bash(.go-getter/bin/go-getter plan issue close *)",
-          "Bash(node compiler/bin/go-getter.mjs plan issue create *)",
-          "Bash(node compiler/bin/go-getter.mjs plan issue comment *)",
-          "Bash(node compiler/bin/go-getter.mjs plan issue close *)"
+          "Bash(gh pr comment *)"
         ]
       },
       {
