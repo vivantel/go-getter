@@ -21,7 +21,7 @@ Eight harness packs and one SDLC pack, each a short guided interview with a reco
 | `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
 | `verification-gate` | 6 Verification loops | which checks mean "done" and where each runs (locally or in CI), the review bar, whether failing checks block completion |
 | `governance` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, whether the lines a change adds are scanned for secrets, whether personal data in tool output is masked, which providers may see internal and confidential data, prompt logging |
-| `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns |
+| `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns, outward commands that may run unasked |
 | `checkpointing` | 9 Checkpointing | whether work is saved to a hidden git ref before a gated command or a plan step, who takes it (the pre-tool hook or the agent), how many are kept |
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
 | `cost-routing` | 11 Cost & model routing | task classes, starting tiers, escalation bound, headless spend cap, prompt-cache lifetime |

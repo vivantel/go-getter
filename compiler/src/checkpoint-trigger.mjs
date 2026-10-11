@@ -19,10 +19,12 @@ export function checkpointConfig(enforcement) {
   return { triggers, keep: keeps.length ? Math.max(...keeps) : DEFAULT_KEEP };
 }
 
-// The id of the first gated command `command` matches (the full catalog on every host, plus the project's extras), or null.
+// The id of the first gated command `command` matches (the full catalog on every host minus the commands the project frees, plus its extras), or null.
 function gatedId(enforcement, command) {
-  const extra = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').flatMap((e) => gateArgs(e.parsed.args).extra);
-  return matchGated(command, { classes: GATE_CLASSES, extra })[0]?.id ?? null;
+  const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => gateArgs(e.parsed.args));
+  const extra = gates.flatMap((g) => g.extra);
+  const free = gates.length ? gates[0].free.filter((id) => gates.every((g) => g.free.includes(id))) : []; // freed by every gate
+  return matchGated(command, { classes: GATE_CLASSES, extra, free })[0]?.id ?? null;
 }
 
 function take(project, trigger, label, host, keep) {
