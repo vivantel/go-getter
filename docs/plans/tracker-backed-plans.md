@@ -36,11 +36,13 @@ Do: add `compiler/src/trackers/github.mjs` implementing `list` and `get` through
 Done-when: the contract test passes for the GitHub source; with a stub returning a closed issue `plan status` shows the step done and reports the file marker as a mismatch; with the stub failing it shows the cached state marked stale; a step without `Issue:` is unchanged; `plan start` refuses a step whose Needs include a step with a still-open issue even when the file marks it done.
 
 ### 4 Jira source — [ ] ‖
+Issue: #78
 Class: implement · Effort: high · Needs: 2 · Check: `node --test compiler/test/tracker-jira.test.mjs compiler/test/secret-patterns.test.mjs`
 Do: add `compiler/src/trackers/jira.mjs` for `list` and `get` over the REST API with Node's `fetch`, Basic authorization from the environment variables named in its configuration (default `JIRA_EMAIL`, `JIRA_API_TOKEN`), state by status category, the same cache and stale rule as step 3. Add an Atlassian token kind to `compiler/src/secrets/patterns.mjs` so redaction and scanning cover it. A missing variable fails naming the variable, never a value. Tests run a local HTTP server.
 Done-when: the contract test passes for the Jira source against the local server; a status named anything maps by category; a missing variable names it and leaks nothing; a fake Atlassian token in output is redacted and in an added line is flagged by `secret-scan`.
 
 ### 5 Issues as `Refs:` targets — [ ] ‖
+Issue: #79
 Class: implement · Needs: 2 · Check: `node --test compiler/test/refs.test.mjs compiler/test/commit-trailer.test.mjs`
 Do: `go-getter refs`, the attribute skill and the conform skill list a step's issue, and an issue the branch slug names (`feat/123-title`, `feat/PROJ-123-title`), as a `Refs:` target; the commit-trailer check accepts `#123` and `PROJ-123` as trailer values. Nothing is fetched.
 Done-when: the tests show a branch `feat/PROJ-123-title` listing `PROJ-123` as nice-to-have, a touched plan step with `Issue:` listing it as must-have, and a `Refs: #123` trailer passing the trailer check.
@@ -51,6 +53,7 @@ Do: add the verbs on the GitHub source. Each takes `--dry-run` (prints the reque
 Done-when: the tests show a dry run sending nothing, `off` refusing, a body containing a fake token refused, a GitHub create calling the stub once and writing `Issue:`, a close making `plan status` show the step done with no mismatch, and telemetry holding no issue text.
 
 ### 6j Write verbs for Jira — [ ] ‖
+Issue: #80
 Class: implement · Needs: 4, 6 · Check: `node --test compiler/test/tracker-write.test.mjs compiler/test/tracker-jira.test.mjs`
 Do: add `create`, `comment` and `close` to the Jira source under the same rules as step 6. `close` takes the single transition into the done category; with none or several it refuses and lists them, unless the configuration names one.
 Done-when: the tests show a Jira create and comment against the local server, a close with one done transition succeeding and a close with two refusing and listing both.
@@ -61,17 +64,20 @@ Do: add `src/packs/tracker/pack.json` (SDLC family): `tracker` (choice `files` r
 Done-when: `check:packs` passes; `check:self-adoption` reports the tracker pack adopted; with `ask` the generated host rules prompt for `go-getter plan issue create` and not for reads; with `off` the verb refuses; `apply --check` is clean; an answer file without the pack renders nothing new.
 
 ### 7j Jira in the pack — [ ]
+Issue: #81
 Class: implement · Needs: 4, 6j, 7 · Check: `npm run check:packs && npm run check:self-adoption && npm run check:generated && npm test`
 Do: bump the pack and add the `jira` choice with its answers (site, project key, the names of the two credential variables, an optional done transition; each `since` the new version, with a default), their decisions, and the coverage line. An answer file from before it renders unchanged. Adopt the new version here with the `github` answer unchanged.
 Done-when: `check:packs` and `check:self-adoption` pass; a project answering `jira` renders the decisions and the guardrail with the Jira names; `apply --check` is clean here.
 
-### 8 Move this repository's plan to GitHub Issues — [ ]
-Class: implement · Needs: 7 · Check: `go-getter plan status`
+### 8 Move this repository's plan to GitHub Issues — [x]
+Issue: #82
+Class: implement · Needs: 7 · Check: `node compiler/bin/go-getter.mjs plan next docs/plans/tracker-backed-plans.md | grep -q ' #[0-9]'`
 **Creating issues is outward-facing: needs the owner's go-ahead, after reading the dry run.**
-Do: run `go-getter plan issue create --dry-run` for every pending step of the plans in `docs/plans/` and the open backlog items (L.6, L.8, L.9) and show it to the owner; check no text carries non-public information. On approval create the issues, which writes `Issue:` onto each step, and change the "Remaining work" paragraph of `AGENTS.md` (outside the generated block) to say that open work is the repository's issues and the plan files hold the step text. A step already done stays in the file only.
+Do: run `go-getter plan issue --dry-run create <step>` for every pending step of the plans in `docs/plans/` (the open backlog items are steps of `docs/plans/backlog.md`) and show it to the owner; check no text carries non-public information. On approval create the issues, which writes `Issue:` onto each step, and change the "Remaining work" paragraph of `AGENTS.md` (outside the generated block) to say that open work is the repository's issues and the plan files hold the step text. A step already done stays in the file only.
 Done-when: `go-getter plan next` names a pending step from its issue; every pending step has `Issue:`; closing one issue with `go-getter plan issue close` makes `plan status` show it done; `go-getter:lint` finds no stale pointer to the old workflow.
 
-### 9 Docs, lint and close — [ ]
+### 9 Tracker plan: docs, lint and close — [ ]
+Issue: #83
 Class: review · Needs: 7j, 8 · Check: `npm run check:plans && npm run check:guardrails`
 Do: describe the tracker pack in README and INSTALLING.md (what is read, what is written, how credentials are supplied, the stale label, that hierarchy is not synced), run the full `go-getter:lint` skill, mark L.7 done in the v0.2 plan backlog and archive this plan.
 Done-when: lint reports no errors; the plan moves to `docs/plans/archive/`; L.7 reads done.
