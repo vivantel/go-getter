@@ -116,3 +116,4 @@ id,title,tags,status
 0123-plans-in-github,"Plan steps live in GitHub Issues","practice-packs, roadmap",active
 0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",active
 0125-tracker-write-commands,"The commands that write to the tracker are listed","practice-packs, roadmap",active
+0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
