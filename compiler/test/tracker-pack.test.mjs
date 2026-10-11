@@ -18,7 +18,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
 const goldenFile = path.join(here, 'golden/tracker-pack.json');
 const pack = loadPack(path.join(root, 'src/packs/tracker/pack.json'));
-const github = { tracker: 'github', writes: 'ask', 'write-commands': pack.questions.find((q) => q.id === 'write-commands').default };
+const github = { tracker: 'github', writes: 'ask' };
 
 function project() {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-tracker-'));
@@ -51,7 +51,7 @@ test('files is the recommended answer and renders one decision, no guardrail, an
   }
 });
 
-test('github with ask renders the write answer for the CLI and a tier-2 gate on the three verbs', () => {
+test('github with ask renders the write answer for the CLI and a tier-2 gate on the three verbs, by what a call runs', () => {
   const dir = project();
   try {
     adopt(dir, github);
@@ -61,26 +61,34 @@ test('github with ask renders the write answer for the CLI and a tier-2 gate on 
     assert.deepEqual(entries.map((e) => e.tier), [2, 1]);
     assert.equal(entries[0].parsed.id, 'gate-command');
     assert.equal(entries[0].parsed.args.classes, '');
-    const gated = gateEntries(entries);
-    assert.deepEqual(gated.map((g) => g.native), [['go-getter plan issue create *'], ['go-getter plan issue comment *'], ['go-getter plan issue close *']]);
-    const rules = nativeRules('claude-code', gated, loadCapabilities(root));
-    assert.deepEqual(rules, ['Bash(go-getter plan issue create *)', 'Bash(go-getter plan issue comment *)', 'Bash(go-getter plan issue close *)']);
-    const gate = (c) => matchGated(c, { classes: [], extra: entries[0].parsed.args.extra.split(',') }).length;
-    assert.equal(gate('go-getter plan issue create 6'), 1);
-    assert.equal(gate('go-getter plan issue --dry-run create 6'), 0, 'a dry run spelled with --dry-run first is never gated');
-    assert.equal(gate('go-getter plan status'), 0);
+    assert.equal(entries[0].parsed.args['go-getter'], 'plan issue create,plan issue comment,plan issue close');
+    const gated = gateEntries(entries, { project: dir });
+    assert.deepEqual(gated.map((g) => g.identity.join(' ')), ['plan issue create', 'plan issue comment', 'plan issue close']);
+    const caps = loadCapabilities(root);
+    // a host whose hook can ask needs no glob: the hook prompts for every spelling
+    assert.deepEqual(nativeRules('claude-code', gated, caps), []);
+    // a host with native rules but a hook that cannot ask gets the usual spellings
+    const kilo = nativeRules('kilo', gated, caps);
+    for (const spelling of ['go-getter', '.go-getter/bin/go-getter', 'npx go-getter', 'npx -y go-getter']) assert.ok(kilo[`${spelling} plan issue create *`], spelling);
+    assert.equal(kilo['go-getter plan issue --dry-run create *'], undefined, 'a dry run is never matched');
+    assert.equal(Object.keys(kilo).length, 15, 'five spellings of three verbs');
+    const gate = (c) => matchGated(c, { classes: [], extra: [] }).length;
     assert.equal(gate('git push'), 0, 'the gate lists no class, so no catalog command is added to hitl');
+    writeFileSync(path.join(dir, 'x'), '');
+    mkdirSync(path.join(dir, 'compiler/bin'), { recursive: true });
+    writeFileSync(path.join(dir, 'compiler/bin/go-getter.mjs'), '');
+    assert.ok(nativeRules('kilo', gateEntries(entries, { project: dir }), caps)['node compiler/bin/go-getter.mjs plan issue close *'], 'a checkout adds its own spelling');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('a project lists its own spelling of the write commands', () => {
+test('an answer file from 0.2.0 that still carries write-commands renders without error', () => {
   const dir = project();
   try {
-    adopt(dir, { ...github, 'write-commands': ['go-getter plan issue create', 'node compiler/bin/go-getter.mjs plan issue create'] });
-    const globs = gateEntries(guardrail(dir)).flatMap((g) => g.native);
-    assert.deepEqual(globs, ['go-getter plan issue create *', 'node compiler/bin/go-getter.mjs plan issue create *']);
+    adopt(dir, { ...github, 'write-commands': ['go-getter plan issue create'] });
+    assert.equal(guardrail(dir).length, 2);
+    assert.ok(!readdirSync(path.join(dir, 'docs/decisions')).some((f) => /write-commands/.test(f)), 'no decision is rendered for the removed question');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -100,7 +108,7 @@ test('off and allow render the answer without a gate; off is advisory only', () 
   }
 });
 
-const jira = { tracker: 'jira', 'jira-site': 'https://acme.atlassian.net', 'jira-auth': 'basic', 'jira-email-env': 'ACME_EMAIL', 'jira-token-env': 'ACME_TOKEN', 'jira-project': 'ACME', 'jira-issue-type': 'Story', 'jira-done-transition': 'Done', writes: 'ask', 'write-commands': github['write-commands'] };
+const jira = { tracker: 'jira', 'jira-site': 'https://acme.atlassian.net', 'jira-auth': 'basic', 'jira-email-env': 'ACME_EMAIL', 'jira-token-env': 'ACME_TOKEN', 'jira-project': 'ACME', 'jira-issue-type': 'Story', 'jira-done-transition': 'Done', writes: 'ask' };
 
 test('the jira path records every setting, the CLI reads the configuration back, and the answers read back', () => {
   const dir = project();

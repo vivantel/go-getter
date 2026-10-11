@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "tracker",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "family": "sdlc",
   "title": "Plan tracker",
   "summary": "Where plan steps live: in the plan files, in the project's GitHub Issues or in Jira, and whether go-getter may create, comment on and close issues from a plan.",
@@ -164,23 +164,6 @@
           "tradeoff": "Fastest, and the only writes are the three plan issue verbs, which refuse text containing a secret or personal data; an agent can still create, comment on and close issues unprompted, which others see."
         }
       ]
-    },
-    {
-      "id": "write-commands",
-      "type": "list",
-      "prompt": "Which commands write to the tracker and so need a human? One prefix per spelling of the three verbs; add the way your project runs go-getter (for example .go-getter/bin/go-getter plan issue create).",
-      "pattern": "^[^\\s\",][^\",]*$",
-      "default": [
-        "go-getter plan issue create",
-        "go-getter plan issue comment",
-        "go-getter plan issue close"
-      ],
-      "when": {
-        "question": "writes",
-        "in": [
-          "ask"
-        ]
-      }
     }
   ],
   "outputs": {
@@ -281,15 +264,15 @@
             "enforcement": [
               {
                 "tier": 2,
-                "check": "Host ask rules and the pre-tool hook gate the commands that write to the tracker",
-                "run": "builtin:gate-command classes=\"\" extra=\"{{answer.write-commands}}\""
+                "check": "The host asks, or hands over, for the commands that write to the tracker, however go-getter is run",
+                "run": "builtin:gate-command classes=\"\" go-getter=\"plan issue create,plan issue comment,plan issue close\""
               },
               {
                 "tier": 1,
                 "check": "Ask the user before running go-getter plan issue create, comment or close"
               }
             ],
-            "body": "## Guardrail\n\nThe commands that write to the tracker (`plan issue create`, `comment`, `close`) need a human: do not run them yourself, ask the user to approve or run them. Hosts with project ask rules prompt natively; the others get a hand-over from the pre-tool hook. Raw `gh issue` and `gh api` commands are covered by the human-approval guardrail of the hitl pack, not by this one.\n"
+            "body": "## Guardrail\n\nThe commands that write to the tracker (`plan issue create`, `comment`, `close`) need a human: do not run them yourself, ask the user to approve or run them. go-getter recognises them by what the call runs, so any way of running go-getter (the project runner, a user-level install, `npx`, `node <entry>`) is covered. A host whose hook can ask prompts once per call; hosts with native ask rules prompt for the usual spellings; the others get a hand-over from the pre-tool hook. Raw `gh issue` and `gh api` commands are covered by the human-approval guardrail of the hitl pack, not by this one.\n"
           }
         ]
       },
@@ -378,27 +361,6 @@
               }
             ],
             "body": "## Guardrail\n\nWrite to the tracker only through `go-getter plan issue create`, `comment` and `close`, never with raw `gh issue` commands, and only what the plan step says. Advisory (tier 1): nothing prompts for these verbs.\n"
-          }
-        ]
-      }
-    },
-    "write-commands": {
-      "*": {
-        "decisions": [
-          {
-            "slug": "tracker-write-commands",
-            "title": "The commands that write to the tracker are listed",
-            "tags": [
-              "practice-packs",
-              "roadmap"
-            ],
-            "frontmatter": {
-              "track": "process",
-              "go-getter": {
-                "tracker-write-commands": "{{answer.write-commands}}"
-              }
-            },
-            "body": "## Decision\n\nThe commands [{{answer.write-commands}}] need a human before they run (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA prompt matches the text of a command, so each way of running go-getter that the project uses is listed.\n"
           }
         ]
       }

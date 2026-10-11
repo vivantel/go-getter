@@ -221,6 +221,33 @@ function gatedCommand(entry, payload, host) {
   return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
 }
 
+// A gate-command entry's go-getter subcommands (`plan issue create`) are gated by what a call runs (decision 0126), whichever way
+// go-getter is installed or typed. A host whose hook can ask gets a prompt; a host with native ask rules relies on the globs apply
+// wrote for the usual spellings; any other host hands over. Null when the call is not one of them.
+function identityGate(project, entry, payload, host) {
+  if (!host) return null;
+  const subs = gateArgs(entry.parsed.args).goGetter;
+  const command = shellCommand(payload);
+  if (!subs.length || typeof command !== 'string') return null;
+  const decide = (text, sub) => {
+    if (canPrompt(host)) return { deny: false, ask: true, reason: `go-getter ${sub} writes outside this machine: approve "${text}"?` };
+    if (hasNativeAsk(host)) return null;
+    return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is an outward command and needs a human; ask the user to run it themselves` };
+  };
+  const parsed = commandWords(command);
+  if (!parsed) {
+    // unreadable: the conservative reading of the text
+    const sub = subs.find((x) => new RegExp(x.split(' ').join('\\s+')).test(command));
+    return sub ? decide(command.length > 200 ? `${command.slice(0, 200)}…` : command, sub) : null;
+  }
+  for (const words of parsed) {
+    const call = goGetterCall(words, { cwd: project });
+    const sub = call && subs.find((x) => x.split(' ').every((w, i) => call.args[i] === w));
+    if (sub) return decide(words.join(' '), sub);
+  }
+  return null;
+}
+
 // A `use` path may be named only by a call that is exactly `go-getter secret run`, and a `sink` path only by one that is
 // exactly `go-getter secret put` (decisions 0072 and 0107); every other call that names one is denied like a `deny` path.
 // Why a call may not change or open the user's approvals, or null: only a person adds or revokes one (a forged approval would let
@@ -270,6 +297,8 @@ export function evaluatePreTool(project, payload, host) {
     if (e.parsed.id === 'gate-command') {
       const gated = gatedCommand(e, payload, host);
       if (gated) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" is an ${gated.class} command and needs a human; ask the user to run it themselves` };
+      const byIdentity = identityGate(project, e, payload, host);
+      if (byIdentity) return byIdentity;
       continue;
     }
     if (e.parsed.id === 'deny-path') {

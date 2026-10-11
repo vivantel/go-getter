@@ -10,3 +10,4 @@ id,title,tags,status
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",superseded
 0104-behavior-is-a-layer-over-knowledge-artifacts,"Behavior is a layer over the four artifact types, split into pure and derived, and derived forms are compiled from knowledge","knowledge-management, generated-files, roadmap",superseded
 0121-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
+0125-tracker-write-commands,"The commands that write to the tracker are listed","practice-packs, roadmap",deprecated

@@ -505,7 +505,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     outputs[target.file] = json(base);
   }
   // Gated commands: the host's native ask rules where it has them (decision 0094); the pre-tool hook covers the rest.
-  const gated = gateEntries(entries);
+  const gated = gateEntries(entries, { project });
   const notes = [];
   for (const host of gated.length ? targetHosts : []) {
     const ask = caps[host]?.permissions?.ask;

@@ -8,6 +8,8 @@
 //   and sqlite3 commands, since that is where the statement is.
 // - A wrapped command (`sh -c "git push"`, `eval`, a script that pushes) is matched on its literal text only: the verb must
 //   be the segment's command word. Heredoc body lines count as segments, so a gated verb in one prompts: the safe failure.
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { tmpdir } from 'node:os';
 
 const GIT = String.raw`git(?:\s+(?:-[Cc]\s+\S+|--[\w-]+(?:=\S+)?|-[pP]))*\s+`;
@@ -189,7 +191,9 @@ export const extraEntries = (extra = []) =>
 export function nativeRules(host, entries, caps) {
   const format = caps[host]?.permissions?.ask?.format;
   if (!format) return null;
-  const globs = [...new Set(entries.flatMap((e) => e.native ?? []))];
+  // A host whose pre-tool hook can ask prompts for an identity-gated call itself, for every spelling, so it needs no glob.
+  const hookAsks = caps[host]?.hooks?.askPreTool === true;
+  const globs = [...new Set(entries.filter((e) => !(e.identity && hookAsks)).flatMap((e) => e.native ?? []))];
   if (format === 'claude-permissions') return globs.map((g) => `Bash(${g})`);
   if (format === 'opencode-permission') return Object.fromEntries(globs.map((g) => [g, 'ask']));
   throw new Error(`unknown ask rule format "${format}" for ${host}`);
@@ -199,16 +203,27 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
-export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: list(args.free) });
+// `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
+export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: list(args.free), goGetter: list(args['go-getter']) });
+
+// The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script
+// of a checkout. A call spelled any other way is still recognised by the hook, which reads what it runs (invocation.mjs).
+export function goGetterSpellings(project) {
+  const spellings = ['go-getter', '.go-getter/bin/go-getter', './.go-getter/bin/go-getter', 'npx go-getter', 'npx -y go-getter'];
+  if (project && existsSync(path.join(project, 'compiler/bin/go-getter.mjs'))) spellings.push('node compiler/bin/go-getter.mjs');
+  return spellings;
+}
 
 // The entries the tier-2 `builtin:gate-command` enforcement entries gate (from `collectEnforcement`): catalog entries of
 // their classes, then their `extra` patterns.
-export function gateEntries(enforcement) {
+export function gateEntries(enforcement, { project } = {}) {
   const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => {
     const args = gateArgs(e.parsed.args);
     const bad = args.classes.filter((c) => !GATE_CLASSES.includes(c));
     // A gate may list only project commands (`extra`) and no class, as the tracker pack's does for the write verbs.
-    if ((!args.classes.length && !args.extra.length) || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
+    if ((!args.classes.length && !args.extra.length && !args.goGetter.length) || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
+    const badSub = args.goGetter.filter((sub) => !/^[a-z][a-z-]*(?: [a-z][a-z-]*)*$/.test(sub));
+    if (badSub.length) throw new Error(`guardrail ${e.guardrail}: gate-command go-getter must be subcommand words, not ${badSub.join(', ')}`);
     const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');
     if (unfree.length) throw new Error(`guardrail ${e.guardrail}: gate-command free must name outward catalog commands, not ${unfree.join(', ')}`);
     for (const x of args.extra.filter(isRegexExtra)) {
@@ -222,7 +237,9 @@ export function gateEntries(enforcement) {
   });
   // An entry is gated when some gate covers its class and does not free it.
   const gated = CATALOG.filter((e) => gates.some((g) => g.classes.includes(e.class) && !g.free.includes(e.id)));
-  return [...gated, ...extraEntries([...new Set(gates.flatMap((g) => g.extra))])];
+  // Subcommands gated by what the call runs: native globs for the usual spellings, for hosts whose hook cannot ask.
+  const identity = [...new Set(gates.flatMap((g) => g.goGetter))].map((sub) => ({ id: `go-getter:${sub}`, class: 'outward', identity: sub.split(' '), native: goGetterSpellings(project).map((sp) => `${sp} ${sub} *`) }));
+  return [...gated, ...extraEntries([...new Set(gates.flatMap((g) => g.extra))]), ...identity];
 }
 
 // OpenCode globs as automata, to reason about every command a glob matches rather than a sample of them. A glob is a token

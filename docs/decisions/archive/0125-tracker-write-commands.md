@@ -1,7 +1,7 @@
 ---
 id: 0125-tracker-write-commands
 title: The commands that write to the tracker are listed
-status: active
+status: deprecated
 date: 2026-10-11
 tags: [practice-packs, roadmap]
 track: process
