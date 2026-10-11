@@ -63,7 +63,6 @@ id,title,tags,status
 0065-behavior-evals-are-scripted-and-keyless,"The first behavior evals run init with scripted answers, with no model and no API key","verification, eval, ci",active
 0066-own-the-knowledge-base-tooling,"go-getter owns its knowledge-base tooling and artifact format; nothing is vendored or synced","knowledge-base, configuration, vendoring, packaging",active
 0067-accepted-artifacts-may-be-corrected-in-place,"Accepted decisions and facts may be corrected in place for wording and factual errors; a change of meaning is superseded","knowledge-management",active
-0068-post-v0.1-milestone-sequence,"v0.2 hardens the agent core in three waves; git workflow and spec workflow follow in v0.3","milestones, roadmap, harness",active
 0069-plan-steps-carry-class-and-dependencies,"Plan steps declare a task class, dependencies and a check, and go-getter offers the next steps as numbered options","roadmap, model-routing, harness",active
 0070-watcher-noise-is-a-project-policy,"Watcher noise is a project policy, quiet by default, enforced by a wrapper rather than by the host","harness, cost, hooks, practice-packs",active
 0071-verification-checks-run-locally-or-in-ci,"Each verification check runs locally, in CI or both, so thin dev machines run only the cheap ones","verification, ci, harness, practice-packs",active
@@ -116,3 +115,4 @@ id,title,tags,status
 0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",active
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
 0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
+0128-post-v0.3-milestone-sequence,"v0.4 is the autonomous run contract with approve-once, then testing and memory; adapters, helpers and MCP follow","milestones, roadmap, harness",active
