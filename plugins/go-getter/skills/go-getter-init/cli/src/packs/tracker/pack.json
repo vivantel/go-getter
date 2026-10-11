@@ -1,10 +1,10 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "tracker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "family": "sdlc",
   "title": "Plan tracker",
-  "summary": "Where plan steps live: in the plan files, or in the project's GitHub Issues, and whether go-getter may create, comment on and close issues from a plan.",
+  "summary": "Where plan steps live: in the plan files, in the project's GitHub Issues or in Jira, and whether go-getter may create, comment on and close issues from a plan.",
   "questions": [
     {
       "id": "tracker",
@@ -20,8 +20,121 @@
           "id": "github",
           "label": "In GitHub Issues, with the plan files holding the step text",
           "tradeoff": "A step that names an issue takes its state from the issue, so the work is visible where the team already tracks it; plan status needs gh and the network (the last state read is shown, marked stale, when it fails), and a step without an issue stays file-driven."
+        },
+        {
+          "id": "jira",
+          "label": "In Jira issues, with the plan files holding the step text",
+          "tradeoff": "A step that names an issue (PROJ-123) takes its state from the issue's status category, so the work is visible where the team already tracks it; plan status needs network access and credentials in environment variables you name (never stored), and a step without an issue stays file-driven."
         }
       ]
+    },
+    {
+      "id": "jira-site",
+      "type": "text",
+      "prompt": "What is your Jira site's base URL, for example https://yourteam.atlassian.net? Leave empty until you know it: reading and writing then report the missing setting.",
+      "pattern": "^(?:https://[^\\s\"]+)?$",
+      "default": "",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      }
+    },
+    {
+      "id": "jira-auth",
+      "prompt": "How does go-getter authenticate to Jira?",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      },
+      "options": [
+        {
+          "id": "basic",
+          "label": "Account email and API token (Jira Cloud)",
+          "tradeoff": "Needs two environment variables, one for the email and one for the token; the token is yours and acts as you.",
+          "recommended": true
+        },
+        {
+          "id": "bearer",
+          "label": "Personal access token (Jira Data Center)",
+          "tradeoff": "Needs one environment variable holding the token; the email is not used."
+        }
+      ]
+    },
+    {
+      "id": "jira-email-env",
+      "type": "text",
+      "prompt": "Which environment variable holds the Jira account email? Only its name is recorded, never its value.",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "default": "JIRA_EMAIL",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      }
+    },
+    {
+      "id": "jira-token-env",
+      "type": "text",
+      "prompt": "Which environment variable holds the Jira API token or personal access token? Only its name is recorded, never its value.",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "default": "JIRA_API_TOKEN",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      }
+    },
+    {
+      "id": "jira-project",
+      "type": "text",
+      "prompt": "Which Jira project key do new issues from a plan go to, for example PROJ? Leave empty if go-getter only reads.",
+      "pattern": "^(?:[A-Z][A-Z0-9_]+)?$",
+      "default": "",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      }
+    },
+    {
+      "id": "jira-issue-type",
+      "type": "text",
+      "prompt": "Which issue type do new issues have?",
+      "pattern": "^[A-Za-z][A-Za-z0-9 _-]{0,40}$",
+      "default": "Task",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      }
+    },
+    {
+      "id": "jira-done-transition",
+      "type": "text",
+      "prompt": "Which transition closes an issue (its name or id)? Leave empty to use the one transition into the done category, which go-getter refuses to guess when there are several.",
+      "pattern": "^(?:[A-Za-z0-9][A-Za-z0-9 _'-]{0,60})?$",
+      "default": "",
+      "since": "0.2.0",
+      "when": {
+        "question": "tracker",
+        "in": [
+          "jira"
+        ]
+      }
     },
     {
       "id": "writes",
@@ -29,7 +142,8 @@
       "when": {
         "question": "tracker",
         "in": [
-          "github"
+          "github",
+          "jira"
         ]
       },
       "options": [
@@ -106,6 +220,25 @@
               }
             },
             "body": "## Decision\n\nA plan step that names a GitHub issue (an `Issue:` field) takes its state from the issue: closed as completed is done, closed as not planned is moved, an open issue is not done. A step without an issue stays file-driven, and the plan file is never rewritten to match (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWork is visible where the team already tracks it, and issue text is read as data and never run as a command.\n"
+          }
+        ]
+      },
+      "jira": {
+        "decisions": [
+          {
+            "slug": "plans-in-jira",
+            "title": "Plan steps live in Jira issues",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker": "jira"
+              }
+            },
+            "body": "## Decision\n\nA plan step that names a Jira issue (an `Issue:` field such as `PROJ-123`) takes its state from the issue's status category: done is done, in progress is in progress, anything else is open, whatever the status is called. A step without an issue stays file-driven, and the plan file is never rewritten to match (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWork is visible where the team already tracks it, and issue text is read as data and never run as a command.\n"
           }
         ]
       }
@@ -266,6 +399,172 @@
               }
             },
             "body": "## Decision\n\nThe commands [{{answer.write-commands}}] need a human before they run (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA prompt matches the text of a command, so each way of running go-getter that the project uses is listed.\n"
+          }
+        ]
+      }
+    },
+    "jira-site": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-site",
+            "title": "The Jira site is recorded",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-site": "{{answer.jira-site}}"
+              }
+            },
+            "body": "## Decision\n\nThe Jira site is `{{answer.jira-site}}` (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      }
+    },
+    "jira-auth": {
+      "basic": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-auth",
+            "title": "The Jira authentication is recorded",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-auth": "basic"
+              }
+            },
+            "body": "## Decision\n\nJira is reached with `{{answer.jira-auth}}` authentication (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      },
+      "bearer": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-auth",
+            "title": "The Jira authentication is recorded",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-auth": "bearer"
+              }
+            },
+            "body": "## Decision\n\nJira is reached with `{{answer.jira-auth}}` authentication (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      }
+    },
+    "jira-email-env": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-email-env",
+            "title": "The variable holding the Jira email is named",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-email-env": "{{answer.jira-email-env}}"
+              }
+            },
+            "body": "## Decision\n\nThe Jira account email is read from the environment variable `{{answer.jira-email-env}}` (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      }
+    },
+    "jira-token-env": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-token-env",
+            "title": "The variable holding the Jira token is named",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-token-env": "{{answer.jira-token-env}}"
+              }
+            },
+            "body": "## Decision\n\nThe Jira token is read from the environment variable `{{answer.jira-token-env}}` (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      }
+    },
+    "jira-project": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-project",
+            "title": "The Jira project for new issues is recorded",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-project": "{{answer.jira-project}}"
+              }
+            },
+            "body": "## Decision\n\nNew issues from a plan are created in the Jira project `{{answer.jira-project}}` (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      }
+    },
+    "jira-issue-type": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-issue-type",
+            "title": "The Jira issue type for new issues is recorded",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-issue-type": "{{answer.jira-issue-type}}"
+              }
+            },
+            "body": "## Decision\n\nNew issues from a plan have the type `{{answer.jira-issue-type}}` (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
+          }
+        ]
+      }
+    },
+    "jira-done-transition": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "tracker-jira-done-transition",
+            "title": "The Jira transition that closes an issue is recorded",
+            "tags": [
+              "practice-packs",
+              "roadmap"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "tracker-jira-done-transition": "{{answer.jira-done-transition}}"
+              }
+            },
+            "body": "## Decision\n\nAn issue is closed by the transition `{{answer.jira-done-transition}}` (pack {{pack.id}}@{{pack.version}}); an empty value means not set.\n\n## Why\n\nGo-getter reads the Jira settings from the project's decisions; the credentials themselves are never recorded, only the names of the environment variables that hold them.\n"
           }
         ]
       }

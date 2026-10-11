@@ -14,7 +14,7 @@ go-getter:
       run: builtin:gate-command classes="" extra="go-getter plan issue create, go-getter plan issue comment, go-getter plan issue close, .go-getter/bin/go-getter plan issue create, .go-getter/bin/go-getter plan issue comment, .go-getter/bin/go-getter plan issue close, node compiler/bin/go-getter.mjs plan issue create, node compiler/bin/go-getter.mjs plan issue comment, node compiler/bin/go-getter.mjs plan issue close"
     - tier: 1
       check: Ask the user before running go-getter plan issue create, comment or close
-  generated-by: tracker@0.1.0
+  generated-by: tracker@0.2.0
   pack-answer: writes
   pack-option: ask
 ---

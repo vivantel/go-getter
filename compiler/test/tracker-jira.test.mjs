@@ -200,6 +200,7 @@ test('the configuration is checked: an https site, plain URL, valid variable nam
   assert.equal(checkConfig(ok, { A: 'e', B: 't' }).base, 'https://acme.atlassian.net');
   assert.equal(checkConfig({ ...ok, site: 'https://jira.example.com/jira/' }, { A: 'e', B: 't' }).base, 'https://jira.example.com/jira');
   assert.throws(() => checkConfig(null), /Jira is not configured/);
+  assert.throws(() => checkConfig({ site: '' }), /Jira site is not set/);
   assert.throws(() => checkConfig({ ...ok, site: 'http://jira.example.com' }, { A: 'e', B: 't' }), /must be an https URL/);
   assert.throws(() => checkConfig({ ...ok, site: 'https://user:pw@acme.atlassian.net' }, { A: 'e', B: 't' }), /plain URL/);
   assert.throws(() => checkConfig({ ...ok, site: 'nope' }, { A: 'e', B: 't' }), /not a URL/);
@@ -211,7 +212,9 @@ test('plan status reads the Jira issue named by the adopted tracker decision', a
   const server = await jira({ 'PROJ-1': { status: 200, body: issue('Shipped', 'done') } });
   const p = project([['1', 'One', 'pending', 'PROJ-1']]);
   try {
-    writeFileSync(path.join(p.dir, 'docs/decisions/0001-tracker-jira.md'), `---\nid: 0001-tracker-jira\ntitle: Jira\nstatus: active\ndate: 2026-10-11\ntags: [x]\ngo-getter:\n  tracker-jira:\n    site: ${server.url}\n    email-env: GG_TEST_EMAIL\n    token-env: GG_TEST_TOKEN\n---\n\nx\n`);
+    const flat = { site: server.url, 'email-env': 'GG_TEST_EMAIL', 'token-env': 'GG_TEST_TOKEN' };
+    const yaml = Object.entries(flat).map(([k, v]) => `  tracker-jira-${k}: ${JSON.stringify(v)}`).join('\n');
+    writeFileSync(path.join(p.dir, 'docs/decisions/0001-tracker-jira.md'), `---\nid: 0001-tracker-jira\ntitle: Jira\nstatus: active\ndate: 2026-10-11\ntags: [x]\ngo-getter:\n${yaml}\n---\n\nx\n`);
     assert.equal(jiraConfig(p.dir).site, server.url);
     const { stdout } = await run(process.execPath, [cli, 'plan', 'status', 'docs/plans/p.md'], { cwd: p.dir, env: { ...process.env, ...ENV } });
     assert.match(stdout, /\[x\]|1\/1 done/);

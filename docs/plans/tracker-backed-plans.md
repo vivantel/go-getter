@@ -63,7 +63,7 @@ Class: implement · Effort: high · Needs: 6 · Check: `npm run check:packs && n
 Do: add `src/packs/tracker/pack.json` (SDLC family): `tracker` (choice `files` recommended, `github`; `jira` is added in step 7j), `writes` (`off`, `ask` recommended, `allow`) and `write-commands` (the command prefixes the `ask` gate covers, one per spelling of the three verbs, since a prompt matches command text; `plan issue --dry-run <verb>` is never matched). Outputs: a decision per answer and the guardrail `tracker-writes-follow-the-answer` with a tier 2 `builtin:gate-command` entry that gates `go-getter plan issue *` when the answer is `ask`, and a tier 1 instruction. `go-getter coverage` names the tracker and the write mode. Adopt it here with `github` and `ask` through `go-getter update`/`reconfigure`, then `apply` and `npm run build`; a step without `Issue:` stays file-driven, so adoption changes nothing until step 8.
 Done-when: `check:packs` passes; `check:self-adoption` reports the tracker pack adopted; with `ask` the generated host rules prompt for `go-getter plan issue create` and not for reads; with `off` the verb refuses; `apply --check` is clean; an answer file without the pack renders nothing new.
 
-### 7j Jira in the pack — [ ]
+### 7j Jira in the pack — [x]
 Issue: #81
 Class: implement · Needs: 4, 6j, 7 · Check: `npm run check:packs && npm run check:self-adoption && npm run check:generated && npm test`
 Do: bump the pack and add the `jira` choice with its answers (site, project key, the names of the two credential variables, an optional done transition; each `since` the new version, with a default), their decisions, and the coverage line. An answer file from before it renders unchanged. Adopt the new version here with the `github` answer unchanged.
