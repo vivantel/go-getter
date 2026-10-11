@@ -170,6 +170,7 @@
         "cli/compiler/src/secrets/patterns.mjs",
         "cli/compiler/src/secrets/pii.mjs",
         "cli/compiler/src/secrets/pseudonyms.mjs",
+        "cli/compiler/src/secrets/put.mjs",
         "cli/compiler/src/secrets/run.mjs",
         "cli/compiler/src/spec-tools.mjs",
         "cli/compiler/src/telemetry/otel.mjs",
