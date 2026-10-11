@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.1] - 2026-10-11
+
+### Added
+
+- A tracker pack: plan steps can live in GitHub Issues or Jira. `go-getter plan status|next|start` take a step's state from its issue (Jira by status category, never by name), a stale cache is labelled, and a step's issue and a branch's issue are `Refs:` targets. `go-getter plan issue create|comment|close` writes to the tracker the project chose; it is asked about once, a dry run needs no network, and only the names of credential variables are recorded, never a value. Jira is proven live for reads and writes (an issue created, commented and closed in a test project). This repository's open plan steps are GitHub Issues.
+- Secret files are used without setup (decision 0126). The pre-tool hook recognises go-getter by what a call runs, from any install (on PATH, `.go-getter/bin`, under the home directory, npx, `node <entry>`), and matches a restricted path by what a command opens, not by its text, which ends the false denials for a path mentioned in a commit message or an `echo`.
+- A command's first use of a secret file is asked once and remembered. The approval is per user and project, kept outside git, bound to a hash of the command's code and its local imports, and lapses only when that code changes. `go-getter approvals` lists (current or STALE), adds and revokes; an agent cannot add or revoke one or write the store. Only Claude Code prompts on first use, because it is the one host whose pre-tool hook can ask; every other host denies and hands over with the `approvals add` line.
+- Projects can free named outward commands from the human gate. The pull request catalog id is split into `gh-pr-create`, `gh-pr-merge` and `gh-pr-close`, so merging can be freed alone; an answer that names `gh-pr` still means all three. hitl 0.3.1.
+- Tracker write verbs are gated by what a call runs: the hook prompts once for `plan issue create|comment|close` however go-getter is run, where before only listed spellings were gated. Tracker pack 0.3.0 drops the write-commands question; an answer file from 0.2.0 still renders.
+
+### Fixed
+
+- A push is judged by the refs it sends, not by the checked-out branch, so pushing a tag from a detached HEAD or a branch from master works.
+- A pending secret approval lasts 30 minutes (it was two), because a host prompt can wait that long.
+- The test run no longer leaves `gg-*` fixtures in the temp directory; a full run had filled a small tmpfs.
+
+### Documentation
+
+- INSTALLING.md and the README describe the tracker pack, Jira settings and how a secret file reaches a command.
+- Decisions 0117, 0118 (tracker-backed plans), 0123, 0124, 0126, 0127 and 0128 (v0.4 order, superseding 0068).
+
 ## [0.3.0] - 2026-10-11
 
 ### Added
