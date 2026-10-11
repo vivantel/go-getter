@@ -13,3 +13,4 @@ id,title,tags,status
 0125-tracker-write-commands,"The commands that write to the tracker are listed","practice-packs, roadmap",deprecated
 0122-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0068-post-v0.1-milestone-sequence,"v0.2 hardens the agent core in three waves; git workflow and spec workflow follow in v0.3","milestones, roadmap, harness",superseded
+0128-post-v0.3-milestone-sequence,"v0.4 is the autonomous run contract with approve-once, then testing and memory; adapters, helpers and MCP follow","milestones, roadmap, harness",superseded

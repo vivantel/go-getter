@@ -10,7 +10,7 @@ accepted-by: sergemso
 
 ## Decision
 
-Refines the v0.4 and later scope of 0128 after a review of the packs for overlap, domain coupling and fit with virage (github.com/vivantel/virage).
+Refines the v0.4 and later scope of 0128 (superseded by 0131) after a review of the packs for overlap, domain coupling and fit with virage (github.com/vivantel/virage).
 
 1. **One concern, one pack.** Planned work extends the pack that already owns the concern instead of adding a second one:
    - Coverage and debugging extend `verification-gate` (it already owns the test commands); release extends its release gate.
