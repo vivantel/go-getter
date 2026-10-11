@@ -1,12 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.3] - 2026-10-12
 
 ### Added
 
 - A run has an always-human set (decision 0130): force-push, branch and tag deletion, history rewrites, tags, releases, publishing and now repository settings (`repo-settings`: `gh repo edit|delete|…`, `gh secret|variable set|delete`, `gh ruleset …`, and `gh api` writes to protection, rulesets, access, hooks, keys, actions, environments and pages) stay gated whatever a run or a remembered approval says; only `git-push`, `pr-create`, `pr-merge`, `pr-close` and `comment-post` can be granted, and `run start --grant` and `approvals allow` refuse the rest. In a run, `plan issue comment` and `close` on a step of its range no longer ask; `create`, other steps and other plans do.
 - Outward commands can be allowed without a prompt by an autonomous run or a remembered approval, and only while their preconditions hold at that use (decision 0130). `hitl` 0.5.0 asks which shapes (`git-push`, `pr-create`, `pr-merge`, `pr-close`, `comment-post`; default the first four) and, on a host whose hook can ask (Claude Code), the hook asks the first time and remembers the shape (`go-getter approvals list`, `allow <shape>`, `revoke <shape>`). A merge needs green checks, the default branch as base and, in a run, a pull request that names an issue of a step in the run's range. Tags, releases and publishing can never be allowed. On a host with a native ask rule and no hook prompt (Kilo, OpenCode) the rule keeps prompting; on a host with neither (Codex, Gemini CLI, Copilot) a run or `approvals allow` is what lets a command through.
 - `go-getter run start <plan> [--through N] [--hours H] [--grant <id>] | status | end` records an autonomous run (decision 0130): a plan range a person starts, kept per user outside git beside the approvals store, expiring at its timeout (8 hours by default), one at a time per project. The pre-tool hook refuses an agent's `run start` and `run end` and any call that opens the store. The record does not yet change what a gate allows; that is the next step of the autonomous-run plan.
+
+### Upgrading
+
+`go-getter update` adopts `hitl` 0.5.0: your `.claude/settings.json` loses the static ask rules for `git push`, `gh pr create|merge|close` where the hook now decides them (Claude Code asks on first use and remembers), and gains rules for repository-settings commands. To keep a shape always asking, answer `run-grants` without it. Decision 0135 is proposed as a draft.
 
 ## [0.3.2] - 2026-10-11
 
