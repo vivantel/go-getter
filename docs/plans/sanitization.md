@@ -77,7 +77,7 @@ Done-when: `check:self-adoption` reports governance at 0.4.0; a post-tool payloa
 
 ## S4 — `secret run|put` and `sandbox` (governance 0.5.0)
 
-### 9 `secret run` — [ ]
+### 9 `secret run` — [x]
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/secret-run.test.mjs`
 Do: add `go-getter secret run (--from <dotenv> | --file <path>) -- <command...>` in `compiler/src/commands/secret.mjs` and `compiler/src/secrets/run.mjs`. It refuses unless the path is `use` mode in the adopted restricted modes (`restrictedModes` in `hook.mjs`) and the command, as written, is on that pattern's allowlist (the `use-commands` answer, matched on the exact command text); with no allowlist it refuses and says so. `--from` parses KEY=VALUE lines (comments, quotes, `export ` prefix) into the child's environment; `--file` copies the file to a 0600 temporary file in a private directory, sets the named environment variable to its path and deletes it in a `finally`. The child's stdout and stderr are scrubbed of every secret value and the shared patterns before they are printed; exit code passes through. Telemetry records the event and the path pattern, never a value or the command's arguments.
 Done-when: the test shows an allowlisted command receives the variables; a command not on the list, a path not in `use` mode and an empty allowlist are each refused with a message and exit 1; a child that prints a value shows `REDACTED` instead; the temp file is gone after success, failure and a signal; a value never appears in the process arguments, the telemetry line or the error text.
