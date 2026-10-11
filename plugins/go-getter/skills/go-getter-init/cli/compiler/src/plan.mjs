@@ -186,6 +186,27 @@ export function formatNext(options) {
     .join('\n');
 }
 
+// The plan's text with `Issue: <reference>` as the first line of a step's block (the heading's next line).
+export function setIssueField(text, step, reference) {
+  const lines = text.split('\n');
+  lines.splice(step.line, 0, `Issue: ${reference}`);
+  return lines.join('\n');
+}
+
+// What a step says, as the body of its issue: its prose lines (`Do:`, `Done-when:`, notes), without the metadata line, a
+// bare `Issue:` or `Check:` (a command stays in the plan, 0119).
+export function stepBody(text, step) {
+  const lines = text.split('\n');
+  const out = [];
+  for (let i = step.line; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^#{1,3}\s/.test(line) || /^---\s*$/.test(line)) break;
+    if (/^(Class|Effort|Tier|Data|Needs|Check|Issue):\s/.test(line)) continue;
+    out.push(line);
+  }
+  return out.join('\n').trim();
+}
+
 // --- start and done ----------------------------------------------------------------------------------------------
 
 const CHECK_TIMEOUT_MS = 30 * 60 * 1000;

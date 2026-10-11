@@ -1,11 +1,13 @@
-// go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan]:
-// read a Markdown plan's steps and move one through its markers (decision 0069, plan A.2).
+// go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan] |
+// issue create|comment|close <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]:
+// read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
 import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot } from '../plan.mjs';
 import { githubSource } from '../trackers/github.mjs';
+import { planIssue, relPlan, VERBS } from '../trackers/github-write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
 
-const USAGE = 'usage: go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan]';
+const USAGE = `usage: go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]`;
 
 function parseArgs(sub, rest) {
   const flags = { json: false };
@@ -21,8 +23,52 @@ function parseArgs(sub, rest) {
   return { ...flags, id: ids ? positional[0] : undefined, plan: positional[ids] };
 }
 
+// `plan issue <verb> <id> [plan] [flags]`: { verb, id, plan, dryRun, text, stdin, reason } or null.
+function parseIssueArgs(rest) {
+  const [verb, ...more] = rest;
+  const o = { verb, dryRun: false, stdin: false };
+  const positional = [];
+  for (let i = 0; i < more.length; i++) {
+    const value = () => (more[i + 1] !== undefined ? more[++i] : null);
+    if (more[i] === '--dry-run') o.dryRun = true;
+    else if (more[i] === '--stdin') o.stdin = true;
+    else if (more[i] === '--text' || more[i] === '--reason') o[more[i].slice(2)] = value();
+    else if (more[i].startsWith('--')) return null;
+    else positional.push(more[i]);
+  }
+  if (!VERBS.includes(verb) || positional.length < 1 || positional.length > 2 || o.text === null || o.reason === null) return null;
+  if (o.stdin && o.text !== undefined) return null;
+  return { ...o, id: positional[0], plan: positional[1] };
+}
+
+async function readStdin() {
+  const chunks = [];
+  for await (const chunk of process.stdin) chunks.push(chunk);
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 export default async function planCommand({ args }) {
   const [sub, ...rest] = args;
+  if (sub === 'issue') {
+    const o = parseIssueArgs(rest);
+    if (!o) {
+      console.error(USAGE);
+      return 2;
+    }
+    try {
+      const cwd = process.cwd();
+      const project = repoRoot(cwd);
+      const file = resolvePlan(cwd, o.plan);
+      const text = o.stdin ? await readStdin() : o.text;
+      const r = await planIssue(project, file, relPlan(cwd, file), o.verb, o.id, { dryRun: o.dryRun, text, reason: o.reason });
+      if (r.ok) console.log(r.message);
+      else console.error(`plan issue ${o.verb}: ${r.error}`);
+      return r.ok ? 0 : 1;
+    } catch (err) {
+      console.error(`plan issue ${o.verb}: ${err.message.split('\n')[0]}`);
+      return 1;
+    }
+  }
   const opts = ['status', 'next', 'start', 'done'].includes(sub) ? parseArgs(sub, rest) : null;
   if (!opts) {
     console.error(USAGE);

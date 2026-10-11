@@ -42,9 +42,11 @@ export function issueStateOf({ state, stateReason }) {
   return String(stateReason ?? '').toUpperCase() === 'NOT_PLANNED' ? 'moved' : 'done';
 }
 
-function gh(args, project) {
+// Runs gh without a shell; `input` (when given) is written to its standard input. Rejects with the process error.
+export function gh(args, project, input) {
   return new Promise((resolve, reject) => {
-    execFile('gh', args, { cwd: project, timeout: GH_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024, env: cleanGitEnv(process.env) }, (err, stdout) => (err ? reject(err) : resolve(stdout)));
+    const child = execFile('gh', args, { cwd: project, timeout: GH_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024, env: cleanGitEnv(process.env) }, (err, stdout, stderr) => (err ? reject(Object.assign(err, { stderr: String(stderr ?? '') })) : resolve(stdout)));
+    if (input !== undefined) child.stdin.end(input);
   });
 }
 
