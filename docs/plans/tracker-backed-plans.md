@@ -45,7 +45,7 @@ Class: implement · Needs: 2 · Check: `node --test compiler/test/refs.test.mjs 
 Do: `go-getter refs`, the attribute skill and the conform skill list a step's issue, and an issue the branch slug names (`feat/123-title`, `feat/PROJ-123-title`), as a `Refs:` target; the commit-trailer check accepts `#123` and `PROJ-123` as trailer values. Nothing is fetched.
 Done-when: the tests show a branch `feat/PROJ-123-title` listing `PROJ-123` as nice-to-have, a touched plan step with `Issue:` listing it as must-have, and a `Refs: #123` trailer passing the trailer check.
 
-### 6 Write verbs for GitHub: `plan issue create|comment|close` — [ ]
+### 6 Write verbs for GitHub: `plan issue create|comment|close` — [x]
 Class: implement · Effort: high · Needs: 3 · Check: `node --test compiler/test/tracker-write.test.mjs`
 Do: add the verbs on the GitHub source. Each takes `--dry-run` (prints the request without sending), refuses when the answer is `off`, records only the verb and `pass|fail|blocked` in telemetry, never the issue text, and takes the issue body only from the plan step's text. `create` writes `Issue:` onto the step. A comment and a body pass through the secret patterns first and are refused if a finding exists.
 Done-when: the tests show a dry run sending nothing, `off` refusing, a body containing a fake token refused, a GitHub create calling the stub once and writing `Issue:`, a close making `plan status` show the step done with no mismatch, and telemetry holding no issue text.

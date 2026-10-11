@@ -3,7 +3,7 @@
 //   data: { issues: [{ number, title, state, stateReason, repo? }], fail?: boolean, repo?: 'owner/repo' }
 // `fail` makes every call exit 1 as if gh were offline. An issue is found by number in `--repo`'s repository (default
 // `data.repo`); one whose `repo` differs is only found there.
-import { chmodSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,6 +21,9 @@ export function installGh(dir, data) {
     dir,
     setData: (next) => writeFileSync(dataFile, JSON.stringify(next)),
     calls: () => readFileSync(logFile, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)),
+    // What the write verbs sent on standard input: [{ args, stdin }].
+    inputs: () => (existsSync(`${logFile}.in`) ? readFileSync(`${logFile}.in`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []),
+    data: () => JSON.parse(readFileSync(dataFile, 'utf8')),
   };
 }
 
@@ -44,6 +47,22 @@ if (process.argv[1] === SELF) {
     console.log(JSON.stringify(issue));
   } else if (args[0] === 'issue' && args[1] === 'list') {
     console.log(JSON.stringify(inRepo));
+  } else if (args[0] === 'issue' && ['create', 'comment'].includes(args[1])) {
+    const stdin = readFileSync(0, 'utf8');
+    appendFileSync(`${process.env.GG_GH_LOG}.in`, `${JSON.stringify({ args, stdin })}\n`);
+    if (args[1] === 'create') {
+      const number = Math.max(0, ...(data.issues ?? []).map((i) => i.number)) + 1;
+      data.issues = [...(data.issues ?? []), { number, title: flag('--title'), state: 'OPEN', repo }];
+      writeFileSync(process.env.GG_GH_DATA, JSON.stringify(data));
+      console.log(`https://github.com/${repo}/issues/${number}`);
+    } else console.log(`https://github.com/${repo}/issues/${args[2]}#issuecomment-1`);
+  } else if (args[0] === 'issue' && args[1] === 'close') {
+    const issue = (data.issues ?? []).find((i) => String(i.number) === args[2] && (i.repo ?? data.repo) === repo);
+    if (!issue) process.exit(1);
+    issue.state = 'CLOSED';
+    issue.stateReason = flag('--reason') === 'not planned' ? 'NOT_PLANNED' : 'COMPLETED';
+    writeFileSync(process.env.GG_GH_DATA, JSON.stringify(data));
+    console.log(`Closed issue ${repo}#${args[2]}`);
   } else {
     console.error(`gh stub: unsupported ${args.join(' ')}`);
     process.exit(2);
