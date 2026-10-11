@@ -138,3 +138,58 @@ export function takePending(project, words, secretPath, { now = () => new Date()
   writePending(items, env);
   return true;
 }
+
+// --- approved shapes -------------------------------------------------------------------------------------------------------
+// "This outward command shape (a catalog id such as pr-merge) may run without asking in this project" (decision 0130 item 2).
+// Same file and rules as the secret approvals, under a `shapes` key per project; it holds an id and a date, never a command's
+// arguments. Whether a use is allowed is decided at each use by the shape's preconditions (runs/shapes.mjs), not here.
+export function shapeApproved(project, id, env = process.env) {
+  return (read(env).shapes?.[keyOf(project)] ?? []).some((e) => e.id === id);
+}
+
+export function listShapes(project, env = process.env) {
+  return read(env).shapes?.[keyOf(project)] ?? [];
+}
+
+export function addShape(project, id, { host, now = () => new Date(), env = process.env } = {}) {
+  if (typeof id !== 'string' || !id) throw new Error('an approval needs a command shape id');
+  const data = read(env);
+  const key = keyOf(project);
+  data.shapes ??= {};
+  const entry = { id, approvedAt: now().toISOString(), ...(host ? { host } : {}) };
+  data.shapes[key] = [...(data.shapes[key] ?? []).filter((e) => e.id !== id), entry];
+  write(data, env);
+  return entry;
+}
+
+// Removes the approved shape `id` (or every one with `all`). Returns how many were removed.
+export function revokeShape(project, { id, all = false } = {}, env = process.env) {
+  const data = read(env);
+  const key = keyOf(project);
+  const before = data.shapes?.[key] ?? [];
+  const kept = all ? [] : before.filter((e) => e.id !== id);
+  if (kept.length === before.length) return 0;
+  if (kept.length) data.shapes[key] = kept;
+  else delete data.shapes[key];
+  write(data, env);
+  return before.length - kept.length;
+}
+
+// A shape the hook asked the person about: single use, promoted by the post-tool hook once the call it asked about ran (so the
+// person said yes). Keyed by project and the command text.
+export function addPendingShape(project, id, command, { now = () => new Date(), env = process.env } = {}) {
+  const item = { project: keyOf(project), shape: id, text: command, createdAt: now().toISOString() };
+  const others = readPending(env, now()).filter((i) => !(i.project === item.project && i.shape === id && i.text === command));
+  writePending([...others, item], env);
+  return item;
+}
+
+// The shape id once, if an unexpired record exists for exactly this command in this project; null otherwise.
+export function takePendingShape(project, command, { now = () => new Date(), env = process.env } = {}) {
+  const items = readPending(env, now());
+  const at = items.findIndex((i) => i.project === keyOf(project) && i.shape && i.text === command);
+  if (at < 0) return null;
+  const [item] = items.splice(at, 1);
+  writePending(items, env);
+  return item.shape;
+}

@@ -124,6 +124,9 @@ export function catalogFor(provider = DEFAULT_PROVIDER) {
 }
 export const CATALOG = catalogFor();
 
+// The outward shapes a remembered approval or a run may allow (decision 0130). Tags, releases and publishing are never on it.
+export const APPROVABLE = ['git-push', 'pr-create', 'pr-merge', 'pr-close', 'comment-post'];
+
 // Splits into command segments, each as `{ raw, masked }` of equal length; masked has quoted text (quotes included) as 'X'.
 function segments(command) {
   const out = [];
@@ -228,9 +231,10 @@ export const extraEntries = (extra = []) =>
 export function nativeRules(host, entries, caps) {
   const format = caps[host]?.permissions?.ask?.format;
   if (!format) return null;
-  // A host whose pre-tool hook can ask prompts for an identity-gated call itself, for every spelling, so it needs no glob.
+  // A host whose pre-tool hook can ask prompts for an identity-gated call itself, for every spelling, so it needs no glob; the same
+  // for a shape a run or a remembered approval may allow (`hookDecides`): a static ask rule would prompt even when it is allowed.
   const hookAsks = caps[host]?.hooks?.askPreTool === true;
-  const globs = [...new Set(entries.filter((e) => !(e.identity && hookAsks)).flatMap((e) => e.native ?? []))];
+  const globs = [...new Set(entries.filter((e) => !((e.identity || e.hookDecides) && hookAsks)).flatMap((e) => e.native ?? []))];
   if (format === 'claude-permissions') return globs.map((g) => `Bash(${g})`);
   if (format === 'opencode-permission') return Object.fromEntries(globs.map((g) => [g, 'ask']));
   throw new Error(`unknown ask rule format "${format}" for ${host}`);
@@ -241,7 +245,7 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
 // `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
-export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: normaliseFree(list(args.free)), goGetter: list(args['go-getter']), provider: String(args.provider ?? DEFAULT_PROVIDER).trim() });
+export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: normaliseFree(list(args.free)), goGetter: list(args['go-getter']), grantable: normaliseFree(list(args.grantable)), provider: String(args.provider ?? DEFAULT_PROVIDER).trim() });
 
 // The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script
 // of a checkout. A call spelled any other way is still recognised by the hook, which reads what it runs (invocation.mjs).
@@ -261,6 +265,8 @@ export function gateEntries(enforcement, { project } = {}) {
     if ((!args.classes.length && !args.extra.length && !args.goGetter.length) || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
     const badSub = args.goGetter.filter((sub) => !/^[a-z][a-z-]*(?: [a-z][a-z-]*)*$/.test(sub));
     if (badSub.length) throw new Error(`guardrail ${e.guardrail}: gate-command go-getter must be subcommand words, not ${badSub.join(', ')}`);
+    const ungrantable = args.grantable.filter((id) => !APPROVABLE.includes(id));
+    if (ungrantable.length) throw new Error(`guardrail ${e.guardrail}: gate-command grantable must name approvable commands (${APPROVABLE.join(', ')}), not ${ungrantable.join(', ')}`);
     if (!PROVIDER_IDS.includes(args.provider)) throw new Error(`guardrail ${e.guardrail}: gate-command provider must be one of ${PROVIDER_IDS.join(', ')}, not ${args.provider}`);
     const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');
     if (unfree.length) throw new Error(`guardrail ${e.guardrail}: gate-command free must name outward catalog commands, not ${unfree.join(', ')}`);
@@ -275,7 +281,8 @@ export function gateEntries(enforcement, { project } = {}) {
   });
   // An entry is gated when some gate covers its class and does not free it.
   const gated = gates.flatMap((g) => catalogFor(g.provider).filter((e) => g.classes.includes(e.class) && !g.free.includes(e.id)));
-  const gatedOnce = [...new Map(gated.map((e) => [e.id, e])).values()];
+  const grantable = new Set(gates.flatMap((g) => g.grantable));
+  const gatedOnce = [...new Map(gated.map((e) => [e.id, grantable.has(e.id) ? { ...e, hookDecides: true } : e])).values()];
   // Subcommands gated by what the call runs: native globs for the usual spellings, for hosts whose hook cannot ask.
   const identity = [...new Set(gates.flatMap((g) => g.goGetter))].map((sub) => ({ id: `go-getter:${sub}`, class: 'outward', identity: sub.split(' '), native: goGetterSpellings(project).map((sp) => `${sp} ${sub} *`) }));
   return [...gatedOnce, ...extraEntries([...new Set(gates.flatMap((g) => g.extra))]), ...identity];
