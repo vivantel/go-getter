@@ -9,6 +9,7 @@ import { CLASSES } from './verify.mjs';
 import { TIERS, EFFORTS } from './routing/policy.mjs';
 import { DATA_CLASSES } from './routing/eligibility.mjs';
 import { newWorktree } from './worktree.mjs';
+import { parseRef, refId } from './trackers/refs.mjs';
 import { recordQuietly } from './telemetry/record.mjs';
 import { checkpointBeforeStep } from './checkpoint-trigger.mjs';
 import { cleanGitEnv } from './git-env.mjs';
@@ -16,8 +17,9 @@ import { cleanGitEnv } from './git-env.mjs';
 export const MARKERS = { ' ': 'pending', '~': 'in progress', x: 'done', '!': 'blocked', '>': 'moved' };
 export const STATE_MARKER = Object.fromEntries(Object.entries(MARKERS).map(([marker, state]) => [state, marker]));
 export const PLAN_DIR = path.join('docs', 'plans');
-const META = { Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES, Needs: null, Check: null };
-export const ID = /^[0-9A-Za-z]+(\.[0-9A-Za-z]+)*$/;
+const META = { Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES, Needs: null, Check: null, Issue: null };
+// Dotted alphanumeric (`7.1`, `L.7`), with a hyphen allowed between groups for a tracker key (`PROJ-123`).
+export const ID = /^[0-9A-Za-z]+([.-][0-9A-Za-z]+)*$/;
 const HEADING = /^###\s+(\S+)\s+(.+?)\s+—\s+\[(.)\]\s*(.*)$/;
 const PARALLEL = '‖';
 const MAX_OPTIONS = 4;
@@ -42,7 +44,7 @@ export function parsePlan(text, file = 'plan') {
         return;
       }
       const [, id, rawTitle, marker, rest] = m;
-      if (!ID.test(id)) problems.push(`${at}: step id "${id}" is not a dotted alphanumeric id`);
+      if (!ID.test(id)) problems.push(`${at}: step id "${id}" is not a dotted alphanumeric id (a hyphen is allowed between groups)`);
       if (!(marker in MARKERS)) problems.push(`${at}: step ${id} has unknown marker [${marker}]`);
       const parallel = rawTitle.endsWith(PARALLEL) || rest.includes(PARALLEL);
       const title = rawTitle.endsWith(PARALLEL) ? rawTitle.slice(0, -1).trimEnd() : rawTitle;
@@ -68,7 +70,11 @@ export function parsePlan(text, file = 'plan') {
         else if (key === 'Tier') step.tier = value;
         else if (key === 'Data') step.data = value;
         else if (key === 'Check') step.check = stripTicks(value);
-        else if (key === 'Needs') step.needs = value === 'none' ? [] : value.split(/\s*,\s*/).filter(Boolean);
+        else if (key === 'Issue') {
+          const ref = parseRef(value);
+          if (!ref) problems.push(`${at}: step ${step.id} has a malformed Issue "${value}" (#123, owner/repo#123, PROJ-123 or an issue URL)`);
+          else step.issueRef = ref;
+        } else if (key === 'Needs') step.needs = value === 'none' ? [] : value.split(/\s*,\s*/).filter(Boolean);
       }
       return;
     }
@@ -81,13 +87,20 @@ export function parsePlan(text, file = 'plan') {
   return { file, steps, problems: [...problems, ...graphProblems(steps, file)] };
 }
 
-// Duplicate ids, unknown Needs ids and dependency cycles.
+// Duplicate ids, duplicate issues, unknown Needs ids and dependency cycles.
 function graphProblems(steps, file) {
   const problems = [];
   const byId = new Map();
   for (const s of steps) {
     if (byId.has(s.id)) problems.push(`${file}:${s.line}: step id ${s.id} is used twice`);
     else byId.set(s.id, s);
+  }
+  const issues = new Map();
+  for (const s of steps) {
+    if (!s.issueRef) continue;
+    const id = refId(s.issueRef);
+    if (issues.has(id)) problems.push(`${file}:${s.line}: step ${s.id} names issue ${s.issueRef.text}, already the issue of step ${issues.get(id)}`);
+    else issues.set(id, s.id);
   }
   for (const s of steps) for (const n of s.needs) if (!byId.has(n)) problems.push(`${file}:${s.line}: step ${s.id} needs unknown step ${n}`);
   const state = new Map(); // id -> 'visiting' | 'done'

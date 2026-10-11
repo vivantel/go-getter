@@ -25,7 +25,7 @@ Do: define the WorkSource contract in `compiler/src/trackers/worksource.mjs` and
 The interface obeys decision 0119: arguments and results are plain data, with no callbacks and no shared state, and the contract test checks that a call's input and output survive a JSON round trip. Tracker text never becomes a command: `Check:` stays in the plan file.
 Done-when: the existing plan tests pass unchanged; the contract test passes for the file source and shows every call's input and output unchanged by a JSON round trip; `check:plans` is clean on every plan in `docs/plans/`.
 
-### 2 Issue references and the `Issue:` field — [ ]
+### 2 Issue references and the `Issue:` field — [x]
 Class: implement · Needs: 1 · Check: `node --test compiler/test/tracker-refs.test.mjs compiler/test/plan.test.mjs`
 Do: add a reference parser per tracker (`parseRef`): GitHub `#123`, `owner/repo#123`, an issue URL; Jira `PROJ-123` and a browse URL; each returns `{ tracker, key }` or null, and `PROJ-123` is not read as GitHub. Allow a hyphen between alphanumeric groups in a step id (`ID` in `plan.mjs`). Add `Issue` to the plan step fields and make `check plans` report a malformed or duplicate reference.
 Done-when: the tests show each form parsed and each near miss (`PROJ123`, `#`, `repo#1.2`) rejected, a plan with `Issue: PROJ-12` on a step parsing, and `check plans` failing on a malformed reference with the file and line.
