@@ -8,12 +8,12 @@
     "data-policy": "0.6.0",
     "git-workflow": "0.1.1",
     "hitl": "0.4.0",
-    "orchestration": "0.1.0",
+    "orchestration": "0.1.1",
     "restricted-data": "0.6.0",
     "sanitization": "0.6.0",
     "telemetry": "0.1.0",
     "tracker": "0.3.0",
-    "verification-gate": "0.3.0"
+    "verification-gate": "0.4.0"
   },
   "files": {
     ".claude/agents/explorer.md": {

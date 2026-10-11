@@ -60,11 +60,12 @@ Do: in `compiler/src/gate.mjs` rename the entries to the action (`pr-create`, `p
 Done-when: tests show each neutral id matching the GitHub commands, every alias accepted, an unknown provider id rejected with a clear message, and the native ask rules unchanged for this repository.
 Result, 2026-10-11: ids renamed, `PROVIDERS`/`catalogFor` in `compiler/src/gate.mjs`, `provider=` arg on `gate-command`, hitl 0.4.0; this repository's host files did not change. `extra-patterns` holds command text, not ids, so nothing there needed an alias.
 
-### 5 One owner for coverage and review ‖ — [ ]
+### 5 One owner for coverage and review ‖ — [x]
 Issue: #139
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/verification-gate-pack.test.mjs compiler/test/orchestration-pack.test.mjs`
 Do: add to `verification-gate` the questions for a coverage command and a coverage bar (a threshold or "no regression"), each with a recommended default and wired into the gate and the local and CI duty split (decision 0071). State in both packs' prompts and in `INSTALLING.md` that `verification-gate` owns the review bar and `orchestration` owns only the reviewer role (read-only, `reviewer-read-only`); remove any question that duplicates the other. Debugging is not built here: it stays with the v0.4 testing item and its interview.
 Done-when: golden tests pass, a project without the new answers renders as before, and the two packs share no question about the same thing.
+Result, 2026-10-11: `coverage-command`, `coverage-bar` (command | threshold | no-regression) and `coverage-threshold` in `verification-gate` 0.4.0; `coverage` is a check kind (detect, placement: CI on thin and ci-only, also for profiles adopted earlier) and the bar reaches the command as `GO_GETTER_COVERAGE_BAR`/`_MIN`. go-getter does not parse coverage reports (the command enforces the bar). Both packs' prompts name the review-bar owner; no question is shared (tested). This repository's update added draft decisions 0133 and 0134 for the owner to accept.
 
 ### 6 Say what is harness and what is practice — [ ]
 Issue: #140

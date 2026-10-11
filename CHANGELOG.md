@@ -6,6 +6,7 @@
 
 - The `governance` pack is split into `restricted-data`, `sanitization` and `data-policy` (0.6.0, decision 0132), one concern each. Question ids, defaults and answers are unchanged. `go-getter update` moves a project adopted at any `governance` version to the three packs without asking again: it relabels the old decisions and guardrails (`generated-by`) and re-renders; rules and host files stay the same.
 - Gated-command ids name the action, not the host: `pr-create`, `pr-merge`, `pr-close`, `release-create`, `comment-post` (decision 0129). A provider table (GitHub first) supplies each action's commands and native ask rules, chosen by `provider=` on `gate-command` (default `github`; an unknown one is refused with the known list). `gh-pr`, `gh-pr-create`, `gh-pr-merge`, `gh-pr-close`, `gh-release-create` and `gh-comment` are still accepted in `free-commands`. `hitl` is 0.4.0 with neutral wording; generated ask rules are unchanged.
+- Coverage and review each have one owner. `verification-gate` 0.4.0 asks for a coverage command and a bar (what the command enforces, a minimum percentage, or no drop below the base branch), runs the command where the machine profile places it and passes the bar in `GO_GETTER_COVERAGE_BAR` and `GO_GETTER_COVERAGE_MIN`; projects that do not answer get no coverage check. `verification-gate` states that it owns the review bar and `orchestration` (0.1.1) only the reviewer role.
 
 ## [0.3.1] - 2026-10-11
 

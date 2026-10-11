@@ -14,7 +14,7 @@ go-getter:
     - tier: 2
       check: Stop hook keeps the agent working while the checks fail, bounded by the escalation limit
       run: builtin:verify-gate
-  generated-by: verification-gate@0.3.0
+  generated-by: verification-gate@0.4.0
   pack-answer: gate
   pack-option: block
 ---

@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction plus the agent file's tool restriction where the host has one
-  generated-by: orchestration@0.1.0
+  generated-by: orchestration@0.1.1
   pack-answer: reviewer
   pack-option: read-only
 ---
