@@ -2,7 +2,7 @@
 // Answers file: {"answers": {"<question>": "<option>" | ["<option>", ...]}, "acceptedBy": "<name>", "date"?: "YYYY-MM-DD", "detect"?: {...}}
 import path from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
-import { loadPack, loadPackSchema, validatePack } from '../packs.mjs';
+import { retiredPackNote, loadPack, loadPackSchema, validatePack } from '../packs.mjs';
 import { planRender, applyRender } from '../render.mjs';
 
 export default function renderPackCommand({ root, args }) {
@@ -20,6 +20,8 @@ export default function renderPackCommand({ root, args }) {
   }
   packFile ??= path.join(root, 'src/packs', id ?? '', 'pack.json');
   if (!existsSync(packFile) || !answersFile) {
+    const note = !existsSync(packFile) && retiredPackNote(root, id);
+    if (note) console.error(`render-pack: ${note}`);
     console.error('usage: go-getter render-pack <pack-id> --answers <file> [--project <dir>] [--dry-run]');
     return 2;
   }

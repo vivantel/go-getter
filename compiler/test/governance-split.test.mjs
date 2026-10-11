@@ -6,7 +6,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSyn
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { planRender, applyRender } from '../src/render.mjs';
 import { adoptedPacks } from '../src/manifest.mjs';
 import { adoptedArtifacts, currentAnswers } from '../src/reconfigure.mjs';
@@ -94,3 +94,26 @@ for (const { pack } of versions) {
     }
   });
 }
+
+test('render-pack and reconfigure on the retired pack id say where its questions went, and the old answers file works for each new pack', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-gov-retired-'));
+  try {
+    mkdirSync(path.join(dir, 'docs/skills'), { recursive: true });
+    writeFileSync(path.join(dir, 'docs/skills/tags.md'), TAGS);
+    const file = path.join(dir, 'answers.json');
+    writeFileSync(file, JSON.stringify({ answers: answersOf(versions[1].pack), acceptedBy: 't', date: '2026-10-11' }));
+    const bin = path.join(root, 'compiler/bin/go-getter.mjs');
+    for (const command of ['render-pack', 'reconfigure']) {
+      const run = spawnSync('node', [bin, command, 'governance', '--answers', file, '--project', dir, '--dry-run'], { encoding: 'utf8' });
+      assert.notEqual(run.status, 0);
+      assert.match(run.stderr, /pack "governance" was split into/);
+      for (const id of GOVERNANCE_IDS) assert.match(run.stderr, new RegExp(id));
+    }
+    for (const id of GOVERNANCE_IDS) {
+      const run = spawnSync('node', [bin, 'render-pack', id, '--answers', file, '--project', dir, '--dry-run'], { encoding: 'utf8' });
+      assert.equal(run.status, 0, run.stderr);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
