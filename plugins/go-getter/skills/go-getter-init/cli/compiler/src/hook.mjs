@@ -250,7 +250,7 @@ function identityGate(project, entry, payload, host) {
 
 // A `use` path may be named only by a call that is exactly `go-getter secret run`, and a `sink` path only by one that is
 // exactly `go-getter secret put` (decisions 0072 and 0107); every other call that names one is denied like a `deny` path.
-// Why a call may not change or open the user's approvals, or null: only a person adds or revokes one (a forged approval would let
+// Why a call may not change or open the user's approvals or run record, or null: only a person adds or revokes an approval or starts or ends a run (a forged approval would let
 // any command use a secret), and the store is not for tools to open.
 function approvalsStoreRefusal(project, payload) {
   const command = shellCommand(payload);
@@ -258,6 +258,8 @@ function approvalsStoreRefusal(project, payload) {
     for (const words of commandWords(command) ?? []) {
       const call = goGetterCall(words, { cwd: project });
       if (call?.args[0] === 'approvals' && ['add', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do with a secret, so a person runs it; ask the user to run it themselves`;
+      // A run changes what an agent may do without asking (decision 0130): a person starts and ends it.
+      if (call?.args[0] === 'run' && ['start', 'end'].includes(call.args[1])) return `blocked: go-getter run ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
     }
   }
   const store = storeDir();
