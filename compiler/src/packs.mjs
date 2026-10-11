@@ -55,6 +55,11 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
   if (errors.length) return errors;
   if (dirName && pack.id !== dirName) errors.push(`$.id: "${pack.id}" must equal its directory "${dirName}"`);
   if (pack.family === 'harness' && !pack.components?.length) errors.push('$.components: harness packs must list the components they cover');
+  if (pack.replaces) {
+    const own = new Set(pack.questions.map((q) => q.id));
+    if (pack.replaces.pack === pack.id) errors.push('$.replaces.pack: a pack cannot replace itself');
+    for (const q of pack.replaces.questions) if (!own.has(q)) errors.push(`$.replaces.questions: "${q}" is not a question of this pack`);
+  }
   for (const r of pack.requires ?? []) if (knownPacks && !knownPacks.has(r)) errors.push(`$.requires: unknown pack "${r}"`);
 
   const questions = new Map();

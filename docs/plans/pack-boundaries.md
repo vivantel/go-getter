@@ -40,17 +40,17 @@ Do: list every place that names the `governance` pack or one of its questions (p
 Done-when: the decision exists, the inventory is in the plan, and steps 2 and 3 name every file they change.
 Result, 2026-10-11: decision 0132 and the inventory above; the split is mechanical (no output reads a question outside its group).
 
-### 2 Let a pack take over a retired pack's answers — [ ]
+### 2 Let a pack take over a retired pack's answers — [x]
 Issue: #136
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/pack-takeover.test.mjs`
-Do: add `replaces` to `compiler/schemas/pack.schema.json` and `compiler/src/packs.mjs`, and the relabel pre-step of decision 0132 to `compiler/src/update.mjs` (with `reconfigure.mjs` and `render.mjs` unchanged unless the tests show otherwise), so a project adopted at `governance@0.5.0` is read as answering the new packs, the old generated artifacts are retired as `update` already retires a decision whose question was removed (the gap recorded in the v0.2 plan follow-ups), and nothing is clobbered (`owned-files-never-clobbered`). Test with answer files and adoptions from every released governance version.
-Done-when: tests show each old governance version updating to the new packs with the same answers, no question re-asked, a modified owned file left alone without `--force`, and the old files retired.
+Do: add `replaces` to `compiler/schemas/pack.schema.json` and `compiler/src/packs.mjs`, and the relabel pre-step of decision 0132 to `compiler/src/update.mjs` (with `reconfigure.mjs` and `render.mjs` unchanged unless the tests show otherwise), so a project adopted at `governance@0.5.0` is read as answering the new packs, the old generated artifacts are retired as `update` already retires a decision whose question was removed (the gap recorded in the v0.2 plan follow-ups), and nothing is clobbered (`owned-files-never-clobbered`).
+Done-when: tests (with a synthetic retired pack, since the real split is step 3) show a project moving to the packs that took it over with the same answers, no question re-asked, an owner-edited decision body kept, a question no pack took over left and reported, a second update changing nothing, and the schema refusing a bad `replaces`. The test over every released governance version moves to step 3.
 
 ### 3 Split `governance` into three packs — [ ]
 Issue: #137
 Class: implement · Effort: high · Needs: 2 · Check: `npm test && npm run check:packs && npm run check:generated`
 Do: create the three packs from `src/packs/governance/pack.json`, keeping question ids, defaults, recommended options and `since` values, with golden files, each declaring `replaces` for `governance`; delete `src/packs/governance/` (decision 0132). Adopt the new packs in this repository (regenerate `docs/` decisions and guardrails, `AGENTS.md`, host files), update `INSTALLING.md`, the README pack table and the interview skill, and note it in the changelog.
-Done-when: tests and checks pass, this repository's adoption renders the same guardrails and settings as before the split, and `go-getter update` on a fixture project adopted at 0.5.0 gives the same enforcement.
+Done-when: tests and checks pass, a project adopted at each released governance version (rebuilt from the pack at each tag) updates to the new packs with the same answers and nothing asked again, this repository's adoption renders the same guardrails and settings as before the split, and `go-getter update` on a fixture project adopted at 0.5.0 gives the same enforcement.
 
 ### 4 Neutral gated-command ids with a provider table ‖ — [ ]
 Issue: #138

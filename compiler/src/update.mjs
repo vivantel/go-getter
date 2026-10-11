@@ -2,12 +2,13 @@
 // re-rendered with their recorded answers (new questions take their default, 0085), then the host outputs are applied
 // from the manifest. The plan is made by running the update on a scratch copy of the project and diffing the two trees,
 // so the printed plan is exactly what a real run writes.
-import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { applyPlan, bootstrap, planApply } from './apply.mjs';
+import { readArtifacts } from './artifacts.mjs';
 import { parseFrontmatter, stringifyFrontmatter } from './frontmatter.mjs';
 import { SCHEMA, adoptedPacks, readManifest } from './manifest.mjs';
 import { gitSetting } from './reconcile.mjs';
@@ -32,7 +33,39 @@ const compareVersions = (a, b) => {
   return 0;
 };
 
+// A pack that took over questions of a retired pack (`replaces`, decision 0132) adopts the retired pack's artifacts for
+// those questions: only `generated-by` changes, to the new pack at the version the project adopted, so nothing is asked
+// again and `since` still tells which questions are new. The ordinary re-render then does the rest.
+function relabelTakenOver(project, root, notes) {
+  const packsDir = path.join(root, 'src/packs');
+  if (!existsSync(packsDir)) return;
+  const shipped = new Set(readdirSync(packsDir));
+  const takeovers = [];
+  for (const id of shipped) {
+    const file = path.join(packsDir, id, 'pack.json');
+    if (existsSync(file)) {
+      const { replaces } = loadPack(file);
+      if (replaces && !shipped.has(replaces.pack)) takeovers.push({ id, ...replaces });
+    }
+  }
+  for (const a of readArtifacts(project)) {
+    if (!['active', 'draft'].includes(a.data.status)) continue;
+    const g = a.data['go-getter'];
+    const m = /^([^@]+)@(.+)$/.exec(String(g?.['generated-by'] ?? ''));
+    if (!m) continue;
+    const to = takeovers.find((t) => t.pack === m[1] && t.questions.includes(g['pack-answer']));
+    if (!to) {
+      if (takeovers.some((t) => t.pack === m[1])) notes.push(`${a.file.split(path.sep).join('/')}: its question "${g['pack-answer']}" is taken over by no pack; left as it is`);
+      continue;
+    }
+    const file = path.join(project, a.file);
+    const { data, body } = parseFrontmatter(readFileSync(file, 'utf8'));
+    writeFileSync(file, stringifyFrontmatter({ ...data, 'go-getter': { ...g, 'generated-by': `${to.id}@${m[2]}` } }, body));
+  }
+}
+
 function reRender(project, root, date, notes) {
+  relabelTakenOver(project, root, notes);
   for (const id of Object.keys(adoptedPacks(project))) {
     const packFile = path.join(root, 'src/packs', id, 'pack.json');
     if (!existsSync(packFile)) {
