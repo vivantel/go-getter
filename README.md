@@ -27,6 +27,7 @@ Eight harness packs and one SDLC pack, each a short guided interview with a reco
 | `cost-routing` | 11 Cost & model routing | task classes, starting tiers, escalation bound, headless spend cap, prompt-cache lifetime |
 | `telemetry` | 12 Observability | a metadata-only step log, its retention and export |
 | `git-workflow` | SDLC (no component) | the branch name pattern, whether the default branch is protected by a git hook and CI, whether `Refs:` trailers are required, encouraged or off; Conventional Commit subjects, squash merge with green CI and one change per branch and pull request are fixed |
+| `tracker` | SDLC (no component) | whether plan steps live in the plan files or in GitHub Issues, and whether go-getter may create, comment on and close issues (off, ask or allow) |
 
 ### Harness coverage
 
