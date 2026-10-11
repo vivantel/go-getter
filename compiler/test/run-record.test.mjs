@@ -102,7 +102,8 @@ test('start refuses an unknown step, a missing plan, a bad grant and a bad timeo
   const s = setup();
   try {
     assert.match(s.cli('start', 'docs/plans/p.md', '--through', '9').stderr, /no step 9/);
-    assert.match(s.cli('start', 'docs/plans/p.md', '--grant', 'git-push-force').stderr, /--grant takes outward catalog ids/);
+    assert.match(s.cli('start', 'docs/plans/p.md', '--grant', 'git-push-force').stderr, /--grant takes approvable command shapes/);
+    assert.match(s.cli('start', 'docs/plans/p.md', '--grant', 'release-create').stderr, /always need a human/);
     assert.match(s.cli('start', 'docs/plans/p.md', '--hours', '500').stderr, /at most 72 hours/);
     assert.match(s.cli('start', 'docs/plans/missing.md').stderr, /no plan at/);
     assert.equal(s.cli('start').status, 2);

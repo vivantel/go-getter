@@ -31,7 +31,7 @@ Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/tes
 Do: let a catalog id in `compiler/src/gate.mjs` be approved by a remembered per-user approval (first use asks on a host whose hook can ask) or by the active run record (any host). Add per-shape preconditions run at each use: `pr-merge` needs green required checks, the default branch as base and a pull request tied to a step in the run's range; a failure asks again or ends the run. `hitl` gains a question for the shapes a run may grant, with a recommended default.
 Done-when: tests show a merge allowed with green checks in range, refused for a red pull request, a pull request outside the range and a non-default base, silent after the first approval, and a host that cannot ask using the run record only.
 
-### 3 The always-human set and tracker scope — [ ]
+### 3 The always-human set and tracker scope — [x]
 Issue: #128
 Class: implement · Effort: medium · Needs: 1 · Check: `node --test compiler/test/run-limits.test.mjs`
 Do: in a run, force-push, history rewrite, shared-branch deletion, repository settings or branch protection changes, tags, releases and publishing stay gated regardless of the record or a remembered approval. `plan issue comment|close` on a step in the range are free; `create` and any other step ask (0124).

@@ -55,6 +55,7 @@ const ENTRIES = [
   { id: 'sql-destructive', class: 'irreversible', description: 'drops, truncates or deletes database rows', raw: true,
     pattern: /^(?:psql|mysql|sqlite3)(?=\s|$)[\s\S]*?\b(?:DROP\s+\w+|TRUNCATE|DELETE\s+FROM)\b/i,
     examples: { match: ['psql -c "DROP TABLE users"', 'mysql -e "truncate orders"', 'sqlite3 app.db "delete from t where 1"'], noMatch: ['psql -c "select 1"', 'echo "DROP TABLE x"'] } },
+  { id: 'repo-settings', class: 'irreversible', description: 'changes repository settings, branch protection, secrets or access', provided: true },
   { id: 'git-push', class: 'outward', description: 'publishes commits to a remote',
     pattern: new RegExp(`^${GIT}push${END}`),
     examples: { match: ['git push', 'git push origin main', 'git -C app push'], noMatch: ['git status', 'git pull', 'git stash push', 'echo "git push"'] } },
@@ -76,6 +77,11 @@ const ENTRIES = [
 // github). A provider that does not offer an action is a gap to fill here, not a silent miss.
 const PROVIDERS = {
   github: {
+    'repo-settings': {
+      // `gh repo edit|delete|...`, `gh secret|variable set|delete`, and `gh api` writes to settings-like endpoints.
+      pattern: new RegExp(`^gh\\s+(?:repo\\s+(?:edit|delete|archive|unarchive|rename|transfer)|(?:secret|variable)\\s+(?:set|delete|remove)|ruleset\\s+(?:create|edit|delete)|api(?=${ARGS}\\s+(?:-X|--method)(?:\\s+|=)(?:POST|PUT|PATCH|DELETE)${END})(?=${ARGS}\\s+\\S*(?:/protection|/rulesets|/collaborators|/hooks|/keys|/actions|/environments|/pages|/autolinks|/transfer|orgs/)\\S*)${END})`),
+        native: ['gh repo edit *', 'gh repo delete *', 'gh repo archive *', 'gh repo unarchive *', 'gh repo rename *', 'gh repo transfer *', 'gh secret set *', 'gh secret delete *', 'gh secret remove *', 'gh variable set *', 'gh variable delete *', 'gh ruleset create *', 'gh ruleset edit *', 'gh ruleset delete *', 'gh api -X *', 'gh api --method *', 'gh api * -X *', 'gh api * --method *'],
+      examples: { match: ['gh repo edit --default-branch dev', 'gh repo delete x --yes', 'gh secret set TOKEN', 'gh api -X PUT repos/o/r/branches/main/protection', 'gh api repos/o/r/rulesets -X POST', 'gh api --method DELETE repos/o/r/hooks/1'], noMatch: ['gh repo view', 'gh repo clone o/r', 'gh secret list', 'gh api repos/o/r/pulls', 'gh api -X GET repos/o/r/branches/main/protection', 'gh api -X POST repos/o/r/issues/1/comments'] } },
     'pr-create': { pattern: /^gh\s+pr\s+create(?=\s|$)/, native: ['gh pr create *'],
       examples: { match: ['gh pr create --fill', 'gh pr create'], noMatch: ['gh pr view 5', 'gh pr list', 'gh pr merge 5'] } },
     'pr-merge': { pattern: /^gh\s+pr\s+merge(?=\s|$)/, native: ['gh pr merge *'],

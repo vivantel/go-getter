@@ -5,12 +5,11 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { activeRun, lastRun, startRun, endRun, DEFAULT_HOURS } from '../runs/record.mjs';
 import { readPlan, repoRoot } from '../plan.mjs';
-import { CATALOG, normaliseFree } from '../gate.mjs';
+import { APPROVABLE, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
 import { adoptedData } from '../governance.mjs';
 
 const USAGE = 'usage: go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | end';
-const OUTWARD = CATALOG.filter((e) => e.class === 'outward').map((e) => e.id);
 
 function parseStart(rest) {
   const o = { grants: [] };
@@ -61,8 +60,8 @@ export default function runCommand({ args }) {
       if (!steps.length) throw new Error('no step is left to do in that range');
       // Without --grant, the shapes the project's hitl answer lists.
       const grants = normaliseFree(o.grants.length ? o.grants : [].concat(adoptedData(project, 'run-grants') ?? []));
-      const bad = grants.filter((g) => !OUTWARD.includes(g));
-      if (bad.length) throw new Error(`--grant takes outward catalog ids (${OUTWARD.join(', ')}), not ${bad.join(', ')}`);
+      const bad = grants.filter((g) => !APPROVABLE.includes(g));
+      if (bad.length) throw new Error(`--grant takes approvable command shapes (${APPROVABLE.join(', ')}), not ${bad.join(', ')}; tags, releases, publishing and history rewrites always need a human`);
       const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd: loadPolicy(project)?.spendCapUsd ?? null, grants });
       console.log(`run started: ${describe(record)}`);
       return 0;

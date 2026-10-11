@@ -15,7 +15,7 @@ import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
 import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape } from './secrets/approvals.mjs';
-import { shapeAllowance } from './runs/shapes.mjs';
+import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
@@ -244,6 +244,7 @@ function identityGate(project, entry, payload, host) {
   for (const words of parsed) {
     const call = goGetterCall(words, { cwd: project });
     const sub = call && subs.find((x) => x.split(' ').every((w, i) => call.args[i] === w));
+    if (sub && ['plan issue comment', 'plan issue close'].includes(sub) && trackerWriteInRun(project, call.args)) continue; // a step of the active run
     if (sub) return decide(words.join(' '), sub);
   }
   return null;
