@@ -56,6 +56,20 @@ test('a staged secret fails naming file, line and kind, and never prints the val
   }
 });
 
+test('an Atlassian API token on an added line is flagged by kind', () => {
+  const dir = repo();
+  try {
+    write(dir, 'src/jira.js', `const t = "ATATT3xFfGF0${'a1B2c3D4e5'.repeat(5)}";\n`);
+    git(dir, 'add', '-A');
+    const r = scan(dir);
+    assert.equal(r.ok, false);
+    assert.match(r.message, /src\/jira\.js:1 atlassian/);
+    assert.ok(!r.message.includes('ATATT3'));
+  } finally {
+    cleanup(dir);
+  }
+});
+
 test('a labelled assignment is found, and the allow marker on the line skips it', () => {
   const dir = repo();
   try {

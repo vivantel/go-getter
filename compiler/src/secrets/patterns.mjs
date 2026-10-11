@@ -16,6 +16,7 @@ export const PATTERNS = [
   { kind: 'slack', source: '\\bxox[abposr]-[A-Za-z0-9-]{10,}', redact: true },
   { kind: 'npm', source: '\\bnpm_[A-Za-z0-9]{36}', redact: true },
   { kind: 'anthropic', source: '\\bsk-ant-[A-Za-z0-9_-]{20,}', redact: true },
+  { kind: 'atlassian', source: '\\bATATT[A-Za-z0-9_=-]{40,}', redact: true },
   { kind: 'stripe', source: '\\bsk_live_[A-Za-z0-9]{20,}', redact: true },
   { kind: 'jwt', source: '\\beyJ[A-Za-z0-9_-]{8,}\\.eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}', redact: false },
   // `secret|token|password|passwd|api_key` (after any prefix such as `db_`, with a suffix such as `_value`) followed by `=` or `:` and a quoted or bare

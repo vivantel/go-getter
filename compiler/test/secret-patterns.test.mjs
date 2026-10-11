@@ -15,12 +15,13 @@ const fake = {
   npm: 'npm_' + 'a1B2'.repeat(9),
   anthropic: 'sk-ant-' + 'a1B2c3D4'.repeat(3),
   stripe: 'sk_live_' + 'a1B2c3D4'.repeat(3),
+  atlassian: 'ATATT3xFfGF0' + 'a1B2c3D4e5'.repeat(5),
   jwt: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r_wW1gFWFOEjXk',
   key: '-----BEGIN RSA PRIVATE KEY-----\nMIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8Qu\n-----END RSA PRIVATE KEY-----',
 };
 
 test('each token format is found, with its kind', () => {
-  const expected = { aws: 'aws', google: 'google', github: 'github', githubPat: 'github', gitlab: 'gitlab', slack: 'slack', npm: 'npm', anthropic: 'anthropic', stripe: 'stripe', jwt: 'jwt', key: 'private-key' };
+  const expected = { aws: 'aws', google: 'google', github: 'github', githubPat: 'github', gitlab: 'gitlab', slack: 'slack', npm: 'npm', anthropic: 'anthropic', stripe: 'stripe', atlassian: 'atlassian', jwt: 'jwt', key: 'private-key' };
   for (const [name, kind] of Object.entries(expected)) assert.deepEqual(kinds(`x ${fake[name]} y`), [kind], name);
 });
 
