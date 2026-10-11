@@ -34,7 +34,7 @@ At each plan phase boundary run `go-getter:lint`; at each release run `go-getter
 
 ## Remaining work
 
-Step status lives in `docs/plans/v0.2-agent-core-hardening.md`. Finished plans are in `docs/plans/archive/`. Update the markers as you go.
+Open work is this repository's GitHub issues: each pending step in `docs/plans/` names its issue (`Issue: #N`) and keeps the step text and its done-when. `go-getter plan next|status` read the issues' state. Create and close issues only with `go-getter plan issue` (a human approves each write). Finished plans are in `docs/plans/archive/`. Update the markers as you go.
 
 <!-- go-getter:start -->
 ## Guardrails

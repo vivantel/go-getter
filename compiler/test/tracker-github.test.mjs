@@ -184,7 +184,8 @@ test('plan status shows the issue state, the mismatch and the stale label; plan 
     const run = (...a) => spawnSync(process.execPath, [cli, 'plan', ...a, 'docs/plans/p.md'], { cwd: p.dir, encoding: 'utf8', env: process.env });
     const status = run('status');
     assert.equal(status.status, 0, status.stderr);
-    assert.match(status.stdout, /\[~\] 1 One \(mismatch: the plan marks the step done but its issue is open\)/);
+    assert.match(status.stdout, /\[~\] 1 One #11 \(mismatch: the plan marks the step done but its issue is open\)/);
+    assert.match(run('next').stdout, /no step is ready/, 'step 2 waits for step 1, whose issue is open');
     const start = run('start', '2');
     assert.equal(start.status, 1);
     assert.match(start.stderr, /step 2 needs 1, not done yet/);
