@@ -115,6 +115,6 @@ id,title,tags,status
 0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",active
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
 0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
-0128-post-v0.3-milestone-sequence,"v0.4 is the autonomous run contract with approve-once, then testing and memory; adapters, helpers and MCP follow","milestones, roadmap, harness",active
 0129-pack-boundaries-neutral-ids-and-a-retrieval-pack,"Each concern has one pack, provider ids are neutral, and memory beyond the knowledge base is a provider-neutral retrieval pack","practice-packs, roadmap, architecture",active
 0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops,"An autonomous run is a plan range the operator starts, with approve-once for outward commands, preconditions checked at use and bounded stops","hooks, enforcement, roadmap, practice-packs",active
+0131-pack-boundaries-then-the-run-approvals-then-mcp,"Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers","milestones, roadmap, harness",active
