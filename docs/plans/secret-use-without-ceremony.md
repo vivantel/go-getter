@@ -42,7 +42,7 @@ Class: implement · Needs: 3 · Check: `node --test compiler/test/approvals.test
 Do: add `compiler/src/secrets/approvals.mjs`: a file under the user's state directory (`$XDG_STATE_HOME`, else `~/.local/state`, overridable by `GO_GETTER_HOME` for tests), keyed by the project's real path, written atomically with mode 0600, holding `{ command, path, hash, approvedAt, host }` and never a value. `approved(project, command, path)` is true only when the stored hash equals the current `fileSetHash`. Add `go-getter approvals list|add|revoke` (add takes the command and path; list shows what each covers and whether it is current or stale).
 Done-when: tests show an approval current, then stale after a file in its set changes, an approval for another project or another path not matching, revoke removing it, the file mode 0600 and no value in it.
 
-### 5a Which hosts can prompt from the pre-tool hook — [ ]
+### 5a Which hosts can prompt from the pre-tool hook — [x]
 Issue: #107
 Class: explore · Needs: none · Check: `npm run check:guardrails`
 Do: for each of the seven hosts, from vendor documentation, record in its integration-surface fact whether a pre-tool hook can ask the human to approve a call (not only allow or deny), the payload shape for it and whether a later run of the same call needs another prompt. Mark what the documentation does not settle as not confirmed, with source and date.

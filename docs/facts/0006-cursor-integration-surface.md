@@ -51,6 +51,10 @@ No OTel export documented; usage visible in the dashboard. No hard spend cap doc
 ## Node availability
 CLI installs via native script (macOS, Linux, WSL, Windows); Node not required.
 
+## Pre-tool hook approval prompt (accessed 2026-10-11)
+
+The `beforeShellExecution` hook lists `permission: allow | deny | ask`, but the `preToolUse` hook lists only allow and deny (`ask` is accepted by the schema and not enforced), and community reports say a hook's `ask` is ignored in every shell path and only `deny` is enforced reliably (Cursor forum threads, several months old, the team acknowledged them). A malformed response is reported to be treated as allow, and exit codes other than 2 fail open. **Not confirmed**: go-getter denies and hands over; revisit when Cursor documents authoritative hook verdicts.
+
 ## Not confirmed
 - Whether CLI `permissions` apply to the IDE agent.
 - BYOK and custom/local endpoints.
@@ -59,3 +63,5 @@ CLI installs via native script (macOS, Linux, WSL, Windows); Node not required.
 
 ## Sources (accessed 2026-10-04)
 https://cursor.com/docs/rules · https://cursor.com/docs/subagents · https://cursor.com/docs/hooks · https://cursor.com/docs/plugins · https://cursor.com/docs/skills · https://cursor.com/docs/cli/reference/permissions · https://cursor.com/docs/cli/reference/parameters · https://cursor.com/docs/cli/installation · https://cursor.com/docs/models-and-pricing · https://cursor.com/help/customization/ignore-files
+- https://cursor.com/docs/hooks (accessed 2026-10-11)
+- https://forum.cursor.com/t/beforeshellexecution-hook-permissions-allow-ask-ignored-allow-list-takes-precedence/144244 (accessed 2026-10-11)

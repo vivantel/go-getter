@@ -51,6 +51,10 @@ Not exposed.
 ## Node availability
 CLI: npm install needs Node ≥22; also Homebrew cask, WinGet, install script, direct download. Runtime Node need for non-npm installs not stated.
 
+## Pre-tool hook approval prompt (accessed 2026-10-11)
+
+The Copilot SDK documents `permissionDecision: allow | deny | ask` for its pre-tool-use hook (`ask` prompts in interactive mode), and a third-party report says Copilot CLI from 1.0.66 honours `ask` and that `allow` suppresses the approval prompt; VS Code reads the decision nested under `hookSpecificOutput`, a different shape. A community guide claims only `deny` is processed, which contradicts the vendor page and is likely outdated. **Not confirmed** for the CLI payload this repository writes (fact 0008, hook payload unconfirmed): go-getter denies and hands over until the payload and `ask` are verified there.
+
 ## Not confirmed
 - Content exclusion vs CLI/agent mode: one page says CLI and IDE agent mode do **not** support it, another says the CLI respects it. Treat as unenforced until verified.
 - Hook input fields: the payload has `toolName` and `toolArgs` (camelCase) or `tool_name` and `tool_input` (VS Code format), but the docs do not say which field of them holds a shell command. Whether hooks can modify arguments.
@@ -59,3 +63,5 @@ CLI: npm install needs Node ≥22; also Homebrew cask, WinGet, install script, d
 
 ## Sources (accessed 2026-10-04)
 https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-custom-agents-for-cli · https://docs.github.com/en/copilot/reference/custom-agents-configuration · https://docs.github.com/en/copilot/concepts/agents/hooks · https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-creating · https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference · https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills · https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli · https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions · https://docs.github.com/en/copilot/concepts/context/content-exclusion · https://docs.github.com/en/copilot/customizing-copilot/customizing-or-disabling-the-firewall-for-copilot-coding-agent
+- https://docs.github.com/en/copilot/how-tos/copilot-sdk/hooks/pre-tool-use (accessed 2026-10-11)
+- https://github.com/rtk-ai/rtk/issues/3037 (accessed 2026-10-11)
