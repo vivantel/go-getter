@@ -39,11 +39,12 @@ Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: `plan next`, `refs` and `coverage` as tools a host can call; a surface only, with no change to the helper contract (decision 0119). Low priority.
 Done-when: the interview is recorded and a plan with steps exists for it.
 
-### L.14 Pack boundaries and neutral ids — [ ]
+### L.14 Pack boundaries and neutral ids — [x]
 Issue: #123
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: plan the work of decision 0129 items 1 to 3: split `governance` into path and secret use, sanitization, and data policy, with answer migration (old answer files keep rendering); provider-neutral gated-command ids with `gh-pr-*` as aliases; fold coverage, debugging and review into `verification-gate` and `orchestration`. Runs before L.11 and L.10 build on the old shapes.
 Done-when: a plan with steps exists, one step per pack change, each with its done-when.
+Result, 2026-10-11: the build is planned in `docs/plans/pack-boundaries.md` (six steps; step 1 settles the pack names and the migration of existing adoptions).
 
 ### L.15 Retrieval pack, virage first — [ ]
 Issue: #124
