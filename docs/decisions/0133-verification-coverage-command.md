@@ -1,10 +1,11 @@
 ---
 id: 0133-verification-coverage-command
 title: The verification coverage command is ""
-status: draft
+status: active
 date: 2026-10-11
 tags: [practice-packs, verification, harness]
 track: process
+accepted-by: sergemso
 go-getter:
   verify-coverage-command: ""
   generated-by: verification-gate@0.4.0
