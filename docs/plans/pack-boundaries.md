@@ -53,11 +53,12 @@ Do: create the three packs from `src/packs/governance/pack.json`, keeping questi
 Done-when: tests and checks pass, a project adopted at each released governance version (rebuilt from the pack at each tag) updates to the new packs with the same answers and nothing asked again, this repository's adoption renders the same guardrails and settings as before the split, and `go-getter update` on a fixture project adopted at 0.5.0 gives the same enforcement.
 Result, 2026-10-11: three packs at 0.6.0, `governance` deleted, this repository re-adopted by `go-getter update` (only `generated-by` and the manifest changed; no host file or AGENTS.md diff). `compiler/test/governance-split.test.mjs` rebuilds an adoption at each released governance version (0.2.0, 0.5.0) and updates it. Known gap, not caused by the split: the `provider` answer of `internal-data: single-provider` is recorded by no artifact, so `update` cannot re-render that pack for such a project (it says so and leaves it).
 
-### 4 Neutral gated-command ids with a provider table ‖ — [ ]
+### 4 Neutral gated-command ids with a provider table ‖ — [x]
 Issue: #138
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/gate.test.mjs compiler/test/hitl-pack.test.mjs`
 Do: in `compiler/src/gate.mjs` rename the entries to the action (`pr-create`, `pr-merge`, `pr-close`, `release-create`, `comment-post`; `git-push`, `git-tag-create`, `package-publish` already are) and add a provider table, GitHub first, giving each action its command pattern, examples and native ask globs. `gh-pr-*`, `gh-pr`, `gh-release-create` and `gh-comment` stay accepted as aliases in `free-commands` and `extra-patterns`. `hitl` gains a minor version with neutral wording; the guardrail `gated-actions-need-human-approval` and decision 0127 keep their meaning, and this repository's answer keeps working unchanged.
 Done-when: tests show each neutral id matching the GitHub commands, every alias accepted, an unknown provider id rejected with a clear message, and the native ask rules unchanged for this repository.
+Result, 2026-10-11: ids renamed, `PROVIDERS`/`catalogFor` in `compiler/src/gate.mjs`, `provider=` arg on `gate-command`, hitl 0.4.0; this repository's host files did not change. `extra-patterns` holds command text, not ids, so nothing there needed an alias.
 
 ### 5 One owner for coverage and review ‖ — [ ]
 Issue: #139
