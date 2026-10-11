@@ -37,12 +37,12 @@ Do: create the three packs from `src/packs/governance/pack.json`, keeping questi
 Done-when: tests and checks pass, this repository's adoption renders the same guardrails and settings as before the split, and `go-getter update` on a fixture project adopted at 0.5.0 gives the same enforcement.
 
 ### 4 Neutral gated-command ids with a provider table — [ ]
-Class: implement · Effort: medium · Needs: none · ‖ with 2, 3 · Check: `node --test compiler/test/gate.test.mjs compiler/test/hitl-pack.test.mjs`
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/gate.test.mjs compiler/test/hitl-pack.test.mjs`
 Do: in `compiler/src/gate.mjs` rename the entries to the action (`pr-create`, `pr-merge`, `pr-close`, `release-create`, `comment-post`; `git-push`, `git-tag-create`, `package-publish` already are) and add a provider table, GitHub first, giving each action its command pattern, examples and native ask globs. `gh-pr-*`, `gh-pr`, `gh-release-create` and `gh-comment` stay accepted as aliases in `free-commands` and `extra-patterns`. `hitl` gains a minor version with neutral wording; the guardrail `gated-actions-need-human-approval` and decision 0127 keep their meaning, and this repository's answer keeps working unchanged.
 Done-when: tests show each neutral id matching the GitHub commands, every alias accepted, an unknown provider id rejected with a clear message, and the native ask rules unchanged for this repository.
 
 ### 5 One owner for coverage and review — [ ]
-Class: implement · Effort: medium · Needs: none · ‖ with 2, 3, 4 · Check: `node --test compiler/test/verification-gate-pack.test.mjs compiler/test/orchestration-pack.test.mjs`
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/verification-gate-pack.test.mjs compiler/test/orchestration-pack.test.mjs`
 Do: add to `verification-gate` the questions for a coverage command and a coverage bar (a threshold or "no regression"), each with a recommended default and wired into the gate and the local and CI duty split (decision 0071). State in both packs' prompts and in `INSTALLING.md` that `verification-gate` owns the review bar and `orchestration` owns only the reviewer role (read-only, `reviewer-read-only`); remove any question that duplicates the other. Debugging is not built here: it stays with the v0.4 testing item and its interview.
 Done-when: golden tests pass, a project without the new answers renders as before, and the two packs share no question about the same thing.
 
