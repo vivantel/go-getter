@@ -7,10 +7,10 @@ Written 2026-10-11 for backlog item L.14 (`docs/plans/backlog.md`, issue #123) f
 ## What you are building (read first)
 
 - **`governance` becomes three packs**, one concern each (step 3). By the questions it asks today:
-  - `restricted-data`: `restricted-paths`, `restricted-modes`, `enforcement`, `use-commands`, `sink-sources`.
+  - `restricted-data`: `restricted-paths`, `restricted-modes`, `enforcement`, `use-commands`, `sink-sources`, `restricted-hosts`.
   - `sanitization`: `secret-scan`, `scan-allow-paths`, `pii-masking`, `pii-extra`.
-  - `data-policy`: `internal-data`, `provider`, `confidential-zdr`, `prompt-logging`, `restricted-hosts`.
-  The names are proposals; step 1 settles them. Runtime code reads adopted data by key (`adoptedData`, `compiler/src/governance.mjs`), not by pack id, so the split is about pack files, generated decisions and guardrails, answer migration and docs, not the hook runtime.
+  - `data-policy`: `internal-data`, `provider`, `confidential-zdr`, `prompt-logging`.
+  Names and grouping are settled by decision 0132 (step 1). Runtime code reads adopted data by key (`adoptedData`, `compiler/src/governance.mjs`), not by pack id, so the split is about pack files, generated decisions and guardrails, answer migration and docs, not the hook runtime.
 - **Neutral gated-command ids** (step 4): the catalog in `compiler/src/gate.mjs` names the action, and a provider table (GitHub first) supplies the command patterns and native ask globs. `gh-pr-*` ids and the `gh-pr` alias keep working.
 - **One owner per concern** (step 5): coverage in `verification-gate`; review owned by `verification-gate` (the bar) with `orchestration` keeping only the reviewer role.
 - **Families are already declared** (`harness` and `sdlc` in each `pack.json`); step 6 makes the docs say it and checks harness packs for software-only wording.
@@ -19,24 +19,37 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 **Rules the design fixes (do not re-decide):** an existing answer file and an existing adoption keep working after the split and after `update`; no answer is lost or asked again; an id that exists today stays accepted as an alias; no new runtime dependency.
 
+## Inventory (step 1, 2026-10-11)
+
+Decision `docs/decisions/0132-governance-splits-into-three-packs-and-existing-adoptions-are-relabelled.md` fixes the names, the takeover and the relabel. Where `governance` is named:
+
+- **Pack**: `src/packs/governance/pack.json` (13 questions, outputs only inside one group each); the vendored copy under `plugins/go-getter/skills/go-getter-init/cli/` is rebuilt by `npm run build`.
+- **Compiler**: `compiler/src/packs.mjs` (`validatePack`, directory name must equal id; add `replaces`) and `compiler/schemas/pack.schema.json`; `compiler/src/update.mjs` (`reRender` loops `adoptedPacks`; relabel goes before it); `compiler/src/reconfigure.mjs` (`adoptedArtifacts` matches `generated-by` by `<id>@`); `compiler/src/manifest.mjs` (`adoptedPacks` reads `generated-by`); `compiler/src/coverage.mjs` (lists packs by `components`). `compiler/src/governance.mjs` and every `adoptedData` caller read by key and need no change.
+- **Tests**: `compiler/test/governance-pack.test.mjs` (pack, golden files, coverage row `governance@...` at lines 151-154), `cost-routing-pack.test.mjs` (loads the pack), `self-adoption.test.mjs` (fixtures only), `pack-answers-roundtrip.test.mjs`, `pack-renamed.test.mjs` (the rename mechanism to model on).
+- **This repository**: `.go-getter/manifest.json` (`governance: 0.5.0`) and the artifacts with `generated-by: governance@...`: guardrails `restricted-paths-denied`, `restricted-data-hosts-rule`, `pii-masked-in-tool-output`, `no-secrets-in-added-lines`, `prompt-logging-disabled`; decisions 0045 to 0050, 0077, 0108, 0109, 0113 to 0116.
+- **Docs**: `README.md` (lines 23, 44, 57), `INSTALLING.md` (line 105), `src/skills/go-getter-init/examples.md` (line 17), `docs/skills/tags.md`.
+
+Versions: the new packs start at 0.6.0 and keep each question's `since`.
+
 ---
 
-### 1 Inventory and migration design — [ ]
+### 1 Inventory and migration design — [x]
 Issue: #135
 Class: plan · Effort: medium · Needs: none · Check: `npm run check:plans && npm run check:tags`
 Do: list every place that names the `governance` pack or one of its questions (pack files, `update.mjs`, `reconfigure.mjs`, `render.mjs`, generated decisions and guardrails with `generated-by: governance@...`, this repository's own adoption, tests, docs) with file and line; settle the three pack names and the question each takes; decide how a project that adopted `governance` moves (a pack declares the pack and questions it took over; `update` reads the old adoption and writes the new ones; what happens to the old rendered decisions and guardrails). Record the outcome as a decision that refines 0129 item 2.
 Done-when: the decision exists, the inventory is in the plan, and steps 2 and 3 name every file they change.
+Result, 2026-10-11: decision 0132 and the inventory above; the split is mechanical (no output reads a question outside its group).
 
 ### 2 Let a pack take over a retired pack's answers — [ ]
 Issue: #136
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/pack-takeover.test.mjs`
-Do: add the mechanism step 1 chose to the pack schema and to `update`, `reconfigure` and `render`, so a project adopted at `governance@0.5.0` is read as answering the new packs, the old generated artifacts are retired as `update` already retires a decision whose question was removed (the gap recorded in the v0.2 plan follow-ups), and nothing is clobbered (`owned-files-never-clobbered`). Test with answer files and adoptions from every released governance version.
+Do: add `replaces` to `compiler/schemas/pack.schema.json` and `compiler/src/packs.mjs`, and the relabel pre-step of decision 0132 to `compiler/src/update.mjs` (with `reconfigure.mjs` and `render.mjs` unchanged unless the tests show otherwise), so a project adopted at `governance@0.5.0` is read as answering the new packs, the old generated artifacts are retired as `update` already retires a decision whose question was removed (the gap recorded in the v0.2 plan follow-ups), and nothing is clobbered (`owned-files-never-clobbered`). Test with answer files and adoptions from every released governance version.
 Done-when: tests show each old governance version updating to the new packs with the same answers, no question re-asked, a modified owned file left alone without `--force`, and the old files retired.
 
 ### 3 Split `governance` into three packs — [ ]
 Issue: #137
 Class: implement · Effort: high · Needs: 2 · Check: `npm test && npm run check:packs && npm run check:generated`
-Do: create the three packs from `src/packs/governance/pack.json`, keeping question ids, defaults, recommended options and `since` values, with golden files; keep `governance` as a thin retired pack only if step 1 says so. Adopt the new packs in this repository (regenerate `docs/` decisions and guardrails, `AGENTS.md`, host files), update `INSTALLING.md`, the README pack table and the interview skill, and note it in the changelog.
+Do: create the three packs from `src/packs/governance/pack.json`, keeping question ids, defaults, recommended options and `since` values, with golden files, each declaring `replaces` for `governance`; delete `src/packs/governance/` (decision 0132). Adopt the new packs in this repository (regenerate `docs/` decisions and guardrails, `AGENTS.md`, host files), update `INSTALLING.md`, the README pack table and the interview skill, and note it in the changelog.
 Done-when: tests and checks pass, this repository's adoption renders the same guardrails and settings as before the split, and `go-getter update` on a fixture project adopted at 0.5.0 gives the same enforcement.
 
 ### 4 Neutral gated-command ids with a provider table ‖ — [ ]
