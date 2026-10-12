@@ -123,3 +123,4 @@ id,title,tags,status
 0134-verification-coverage-bar,"Coverage must meet what the coverage command enforces","practice-packs, verification, harness",active
 0135-gated-run-grants,"Outward commands a run or a remembered approval may allow are listed","practice-packs, hooks",active
 0136-host-adapter-interface,"A host adapter answers nine questions as plain data and shares the rest","architecture, compiler, host-agents",draft
+0137-a-run-may-be-started-by-confirmation-at-the-host-prompt,"A run may be started by the agent when a person confirms it at the host prompt","hooks, enforcement, roadmap",draft
