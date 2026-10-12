@@ -16,7 +16,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 Inventory and the adapter interface — [ ]
+### 1 Inventory and the adapter interface — [x]
 Issue: #84
 Class: plan · Needs: none · Check: `npm run check:guardrails`
 Do: list, for each of the seven hosts, every place the compiler and runtime branch on it (apply outputs, agent renderers, hook config and payload parsing, capability row, coverage row, plugin files, session identity); write the table into a new fact and define the adapter interface from it (what a host answers, what is shared). Mark what the three first hosts need and what the deferred four keep.
