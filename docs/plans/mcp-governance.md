@@ -37,7 +37,7 @@ Class: implement · Effort: high · Needs: 2 · Check: `node --test compiler/tes
 Do: add the `mcp-tools` answer (`server:tool` marked read or write). A write call is a shape `mcp:<server>:<tool>` decided by the shape store and the run record like an outward command shape, which needs these changes: the closed `APPROVABLE` list in `compiler/src/gate.mjs` becomes a test that also admits the `mcp:` family; `shapeAllowance` (`runs/shapes.mjs`), `run start --grant` (`commands/run.mjs`) and `approvals allow` (`commands/approvals.mjs`) use it; the `hitl` `run-grants` pattern and option list admit `mcp:<server>:<tool>`; pending first-use approvals key on the tool call (server, tool), not on command text; `checkShape` (`runs/preconditions.mjs`) gets the `mcp:` precondition (server still allowlisted, tool still marked write). First use asks where the hook can ask; where it cannot, `go-getter approvals allow mcp:<server>:<tool>` records it; `run-grants` may list it. An unmarked tool counts as write; a tool on an unlisted server is never granted. `approvals` lists and revokes them.
 Done-when: tests show a read tool free, a write tool asking once then silent on a host that can ask, `approvals allow` recording it on a host that cannot, a run granting a listed write tool, an unmarked tool asking, a tool whose server left the allowlist refused despite an approval, and a revoked approval asking again.
 
-### 4 Argument scan — [ ] ‖
+### 4 Argument scan — [x] ‖
 Issue: #171
 Class: implement · Effort: medium · Needs: 2 · Check: `node --test compiler/test/mcp-arguments.test.mjs`
 Do: add a `sanitization` answer for scanning MCP call input; a call whose input matches the shared secret patterns is denied with a reason that names the kind, never the text.

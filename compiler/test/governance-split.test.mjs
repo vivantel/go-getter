@@ -41,7 +41,8 @@ function adopted(pack, overrides) {
 
 const snapshot = (dir) => Object.fromEntries(['decisions', 'guardrails'].flatMap((d) => readdirSync(path.join(dir, 'docs', d)).map((f) => [`${d}/${f}`, readFileSync(path.join(dir, 'docs', d, f), 'utf8')])));
 // The rules a project enforces, without the provenance label that the update rewrites.
-const enforcement = (dir) => JSON.stringify(collectEnforcement(dir).map((e) => ({ ...e, 'generated-by': undefined })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
+// Guardrails of questions added after the split (the mcp-* ones) are not part of what the split must preserve.
+const enforcement = (dir) => JSON.stringify(collectEnforcement(dir).filter((e) => !/^mcp-/.test(e.guardrail)).map((e) => ({ ...e, 'generated-by': undefined })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
 
 for (const { pack } of versions) {
   test(`the provider of internal-data: single-provider is kept when governance ${pack.version} updates (issue 147)`, () => {

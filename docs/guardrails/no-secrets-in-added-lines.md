@@ -15,7 +15,7 @@ go-getter:
       stages: [pre-commit, pre-push]
     - tier: 1
       check: Never paste a credential into a file; refer to it by environment variable name
-  generated-by: sanitization@0.6.0
+  generated-by: sanitization@0.7.0
   pack-answer: secret-scan
   pack-option: on
 ---

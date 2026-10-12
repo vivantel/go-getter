@@ -108,6 +108,7 @@
         "cli/compiler/src/checks/builtin/gate-command.mjs",
         "cli/compiler/src/checks/builtin/gitignore-includes.mjs",
         "cli/compiler/src/checks/builtin/mcp-allow.mjs",
+        "cli/compiler/src/checks/builtin/mcp-scan.mjs",
         "cli/compiler/src/checks/builtin/not-on-default-branch.mjs",
         "cli/compiler/src/checks/builtin/path-exists.mjs",
         "cli/compiler/src/checks/builtin/prompt-logging-off.mjs",

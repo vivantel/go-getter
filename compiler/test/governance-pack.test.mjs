@@ -42,10 +42,13 @@ test('the three governance packs are valid, cover component 7 and take over ever
   for (const p of governancePacks) {
     assert.deepEqual(validatePack(loadPackSchema(root), p, { dirName: p.id }), []);
     assert.deepEqual(p.components, [7]);
-    assert.deepEqual(p.replaces, { pack: 'governance', questions: p.questions.map((q) => q.id) });
+    // Questions added after the split (`since` above the last governance version) are not taken over from the old pack.
+    const [maj, min] = pack.version.split('.').map(Number);
+    const old = (q) => !q.since || ((s) => s[0] < maj || (s[0] === maj && s[1] <= min))(q.since.split('.').map(Number));
+    assert.deepEqual(p.replaces, { pack: 'governance', questions: p.questions.filter(old).map((q) => q.id) });
   }
   assert.deepEqual(governancePacks.map((p) => p.id), GOVERNANCE_IDS);
-  assert.equal(pack.questions.length, 14);
+  assert.equal(pack.questions.filter((q) => !q.since || q.since <= '0.6.0').length, 14, 'the questions the split took over; later ones carry a newer since');
 });
 
 test('every answer of every choice question renders', () => {
@@ -153,7 +156,7 @@ test('coverage shows the DLP tier per host', () => {
   adopt(dir);
   const rows = coverage(dir, Object.fromEntries(governancePacks.map((p) => [p.id, p])), loadCapabilities(root));
   const dlp = rows.find((r) => r.component === 7);
-  assert.deepEqual(dlp.packs, [...GOVERNANCE_IDS].sort().map((id) => `${id}@${pack.version}`));
+  assert.deepEqual(dlp.packs, [...GOVERNANCE_IDS].sort().map((id) => `${id}@${governancePacks.find((p) => p.id === id).version}`));
   assert.ok(Object.values(dlp.tiers).every((t) => t === 3));
   assert.ok(Object.values(dlp.inHost).every((t) => t === 2));
   assert.match(formatCoverage(rows), new RegExp(`^7 Guardrails & DLP\\s+data-policy@${pack.version.replace(/\./g, '\\.')}, restricted-data@\\S+, sanitization@\\S+\\s+hook\\+ci\\s+hook\\+ci`, 'm'));

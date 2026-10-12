@@ -1,3 +1,5 @@
+import { findings } from './secrets/patterns.mjs';
+
 // How a host shows an MCP call to a hook (fact 0036) and the server allowlist of decision 0138.
 // `mcp__<server>__<tool>` (Claude Code, Codex) carries the server; Cursor's `MCP:<tool>` does not; other hosts are unconfirmed.
 
@@ -25,6 +27,12 @@ export const readTools = (args = {}) => String(args.reads ?? '').split(',').map(
 export const isReadTool = (call, args) => readTools(args).includes(`${normaliseServer(call.server)}:${call.tool}`);
 // The approval shape id of a write tool.
 export const mcpShapeId = (call) => `mcp:${normaliseServer(call.server)}:${call.tool}`;
+
+// The kinds of secret in an MCP call's input, never the text. `input` is the tool input as the host sent it.
+export function secretKinds(input) {
+  const text = typeof input === 'string' ? input : JSON.stringify(input ?? null);
+  return [...new Set(findings(text).map((f) => f.kind))];
+}
 
 // A denial reason for a call to a server that is not listed, or null (allowed, or the host does not show the server).
 export function mcpDenial(toolName, args) {
