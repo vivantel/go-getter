@@ -68,11 +68,12 @@ Do: plan the work of decision 0129 items 1 to 3: split `governance` into path an
 Done-when: a plan with steps exists, one step per pack change, each with its done-when.
 Result, 2026-10-11: the build is planned in `docs/plans/archive/pack-boundaries.md` (seven steps, all done 2026-10-11; step 1 settles the pack names and the migration of existing adoptions).
 
-### L.15 Retrieval pack, virage first — [ ]
+### L.15 Retrieval pack, virage first — [x]
 Issue: #124
 Class: plan · Needs: L.11 · Check: `npm run check:plans`
 Do: first record a fact on virage's integration surface (MCP tool names, hook behaviour, which host files `virage update` and its agent plugins write; each marked confirmed or not). Then interview the owner and plan the `retrieval` pack of decision 0129 item 4, with a detect-and-coexist slice that can ship before the pack.
 Done-when: the fact exists, the interview is recorded and a plan with steps exists for it.
+Result, 2026-10-12: fact 0038 records virage's integration surface from its source (it registers MCP and a prompt hook for Claude Code only; the hook injects chunks without a tool call; no restricted-path input or secret scan). The interview is decision 0145: retrieval tools follow a go-getter contract (no hooks or MCP entry of their own, a go-getter ignore input, a warm local query endpoint), virage is changed to conform, and the pack waits for that. The build is planned in `docs/plans/retrieval-pack.md` (seven steps; whether to reverse the hold on an earlier slice is the owner's call, step 6).
 
 ### L.13 Secret use without ceremony — [x]
 Issue: #101
