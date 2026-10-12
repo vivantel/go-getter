@@ -2,7 +2,7 @@
 // active run granting it, and in both cases the shape's preconditions hold at this use.
 import path from 'node:path';
 import { shapeApproved } from '../secrets/approvals.mjs';
-import { APPROVABLE } from '../gate.mjs';
+import { isApprovable } from '../gate.mjs';
 import { resolvePlan } from '../plan.mjs';
 import { activeRun } from './record.mjs';
 import { checkShape } from './preconditions.mjs';
@@ -12,8 +12,8 @@ import { checkShape } from './preconditions.mjs';
 export function shapeAllowance(project, id, command, { gh, env = process.env } = {}) {
   const run = activeRun(project, { env });
   // Only approvable shapes: whatever a record says, tags, releases, publishing and repository settings are never allowed here.
-  const inRun = Boolean(run?.grants.includes(id)) && APPROVABLE.includes(id);
-  if (!APPROVABLE.includes(id)) return { allowed: false, never: true };
+  const inRun = Boolean(run?.grants.includes(id)) && isApprovable(id);
+  if (!isApprovable(id)) return { allowed: false, never: true };
   if (!inRun && !shapeApproved(project, id, env)) return { allowed: false, firstUse: true };
   const check = checkShape({ project, id, command, run: inRun ? run : null, ...(gh ? { gh } : {}) });
   return check.ok ? { allowed: true, by: inRun ? 'run' : 'remembered' } : { allowed: false, reason: check.reason };

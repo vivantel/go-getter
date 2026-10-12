@@ -132,6 +132,9 @@ export const CATALOG = catalogFor();
 
 // The outward shapes a remembered approval or a run may allow (decision 0130). Tags, releases and publishing are never on it.
 export const APPROVABLE = ['git-push', 'pr-create', 'pr-merge', 'pr-close', 'comment-post'];
+// The shape of an MCP write tool a person approved or a run granted (decision 0138 item 2): `mcp:<server>:<tool>`, the server as `normaliseServer` spells it.
+export const MCP_SHAPE = /^mcp:[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$/;
+export const isApprovable = (id) => APPROVABLE.includes(id) || MCP_SHAPE.test(String(id));
 
 // Splits into command segments, each as `{ raw, masked }` of equal length; masked has quoted text (quotes included) as 'X'.
 function segments(command) {
@@ -271,7 +274,7 @@ export function gateEntries(enforcement, { project } = {}) {
     if ((!args.classes.length && !args.extra.length && !args.goGetter.length) || bad.length) throw new Error(`guardrail ${e.guardrail}: gate-command classes must be ${GATE_CLASSES.join(' and/or ')}${bad.length ? `, not ${bad.join(', ')}` : ''}`);
     const badSub = args.goGetter.filter((sub) => !/^[a-z][a-z-]*(?: [a-z][a-z-]*)*$/.test(sub));
     if (badSub.length) throw new Error(`guardrail ${e.guardrail}: gate-command go-getter must be subcommand words, not ${badSub.join(', ')}`);
-    const ungrantable = args.grantable.filter((id) => !APPROVABLE.includes(id));
+    const ungrantable = args.grantable.filter((id) => !isApprovable(id));
     if (ungrantable.length) throw new Error(`guardrail ${e.guardrail}: gate-command grantable must name approvable commands (${APPROVABLE.join(', ')}), not ${ungrantable.join(', ')}`);
     if (!PROVIDER_IDS.includes(args.provider)) throw new Error(`guardrail ${e.guardrail}: gate-command provider must be one of ${PROVIDER_IDS.join(', ')}, not ${args.provider}`);
     const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');

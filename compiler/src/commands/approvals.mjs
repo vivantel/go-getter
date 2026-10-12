@@ -3,7 +3,7 @@
 // `add`, `allow` and `revoke` change what an agent may do, so a person runs them; the pre-tool hook refuses an agent's call.
 import { realpathSync } from 'node:fs';
 import { add, list, revoke, storeFile, addShape, listShapes, revokeShape } from '../secrets/approvals.mjs';
-import { APPROVABLE } from '../gate.mjs';
+import { APPROVABLE, isApprovable } from '../gate.mjs';
 import { restrictedPatterns } from '../hook.mjs';
 import { matchesAny } from '../glob.mjs';
 import { repoRoot } from '../plan.mjs';
@@ -21,7 +21,7 @@ export default function approvalsCommand({ args }) {
       const shapes = listShapes(project);
       if (rest.includes('--json')) console.log(JSON.stringify(entries, null, 2)); // secret approvals only: the format other tools read
       else {
-        const lines = [...entries.map(describe), ...shapes.map((e) => `${e.id}  outward command shape, may run without asking while its preconditions hold  (approved ${e.approvedAt.slice(0, 10)})`)];
+        const lines = [...entries.map(describe), ...shapes.map((e) => `${e.id}  ${e.id.startsWith('mcp:') ? 'MCP write tool' : 'outward command shape'}, may run without asking while its preconditions hold  (approved ${e.approvedAt.slice(0, 10)})`)];
         console.log(lines.length ? lines.join('\n') : `no approvals for ${realpathSync(project)} (store: ${storeFile()})`);
       }
       return 0;
@@ -42,8 +42,8 @@ export default function approvalsCommand({ args }) {
       return 0;
     }
     if (sub === 'allow' && rest.length === 1) {
-      if (!APPROVABLE.includes(rest[0])) {
-        console.error(`approvals: ${rest[0]} cannot be approved once; the shapes that can are ${APPROVABLE.join(', ')} (tags, releases, publishing and history rewrites always ask)`);
+      if (!isApprovable(rest[0])) {
+        console.error(`approvals: ${rest[0]} cannot be approved once; the shapes that can are ${APPROVABLE.join(', ')} and mcp:<server>:<tool> (tags, releases, publishing and history rewrites always ask)`);
         return 1;
       }
       const entry = addShape(project, rest[0], { host: process.env.GO_GETTER_HOST });

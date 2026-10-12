@@ -17,6 +17,15 @@ export const normaliseServer = (name) => String(name).replace(/[^A-Za-z0-9_-]/g,
 // The servers of a `builtin:mcp-allow servers="a, b"` entry, normalised.
 export const allowedServers = (args = {}) => String(args.servers ?? '').split(',').map((s) => s.trim()).filter(Boolean).map(normaliseServer);
 
+// The tools a project marked read, as `server:tool` normalised, from `reads="srv:tool, ..."`.
+export const readTools = (args = {}) => String(args.reads ?? '').split(',').map((s) => s.trim()).filter(Boolean).map((s) => {
+  const at = s.indexOf(':');
+  return `${normaliseServer(s.slice(0, at))}:${s.slice(at + 1)}`;
+});
+export const isReadTool = (call, args) => readTools(args).includes(`${normaliseServer(call.server)}:${call.tool}`);
+// The approval shape id of a write tool.
+export const mcpShapeId = (call) => `mcp:${normaliseServer(call.server)}:${call.tool}`;
+
 // A denial reason for a call to a server that is not listed, or null (allowed, or the host does not show the server).
 export function mcpDenial(toolName, args) {
   const call = mcpCall(toolName);

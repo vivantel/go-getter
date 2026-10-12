@@ -8,7 +8,7 @@ import { readPlan, repoRoot } from '../plan.mjs';
 import { nextInRun } from '../runs/next.mjs';
 import { buildReport, reportStep } from '../runs/report.mjs';
 import { planIssue, relPlan } from '../trackers/write.mjs';
-import { APPROVABLE, normaliseFree } from '../gate.mjs';
+import { APPROVABLE, isApprovable, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
 import { adoptedData } from '../governance.mjs';
 import { telemetryConfig } from '../telemetry/record.mjs';
@@ -92,8 +92,8 @@ export default async function runCommand({ args }) {
       if (!steps.length) throw new Error('no step is left to do in that range');
       // Without --grant, the shapes the project's hitl answer lists (stored as one comma-separated string).
       const grants = normaliseFree((o.grants.length ? o.grants : [].concat(adoptedData(project, 'run-grants') ?? [])).flatMap((g) => String(g).split(',')).map((g) => g.trim()).filter(Boolean));
-      const bad = grants.filter((g) => !APPROVABLE.includes(g));
-      if (bad.length) throw new Error(`--grant takes approvable command shapes (${APPROVABLE.join(', ')}), not ${bad.join(', ')}; tags, releases, publishing and history rewrites always need a human`);
+      const bad = grants.filter((g) => !isApprovable(g));
+      if (bad.length) throw new Error(`--grant takes approvable command shapes (${APPROVABLE.join(', ')}, mcp:<server>:<tool>), not ${bad.join(', ')}; tags, releases, publishing and history rewrites always need a human`);
       // The spend cap is read from the telemetry log (runs/next.mjs), so a cap with recording off would never bind.
       const spendCapUsd = loadPolicy(project)?.spendCapUsd ?? null;
       if (spendCapUsd && telemetryConfig(project).recording !== 'metadata-log') throw new Error(`the project sets a spend cap of $${spendCapUsd}, which is read from the telemetry metadata log, and telemetry recording is off; turn on telemetry-recording (metadata-log) or remove the cap`);
