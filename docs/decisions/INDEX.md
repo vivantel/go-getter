@@ -125,3 +125,4 @@ id,title,tags,status
 0136-host-adapter-interface,"A host adapter answers nine questions as plain data and shares the rest","architecture, compiler, host-agents",draft
 0137-a-run-may-be-started-by-confirmation-at-the-host-prompt,"A run may be started by the agent when a person confirms it at the host prompt","hooks, enforcement, roadmap",draft
 0138-mcp-servers-are-allowlisted-and-their-calls-classed-masked-and-scanned,"MCP servers are allowlisted by name; their tool calls are classed, approved once, scanned and masked","hooks, enforcement, roadmap, practice-packs",active
+0139-go-getter-serves-adopted-pack-verbs-as-read-only-mcp-tools-over-stdio,"go-getter serves the verbs of the packs a project adopted as read-only MCP tools over stdio, opt-in","architecture, roadmap, hooks, compiler",active
