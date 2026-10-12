@@ -122,3 +122,4 @@ id,title,tags,status
 0133-verification-coverage-command,"The verification coverage command is """"","practice-packs, verification, harness",active
 0134-verification-coverage-bar,"Coverage must meet what the coverage command enforces","practice-packs, verification, harness",active
 0135-gated-run-grants,"Outward commands a run or a remembered approval may allow are listed","practice-packs, hooks",active
+0136-host-adapter-interface,"A host adapter answers nine questions as plain data and shares the rest","architecture, compiler, host-agents",draft

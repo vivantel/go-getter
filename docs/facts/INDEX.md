@@ -32,3 +32,4 @@ id,title,tags,status
 0031-host-output-redaction-and-read-deny-levers,"Copilot, Codex, Gemini CLI and Kilo hooks can replace a tool result; Cursor only an MCP result; reads are denied by config on Cursor, OpenCode and Kilo and by hooks everywhere","host-agents, governance, security, hooks",active
 0033-apply-keeps-no-record-of-what-it-wrote,"Until the manifest (0089), apply kept no record of what it wrote, so it could not undo settings or tell its content from the user's","generated-files, enforcement",active
 0034-kilo-question-tool-gated-by-client,"Kilo's question tool is on for the app, cli, desktop and vscode clients and otherwise needs KILO_ENABLE_QUESTION_TOOL","kilo, host-agents, interview",active
+0035-host-specific-branches-in-the-compiler-and-runtime,"Host knowledge sits in thirteen places across the compiler and the runtime; capability rows are the only data-driven part","architecture, compiler, host-agents, hooks",active
