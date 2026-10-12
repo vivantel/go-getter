@@ -1,7 +1,7 @@
 // Stop rules of an autonomous run (decision 0130 items 6-8, step 4 of the autonomous-run plan).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,14 +23,16 @@ function setup(plan = PLAN([step(1), step(2), step(3)])) {
   writeFileSync(path.join(dir, 'docs/plans/p.md'), plan);
   writeFileSync(path.join(dir, 'docs/guardrails/gated.md'), `---\nid: gated\ntitle: gated\nstatus: active\ndate: 2026-10-05\ntags: [guardrail]\ngo-getter:\n  enforcement:\n    - tier: 2\n      check: gated\n      run: "${GATE}"\n---\n\n## Guardrail\n\nAsk.\n`);
   execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
-  const saved = process.env.GO_GETTER_HOME;
+  symlinkSync(cli, path.join(base, 'go-getter')); // go-getter on PATH, as the hook recognises it
+  const saved = { PATH: process.env.PATH, GO_GETTER_HOME: process.env.GO_GETTER_HOME };
+  process.env.PATH = `${base}${path.delimiter}${saved.PATH}`;
   process.env.GO_GETTER_HOME = path.join(base, 'home');
   return {
     dir,
     start: (opts = {}) => startRun(dir, { plan: 'docs/plans/p.md', steps: ['1', '2', '3'], ...opts }),
     cli: (...args) => spawnSync('node', [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
     cleanup: () => {
-      saved === undefined ? delete process.env.GO_GETTER_HOME : (process.env.GO_GETTER_HOME = saved);
+      for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
       rmSync(base, { recursive: true, force: true });
     },
   };
