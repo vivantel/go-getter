@@ -43,7 +43,7 @@ Class: implement · Effort: medium · Needs: 2 · Check: `node --test compiler/t
 Do: add a `sanitization` answer for scanning MCP call input; a call whose input matches the shared secret patterns is denied with a reason that names the kind, never the text.
 Done-when: tests show a call with a token denied by kind, a clean call passing, and the denial text holding no secret.
 
-### 5 Result masking — [ ] ‖
+### 5 Result masking — [x] ‖
 Issue: #172
 Class: implement · Effort: medium · Needs: 2 · Check: `node --test compiler/test/mcp-results.test.mjs`
 Do: add the capability `rewriteMcpOutput` (true where a host can replace MCP results, Cursor included) beside `rewriteOutput`, and install the post-tool hook when this governance is adopted even if no restricted path or personal-data masking is; make the masking cover MCP results using each host's answer shape (`respondPostTool` gains the Cursor branch); on a host that cannot, mark the guardrail advisory in `coverage`.

@@ -24,10 +24,11 @@ From facts 0003-0008 and 0031 and the capability rows; no new web research. Sour
 Consequences for 0138:
 
 - A server allowlist can be applied from the hook only where the name carries the server: Claude Code and Codex. Cursor has a native rule; Gemini CLI, Copilot, Kilo and OpenCode are advisory for the allowlist until their name shape is confirmed.
-- Result masking works on Claude Code, Codex, Gemini CLI, Copilot and Kilo through the hook, and on Cursor for MCP only (capability `rewriteOutput` is false for Cursor, so a separate MCP capability is needed). OpenCode cannot replace.
+- Result masking works on Claude Code, Codex, Gemini CLI, Copilot and Kilo through the hook, and on Cursor for MCP only (capability `rewriteOutput` is false for Cursor; the capability `rewriteMcpOutput` marks it, and `apply` writes its post-tool hook when MCP governance is adopted). OpenCode cannot replace.
 - Only Claude Code can ask from its hook (`askPreTool`); on the others an MCP write needs a recorded approval or a run grant.
 
 ## Not confirmed
 - The tool-name shape of MCP calls on Gemini CLI, Copilot, Kilo and OpenCode, and Claude Code's server-name normalisation.
 - The Claude Code permission rule form for an MCP server or tool.
 - Whether Kilo and OpenCode name MCP tools with a server prefix in `tool.execute.before`.
+- The field names of Cursor's `postToolUse` input (go-getter reads `tool_output` and the other aliases of `evaluatePostTool`) and whether its hook fires for every tool or only MCP ones; the answer `updated_mcp_tool_output` is from fact 0031.

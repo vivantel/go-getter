@@ -48,11 +48,14 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
     // Tool-output masking (component 7, decision 0106): where the host can replace tool output, and what is masked there.
     if (c === 7) {
       const canReplace = hosts.filter((h) => caps[h]?.hooks?.rewriteOutput === true);
+      // Hosts that replace MCP results only (capability hooks.rewriteMcpOutput): masked there for MCP tools, not for others.
+      const mcpOnly = hosts.filter((h) => !canReplace.includes(h) && caps[h]?.hooks?.rewriteMcpOutput === true);
       const inHostEntries = entries.filter((e) => e.tier === 2);
       row.outputMasking = {
         secrets: inHostEntries.length ? canReplace : [],
         pii: inHostEntries.some((e) => /^builtin:redact-pii\b/.test(e.run ?? '')) ? canReplace : [],
         none: inHostEntries.length ? hosts.filter((h) => !canReplace.includes(h)) : [],
+        mcpOnly: inHostEntries.some((e) => /^builtin:mcp-(allow|scan)\b/.test(e.run ?? '')) ? mcpOnly : [],
       };
     }
     if (c === 9) row.nativeRestore = Object.fromEntries(hosts.filter((h) => caps[h]?.checkpointRestore).map((h) => [h, caps[h].checkpointRestore]));
@@ -75,6 +78,7 @@ export function formatCoverage(rows, hosts = HOSTS) {
     const parts = [`secrets on ${masking.secrets.join(', ')}`];
     if (masking.pii.length) parts.push(`personal data on ${masking.pii.join(', ')}`);
     if (masking.none.length) parts.push(`not on ${masking.none.join(', ')} (the host cannot replace tool output)`);
+    if (masking.mcpOnly?.length) parts.push(`MCP results alone on ${masking.mcpOnly.join(', ')} (the host replaces only those)`);
     lines.push(`Tool-output masking (component 7): ${parts.join('; ')}.`);
   }
   const checkpoints = rows.find((r) => r.component === 9);

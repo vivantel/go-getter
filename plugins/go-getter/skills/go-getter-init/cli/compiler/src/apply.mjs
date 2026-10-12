@@ -216,7 +216,7 @@ const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 // `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: knowledge base present (session-start nudges).
 // `pii`: the project masks PII in tool output (post-tool hook, and a session-end hook where the host has one, decision 0106).
 // `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
-export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, pii = false, read = (rel) => readJson(project, rel)) {
+export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, pii = false, mcp = false, read = (rel) => readJson(project, rel)) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the
   // runtime as --project. Without a runner the hook warns and lets the call through (fail open, decision 0019).
   // The script is wrapped in `sh -c '...'` so it also works for a host that executes the command without a shell;
@@ -234,8 +234,10 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   const canRedact = (host) => (enabled || pii) && caps[host]?.hooks.rewriteOutput === true;
   // The pseudonym map is deleted when a session ends, on the hosts that document such an event (facts 0003-0008).
   const canEnd = (host) => pii && canRedact(host);
+  // A host that can replace only MCP results (capability hooks.rewriteMcpOutput, Cursor) gets the post-tool hook when MCP governance is adopted (decision 0138 item 4).
+  const canMaskMcp = (host) => mcp && caps[host]?.hooks?.rewriteMcpOutput === true && caps[host]?.hooks?.rewriteOutput !== true;
   // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
-  const wanted = (rel, host) => enabled || session || stop || (pii && canRedact(host)) || existsSync(path.join(project, rel));
+  const wanted = (rel, host) => enabled || session || stop || (pii && canRedact(host)) || canMaskMcp(host) || existsSync(path.join(project, rel));
   const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
   const plain = (host, event) => ({ hooks: [{ type: 'command', command: cmd(host, event) }] });
   // Sets or removes each of go-getter's events: [keys, entry-or-null].
@@ -271,6 +273,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
     if (host === 'cursor' && wanted('.cursor/hooks.json', host)) {
       out['.cursor/hooks.json'] = json({ version: 1, ...events(read('.cursor/hooks.json'), [
         [['hooks', 'preToolUse'], enabled ? { command: cmd(host) } : null],
+        [['hooks', 'postToolUse'], canMaskMcp(host) ? { command: cmd(host, 'post-tool') } : null],
         [['hooks', 'sessionStart'], session ? { command: cmd(host, 'session-start') } : null],
         [['hooks', 'stop'], canStop(host) ? { command: cmd(host, 'stop') } : null],
       ]) });
@@ -466,7 +469,8 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     names.add('AGENTS.md');
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
-  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, pii, read);
+  const mcp = entries.some((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && ['mcp-allow', 'mcp-scan'].includes(e.parsed.id));
+  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, pii, mcp, read);
   for (const p of Object.keys(hookOutputs)) if (SHARED_HOOK_FILES.includes(p)) remember(p);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {

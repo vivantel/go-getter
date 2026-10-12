@@ -122,7 +122,7 @@ test('component 7 says where tool output is masked: secrets, personal data, and 
   assert.deepEqual(row.outputMasking.pii, replace);
   assert.deepEqual(row.outputMasking.none.sort(), ['cursor', 'opencode']);
   const text = formatCoverage(coverage(root, governanceByIds, caps));
-  assert.match(text, /Tool-output masking \(component 7\): secrets on claude-code, codex, kilo, gemini-cli, copilot; personal data on claude-code, codex, kilo, gemini-cli, copilot; not on opencode, cursor \(the host cannot replace tool output\)\./);
+  assert.match(text, /Tool-output masking \(component 7\): secrets on claude-code, codex, kilo, gemini-cli, copilot; personal data on claude-code, codex, kilo, gemini-cli, copilot; not on opencode, cursor \(the host cannot replace tool output\); MCP results alone on cursor \(the host replaces only those\)\./);
 });
 
 test('without a governance pack there is no masking line', () => {
