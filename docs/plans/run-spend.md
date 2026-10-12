@@ -9,7 +9,7 @@ Written 2026-10-12 for backlog item L.19 (`docs/plans/backlog.md`, issue #194). 
 A run's spend cap reads `cost` from the telemetry log (`spentUsd`, `compiler/src/runs/next.mjs`), but nothing writes it on the hosts in use, so the cap never binds. After this plan:
 
 - **A host says whether it can meter** (capability `spendSource`), and `go-getter run start` and the report say plainly when the cap cannot bind (step 1).
-- **Readers** turn what a host already writes into telemetry records with `cost` and `tokens`: Claude Code's transcript (step 2), Codex's transcript (step 4) and the OpenCode and Kilo `stats` total (step 5). Cursor, Gemini CLI and Copilot have no confirmed source and stay unmetered.
+- **Readers** turn what a host already writes into telemetry records with `cost` and `tokens`: Claude Code's transcript (step 2), Codex's transcript (step 4, if it holds usage) and the OpenCode and Kilo session export (step 5). Cursor, Gemini CLI and Copilot have no confirmed source and stay unmetered.
 - **Nothing is installed in the user's settings** (no status line, no OTel).
 
 Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter:capture`, `go-getter:conform`, `go-getter:attribute`. Guardrails to read first: `telemetry-records-metadata-only`, `no-runtime-dependencies`, `neutral-source-has-no-host-specific-language`, `generated-host-files-not-hand-edited`, `restricted-paths-denied`, `routing-uses-total-step-cost`. Reuse `hookRecord` and `payloadUsage` (`compiler/src/hook.mjs`), the telemetry schema (`compiler/src/telemetry/`), the price tables (`compiler/src/routing/cost.mjs`, facts 0011 to 0013) and the run record (`compiler/src/runs/`); do not add a second spend log.
@@ -21,32 +21,36 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 ### 1 Say when the cap cannot bind — [x]
 Issue: #201
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/run-spend-source.test.mjs`
-Do: add the capability `telemetry.spendSource` (`none`, `transcript` or `stats`) to the host capability rows and schema, `none` on every row (a row becomes `transcript` or `stats` only when its reader exists: claude-code in step 2, codex in step 4, opencode and kilo in step 5). `go-getter run start` on a host whose source is `none` with a cap set prints that the cap cannot bind on this host and which stops still apply, and starts; the run record stores `spendMetered: false`, and the report prints "spend not metered on this host" instead of a dollar figure. The telemetry-recording refusal stays.
+Do: add the capability `telemetry.spendSource` (`none`, `transcript` or `sessions`) to the host capability rows and schema, `none` on every row (a row becomes `transcript` or `stats` only when its reader exists: claude-code in step 2, codex in step 4, opencode and kilo in step 5, as `sessions`). `go-getter run start` on a host whose source is `none` with a cap set prints that the cap cannot bind on this host and which stops still apply, and starts; the run record stores `spendMetered: false`, and the report prints "spend not metered on this host" instead of a dollar figure. The telemetry-recording refusal stays.
 Done-when: tests show the notice and a started run on a `none` host, the record flag, the report line, no notice on a host with a source, and no change for a run without a cap.
 
-### 2 Claude Code transcript reader — [ ]
+### 2 Claude Code transcript reader — [x]
 Issue: #202
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/spend-transcript.test.mjs`
 Do: a neutral reader (`compiler/src/spend/`) that, given a hook payload's `transcript_path`, sums the `usage` of assistant entries not yet counted (key by message id; an offset or seen-id set kept in the run record, metadata only), prices them with the routing tables for the entry's model, and writes one telemetry record per read with `tokens` and `cost`. The hook calls it on the events that end a turn or a session; it never blocks, never reads outside the path the payload names, and fails open (an unreadable or reshaped line is skipped and counted). Include subagent entries (marked `isSidechain` in the observed shape). A model with no price row records tokens without a cost and says so in `coverage`. Set `spendSource: transcript` on the claude-code row.
 Done-when: tests show a transcript summed to the expected cost, a repeated message id counted once, a second read counting only new lines, an unknown model recording tokens only, a malformed line skipped without failing the hook, no transcript text in the record, and `run next` stopping on `spend-cap` from these records.
 
-### 3 Verify the unconfirmed sources — [ ] ‖
+### 3 Verify the unconfirmed sources — [x] ‖
 Issue: #203
 Class: explore · Needs: none · Check: `npm run check:tags`
 Do: on each installed host, run one short real session and record what is there: the usage fields in Codex's transcript, the JSON `opencode export` and the Kilo equivalent write for a session, `run --format json` usage fields on codex, opencode, kilo and cursor, and the Gemini CLI and Copilot transcripts. Update fact 0037 in place (confirmed or still unconfirmed, with the field names), and say which hosts get a reader in steps 4 and 5.
 Done-when: every "unconfirmed" cell of fact 0037 is replaced by field names or by "checked on <version>, no usage".
 
-### 4 Codex transcript reader — [ ]
+Result, 2026-10-12: checked on the hosts installed here. Claude Code: the transcript carries `message.usage` per assistant message, repeated per content block with identical usage (counted once by message id). OpenCode 1.18.35 and Kilo 7.6.2: `session list --format json` and `export <id>` carry `cost` and `tokens` per assistant message (better than `stats`, so step 5 reads them). Codex, Cursor, Gemini CLI and Copilot are not installed here and stay unconfirmed in fact 0037; Claude Code subagent usage could not be found either.
+
+### 4 Codex transcript reader — [x]
 Issue: #204
-Class: implement · Effort: medium · Needs: 2, 3 · Check: `node --test compiler/test/spend-codex.test.mjs`
+Class: implement · Effort: medium · Needs: 2, 3 · Check: `npm run check:plans`
 Do: if step 3 found usage in Codex's transcript, add its line shape to the reader of step 2 (shape per host, same dedupe and fail-open rules) and set `spendSource: transcript` on the codex row; if not, leave it `none` and record that in fact 0037 and this step's result. Codex reports tokens only, so the cost comes from the price tables.
 Done-when: tests show a Codex transcript summed to the expected cost, or the result line records that Codex has no source and the row stays `none`.
 
-### 5 OpenCode and Kilo stats reader — [ ]
+Result, 2026-10-12: not built. Codex is not installed here, so step 3 could not confirm usage fields in its transcript (the vendor calls the format unstable); the row stays `none` and `run start` says so. Reopen when a Codex session can be inspected: add a `codex` entry to `PARSERS` in `compiler/src/spend/transcript.mjs` and set the row to `transcript`.
+
+### 5 OpenCode and Kilo session reader — [x]
 Issue: #205
-Class: implement · Effort: medium · Needs: 2, 3 · Check: `node --test compiler/test/spend-stats.test.mjs`
-Do: where step 3 found no per-session source, read `stats` (or the export) when `run start` begins and when a step ends (`run next`), record the difference as the run's spend, and set `spendSource: stats`. State in the report that the figure is a before-and-after difference and counts any other session on the machine. If the host's `stats` shows no price for the provider in use, record tokens only.
-Done-when: tests with a stub `stats` output show the difference recorded, a missing command recording nothing and saying so, and an unpriced provider recording tokens only.
+Class: implement · Effort: medium · Needs: 2, 3 · Check: `node --test compiler/test/spend-sessions.test.mjs`
+Do: step 3 found that `session list --format json` and `export <id>` give a cost and token counts per assistant message, so read those (not the `stats` totals) when `run next` runs and in the report: the sessions of this project touched since the run began, each message counted once by a completion-time watermark. Set `spendSource: sessions` on the opencode and kilo rows. A cost of zero (a free model) is priced from tokens when the model has a price row, else tokens only. State in INSTALLING.md that another session in the same directory is counted too.
+Done-when: tests with a stub host command show the cost summed and a later read counting only new messages, other projects' sessions and earlier messages left out, a zero cost priced from tokens, and a missing command recording nothing.
 
 ### 6 Adopt, document and dogfood — [ ]
 Issue: #206

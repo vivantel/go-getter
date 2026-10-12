@@ -70,7 +70,7 @@
   "telemetry": {
     "otel": true,
     "cost": true,
-    "spendSource": "none",
+    "spendSource": "transcript",
     "logsPromptsByDefault": false
   },
   "sandbox": true,

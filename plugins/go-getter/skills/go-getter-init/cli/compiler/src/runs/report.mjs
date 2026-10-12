@@ -7,6 +7,7 @@ import { listShapes } from '../secrets/approvals.mjs';
 import { originRepo } from '../trackers/github.mjs';
 import { cleanGitEnv } from '../git-env.mjs';
 import { spentUsd } from './next.mjs';
+import { recordRunSpend } from '../spend/index.mjs';
 
 // Pull requests merged since the run started: the `(#N)` a squash merge puts in the subject of a commit on this branch.
 function mergedPullRequests(project, since) {
@@ -19,7 +20,7 @@ function mergedPullRequests(project, since) {
 }
 
 // Markdown report of a finished run record. `project` is the repository root.
-export function buildReport(project, run, { env = process.env } = {}) {
+export function buildReport(project, run, { env = process.env, spendExec } = {}) {
   const repo = originRepo(project);
   const link = (kind, n) => (repo ? `[#${n}](https://github.com/${repo}/${kind}/${n})` : `#${n}`);
   const issueLink = (step) => {
@@ -32,6 +33,7 @@ export function buildReport(project, run, { env = process.env } = {}) {
   const done = inRange.filter((s) => s.state === 'done');
   const open = inRange.filter((s) => s.state !== 'done');
   const reasonFor = (s) => (run.stop?.step === s.id ? `${run.stop.code}: ${run.stop.reason}` : run.stop && !run.stop.step ? `${run.stop.code}: ${run.stop.reason}` : s.human ? `needs a person: ${s.human}` : `not reached (run ${run.endReason})`);
+  if (run.spendCapUsd && run.spendMetered !== false) recordRunSpend(project, run, undefined, spendExec);
   const spent = spentUsd(project, run);
   const prs = mergedPullRequests(project, run.startedAt);
   const attempts = Object.entries(run.counters?.attempts ?? {});

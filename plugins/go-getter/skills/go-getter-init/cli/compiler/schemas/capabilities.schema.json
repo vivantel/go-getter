@@ -130,7 +130,7 @@
       "properties": {
         "otel": { "type": "boolean" },
         "cost": { "type": "boolean" },
-        "spendSource": { "enum": ["none", "transcript", "stats"] },
+        "spendSource": { "enum": ["none", "transcript", "sessions"] },
         "logsPromptsByDefault": { "type": "boolean" },
         "promptLogOff": {
           "type": "object",
