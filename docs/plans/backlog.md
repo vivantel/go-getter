@@ -48,11 +48,12 @@ Class: plan · Needs: none · Human: wait for a second implementation of a kind 
 Do: plan the protocol of decision 0119 for the first kind, the work source (a GitLab tracker is the model case): the envelope, the process per call, the contract suite with the budgets of 0140, and extracting one in-tree source as the proof. Interview the owner first.
 Done-when: the interview is recorded and a plan with steps exists for it.
 
-### L.19 Record each run's spend — [ ]
+### L.19 Record each run's spend — [x]
 Issue: #194
 Class: explore · Needs: none · Check: `npm run check:plans`
 Do: a run's spend cap is read from the telemetry log, but nothing writes `cost` there on the hosts in use (the first dogfood report showed $0.00; fact 0003 says Claude Code's hook input has no token or cost fields). Find, per host, a source of tokens or cost (the transcript file the hooks name, a status line, the headless budget flag), record it in the telemetry log where one exists, and make `go-getter run start` say plainly on a host without one that the cap cannot bind. Then plan the build.
 Done-when: a fact lists the cost source per host and a plan with steps exists for recording it, or the decision not to.
+Result, 2026-10-12: fact 0037 lists the cost source per host (readable today on Claude Code via its transcript; Codex, OpenCode and Kilo need a format check; Cursor, Gemini CLI and Copilot have none). Decision 0144: a host without a source gets a plain notice from `run start` and the run starts. The build is planned in `docs/plans/run-spend.md` (six steps, issues #201 to #206).
 
 ### L.20 MCP native deny rules — [ ]
 Issue: #173

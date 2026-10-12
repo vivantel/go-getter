@@ -130,3 +130,4 @@ id,title,tags,status
 0141-mcp-no-project-policy,"No project list of MCP servers","practice-packs, hooks",draft
 0142-the-helper-protocol-waits-for-a-real-need,"The helper protocol waits for a second implementation or an external request; our own trust steps do not trigger it","architecture, roadmap",active
 0143-mcp-arguments-scanned,"MCP call arguments are scanned for secrets","practice-packs, hooks",draft
+0144-a-spend-cap-on-a-host-without-a-cost-source-warns-and-starts,"A spend cap on a host with no cost source is reported, not refused; sources are read, never installed","cost, enforcement, host-agents",active
