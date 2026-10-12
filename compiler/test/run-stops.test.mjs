@@ -131,3 +131,20 @@ test('the hook still refuses an agent starting or ending a run, and run attempt 
     assert.match(readFileSync(path.join(root, 'compiler/src/commands/run.mjs'), 'utf8'), /next \[--json\] \| attempt/);
   } finally { s.cleanup(); }
 });
+
+test('run start refuses while a spend cap is set and telemetry recording is off, and starts once it is on', () => {
+  const s = setup();
+  try {
+    const decision = (extra) => writeFileSync(path.join(s.dir, 'docs/decisions/0001-x.md'), `---\nid: 0001-x\ntitle: x\nstatus: active\ndate: 2026-10-05\ntags: [roadmap]\ngo-getter:\n  routing-start-tiers: {implement: small}\n  headless-spend-cap-usd: "5"\n${extra}---\n\n## Decision\n\nx\n`);
+    mkdirSync(path.join(s.dir, 'docs/decisions'), { recursive: true });
+    decision('');
+    const off = s.cli('run', 'start', 'docs/plans/p.md');
+    assert.equal(off.status, 1);
+    assert.match(off.stderr, /telemetry recording is off/);
+    assert.equal(activeRun(s.dir), null);
+    decision('  telemetry-recording: metadata-log\n');
+    const on = s.cli('run', 'start', 'docs/plans/p.md');
+    assert.equal(on.status, 0, on.stderr);
+    assert.equal(activeRun(s.dir).spendCapUsd, 5);
+  } finally { s.cleanup(); }
+});
