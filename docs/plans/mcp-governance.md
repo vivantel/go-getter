@@ -49,14 +49,15 @@ Class: implement · Effort: medium · Needs: 2 · Check: `node --test compiler/t
 Do: add the capability `rewriteMcpOutput` (true where a host can replace MCP results, Cursor included) beside `rewriteOutput`, and install the post-tool hook when this governance is adopted even if no restricted path or personal-data masking is; make the masking cover MCP results using each host's answer shape (`respondPostTool` gains the Cursor branch); on a host that cannot, mark the guardrail advisory in `coverage`.
 Done-when: tests show a secret and an email masked in an MCP result per supporting host (Cursor included), the hook installed for a project that adopted only MCP governance, an unchanged clean result, and `coverage` reporting the hosts that cannot.
 
-### 6 Native rules — [ ]
+### 6 Native rules — [>]
 Issue: #173
+Moved to `docs/plans/backlog.md` item L.20 on 2026-10-12: the rule forms are unconfirmed (fact 0036), nothing writes native deny rules yet, a deny must name the servers to refuse and only project MCP config files show them, and the hook already denies by server where the host shows it. Held until Cursor's allowlist needs it.
 Class: implement · Effort: medium · Needs: 3 · Check: `npm run check:generated && node --test compiler/test/mcp-native.test.mjs`
 Do: where a host can deny a server natively (step 1), `apply` writes a deny rule for each server off the allowlist, and nothing for tool classes (a native rule on a tool would defeat approve-once and run grants), owned and removable like the other rules.
 Done-when: tests show the rules written, removed on update, and not hand-editable by the owned-files rule.
 
 ### 7 Adopt, document and dogfood — [ ]
 Issue: #174
-Class: implement · Effort: medium · Needs: 3, 4, 5, 6 · Check: `npm run check:self-adoption && npm run check:generated`
-Do: adopt the new answers in this repository (the servers it really uses), regenerate, describe MCP governance in INSTALLING.md and the README, and record in the plan's result line what was friction.
+Class: implement · Effort: medium · Needs: 3, 4, 5 · Check: `npm run check:self-adoption && npm run check:generated`
+Do: decide for this repository whether to adopt an allowlist (the servers it uses as project servers; user-scope connectors are not listed and would be denied), regenerate, describe MCP governance in INSTALLING.md and the README, and record in the plan's result line what was friction.
 Done-when: the checks pass and the plan's result line states what was found.
