@@ -18,7 +18,8 @@ import { approved as personallyApproved, addPending, storeDir, relativeSecretPat
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
 import { readPlan } from './plan.mjs';
-import { mcpDenial } from './mcp.mjs';
+import { mcpDenial, mcpCall, isReadTool, mcpShapeId } from './mcp.mjs';
+import { MCP_SHAPE } from './gate.mjs';
 import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
@@ -327,9 +328,32 @@ function shapeGate(project, entry, payload, host) {
   return { deny: false, ask: true, reason: `go-getter: approve "${text}"? Approving remembers ${ids} for this project until revoked (go-getter approvals revoke), and its preconditions (green checks, default branch, a step of the run) are checked at each use.` };
 }
 
+// MCP tool classes (decision 0138 item 2). A tool the project marked read is free; any other tool is a write, decided like an outward
+// shape: a run's grant or a remembered approval allows it, else the person is asked where the hook can ask and told what to run where
+// it cannot. Applies only to an entry with a `reads` argument and a host that shows the server (fact 0036).
+function mcpClassGate(project, entry, name, host) {
+  if (entry.parsed.args?.reads === undefined) return null;
+  const call = mcpCall(name);
+  if (!call?.server || isReadTool(call, entry.parsed.args)) return null;
+  const id = mcpShapeId(call);
+  const text = `${call.server} ${call.tool}`;
+  if (!MCP_SHAPE.test(id)) return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" has a name go-getter cannot approve once; mark it read or ask the user to use it another way` };
+  const verdict = shapeAllowance(project, id, name);
+  if (verdict.allowed) return null;
+  if (host && canPrompt(host)) {
+    try {
+      addPendingShape(project, id, name);
+    } catch {
+      // not remembered: the person is asked again next time, which is safe
+    }
+    return { deny: false, ask: true, reason: `go-getter: MCP tool "${text}" is not marked read. Approving remembers ${id} for this project until revoked (go-getter approvals revoke ${id}); the server must stay on the allowlist.` };
+  }
+  return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" is not marked read and needs a human; ask the user to mark it read in the project's answer or to run: go-getter approvals allow ${id}` };
+}
+
 // After a call the hook asked about has run, the person said yes: remember its shape.
 function promoteShapes(project, payload) {
-  const command = shellCommand(payload);
+  const command = shellCommand(payload) ?? (mcpCall(toolName(payload))?.server ? toolName(payload) : undefined);
   if (typeof command !== 'string' || !command) return;
   for (let id = takePendingShape(project, command); id; id = takePendingShape(project, command)) addShape(project, id, {});
 }
@@ -373,6 +397,8 @@ function decidePreTool(project, payload, host) {
     if (e.parsed.id === 'mcp-allow') {
       const why = mcpDenial(toolName(payload), e.parsed.args);
       if (why) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${why}` };
+      const classed = mcpClassGate(project, e, toolName(payload), host);
+      if (classed) return classed;
       continue;
     }
     if (e.parsed.id === 'deny-path') {

@@ -70,8 +70,8 @@
     {
       "id": "run-grants",
       "type": "list",
-      "prompt": "Which outward commands may an autonomous run or a remembered approval allow without asking? Only these are decided at use, by their preconditions (merge: green checks, the default branch as base, and in a run a pull request tied to a step of the run); the rest keep asking. Tags, releases and publishing can never be listed. Where the host's hook can ask it asks the first time and remembers; elsewhere a person starts a run or runs go-getter approvals allow <id>.",
-      "pattern": "^(git-push|pr-create|pr-merge|pr-close|comment-post)$",
+      "prompt": "Which outward commands may an autonomous run or a remembered approval allow without asking? Only these are decided at use, by their preconditions (merge: green checks, the default branch as base, and in a run a pull request tied to a step of the run); the rest keep asking. Tags, releases and publishing can never be listed. Where the host's hook can ask it asks the first time and remembers; elsewhere a person starts a run or runs go-getter approvals allow <id>. An MCP write tool is listed as mcp:<server>:<tool>.",
+      "pattern": "^(git-push|pr-create|pr-merge|pr-close|comment-post|mcp:[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+)$",
       "default": [
         "git-push",
         "pr-create",
@@ -110,6 +110,20 @@
       "type": "list",
       "prompt": "Which MCP servers may agents use? Write each as the host shows it (letters, digits, _ . -); a server the host renames (spaces and dots become _ on some hosts) is compared after the same renaming. An empty list allows no MCP.",
       "pattern": "^[A-Za-z0-9_.-]+$",
+      "default": [],
+      "since": "0.6.0",
+      "when": {
+        "question": "mcp-policy",
+        "in": [
+          "allowlist"
+        ]
+      }
+    },
+    {
+      "id": "mcp-read-tools",
+      "type": "list",
+      "prompt": "Which MCP tools only read? Write each as server:tool. These run without asking; any other tool of an allowed server is a write and asks once (or is granted by a run).",
+      "pattern": "^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$",
       "default": [],
       "since": "0.6.0",
       "when": {
@@ -394,10 +408,10 @@
               {
                 "tier": 2,
                 "check": "The pre-tool hook denies a call to an MCP server that is not listed",
-                "run": "builtin:mcp-allow servers=\"{{answer.mcp-servers}}\""
+                "run": "builtin:mcp-allow servers=\"{{answer.mcp-servers}}\" reads=\"{{answer.mcp-read-tools}}\""
               }
             ],
-            "body": "## Guardrail\n\nUse only the MCP servers the project lists. A call to another server is denied by the pre-tool hook on hosts whose hook shows the server name in the tool call; on the others the list is advisory (fact 0036). `go-getter coverage` shows the tier per host.\n"
+            "body": "## Guardrail\n\nUse only the MCP servers the project lists. A call to another server is denied by the pre-tool hook on hosts whose hook shows the server name in the tool call; on the others the list is advisory (fact 0036). A tool not marked read is a write: it asks once where the hook can ask and is remembered, or a run grants it; elsewhere a person runs `go-getter approvals allow mcp:<server>:<tool>`. `go-getter coverage` shows the tier per host.\n"
           }
         ]
       },
@@ -414,6 +428,27 @@
               "track": "process"
             },
             "body": "## Decision\n\nThe project sets no list of MCP servers; the host's own settings decide which servers agents use (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe project accepted the host's defaults for less setup (decision 0138); choosing `allowlist` makes the pre-tool hook deny unlisted servers.\n"
+          }
+        ]
+      }
+    },
+    "mcp-read-tools": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "mcp-read-tools-listed",
+            "title": "MCP tools that only read run without asking",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "mcp-read-tools": "{{answer.mcp-read-tools}}"
+              }
+            },
+            "body": "## Decision\n\nThe MCP tools [{{answer.mcp-read-tools}}] only read and run without a prompt; every other tool of an allowed server is a write and needs a remembered approval or a run grant (pack {{pack.id}}@{{pack.version}}); an empty list marks none.\n\n## Why\n\nReads stay usable unattended while writes ask once and are remembered, reusing the approvals store and the run record (decision 0138).\n"
           }
         ]
       }

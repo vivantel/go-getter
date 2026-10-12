@@ -149,8 +149,14 @@ test('mcp-policy is off by default; allowlist renders the guardrail, the listed 
   adopt(dir, { ...recommended, 'mcp-policy': 'allowlist', 'mcp-servers': ['github', 'my.server'] });
   const entry = collectEnforcement(dir).find((e) => /mcp-allow/.test(e.run ?? ''));
   assert.equal(entry.tier, 2);
-  assert.match(entry.run, /^builtin:mcp-allow servers="github, my\.server"$/);
+  assert.match(entry.run, /^builtin:mcp-allow servers="github, my\.server" reads=""$/);
   assert.equal(adoptedData(dir, 'mcp-servers'), 'github, my.server');
+  assert.match(entry.run, /reads=""/);
+  const classed = project();
+  adopt(classed, { ...recommended, 'mcp-policy': 'allowlist', 'mcp-servers': ['github'], 'mcp-read-tools': ['github:list_issues'] });
+  assert.match(collectEnforcement(classed).find((e) => /mcp-allow/.test(e.run ?? '')).run, /reads="github:list_issues"/);
+  assert.equal(adoptedData(classed, 'mcp-read-tools'), 'github:list_issues');
+  rmSync(classed, { recursive: true, force: true });
   rmSync(dir, { recursive: true, force: true });
   const empty = project();
   adopt(empty, { ...recommended, 'mcp-policy': 'allowlist', 'mcp-servers': [] });
