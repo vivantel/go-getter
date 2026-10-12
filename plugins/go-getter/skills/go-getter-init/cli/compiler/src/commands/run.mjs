@@ -1,15 +1,16 @@
-// go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | end
+// go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | next [--json] | attempt <step> | end
 // An autonomous run (decision 0130): a person starts it on a plan range; the record is read by the pre-tool hook. `start` and
 // `end` change what an agent may do, so a person runs them; the hook refuses an agent's call to either.
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { activeRun, lastRun, startRun, endRun, DEFAULT_HOURS } from '../runs/record.mjs';
+import { activeRun, lastRun, startRun, endRun, noteEvent, DEFAULT_HOURS } from '../runs/record.mjs';
 import { readPlan, repoRoot } from '../plan.mjs';
+import { nextInRun } from '../runs/next.mjs';
 import { APPROVABLE, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
 import { adoptedData } from '../governance.mjs';
 
-const USAGE = 'usage: go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | end';
+const USAGE = 'usage: go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | next [--json] | attempt <step> | end';
 
 function parseStart(rest) {
   const o = { grants: [] };
@@ -36,6 +37,22 @@ export default function runCommand({ args }) {
       const active = activeRun(project);
       if (rest.includes('--json')) console.log(JSON.stringify({ active, last: lastRun(project) }, null, 2));
       else console.log(active ? `run active: ${describe(active)}` : 'no run is active');
+      return 0;
+    }
+    // The next step of the range, or why the run stops and hands over (exit 1). Metadata only.
+    if (sub === 'next' && rest.every((a) => a === '--json')) {
+      const r = nextInRun(project);
+      if (rest.includes('--json')) console.log(JSON.stringify(r, null, 2));
+      else if (r.step) console.log(`next: step ${r.step.id} ${r.step.title}${r.step.check ? `\ncheck: ${r.step.check}` : ''}${r.step.doneWhen ? `\ndone-when: ${r.step.doneWhen}` : ''}`);
+      else if (r.done) console.log('the run range is finished; a person ends the run with: go-getter run end');
+      else console.log(`stop (${r.stop.code}): ${r.stop.reason}; hand over to the user`);
+      return r.step ? 0 : r.done ? 0 : 1;
+    }
+    // One failed fix attempt on a step (red CI or a failing check); two stop the run on that step.
+    if (sub === 'attempt' && rest.length === 1) {
+      const n = noteEvent(project, 'attempt', rest[0]);
+      if (n === null) throw new Error(`no active run has step ${rest[0]}`);
+      console.log(`attempt ${n} recorded for step ${rest[0]}`);
       return 0;
     }
     if (sub === 'end' && !rest.length) {

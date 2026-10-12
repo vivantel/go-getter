@@ -10,6 +10,13 @@
       ]
     },
     {
+      "name": "autonomous-run",
+      "version": "0.3.3",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
       "name": "bootstrap",
       "version": "0.3.3",
       "files": [
@@ -169,6 +176,7 @@
         "cli/compiler/src/routing/eligibility.mjs",
         "cli/compiler/src/routing/policy.mjs",
         "cli/compiler/src/routing/registry.mjs",
+        "cli/compiler/src/runs/next.mjs",
         "cli/compiler/src/runs/preconditions.mjs",
         "cli/compiler/src/runs/record.mjs",
         "cli/compiler/src/runs/shapes.mjs",

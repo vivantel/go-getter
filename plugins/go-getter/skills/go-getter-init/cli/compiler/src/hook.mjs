@@ -16,6 +16,8 @@ import { shellOperands, commandWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
 import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape } from './secrets/approvals.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
+import { activeRun, noteEvent } from './runs/record.mjs';
+import { readPlan } from './plan.mjs';
 import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
@@ -331,7 +333,26 @@ function promoteShapes(project, payload) {
   for (let id = takePendingShape(project, command); id; id = takePendingShape(project, command)) addShape(project, id, {});
 }
 
+// A denial inside a run is counted against the step in progress, by guardrail id (decision 0130 item 8); best effort.
+function recordDenial(project, result) {
+  try {
+    const run = activeRun(project);
+    if (!run) return;
+    const plan = readPlan(path.join(project, run.plan));
+    const current = plan.steps.find((s) => run.steps.includes(s.id) && s.state === 'in progress') ?? plan.steps.find((s) => run.steps.includes(s.id) && s.state === 'pending');
+    if (current) noteEvent(project, 'denial', current.id, /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1] ?? 'hook');
+  } catch {
+    // counting must never change the decision
+  }
+}
+
 export function evaluatePreTool(project, payload, host) {
+  const result = decidePreTool(project, payload, host);
+  if (result.deny) recordDenial(project, result);
+  return result;
+}
+
+function decidePreTool(project, payload, host) {
   let exempt;
   const forged = approvalsStoreRefusal(project, payload);
   if (forged) return { deny: true, reason: forged };
