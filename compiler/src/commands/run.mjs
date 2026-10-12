@@ -9,6 +9,7 @@ import { nextInRun } from '../runs/next.mjs';
 import { APPROVABLE, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
 import { adoptedData } from '../governance.mjs';
+import { telemetryConfig } from '../telemetry/record.mjs';
 
 const USAGE = 'usage: go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | next [--json] | attempt <step> | end';
 
@@ -79,7 +80,10 @@ export default function runCommand({ args }) {
       const grants = normaliseFree(o.grants.length ? o.grants : [].concat(adoptedData(project, 'run-grants') ?? []));
       const bad = grants.filter((g) => !APPROVABLE.includes(g));
       if (bad.length) throw new Error(`--grant takes approvable command shapes (${APPROVABLE.join(', ')}), not ${bad.join(', ')}; tags, releases, publishing and history rewrites always need a human`);
-      const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd: loadPolicy(project)?.spendCapUsd ?? null, grants });
+      // The spend cap is read from the telemetry log (runs/next.mjs), so a cap with recording off would never bind.
+      const spendCapUsd = loadPolicy(project)?.spendCapUsd ?? null;
+      if (spendCapUsd && telemetryConfig(project).recording !== 'metadata-log') throw new Error(`the project sets a spend cap of $${spendCapUsd}, which is read from the telemetry metadata log, and telemetry recording is off; turn on telemetry-recording (metadata-log) or remove the cap`);
+      const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd, grants });
       console.log(`run started: ${describe(record)}`);
       return 0;
     }
