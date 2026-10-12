@@ -38,5 +38,5 @@ export function secretKinds(input) {
 export function mcpDenial(toolName, args) {
   const call = mcpCall(toolName);
   if (!call || call.server === null) return null;
-  return allowedServers(args).includes(normaliseServer(call.server)) ? null : `MCP server "${call.server}" is not on the project's allowlist`;
+  return allowedServers(args).includes(normaliseServer(call.server)) ? null : `MCP server "${call.server}" is not on the project's allowlist; ask the user to add it to the hitl pack's mcp-servers answer (go-getter reconfigure hitl)`;
 }
