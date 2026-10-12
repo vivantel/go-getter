@@ -21,11 +21,12 @@ Do: interview the owner, then write the contract: proceeding on a plan while the
 Done-when: the interview is recorded and a decision and a plan with steps exist for it.
 Result, 2026-10-11: the interview is recorded in decision 0130 and the build is planned in `docs/plans/archive/autonomous-run.md` (six steps).
 
-### L.9 Third-party packs and helpers — [ ]
+### L.9 Third-party packs and helpers — [x]
 Issue: #92
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: decide first. The helper contract is decision 0119 (envelope, data only, capabilities, digest-pinned and vendored, untrusted output, off the enforcement path) on the order of 0118. What remains is building the protocol when a trigger holds (a second implementation of a kind, a third party, or the trust steps) and the decision to load foreign code; a pack may not ship its own `run`.
 Done-when: a decision records whether and how foreign packs and helpers load, and a plan with steps exists for the protocol.
+Result, 2026-10-12: decided in 0140; the plan `docs/plans/third-party-packs.md` (six steps) builds the budgets and the vendoring of foreign packs. The helper protocol itself waits for a trigger written in 0140.
 
 ### L.11 MCP governance — [x]
 Issue: #93
