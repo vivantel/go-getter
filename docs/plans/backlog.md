@@ -21,11 +21,12 @@ Do: interview the owner, then write the contract: proceeding on a plan while the
 Done-when: the interview is recorded and a decision and a plan with steps exist for it.
 Result, 2026-10-11: the interview is recorded in decision 0130 and the build is planned in `docs/plans/archive/autonomous-run.md` (six steps).
 
-### L.9 Third-party packs and helpers — [ ]
+### L.9 Third-party packs and helpers — [x]
 Issue: #92
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: decide first. The helper contract is decision 0119 (envelope, data only, capabilities, digest-pinned and vendored, untrusted output, off the enforcement path) on the order of 0118. What remains is building the protocol when a trigger holds (a second implementation of a kind, a third party, or the trust steps) and the decision to load foreign code; a pack may not ship its own `run`.
 Done-when: a decision records whether and how foreign packs and helpers load, and a plan with steps exists for the protocol.
+Result, 2026-10-12: decided in 0140; the plan `docs/plans/third-party-packs.md` (six steps) builds the budgets and the vendoring of foreign packs. The helper protocol is item L.18, due once the trust steps of that plan exist.
 
 ### L.11 MCP governance — [x]
 Issue: #93
@@ -40,6 +41,12 @@ Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: `plan next`, `refs` and `coverage` as tools a host can call; a surface only, with no change to the helper contract (decision 0119). Low priority.
 Done-when: the interview is recorded and a plan with steps exists for it.
 Result, 2026-10-12: the interview is recorded in decision 0139 and the build is planned in `docs/plans/mcp-server.md` (five steps).
+
+### L.18 Helper protocol — [ ]
+Issue: #189
+Class: plan · Needs: none · Human: wait until steps 3 and 4 of docs/plans/third-party-packs.md are done (the trust steps of 0119) · Check: `npm run check:plans`
+Do: plan the protocol of decision 0119 for the first kind, the work source (a GitLab tracker is the model case): the envelope, the process per call, the contract suite with the budgets of 0140, and extracting one in-tree source as the proof. Interview the owner first.
+Done-when: the interview is recorded and a plan with steps exists for it.
 
 ### L.14 Pack boundaries and neutral ids — [x]
 Issue: #123
