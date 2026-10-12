@@ -20,7 +20,7 @@ The L.8 interview (2026-10-11) settled the autonomous run contract. It is a prof
 6. **The run stops and hands over** when the spend cap is reached (the `cost-routing` answer) or when a step needs a human (marked `Human: <reason>` in the plan, or blocked: an owner, an interview, an ambiguous done-when); it never skips such a step silently. Spend is read from the telemetry metadata log, so `go-getter run start` refuses while a cap is set and `telemetry-recording` is not `metadata-log`.
 7. **Red CI:** fix and retry up to two attempts per step, then stop; a red pull request is never merged.
 8. **A guardrail denial** is recorded. The agent may take another permitted route but never works around the guardrail; a repeated denial on the same step stops the run.
-9. **A report** ends every run: steps done, pull requests merged and issues closed with links; stops, denials and skipped steps with reasons; spend and approvals used. It is posted as a comment on the plan's issue after the secret and personal-data check.
+9. **A report** ends every run: steps done, pull requests merged and issues closed with links; stops, denials and skipped steps with reasons; spend and approvals used. It is posted as a comment on the issue of the range's last step that has one (a plan has no issue of its own) after the secret and personal-data check; without one, or when the check refuses, it is printed.
 
 ## Why
 
