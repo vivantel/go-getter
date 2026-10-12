@@ -1,4 +1,4 @@
-// Spend coverage of a run (decision 0144, step 1 of docs/plans/run-spend.md): a cap on a host with no spend source is reported.
+// Spend coverage of a run (decision 0144, step 1 of docs/plans/archive/run-spend.md): a cap on a host with no spend source is reported.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
