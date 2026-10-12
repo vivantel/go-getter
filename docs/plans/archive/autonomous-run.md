@@ -49,8 +49,10 @@ Class: implement · Effort: medium · Needs: 4 · Check: `node --test compiler/t
 Do: `go-getter run end` builds the report: steps done, pull requests merged and issues closed with links, stops, denials and skipped steps with reasons, spend and approvals used (from telemetry metadata and the approvals store). It posts the report as a comment on the issue of the range's last step that has one (a plan has no issue of its own) after the secret and personal-data check, and prints it when there is no issue.
 Done-when: tests show the report content for a finished and a stopped run, the check blocking a secret in the text, and no prompt or file content in it.
 
-### 6 Adopt, document and dogfood — [~]
+### 6 Adopt, document and dogfood — [x]
 Issue: #131
 Class: implement · Effort: medium · Needs: 5 · Check: `npm run check:self-adoption && npm run check:generated`
 Do: adopt the new `hitl` answers in this repository, regenerate, describe the run in INSTALLING.md and the README, and run one real run over a small plan range on this repository, recording what was friction.
 Done-when: the checks pass and the plan's result line states what the dogfood run found.
+
+Result, 2026-10-12: INSTALLING.md and the README describe the run; this repository already carried the `run-grants` answer (0135). Dogfood: `run start docs/plans/host-adapters.md --through 1`, one step (#84, a plan-class step) done in PR #163, merged and its issue closed without a prompt inside the run, report posted on #84. Friction: (1) `run start` refused the adopted grants because `run-grants` is stored as one comma-separated string (fixed, #162); (2) a plan-class step that drafts a design for the owner's sign-off was not stopped, since only `Human:` stops a run, so such steps should carry it; (3) the report prints `ended (ended)` and "remembered shapes" lists what is remembered, not what the run used; (4) `run end` lists merged pull requests only from the branch it runs on; (5) a run that times out builds no report.
