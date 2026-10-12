@@ -60,6 +60,14 @@ Done-when: the interview is recorded and a decision and a plan with steps exist 
 Result, 2026-10-11: the interview is recorded in decision 0126 and the build is done (plan `docs/plans/archive/secret-use-without-ceremony.md`, issues #103 to #110): go-getter is recognised wherever it is installed, the hook reads what a command opens, a command's first use of a secret asks once and is remembered per user while its code is unchanged, and the tracker write verbs are gated by what a call runs.
 
 ### L.16 Start a run by confirmation — [ ]
+Issue: #166
 Class: implement · Effort: high · Needs: none · Human: accept decision 0137 and decide when to resume; postponed 2026-10-12 · Check: `node --test compiler/test/run-confirm.test.mjs`
 Do: build decision 0137 once accepted: the hook asks instead of denying `go-getter run start` where the host can ask, with the resolved plan, range, grants, timeout and cap in the prompt; `run end` free for the agent; the `autonomous-run` skill triggers on a free-form request and resolves the plan; first record each run's spend in the telemetry log on the hosts in use (item 7), and test how a host's prompt-skipping modes treat a hook ask.
 Done-when: tests show the ask with the resolved range, a declined prompt refusing the run, `--grant` refused for an agent, a host without ask still denying, and a run's spend counted toward the cap.
+
+### L.17 Run polish: report gaps and plan-step stops — [ ]
+Issue: #167
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/run-report.test.mjs compiler/test/run-stops.test.mjs`
+Do: the frictions the first dogfood run found (`docs/plans/archive/autonomous-run.md`, step 6 result): build a report for a run that timed out (today `run end` finds no active run); list merged pull requests from the default branch whatever branch `run end` runs on; print the end reason once and list only the approvals the run used, not every remembered shape; and decide whether a `Class: plan` step stops a run by default, since a design drafted for the owner's sign-off is not stopped unless it carries `Human:`.
+Done-when: tests show the timed-out report, the merged list from another branch, the corrected report lines, and the chosen plan-step rule.
+
