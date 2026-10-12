@@ -44,9 +44,15 @@ Result, 2026-10-12: the interview is recorded in decision 0139 and the build is 
 
 ### L.18 Helper protocol — [ ]
 Issue: #189
-Class: plan · Needs: none · Human: wait until steps 3 and 4 of docs/plans/third-party-packs.md are done (the trust steps of 0119) · Check: `npm run check:plans`
+Class: plan · Needs: none · Human: wait for a second implementation of a kind or a third party who asks to write a helper (decision 0142) · Check: `npm run check:plans`
 Do: plan the protocol of decision 0119 for the first kind, the work source (a GitLab tracker is the model case): the envelope, the process per call, the contract suite with the budgets of 0140, and extracting one in-tree source as the proof. Interview the owner first.
 Done-when: the interview is recorded and a plan with steps exists for it.
+
+### L.19 Record each run's spend — [ ]
+Issue: #194
+Class: explore · Needs: none · Check: `npm run check:plans`
+Do: a run's spend cap is read from the telemetry log, but nothing writes `cost` there on the hosts in use (the first dogfood report showed $0.00; fact 0003 says Claude Code's hook input has no token or cost fields). Find, per host, a source of tokens or cost (the transcript file the hooks name, a status line, the headless budget flag), record it in the telemetry log where one exists, and make `go-getter run start` say plainly on a host without one that the cap cannot bind. Then plan the build.
+Done-when: a fact lists the cost source per host and a plan with steps exists for recording it, or the decision not to.
 
 ### L.14 Pack boundaries and neutral ids — [x]
 Issue: #123
@@ -70,9 +76,9 @@ Result, 2026-10-11: the interview is recorded in decision 0126 and the build is 
 
 ### L.16 Start a run by confirmation — [ ]
 Issue: #166
-Class: implement · Effort: high · Needs: none · Human: accept decision 0137 and decide when to resume; postponed 2026-10-12 · Check: `node --test compiler/test/run-confirm.test.mjs`
-Do: build decision 0137 once accepted: the hook asks instead of denying `go-getter run start` where the host can ask, with the resolved plan, range, grants, timeout and cap in the prompt; `run end` free for the agent; the `autonomous-run` skill triggers on a free-form request and resolves the plan; first record each run's spend in the telemetry log on the hosts in use (item 7), and test how a host's prompt-skipping modes treat a hook ask.
-Done-when: tests show the ask with the resolved range, a declined prompt refusing the run, `--grant` refused for an agent, a host without ask still denying, and a run's spend counted toward the cap.
+Class: implement · Effort: high · Needs: L.19 · Human: accept decision 0137 and decide when to resume; postponed 2026-10-12 (a convenience, and it softens the human-only start of a run) · Check: `node --test compiler/test/run-confirm.test.mjs`
+Do: build decision 0137 once accepted: the hook asks instead of denying `go-getter run start` where the host can ask, with the resolved plan, range, grants, timeout and cap in the prompt; `run end` free for the agent; the `autonomous-run` skill triggers on a free-form request and resolves the plan; test how a host's prompt-skipping modes treat a hook ask. Spend recording is split out as L.19.
+Done-when: tests show the ask with the resolved range, a declined prompt refusing the run, `--grant` refused for an agent, and a host without ask still denying.
 
 ### L.17 Run polish: report gaps and plan-step stops — [ ]
 Issue: #167

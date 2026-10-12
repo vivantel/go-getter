@@ -32,7 +32,7 @@ Done-when: the three in-tree sources pass, and a test double that returns a body
 
 ### 3 Manifest entry, digest and vendoring — [ ]
 Issue: #184
-Class: implement · Effort: high · Needs: 4 · Check: `node --test compiler/test/foreign-vendoring.test.mjs`
+Class: implement · Effort: high · Needs: 4 · Human: start when someone asks to write a pack (decision 0142) · Check: `node --test compiler/test/foreign-vendoring.test.mjs`
 Do: add a manifest entry for a foreign pack (git URL, digest, pack-format range); `apply` fetches it with `https` or `ssh` only (refusing `ext::`, `file:` and other transports), without hooks or submodules, runs the step 4 content rule, then vendors it. The digest is a SHA-256 over the sorted paths and byte contents of the vendored files, recomputed on every `apply` and check, so it does not depend on line-ending settings of the machine. No network call outside `apply`, no npm. Capabilities belong to helpers (0119 item 4) and are checked when helpers exist, not here.
 Done-when: tests show a pinned pack vendored, a changed byte refused on check, an unpinned entry refused, a refused transport, content that fails step 4 never written, and removal on update leaving a modified copy alone (`owned-files-never-clobbered`).
 
@@ -44,7 +44,7 @@ Done-when: tests show a data-only pack accepted and each of a `run` entry, a scr
 
 ### 5 Author guide and trigger record — [ ] ‖
 Issue: #186
-Class: plan · Needs: 2 · Check: `npm run check:tags`
+Class: plan · Needs: 2 · Human: start when someone asks to write a pack (decision 0142) · Check: `npm run check:tags`
 Do: write a short procedure under `docs/skills/` for writing a pack and, once a trigger holds, a helper (contract, budgets, how to run the suite, what the PR reviewer checks), and record the two triggers of 0140 and the first kind in a fact so a later session can tell whether one has happened.
 Done-when: the procedure and the fact exist, are indexed and carry canonical tags.
 

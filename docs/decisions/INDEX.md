@@ -128,3 +128,4 @@ id,title,tags,status
 0139-go-getter-serves-adopted-pack-verbs-as-read-only-mcp-tools-over-stdio,"go-getter serves the verbs of the packs a project adopted as read-only MCP tools over stdio, opt-in","architecture, roadmap, hooks, compiler",active
 0140-foreign-packs-and-helpers-are-vendored-pinned-and-held-to-the-cores-budgets,"Foreign packs and helpers are vendored by digest, trusted through the pull request, and held to budgets the core enforces","architecture, roadmap, practice-packs, cost",active
 0141-mcp-no-project-policy,"No project list of MCP servers","practice-packs, hooks",draft
+0142-the-helper-protocol-waits-for-a-real-need,"The helper protocol waits for a second implementation or an external request; our own trust steps do not trigger it","architecture, roadmap",active
