@@ -28,14 +28,14 @@ Done-when: a fact lists the seven hosts with the name shape, deny and replace su
 ### 2 Server allowlist — [ ]
 Issue: #169
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/mcp-allowlist.test.mjs`
-Do: add the `mcp-servers` answer to `hitl` (a list of names, pattern-checked) and the gate entry that reads it; the hook parses a server and tool from the host's name shape (step 1) and denies a server off the list. Bump the pack version and keep the golden files in step.
+Do: add the `mcp-servers` answer to `hitl` (a list of names matching `^[A-Za-z0-9_.-]+$`) and the gate entry that reads it; the hook parses a server and tool from the host's name shape (step 1) and compares after the normalisation rule that fact fixes, and denies a server off the list. A host whose hook shows no server is left to its native rule or marked advisory. Bump the pack version and keep the golden files in step.
 Done-when: tests show an allowed server passing, an unlisted server denied on each host name shape, an empty list denying all MCP, and no change for a project without the answer.
 
 ### 3 Tool classes, approve-once and run grants — [ ]
 Issue: #170
 Class: implement · Effort: high · Needs: 2 · Check: `node --test compiler/test/mcp-classes.test.mjs`
-Do: add the `mcp-tools` answer (`server:tool` marked read or write); a write call is a shape `mcp:<server>:<tool>` decided by the shape store and the run record exactly as an outward command shape (first use asks where the hook can ask, remembered per user, `run-grants` may list it); an unmarked tool counts as write; a tool on an unlisted server is never granted. Extend `go-getter approvals` to list and revoke them.
-Done-when: tests show a read tool free, a write tool asking once then silent, a run granting a listed write tool, an unmarked tool asking, and a revoked approval asking again.
+Do: add the `mcp-tools` answer (`server:tool` marked read or write). A write call is a shape `mcp:<server>:<tool>` decided by the shape store and the run record like an outward command shape, which needs these changes: the closed `APPROVABLE` list in `compiler/src/gate.mjs` becomes a test that also admits the `mcp:` family; `shapeAllowance` (`runs/shapes.mjs`), `run start --grant` (`commands/run.mjs`) and `approvals allow` (`commands/approvals.mjs`) use it; the `hitl` `run-grants` pattern and option list admit `mcp:<server>:<tool>`; pending first-use approvals key on the tool call (server, tool), not on command text; `checkShape` (`runs/preconditions.mjs`) gets the `mcp:` precondition (server still allowlisted, tool still marked write). First use asks where the hook can ask; where it cannot, `go-getter approvals allow mcp:<server>:<tool>` records it; `run-grants` may list it. An unmarked tool counts as write; a tool on an unlisted server is never granted. `approvals` lists and revokes them.
+Done-when: tests show a read tool free, a write tool asking once then silent on a host that can ask, `approvals allow` recording it on a host that cannot, a run granting a listed write tool, an unmarked tool asking, a tool whose server left the allowlist refused despite an approval, and a revoked approval asking again.
 
 ### 4 Argument scan — [ ] ‖
 Issue: #171
@@ -46,13 +46,13 @@ Done-when: tests show a call with a token denied by kind, a clean call passing, 
 ### 5 Result masking — [ ] ‖
 Issue: #172
 Class: implement · Effort: medium · Needs: 2 · Check: `node --test compiler/test/mcp-results.test.mjs`
-Do: make the post-tool masking cover MCP results on every host that can replace output, using each host's answer shape; on a host that cannot, mark the guardrail advisory in `coverage`.
-Done-when: tests show a secret and an email masked in an MCP result per supporting host, an unchanged clean result, and `coverage` reporting the hosts that cannot.
+Do: add the capability `rewriteMcpOutput` (true where a host can replace MCP results, Cursor included) beside `rewriteOutput`, and install the post-tool hook when this governance is adopted even if no restricted path or personal-data masking is; make the masking cover MCP results using each host's answer shape (`respondPostTool` gains the Cursor branch); on a host that cannot, mark the guardrail advisory in `coverage`.
+Done-when: tests show a secret and an email masked in an MCP result per supporting host (Cursor included), the hook installed for a project that adopted only MCP governance, an unchanged clean result, and `coverage` reporting the hosts that cannot.
 
 ### 6 Native rules — [ ]
 Issue: #173
 Class: implement · Effort: medium · Needs: 3 · Check: `npm run check:generated && node --test compiler/test/mcp-native.test.mjs`
-Do: where a host can deny a server natively (step 1), `apply` writes the rule for servers off the allowlist and the write-class tools, owned and removable like the other rules.
+Do: where a host can deny a server natively (step 1), `apply` writes a deny rule for each server off the allowlist, and nothing for tool classes (a native rule on a tool would defeat approve-once and run grants), owned and removable like the other rules.
 Done-when: tests show the rules written, removed on update, and not hand-editable by the owned-files rule.
 
 ### 7 Adopt, document and dogfood — [ ]
