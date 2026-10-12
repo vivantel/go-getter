@@ -17,7 +17,7 @@ import { cleanGitEnv } from './git-env.mjs';
 export const MARKERS = { ' ': 'pending', '~': 'in progress', x: 'done', '!': 'blocked', '>': 'moved' };
 export const STATE_MARKER = Object.fromEntries(Object.entries(MARKERS).map(([marker, state]) => [state, marker]));
 export const PLAN_DIR = path.join('docs', 'plans');
-const META = { Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES, Needs: null, Check: null, Issue: null };
+const META = { Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES, Needs: null, Check: null, Issue: null, Human: null };
 // Dotted alphanumeric (`7.1`, `L.7`), with a hyphen allowed between groups for a tracker key (`PROJ-123`).
 export const ID = /^[0-9A-Za-z]+([.-][0-9A-Za-z]+)*$/;
 const HEADING = /^###\s+(\S+)\s+(.+?)\s+—\s+\[(.)\]\s*(.*)$/;
@@ -70,6 +70,7 @@ export function parsePlan(text, file = 'plan') {
         else if (key === 'Tier') step.tier = value;
         else if (key === 'Data') step.data = value;
         else if (key === 'Check') step.check = stripTicks(value);
+        else if (key === 'Human') step.human = value;
         else if (key === 'Issue') {
           const ref = parseRef(value);
           if (!ref) problems.push(`${at}: step ${step.id} has a malformed Issue "${value}" (#123, owner/repo#123, PROJ-123 or an issue URL)`);

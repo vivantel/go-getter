@@ -37,10 +37,10 @@ Class: implement · Effort: medium · Needs: 1 · Check: `node --test compiler/t
 Do: in a run, force-push, history rewrite, shared-branch deletion, repository settings or branch protection changes, tags, releases and publishing stay gated regardless of the record or a remembered approval. `plan issue comment|close` on a step in the range are free; `create` and any other step ask (0124).
 Done-when: tests show each always-human command still denied or asked inside a run and the tracker verbs scoped as described.
 
-### 4 Stop rules and the run procedure — [ ]
+### 4 Stop rules and the run procedure — [x]
 Issue: #129
 Class: implement · Effort: high · Needs: 2, 3 · Check: `node --test compiler/test/run-stops.test.mjs`
-Do: add `go-getter run next`, which gives the next step of the range or the reason to stop: spend cap reached, a step needing a human, two red attempts on one step, or a repeated denial on one step. Record denials and attempts in the run record (metadata only). Add the run procedure as a skill under `src/skills/` that tells the agent to follow `run next`, fix red CI up to the bound, and take a permitted alternative after a denial.
+Do: add `go-getter run next`, which gives the next step of the range or the reason to stop: spend cap reached, a step needing a human, two red attempts on one step, or a repeated denial on one step. A plan step marks "needs a human" with a `Human: <reason>` field (a blocked step counts too). Record denials (by the hook, against the step in progress) and fix attempts (`go-getter run attempt <step>`) in the run record (metadata only). Add the run procedure as a skill under `src/skills/` that tells the agent to follow `run next`, fix red CI up to the bound, and take a permitted alternative after a denial.
 Done-when: tests show each stop, no silent skip of a human-needed step, and a recorded denial counted toward the repeat rule.
 
 ### 5 End-of-run report — [ ]

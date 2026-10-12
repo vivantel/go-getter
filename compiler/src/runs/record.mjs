@@ -4,7 +4,8 @@
 // It holds ids and numbers only: no command output, prompt or file content.
 //
 // Shape of a project's entry: { active: record | null, last: record | null } where a record is
-// { plan, steps, through, startedAt, timeoutAt, spendCapUsd, grants, endedAt?, endReason? }.
+// { plan, steps, through, startedAt, timeoutAt, spendCapUsd, grants, counters?, stop?, endedAt?, endReason? }. `counters` holds
+// per-step numbers for the stop rules: { attempts: { <step>: n }, denials: { <step>: { <guardrail id>: n } } }.
 import { chmodSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { storeDir } from '../secrets/approvals.mjs';
@@ -80,4 +81,32 @@ export function endRun(project, { reason = 'ended', env = process.env, now = () 
   data.projects[key] = { active: null, last: finished };
   write(data, env);
   return finished;
+}
+
+// Counts one event against the active run (a fix attempt, or a denial by `key`) for `step`; returns the new count, or null
+// when no run is active or `step` is not in its range. Numbers and ids only.
+export function noteEvent(project, kind, step, key = null, { env = process.env, now = () => new Date() } = {}) {
+  const { data, key: slot, entry } = load(project, env, now());
+  const run = entry.active;
+  if (!run || !run.steps.includes(step)) return null;
+  const counters = (run.counters ??= { attempts: {}, denials: {} });
+  let count;
+  if (kind === 'attempt') count = counters.attempts[step] = (counters.attempts[step] ?? 0) + 1;
+  else {
+    const per = (counters.denials[step] ??= {});
+    count = per[key] = (per[key] ?? 0) + 1;
+  }
+  data.projects[slot] = entry;
+  write(data, env);
+  return count;
+}
+
+// Records why `run next` stopped, for the report: { code, step, at }.
+export function noteStop(project, stop, { env = process.env, now = () => new Date() } = {}) {
+  const t = now();
+  const { data, key, entry } = load(project, env, t);
+  if (!entry.active) return;
+  entry.active.stop = { ...stop, at: t.toISOString() };
+  data.projects[key] = entry;
+  write(data, env);
 }
