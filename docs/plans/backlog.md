@@ -54,6 +54,12 @@ Class: explore · Needs: none · Check: `npm run check:plans`
 Do: a run's spend cap is read from the telemetry log, but nothing writes `cost` there on the hosts in use (the first dogfood report showed $0.00; fact 0003 says Claude Code's hook input has no token or cost fields). Find, per host, a source of tokens or cost (the transcript file the hooks name, a status line, the headless budget flag), record it in the telemetry log where one exists, and make `go-getter run start` say plainly on a host without one that the cap cannot bind. Then plan the build.
 Done-when: a fact lists the cost source per host and a plan with steps exists for recording it, or the decision not to.
 
+### L.20 MCP native deny rules — [ ]
+Issue: #173
+Class: implement · Effort: medium · Needs: none · Human: confirm the host rule forms (fact 0036) and that a Cursor project needs the allowlist; held 2026-10-12 · Check: `npm run check:generated && node --test compiler/test/mcp-native.test.mjs`
+Do: where a host can deny an MCP server natively, `apply` writes a deny rule for each server of the project's MCP configuration that is off the allowlist (never for tool classes: a native rule would defeat approve-once and run grants), owned and removable like the other rules. Cursor, whose hook shows no server, is the case that needs it.
+Done-when: tests show the rules written, removed on update, and not hand-editable by the owned-files rule.
+
 ### L.14 Pack boundaries and neutral ids — [x]
 Issue: #123
 Class: plan · Needs: none · Check: `npm run check:plans`
