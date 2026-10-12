@@ -137,3 +137,23 @@ test('run-grants lists the shapes a run or a remembered approval may allow; the 
   assert.match(collectEnforcement(bare).find((e) => e.guardrail === 'gated-actions-need-human-approval').run, /grantable=""/);
   rmSync(bare, { recursive: true, force: true });
 });
+
+test('mcp-policy is off by default; allowlist renders the guardrail, the listed servers and a hook-enforced entry', async () => {
+  const { adoptedData } = await import('../src/governance.mjs');
+  const off = project();
+  adopt(off, recommended);
+  assert.equal(collectEnforcement(off).some((e) => /mcp-allow/.test(e.run ?? '')), false, 'no policy without the answer');
+  assert.equal(adoptedData(off, 'mcp-servers'), undefined);
+  rmSync(off, { recursive: true, force: true });
+  const dir = project();
+  adopt(dir, { ...recommended, 'mcp-policy': 'allowlist', 'mcp-servers': ['github', 'my.server'] });
+  const entry = collectEnforcement(dir).find((e) => /mcp-allow/.test(e.run ?? ''));
+  assert.equal(entry.tier, 2);
+  assert.match(entry.run, /^builtin:mcp-allow servers="github, my\.server"$/);
+  assert.equal(adoptedData(dir, 'mcp-servers'), 'github, my.server');
+  rmSync(dir, { recursive: true, force: true });
+  const empty = project();
+  adopt(empty, { ...recommended, 'mcp-policy': 'allowlist', 'mcp-servers': [] });
+  assert.match(collectEnforcement(empty).find((e) => /mcp-allow/.test(e.run ?? '')).run, /servers=""/);
+  rmSync(empty, { recursive: true, force: true });
+});

@@ -25,7 +25,7 @@ Class: explore · Needs: none · Check: `npm run check:tags`
 Do: from the hook payloads and permission formats in facts 0003 to 0008 and 0031 and the capability rows, write a fact listing, per host, the tool-name shape an MCP call has in a pre-tool and a post-tool payload, whether the hook can deny it and replace its result, and the native deny rule if any. Mark what is unconfirmed.
 Done-when: a fact lists the seven hosts with the name shape, deny and replace support, and native rule, unconfirmed shapes marked.
 
-### 2 Server allowlist — [ ]
+### 2 Server allowlist — [x]
 Issue: #169
 Class: implement · Effort: high · Needs: 1 · Check: `node --test compiler/test/mcp-allowlist.test.mjs`
 Do: add the `mcp-servers` answer to `hitl` (a list of names matching `^[A-Za-z0-9_.-]+$`) and the gate entry that reads it; the hook parses a server and tool from the host's name shape (step 1) and compares after the normalisation rule that fact fixes, and denies a server off the list. A host whose hook shows no server is left to its native rule or marked advisory. Bump the pack version and keep the golden files in step.
