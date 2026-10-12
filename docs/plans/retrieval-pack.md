@@ -8,22 +8,22 @@ Written 2026-10-12 from an interview with the repo owner (`sergemso`) for backlo
 
 Memory beyond the knowledge base is a `retrieval` pack with a provider-neutral question (`none | virage | other`), virage first. A retrieval tool does not configure the host itself; **go-getter does, under a contract**:
 
-- **Contract** (step 1): the tool registers no hook and no MCP entry, reads a go-getter-generated file (ignore globs from restricted paths, allowed embedder kinds, data class), and offers a warm local query endpoint.
+- **Contract** (step 1), versioned and in three parts a tool can meet separately: index policy (no hook or MCP entry of its own; reads a go-getter-generated file of ignore globs, allowed embedder kinds and data class), a declaration (contract version, pre-index secret scan), and a warm local query endpoint that the tool itself starts and announces in a discovery file.
 - **Virage conforms** (step 2, in the virage repository) before anything ships.
 - **go-getter owns** the MCP entry and the hook that injects retrieved chunks into a prompt (steps 3 and 4), with masking and scanning, so 0138 covers both paths.
 - **Index governance** (step 5): restricted paths stay out of the index, secrets are scanned before indexing, a hosted embedder is refused for internal data.
 
 Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter:capture`, `go-getter:conform`, `go-getter:attribute`. Guardrails to read first: `practice-ships-only-after-self-adoption`, `restricted-paths-denied`, `no-secrets-in-added-lines`, `no-runtime-dependencies`, `neutral-source-has-no-host-specific-language`, `generated-host-files-not-hand-edited`, `owned-files-never-clobbered`, `pack-questions-have-a-recommended-default`. Reuse the pack machinery (`compiler/src/packs/`, `render.mjs`, `apply.mjs`), the MCP governance of 0138 and the masking (`compiler/src/secrets/mask.mjs`, `patterns.mjs`); do not build a second masking path.
 
-**Rules the design fixes (do not re-decide):** the pack ships nothing until virage conforms; Claude Code is the only host configured, the others are detected; go-getter never loads the tool's code; the secret text is never shown in a denial or a record.
+**Rules the design fixes (do not re-decide):** go-getter calls the tool's endpoint and never starts or supervises it; retrieved chunks are untrusted data; an unreachable endpoint fails open and a failed governance check fails closed; the pack ships nothing until virage conforms; Claude Code is the only host configured, the others are detected; go-getter never loads the tool's code; the secret text is never shown in a denial or a record.
 
 ---
 
 ### 1 Write the contract, version 0 — [ ]
 Issue: #212
 Class: plan · Needs: none · Human: the owner reviews the contract before virage is changed to meet it · Check: `npm run check:plans`
-Do: fix, in one decision, the contract of 0145 item 1: the name and location of the generated file and its fields (ignore globs, allowed embedder kinds, data class); how a tool declares that it conforms (a file, a command or a manifest field); the query endpoint (transport: a local socket or loopback port with a per-user token; request and response shapes, read-only, bounded result size); who starts, keeps alive and stops the endpoint (a hook process is short-lived and cannot own a daemon whose cold start is about 30 seconds: for example go-getter's session-start hook starts it, it ends on an idle timeout or session end, and a per-user socket or token keeps other users out), and what happens when it is down (the hook injects nothing and says so); the declaration that the tool scans for secrets before indexing, which step 5 checks. Write it so a second tool could meet it, naming nothing virage-specific.
-Done-when: a decision exists with the file fields, the conformance and scan declarations, the endpoint protocol and its lifecycle, and the owner has accepted it.
+Do: fix, in one decision, the three parts of the contract of 0145 item 1, each separately meetable: (a) index policy: the name and location of the generated file, its `contractVersion` and fields (ignore globs, allowed embedder kinds, data class); (b) declaration: how a tool states the contract version it meets and that it scans for secrets before indexing (a file, a command or a manifest field), which step 5 checks; (c) query endpoint: the discovery file the tool writes (address, per-user token, tool version), the transport (a local socket or loopback port), request and response shapes (read-only, bounded result size, a source label per chunk), and the lifecycle, which belongs to the tool (it starts on demand, ends on an idle timeout; go-getter never supervises a process). State the failure rules: an unreachable endpoint fails open (nothing injected, one line said), a failed governance check fails closed. Write it so a second tool could meet it, naming nothing virage-specific.
+Done-when: a decision exists with the file fields, the conformance and scan declarations, the discovery file, the failure rules and the lifecycle owned by the tool, and the owner has accepted it.
 
 ### 2 Virage conforms — [ ]
 Issue: #213
@@ -40,8 +40,8 @@ Done-when: tests show the file and entry written and removed on update, a pre-co
 ### 4 The injection hook — [ ]
 Issue: #215
 Class: implement · Effort: high · Needs: 3 · Check: `node --test compiler/test/retrieval-hook.test.mjs`
-Do: a go-getter hook on the prompt event of Claude Code that asks the tool's endpoint for chunks, masks secrets and personal data in them (the shared patterns), masks the outgoing query the same way before it reaches the tool's embedder, applies a size and similarity bound, and injects the result, failing open with a one-line notice when the endpoint is down. It runs as one hook with the existing ones, not a second runner. Record counts only in telemetry (chunks, masked kinds), never text.
-Done-when: tests show chunks injected, a secret in a chunk masked, a secret in the prompt masked in the query sent, an endpoint that is down injecting nothing without failing the prompt, the bound respected, and no chunk text in the telemetry record.
+Do: a go-getter hook on the prompt event of Claude Code that asks the tool's endpoint for chunks, masks secrets and personal data in them (the shared patterns), masks the outgoing query the same way before it reaches the tool's embedder, applies a size and similarity bound, and injects the result framed as quoted reference material with its source (chunks are untrusted data, never instructions), failing open with a one-line notice when the endpoint is down. It runs as one hook with the existing ones, not a second runner. Record counts only in telemetry (chunks, masked kinds), never text.
+Done-when: tests show chunks injected, a secret in a chunk masked, a secret in the prompt masked in the query sent, a chunk containing an instruction injected only inside the quoted frame, an endpoint that is down injecting nothing without failing the prompt, the bound respected, and no chunk text in the telemetry record.
 
 ### 5 Index governance checks — [ ]
 Issue: #216
