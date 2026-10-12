@@ -29,4 +29,4 @@ A retrieved chunk enters the model with no tool call, so a tool that injects its
 - **Strip virage's hook after each update:** works today, but re-fights the tool on every update.
 - **MCP-only contract:** simplest, cannot cover prompt injection.
 - **Library contract:** conflicts with 0119.
-- **Cost accepted:** nothing ships for retrieval until virage changes; the contract file name, fields and daemon protocol are still to be fixed (plan step 1).
+- **Cost accepted:** nothing ships for retrieval until virage changes; the contract file names, fields and endpoint protocol are fixed in 0146.
