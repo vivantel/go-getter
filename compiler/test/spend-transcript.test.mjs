@@ -1,4 +1,4 @@
-// The Claude Code transcript reader (step 2 of docs/plans/run-spend.md, fact 0037).
+// The Claude Code transcript reader (step 2 of docs/plans/archive/run-spend.md, fact 0037).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, appendFileSync, readFileSync, realpathSync, rmSync } from 'node:fs';

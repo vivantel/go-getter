@@ -1,4 +1,4 @@
-// The OpenCode and Kilo session reader (step 5 of docs/plans/run-spend.md, fact 0037), with a stub for the host command.
+// The OpenCode and Kilo session reader (step 5 of docs/plans/archive/run-spend.md, fact 0037), with a stub for the host command.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync } from 'node:fs';
