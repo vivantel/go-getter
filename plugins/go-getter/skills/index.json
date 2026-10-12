@@ -184,6 +184,7 @@
         "cli/compiler/src/runs/record.mjs",
         "cli/compiler/src/runs/report.mjs",
         "cli/compiler/src/runs/shapes.mjs",
+        "cli/compiler/src/runs/spend.mjs",
         "cli/compiler/src/sandbox.mjs",
         "cli/compiler/src/schema.mjs",
         "cli/compiler/src/secrets/approvals.mjs",

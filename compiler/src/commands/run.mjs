@@ -12,6 +12,9 @@ import { APPROVABLE, isApprovable, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
 import { adoptedData } from '../governance.mjs';
 import { telemetryConfig } from '../telemetry/record.mjs';
+import { packageCapabilities } from '../governance.mjs';
+import { detect } from '../detect.mjs';
+import { spendCoverage } from '../runs/spend.mjs';
 
 const USAGE = 'usage: go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | next [--json] | attempt <step> | end';
 
@@ -97,7 +100,10 @@ export default async function runCommand({ args }) {
       // The spend cap is read from the telemetry log (runs/next.mjs), so a cap with recording off would never bind.
       const spendCapUsd = loadPolicy(project)?.spendCapUsd ?? null;
       if (spendCapUsd && telemetryConfig(project).recording !== 'metadata-log') throw new Error(`the project sets a spend cap of $${spendCapUsd}, which is read from the telemetry metadata log, and telemetry recording is off; turn on telemetry-recording (metadata-log) or remove the cap`);
-      const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd, grants });
+      // A host with no spend reader cannot bind the cap (decision 0144): say so plainly and start anyway.
+      const coverage = spendCoverage(detect(project).hostAgents, packageCapabilities(), spendCapUsd);
+      const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd, grants, spendMetered: spendCapUsd ? coverage.metered : null });
+      if (coverage.notice) console.error(`run: ${coverage.notice}`);
       console.log(`run started: ${describe(record)}`);
       return 0;
     }

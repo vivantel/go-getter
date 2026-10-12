@@ -18,10 +18,10 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 Say when the cap cannot bind — [ ]
+### 1 Say when the cap cannot bind — [x]
 Issue: #201
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/run-spend-source.test.mjs`
-Do: add the capability `spendSource` (`transcript`, `stats` or `none`) to the host capability rows and schema, `none` for cursor, gemini-cli and copilot and `transcript` for claude-code and codex until their readers land (a row is only `transcript` once its reader exists: set claude-code in step 2, codex in step 4). `go-getter run start` on a host whose source is `none` with a cap set prints that the cap cannot bind on this host and which stops still apply, and starts; the run record stores `spendMetered: false`, and the report prints "spend not metered on this host" instead of a dollar figure. The telemetry-recording refusal stays.
+Do: add the capability `telemetry.spendSource` (`none`, `transcript` or `stats`) to the host capability rows and schema, `none` on every row (a row becomes `transcript` or `stats` only when its reader exists: claude-code in step 2, codex in step 4, opencode and kilo in step 5). `go-getter run start` on a host whose source is `none` with a cap set prints that the cap cannot bind on this host and which stops still apply, and starts; the run record stores `spendMetered: false`, and the report prints "spend not metered on this host" instead of a dollar figure. The telemetry-recording refusal stays.
 Done-when: tests show the notice and a started run on a `none` host, the record flag, the report line, no notice on a host with a source, and no change for a run without a cap.
 
 ### 2 Claude Code transcript reader — [ ]

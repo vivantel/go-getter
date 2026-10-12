@@ -48,6 +48,7 @@
   "telemetry": {
     "otel": true,
     "cost": false,
+    "spendSource": "none",
     "logsPromptsByDefault": true,
     "promptLogOff": {
       "file": ".gemini/settings.json",
