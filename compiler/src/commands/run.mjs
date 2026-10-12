@@ -90,8 +90,8 @@ export default async function runCommand({ args }) {
       const last = o.through === undefined ? ids.length - 1 : ids.indexOf(o.through);
       const steps = plan.steps.slice(0, last + 1).filter((s) => ['pending', 'in progress', 'blocked'].includes(s.state)).map((s) => s.id);
       if (!steps.length) throw new Error('no step is left to do in that range');
-      // Without --grant, the shapes the project's hitl answer lists.
-      const grants = normaliseFree(o.grants.length ? o.grants : [].concat(adoptedData(project, 'run-grants') ?? []));
+      // Without --grant, the shapes the project's hitl answer lists (stored as one comma-separated string).
+      const grants = normaliseFree((o.grants.length ? o.grants : [].concat(adoptedData(project, 'run-grants') ?? [])).flatMap((g) => String(g).split(',')).map((g) => g.trim()).filter(Boolean));
       const bad = grants.filter((g) => !APPROVABLE.includes(g));
       if (bad.length) throw new Error(`--grant takes approvable command shapes (${APPROVABLE.join(', ')}), not ${bad.join(', ')}; tags, releases, publishing and history rewrites always need a human`);
       // The spend cap is read from the telemetry log (runs/next.mjs), so a cap with recording off would never bind.
