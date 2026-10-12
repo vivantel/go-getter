@@ -88,6 +88,23 @@ node <skill-dir>/cli/compiler/bin/go-getter.mjs coverage
 
 A project that adopts the `hitl` pack gates irreversible and outward-facing shell commands (force-push, hard reset, `rm -rf`, pushes, pull requests, releases, publishing). Claude Code, Kilo and OpenCode prompt you natively: `apply` writes ask rules into `.claude/settings.json`, `kilo.json` and `opencode.json`. Cursor, Codex and Gemini CLI get a hand-over: the pre-tool hook denies the command and asks the agent to have you run it. Copilot's hook hand-over is untested, so it is counted as advisory until its hook payload is confirmed. Agents in such a project will ask before pushes, pull requests and releases, among other gated commands (the catalog is in decision 0094). To get fewer prompts, narrow the classes in the pack's answers, or name outward-facing commands in `free-commands` (for example `git-push`: plain pushes then run unasked while force-push, branch deletion, pull requests and releases still ask; the project then relies on a git hook or branch protection to stop pushes to the default branch). An allow rule in your own settings does not override the committed ask rules on Claude Code. A mode that skips permission prompts defeats the native rules, and a wrapped command (`sh -c`, `eval`, a script) or `sudo`/`git -C` is not matched.
 
+## Autonomous runs
+
+A person can start an autonomous run on a plan range so the agent works through it without asking for each push, pull request or merge ([decision 0130](docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md)). Only a person starts or ends one; the hook refuses an agent's `go-getter run start` or `run end`, and the run record lives in your user directory, outside git.
+
+```
+go-getter run start docs/plans/<plan>.md --through <step> [--hours H] [--grant <shape>]...
+go-getter run status
+go-getter run end
+```
+
+- **What it grants:** the outward command shapes your `hitl` answer lists (`run-grants`; by default `git-push`, `pr-create`, `pr-merge`, `pr-close`), checked at every use: a merge needs green required checks, the default branch as base and a pull request tied to a step in the range. `plan issue comment|close` on the range's steps need no approval; `create` still asks.
+- **What it never grants:** force-push, history rewrites, deleting shared branches, repository settings, tags, releases and publishing.
+- **When it stops:** `go-getter run next` gives the agent the next step or a reason to stop: the spend cap is reached, a step needs a person (`Human: <reason>` in the plan, or blocked), two fix attempts failed on one step, or the same guardrail denied the same step twice. A stop is never skipped. The spend cap is read from the telemetry log, so `run start` refuses while a cap is set and `telemetry-recording` is off.
+- **The report:** `go-getter run end` posts what the run did (steps, pull requests, stops, denials, spend, approvals used) as a comment on the issue of the range's last step that has one, after the secret and personal-data check, or prints it. Run it from the default branch so merged pull requests are listed.
+
+The `autonomous-run` skill tells the agent to follow `run next`. Where the host's hook can ask, the first use of a shape asks and is remembered (`go-getter approvals list`); `go-getter approvals allow <shape>` does it ahead of time.
+
 ## Checkpoints
 
 A project that adopts the `checkpointing` pack saves its working tree to a hidden git ref (`refs/go-getter/checkpoints/`) before a gated command, and optionally before a plan step. The pre-tool hook takes it automatically; the 10 newest are kept (or all, if you chose that). Taking one never changes a branch, the index or a file, and never blocks the command. Ignored files are not saved, and an untracked file that is not ignored is: keep secret files in `.gitignore`.

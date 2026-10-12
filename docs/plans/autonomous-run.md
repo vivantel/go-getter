@@ -49,7 +49,7 @@ Class: implement · Effort: medium · Needs: 4 · Check: `node --test compiler/t
 Do: `go-getter run end` builds the report: steps done, pull requests merged and issues closed with links, stops, denials and skipped steps with reasons, spend and approvals used (from telemetry metadata and the approvals store). It posts the report as a comment on the issue of the range's last step that has one (a plan has no issue of its own) after the secret and personal-data check, and prints it when there is no issue.
 Done-when: tests show the report content for a finished and a stopped run, the check blocking a secret in the text, and no prompt or file content in it.
 
-### 6 Adopt, document and dogfood — [ ]
+### 6 Adopt, document and dogfood — [~]
 Issue: #131
 Class: implement · Effort: medium · Needs: 5 · Check: `npm run check:self-adoption && npm run check:generated`
 Do: adopt the new `hitl` answers in this repository, regenerate, describe the run in INSTALLING.md and the README, and run one real run over a small plan range on this repository, recording what was friction.
