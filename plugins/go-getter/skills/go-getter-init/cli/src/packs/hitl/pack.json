@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "hitl",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "family": "harness",
   "components": [
     8
@@ -84,6 +84,38 @@
         "in": [
           "both",
           "outward"
+        ]
+      }
+    },
+    {
+      "id": "mcp-policy",
+      "prompt": "May agents use MCP servers without a project list?",
+      "options": [
+        {
+          "id": "off",
+          "label": "No project policy",
+          "tradeoff": "The host's own MCP settings decide; go-getter neither allows nor denies a server.",
+          "recommended": true
+        },
+        {
+          "id": "allowlist",
+          "label": "Only listed servers",
+          "tradeoff": "The pre-tool hook denies a call to any MCP server not on the list, on hosts whose hook shows the server; an empty list allows no MCP at all."
+        }
+      ],
+      "since": "0.6.0"
+    },
+    {
+      "id": "mcp-servers",
+      "type": "list",
+      "prompt": "Which MCP servers may agents use? Write each as the host shows it (letters, digits, _ . -); a server the host renames (spaces and dots become _ on some hosts) is compared after the same renaming. An empty list allows no MCP.",
+      "pattern": "^[A-Za-z0-9_.-]+$",
+      "default": [],
+      "since": "0.6.0",
+      "when": {
+        "question": "mcp-policy",
+        "in": [
+          "allowlist"
         ]
       }
     }
@@ -319,6 +351,69 @@
               }
             },
             "body": "## Decision\n\nThe outward commands [{{answer.run-grants}}] may run without a prompt when an autonomous run grants them or a person approved them once, and only while their preconditions hold at that use (pack {{pack.id}}@{{pack.version}}); an empty list grants none. Tags, releases, publishing and history rewrites always need a human.\n\n## Why\n\nConfirming each merge of a plan whose order is fixed is friction without protection when required checks and branch protection already bound the work; the preconditions keep a remembered approval from outliving the conditions that made it safe (decision 0130).\n"
+          }
+        ]
+      }
+    },
+    "mcp-policy": {
+      "allowlist": {
+        "decisions": [
+          {
+            "slug": "mcp-servers-allowlisted",
+            "title": "MCP servers agents may use are listed",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "mcp-servers": "{{answer.mcp-servers}}"
+              }
+            },
+            "body": "## Decision\n\nAgents may use the MCP servers [{{answer.mcp-servers}}]; a call to any other server is denied by the pre-tool hook where the host shows the server in the tool name (pack {{pack.id}}@{{pack.version}}); an empty list allows no MCP.\n\n## Why\n\nAn MCP server is third-party code and data an agent calls with the project's context; a list is cheap to state and to audit (decision 0138).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "mcp-servers-are-allowlisted",
+            "title": "Agents use only the allowlisted MCP servers",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.mcp-policy}}",
+              "grounded-in": [
+                "{{id.decision.mcp-policy}}"
+              ],
+              "derivation-note": "Given an MCP server is third-party code reached with the project's context (0138), a call to a server the project did not list must be refused by the host's hook, since an instruction alone fails silently."
+            },
+            "enforcement": [
+              {
+                "tier": 2,
+                "check": "The pre-tool hook denies a call to an MCP server that is not listed",
+                "run": "builtin:mcp-allow servers=\"{{answer.mcp-servers}}\""
+              }
+            ],
+            "body": "## Guardrail\n\nUse only the MCP servers the project lists. A call to another server is denied by the pre-tool hook on hosts whose hook shows the server name in the tool call; on the others the list is advisory (fact 0036). `go-getter coverage` shows the tier per host.\n"
+          }
+        ]
+      },
+      "off": {
+        "decisions": [
+          {
+            "slug": "mcp-no-project-policy",
+            "title": "No project list of MCP servers",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nThe project sets no list of MCP servers; the host's own settings decide which servers agents use (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe project accepted the host's defaults for less setup (decision 0138); choosing `allowlist` makes the pre-tool hook deny unlisted servers.\n"
           }
         ]
       }

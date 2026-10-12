@@ -18,6 +18,7 @@ import { approved as personallyApproved, addPending, storeDir, relativeSecretPat
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
 import { readPlan } from './plan.mjs';
+import { mcpDenial } from './mcp.mjs';
 import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
@@ -367,6 +368,11 @@ function decidePreTool(project, payload, host) {
       if (gated) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" is an ${gated.class} command and needs a human; ask the user to run it themselves` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
+      continue;
+    }
+    if (e.parsed.id === 'mcp-allow') {
+      const why = mcpDenial(toolName(payload), e.parsed.args);
+      if (why) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${why}` };
       continue;
     }
     if (e.parsed.id === 'deny-path') {
