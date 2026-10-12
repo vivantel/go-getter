@@ -21,9 +21,9 @@ Ten harness packs and two SDLC (practice) packs, each a short guided interview w
 | `context` | 4 Context management | instruction-file cap, procedure delivery, noisy-work placement, cache hygiene, compaction timing, watcher noise |
 | `verification-gate` | 6 Verification loops | which checks mean "done" (including a coverage command and bar) and where each runs (locally or in CI), the review bar, whether failing checks block completion |
 | `restricted-data` | 7 Guardrails & DLP | restricted paths, their access modes and enforcement, how secrets are used and where they may be written, which hosts may handle restricted data |
-| `sanitization` | 7 Guardrails & DLP | whether the lines a change adds are scanned for secrets, which paths the scan skips, whether personal data in tool output is masked |
+| `sanitization` | 7 Guardrails & DLP | whether the lines a change adds are scanned for secrets, which paths the scan skips, whether personal data in tool output is masked, whether MCP call arguments are scanned for secrets |
 | `data-policy` | 7 Guardrails & DLP | which providers may see internal and confidential data, prompt logging |
-| `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns, outward commands that may run unasked, and which an autonomous run may grant (see [INSTALLING.md](INSTALLING.md#autonomous-runs)) |
+| `hitl` | 8 Human-in-the-loop | which shell commands need a human (irreversible, outward-facing, both), project-specific patterns, outward commands that may run unasked, which an autonomous run may grant (see [INSTALLING.md](INSTALLING.md#autonomous-runs)), and which MCP servers and tools agents may use (see [INSTALLING.md](INSTALLING.md#mcp-servers)) |
 | `checkpointing` | 9 Checkpointing | whether work is saved to a hidden git ref before a gated command or a plan step, who takes it (the pre-tool hook or the agent), how many are kept |
 | `orchestration` | 10 Multi-agent orchestration | agent roles compiled to each host's native format, worktree isolation, concurrency limit |
 | `cost-routing` | 11 Cost & model routing | task classes, starting tiers, escalation bound, headless spend cap, prompt-cache lifetime |

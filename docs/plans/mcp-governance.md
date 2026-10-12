@@ -56,8 +56,11 @@ Class: implement · Effort: medium · Needs: 3 · Check: `npm run check:generate
 Do: where a host can deny a server natively (step 1), `apply` writes a deny rule for each server off the allowlist, and nothing for tool classes (a native rule on a tool would defeat approve-once and run grants), owned and removable like the other rules.
 Done-when: tests show the rules written, removed on update, and not hand-editable by the owned-files rule.
 
-### 7 Adopt, document and dogfood — [ ]
+### 7 Adopt, document and dogfood — [x]
 Issue: #174
 Class: implement · Effort: medium · Needs: 3, 4, 5 · Check: `npm run check:self-adoption && npm run check:generated`
 Do: decide for this repository whether to adopt an allowlist (the servers it uses as project servers; user-scope connectors are not listed and would be denied), regenerate, describe MCP governance in INSTALLING.md and the README, and record in the plan's result line what was friction.
 Done-when: the checks pass and the plan's result line states what was found.
+
+Result, 2026-10-12: steps 1 to 5 and 7 done; step 6 (native deny rules) moved to backlog L.20 with the rule forms unconfirmed. Dogfood in a scratch project adopted through `render-pack` and `apply`: a listed read tool passed, a listed write tool asked and was remembered after the person said yes (`approvals list` showed `mcp:github:create_issue`), an unlisted server was denied, a token in the arguments was denied by kind, and a token in a result was masked. Friction: (1) a user-level connector (`claude_ai_Claude_Docs`) was denied as soon as an allowlist existed, so this repository does not adopt one (it uses no project MCP server and its owner uses connectors) and records `mcp-policy: off`; (2) the denial did not say how to allow a server (now it names the `mcp-servers` answer); (3) the allowlist is advisory on five of seven hosts until their tool-name shape is confirmed, and Cursor's post-tool input shape is unconfirmed; (4) approving once needs the post-tool hook, which is installed with any tier-2 guardrail; (5) every unlisted tool of an allowed server asks, so a server with many read tools needs them listed.
+
