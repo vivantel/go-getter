@@ -54,6 +54,7 @@
         "askPreTool": { "type": "boolean" },
         "rewriteToolInput": { "type": "boolean" },
         "rewriteOutput": { "type": "boolean" },
+        "rewriteMcpOutput": { "type": "boolean" },
         "blockStop": { "type": "boolean" },
         "modelSwap": { "type": "boolean" },
         "runtime": { "enum": ["command", "javascript"] },

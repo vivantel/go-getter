@@ -534,7 +534,7 @@ export function evaluatePostTool(project, payload) {
     pseudonymizer?.close();
   }
   if (pii) sweepPseudonyms(project);
-  return { output, redactions, masked, mcp: /^mcp__/.test(toolName(payload) ?? '') };
+  return { output, redactions, masked, mcp: Boolean(mcpCall(toolName(payload))) };
 }
 
 // A session ended: its pseudonym map goes (a host that never sends this leaves the 24-hour sweep).
@@ -561,6 +561,8 @@ export function respondPostTool(host, result) {
   if (host === 'codex') return answer({ decision: 'block', reason: text(out) });
   if (host === 'gemini-cli') return answer({ decision: 'deny', reason: text(out?.llmContent ?? out) });
   if (host === 'kilo') return answer({ output: text(out) });
+  // Cursor replaces MCP results only (fact 0031); the shape of its post-tool input is unconfirmed.
+  if (host === 'cursor') return result.mcp ? answer({ updated_mcp_tool_output: out }) : none;
   return none;
 }
 
