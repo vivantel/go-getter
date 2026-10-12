@@ -6,6 +6,8 @@ import path from 'node:path';
 import { activeRun, lastRun, startRun, endRun, noteEvent, DEFAULT_HOURS } from '../runs/record.mjs';
 import { readPlan, repoRoot } from '../plan.mjs';
 import { nextInRun } from '../runs/next.mjs';
+import { buildReport, reportStep } from '../runs/report.mjs';
+import { planIssue, relPlan } from '../trackers/write.mjs';
 import { APPROVABLE, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
 import { adoptedData } from '../governance.mjs';
@@ -30,7 +32,7 @@ function parseStart(rest) {
 
 const describe = (r) => `plan ${r.plan}, steps ${r.steps.join(', ')} (through ${r.through}), started ${r.startedAt}, times out ${r.timeoutAt}${r.spendCapUsd ? `, spend cap $${r.spendCapUsd}` : ''}${r.grants.length ? `, grants: ${r.grants.join(', ')}` : ''}`;
 
-export default function runCommand({ args }) {
+export default async function runCommand({ args }) {
   const [sub, ...rest] = args;
   const project = repoRoot(process.cwd());
   try {
@@ -58,8 +60,20 @@ export default function runCommand({ args }) {
     }
     if (sub === 'end' && !rest.length) {
       const done = endRun(project, { reason: 'ended' });
-      console.log(done ? `run ended: ${describe(done)}` : 'no run is active');
-      return done ? 0 : 1;
+      if (!done) {
+        console.log('no run is active');
+        return 1;
+      }
+      console.log(`run ended: ${describe(done)}`);
+      // The report goes to the issue of the range's last step after the tracker's secret and personal-data check; without an issue, or
+      // when the post is refused, it is printed.
+      const { text, steps } = buildReport(project, done);
+      const id = reportStep(steps);
+      const file = path.resolve(project, done.plan);
+      const posted = id ? await planIssue(project, file, relPlan(project, file), 'comment', id, { text }) : null;
+      if (posted?.ok) console.log(`report posted: ${posted.message}`);
+      else console.log(`${posted ? `report not posted (${posted.error})` : 'report (the plan has no issue to post it on)'}:\n\n${text}`);
+      return 0;
     }
     if (sub === 'start') {
       const o = parseStart(rest);

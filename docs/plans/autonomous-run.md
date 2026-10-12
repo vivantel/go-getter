@@ -43,10 +43,10 @@ Class: implement · Effort: high · Needs: 2, 3 · Check: `node --test compiler/
 Do: add `go-getter run next`, which gives the next step of the range or the reason to stop: spend cap reached, a step needing a human, two red attempts on one step, or a repeated denial on one step. A plan step marks "needs a human" with a `Human: <reason>` field (a blocked step counts too). Record denials (by the hook, against the step in progress) and fix attempts (`go-getter run attempt <step>`) in the run record (metadata only). Add the run procedure as a skill under `src/skills/` that tells the agent to follow `run next`, fix red CI up to the bound, and take a permitted alternative after a denial.
 Done-when: tests show each stop, no silent skip of a human-needed step, and a recorded denial counted toward the repeat rule.
 
-### 5 End-of-run report — [ ]
+### 5 End-of-run report — [x]
 Issue: #130
 Class: implement · Effort: medium · Needs: 4 · Check: `node --test compiler/test/run-report.test.mjs`
-Do: `go-getter run end` builds the report: steps done, pull requests merged and issues closed with links, stops, denials and skipped steps with reasons, spend and approvals used (from telemetry metadata and the approvals store). It posts the report as a comment on the plan's issue after the secret and personal-data check, and prints it when there is no issue.
+Do: `go-getter run end` builds the report: steps done, pull requests merged and issues closed with links, stops, denials and skipped steps with reasons, spend and approvals used (from telemetry metadata and the approvals store). It posts the report as a comment on the issue of the range's last step that has one (a plan has no issue of its own) after the secret and personal-data check, and prints it when there is no issue.
 Done-when: tests show the report content for a finished and a stopped run, the check blocking a secret in the text, and no prompt or file content in it.
 
 ### 6 Adopt, document and dogfood — [ ]
