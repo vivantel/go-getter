@@ -10,7 +10,7 @@ accepted-by: sergemso
 
 ## Decision
 
-This fixes the contract that 0118 left as an intent. The protocol is **not built**; it is built when a second implementation of a kind exists, a third party wants to write one, or the trust steps of L.9 exist. Until then the in-tree interfaces (WorkSource, the host adapter registry) obey the same rules, so extraction is a move.
+This fixes the contract that 0118 left as an intent. The protocol is **not built**; it is built when a second implementation of a kind exists, a third party wants to write one, or the trust steps of L.9 exist (the last trigger was dropped by 0142). Until then the in-tree interfaces (WorkSource, the host adapter registry) obey the same rules, so extraction is a move.
 
 1. **Envelope.** One JSON request on standard input, `{protocol, kind, op, args}`, and one JSON response on standard output, `{ok, result | error, stale?}`. Errors are typed, a call has a timeout, standard output carries only JSON and standard error is scrubbed before it is shown.
 2. **Lifecycle.** One process per call. A long-lived mode is added only for a measured need.

@@ -20,7 +20,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ### 1 The stdio server — [ ]
 Issue: #176
-Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/mcp-serve.test.mjs`
+Class: implement · Effort: high · Needs: none · Human: start when a host or user asks for it (decision 0142) · Check: `node --test compiler/test/mcp-serve.test.mjs`
 Do: add `go-getter mcp serve`: line-delimited JSON-RPC 2.0 on stdin and stdout answering `initialize`, `ping`, `tools/list` and `tools/call`, with protocol errors for unknown methods, bad input and unknown tools; tools come from a registry the next steps fill. Nothing is written to stdout except protocol messages.
 Done-when: tests drive the server through a pipe and show the handshake, an empty tool list, an unknown method and an unknown tool answered with errors, and stdout holding only valid messages.
 
