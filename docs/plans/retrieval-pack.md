@@ -19,11 +19,12 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 Write the contract, version 0 — [~]
+### 1 Write the contract, version 0 — [x]
 Issue: #212
 Class: plan · Needs: none · Human: the owner reviews the contract before virage is changed to meet it · Check: `npm run check:plans`
 Do: fix, in one decision, the three parts of the contract of 0145 item 1, each separately meetable: (a) index policy: the name and location of the generated file, its `contractVersion` and fields (ignore globs, allowed embedder kinds, data class); (b) declaration: how a tool states the contract version it meets and that it scans for secrets before indexing (a file, a command or a manifest field), which step 5 checks; (c) query endpoint: the discovery file the tool writes (address, per-user token, tool version), the transport (a local socket or loopback port), request and response shapes (read-only, bounded result size, a source label per chunk), and the lifecycle, which belongs to the tool (it starts on demand, ends on an idle timeout; go-getter never supervises a process). State the failure rules: an unreachable endpoint fails open (nothing injected, one line said), a failed governance check fails closed. Write it so a second tool could meet it, naming nothing virage-specific.
 Done-when: a decision exists with the file fields, the conformance and scan declarations, the discovery file, the failure rules and the lifecycle owned by the tool, and the owner has accepted it.
+Result: decision 0146 accepted by sergemso 2026-10-12; the changes virage needs are listed at its end and feed step 2.
 
 ### 2 Virage conforms — [ ]
 Issue: #213

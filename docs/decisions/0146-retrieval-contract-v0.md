@@ -1,10 +1,11 @@
 ---
 id: 0146-retrieval-contract-v0
 title: Retrieval contract v0 is three files (index policy, declaration, endpoint discovery) and a loopback JSON endpoint the tool owns
-status: draft
+status: active
 date: 2026-10-12
 tags: [practice-packs, hooks, security]
 track: product
+accepted-by: sergemso
 governed-facts: [0038-virage-integration-surface]
 ---
 
