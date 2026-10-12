@@ -34,11 +34,12 @@ Do: interview the owner, then plan: which MCP servers a project allows, gating o
 Done-when: the interview is recorded and a plan with steps exists for it.
 Result, 2026-10-12: the interview is recorded in decision 0138 and the build is planned in `docs/plans/mcp-governance.md` (seven steps).
 
-### L.12 go-getter as an MCP server — [ ]
+### L.12 go-getter as an MCP server — [x]
 Issue: #94
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: `plan next`, `refs` and `coverage` as tools a host can call; a surface only, with no change to the helper contract (decision 0119). Low priority.
 Done-when: the interview is recorded and a plan with steps exists for it.
+Result, 2026-10-12: the interview is recorded in decision 0139 and the build is planned in `docs/plans/mcp-server.md` (five steps).
 
 ### L.14 Pack boundaries and neutral ids — [x]
 Issue: #123
