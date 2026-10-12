@@ -68,11 +68,12 @@ Do: plan the work of decision 0129 items 1 to 3: split `governance` into path an
 Done-when: a plan with steps exists, one step per pack change, each with its done-when.
 Result, 2026-10-11: the build is planned in `docs/plans/archive/pack-boundaries.md` (seven steps, all done 2026-10-11; step 1 settles the pack names and the migration of existing adoptions).
 
-### L.15 Retrieval pack, virage first — [ ]
+### L.15 Retrieval pack, virage first — [x]
 Issue: #124
 Class: plan · Needs: L.11 · Check: `npm run check:plans`
 Do: first record a fact on virage's integration surface (MCP tool names, hook behaviour, which host files `virage update` and its agent plugins write; each marked confirmed or not). Then interview the owner and plan the `retrieval` pack of decision 0129 item 4, with a detect-and-coexist slice that can ship before the pack.
 Done-when: the fact exists, the interview is recorded and a plan with steps exists for it.
+Result, 2026-10-12: fact 0038 records virage's integration surface from its source (it registers MCP and a prompt hook for Claude Code only; the hook injects chunks without a tool call; no restricted-path input or secret scan). The interview is decision 0145: retrieval tools follow a go-getter contract (no hooks or MCP entry of their own, a go-getter ignore input, a warm local query endpoint), virage is changed to conform, and the pack waits for that. The build is planned in `docs/plans/retrieval-pack.md` (seven steps; whether to reverse the hold on an earlier slice is the owner's call, step 6).
 
 ### L.13 Secret use without ceremony — [x]
 Issue: #101
@@ -93,3 +94,9 @@ Class: implement · Effort: medium · Needs: none · Check: `node --test compile
 Do: the frictions the first dogfood run found (`docs/plans/archive/autonomous-run.md`, step 6 result): build a report for a run that timed out (today `run end` finds no active run); list merged pull requests from the default branch whatever branch `run end` runs on; print the end reason once and list only the approvals the run used, not every remembered shape; and decide whether a `Class: plan` step stops a run by default, since a design drafted for the owner's sign-off is not stopped unless it carries `Human:`. Also: a run whose plan was moved to `docs/plans/archive/` fails to build its report (`run end` reads the old path).
 Done-when: tests show the timed-out report, the merged list from another branch, the corrected report lines, and the chosen plan-step rule.
 
+
+### L.21 Spend readers driven by capability data — [ ]
+Issue: #220
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/spend-transcript.test.mjs compiler/test/spend-sessions.test.mjs compiler/test/run-spend-source.test.mjs`
+Do: a design review of the readers built for `docs/plans/archive/run-spend.md` found host knowledge hardcoded in three places (`PARSERS` in `spend/transcript.mjs`, `COMMANDS` in `spend/sessions.mjs`, the source branches in `spend/index.mjs`) where fact 0035 says capability rows are the only data-driven part. Make the row say how (`spendSource: {kind, format, command}`) and have a registry map a kind to its reader, so a new host edits data; split recording from deciding (`settleSpend(project, run)` called by `run next` and the report, so `nextInRun` stays a read); add a `coverage` field to the spend record (`lower-bound`, `shared-directory`) that the report prints beside the figure; cache `detect()` per call and give `spend.json` a schema version.
+Done-when: tests show a host added by a capability row alone, `nextInRun` writing nothing when `settleSpend` was not called, the report line carrying the coverage note, and an old `spend.json` read.
