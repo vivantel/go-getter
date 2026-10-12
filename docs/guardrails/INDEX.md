@@ -45,3 +45,4 @@ no-commits-on-the-default-branch,"Work must not happen on the default branch","p
 no-secrets-in-added-lines,"Added lines must not contain secrets","practice-packs, governance, security, guardrail",active
 pii-masked-in-tool-output,"Personal data is masked in tool output","practice-packs, governance, security, guardrail",active
 tracker-writes-follow-the-answer,"Writes to the plan tracker follow the project's answer","practice-packs, hooks, guardrail",active
+mcp-arguments-hold-no-secret,"MCP calls carry no secret","practice-packs, hooks, guardrail",active

@@ -129,3 +129,4 @@ id,title,tags,status
 0140-foreign-packs-and-helpers-are-vendored-pinned-and-held-to-the-cores-budgets,"Foreign packs and helpers are vendored by digest, trusted through the pull request, and held to budgets the core enforces","architecture, roadmap, practice-packs, cost",active
 0141-mcp-no-project-policy,"No project list of MCP servers","practice-packs, hooks",draft
 0142-the-helper-protocol-waits-for-a-real-need,"The helper protocol waits for a second implementation or an external request; our own trust steps do not trigger it","architecture, roadmap",active
+0143-mcp-arguments-scanned,"MCP call arguments are scanned for secrets","practice-packs, hooks",draft

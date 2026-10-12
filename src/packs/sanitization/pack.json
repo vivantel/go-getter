@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "sanitization",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "family": "harness",
   "components": [
     7
@@ -81,6 +81,24 @@
           "on"
         ]
       }
+    },
+    {
+      "id": "mcp-argument-scan",
+      "prompt": "Should a call to an MCP server be refused when its arguments contain a secret?",
+      "options": [
+        {
+          "id": "on",
+          "label": "Refuse calls carrying a secret",
+          "tradeoff": "The pre-tool hook denies an MCP call whose input matches the shared secret patterns, naming the kind and never the text; a false positive on a token-like string blocks the call until the agent removes it.",
+          "recommended": true
+        },
+        {
+          "id": "off",
+          "label": "Do not scan MCP arguments",
+          "tradeoff": "A secret in a tool call reaches the third-party server; results are still masked where the host allows."
+        }
+      ],
+      "since": "0.7.0"
     }
   ],
   "outputs": {
@@ -264,6 +282,66 @@
               }
             },
             "body": "## Decision\n\nThe types masked in addition to email, card numbers and IBANs are [{{answer.pii-extra}}] (pack {{pack.id}}@{{pack.version}}); an empty list adds none.\n\n## Why\n\nPhone and national-id formats are locale-bound and match ordinary numbers, so the project opts in (decision 0106).\n"
+          }
+        ]
+      }
+    },
+    "mcp-argument-scan": {
+      "on": {
+        "decisions": [
+          {
+            "slug": "mcp-arguments-scanned",
+            "title": "MCP call arguments are scanned for secrets",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nA call to an MCP server whose arguments contain a secret is refused before it leaves, naming the kind of secret and never its text (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nAn MCP server is third-party code; a secret in a tool call would leave the project with it (decision 0138).\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "mcp-arguments-hold-no-secret",
+            "title": "MCP calls carry no secret",
+            "tags": [
+              "practice-packs",
+              "hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.mcp-argument-scan}}",
+              "grounded-in": [
+                "{{id.decision.mcp-argument-scan}}"
+              ],
+              "derivation-note": "Given an MCP server is third-party code reached with the project's context (0138), a secret in a call's arguments must be stopped by the host's hook before it leaves, since an instruction alone fails silently."
+            },
+            "enforcement": [
+              {
+                "tier": 2,
+                "check": "The pre-tool hook denies an MCP call whose arguments contain a secret",
+                "run": "builtin:mcp-scan"
+              }
+            ],
+            "body": "## Guardrail\n\nDo not put a secret in the arguments of an MCP tool call. The pre-tool hook denies a call whose input matches the secret patterns and names the kind; remove the value and use `go-getter secret run` or an environment variable the server reads itself. `go-getter coverage` shows the tier per host.\n"
+          }
+        ]
+      },
+      "off": {
+        "decisions": [
+          {
+            "slug": "mcp-arguments-not-scanned",
+            "title": "MCP call arguments are not scanned",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nThe project does not scan the arguments of MCP calls for secrets (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe project accepted the risk for fewer blocked calls (decision 0138).\n"
           }
         ]
       }
