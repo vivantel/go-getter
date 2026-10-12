@@ -12,6 +12,7 @@ import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
 import { wrapWatch } from '../watch.mjs';
+import { recordHostSpend } from '../spend/index.mjs';
 
 export default async function hookCommand({ root, args }) {
   const [event, ...rest] = args;
@@ -46,6 +47,7 @@ export default async function hookCommand({ root, args }) {
   }
   const dir = payload.cwd ? path.resolve(payload.cwd) : project;
   if (event === 'session-end') {
+    recordHostSpend(dir, host, payload);
     try {
       evaluateSessionEnd(dir, payload);
     } catch {
@@ -61,11 +63,13 @@ export default async function hookCommand({ root, args }) {
       return 0; // a broken hook fails open (decision 0019)
     }
     recordQuietly(dir, hookRecord('post-tool', host, payload, undefined, result.redactions, result.masked));
+    recordHostSpend(dir, host, payload);
     const out = respondPostTool(host, result);
     if (out.stdout) process.stdout.write(out.stdout);
     return out.code;
   }
   if (event === 'stop') {
+    recordHostSpend(dir, host, payload);
     let out;
     try {
       out = respondStop(host, await evaluateStop(dir, payload, { host }));

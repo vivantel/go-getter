@@ -15,10 +15,10 @@ import { installGh } from './support/gh-stub.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'compiler/bin/go-getter.mjs');
-const caps = { a: { telemetry: { spendSource: 'transcript' } }, b: { telemetry: { spendSource: 'none' } }, c: { telemetry: { spendSource: 'stats' } } };
+const caps = { a: { telemetry: { spendSource: 'transcript' } }, b: { telemetry: { spendSource: 'none' } }, c: { telemetry: { spendSource: 'sessions' } } };
 
 test('every capability row names a spend source', () => {
-  for (const [host, c] of Object.entries(packageCapabilities())) assert.ok(['none', 'transcript', 'stats'].includes(c.telemetry.spendSource), host);
+  for (const [host, c] of Object.entries(packageCapabilities())) assert.ok(['none', 'transcript', 'sessions'].includes(c.telemetry.spendSource), host);
 });
 
 test('a host with a source meters the cap and says nothing', () => {

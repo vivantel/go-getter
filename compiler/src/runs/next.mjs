@@ -4,6 +4,7 @@ import path from 'node:path';
 import { readPlan } from '../plan.mjs';
 import { readLog } from '../telemetry/record.mjs';
 import { activeRun, noteStop } from './record.mjs';
+import { recordRunSpend } from '../spend/index.mjs';
 
 export const MAX_ATTEMPTS = 2;
 export const MAX_DENIALS = 2;
@@ -15,7 +16,7 @@ export function spentUsd(project, run) {
 }
 
 // { step } for the next step to do, { done: true } when the range is finished, { stop: { code, step?, reason } } otherwise.
-export function nextInRun(project, { env = process.env, record = true } = {}) {
+export function nextInRun(project, { env = process.env, record = true, spendExec } = {}) {
   const run = activeRun(project, { env });
   if (!run) return { stop: { code: 'no-run', reason: 'no run is active' } };
   const stop = (code, reason, step) => {
@@ -23,6 +24,7 @@ export function nextInRun(project, { env = process.env, record = true } = {}) {
     if (record) noteStop(project, s, { env });
     return { stop: s };
   };
+  if (run.spendCapUsd) recordRunSpend(project, run, undefined, spendExec);
   const spent = spentUsd(project, run);
   if (run.spendCapUsd && spent >= run.spendCapUsd) return stop('spend-cap', `spend $${spent.toFixed(2)} has reached the cap of $${run.spendCapUsd}`);
   const plan = readPlan(path.join(project, run.plan));

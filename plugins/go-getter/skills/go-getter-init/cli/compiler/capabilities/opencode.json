@@ -51,7 +51,7 @@
   "telemetry": {
     "otel": false,
     "cost": false,
-    "spendSource": "none"
+    "spendSource": "sessions"
   },
   "sandbox": false,
   "checkpointing": false,
