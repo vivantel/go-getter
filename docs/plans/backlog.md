@@ -27,11 +27,12 @@ Class: plan · Needs: none · Check: `npm run check:plans`
 Do: decide first. The helper contract is decision 0119 (envelope, data only, capabilities, digest-pinned and vendored, untrusted output, off the enforcement path) on the order of 0118. What remains is building the protocol when a trigger holds (a second implementation of a kind, a third party, or the trust steps) and the decision to load foreign code; a pack may not ship its own `run`.
 Done-when: a decision records whether and how foreign packs and helpers load, and a plan with steps exists for the protocol.
 
-### L.11 MCP governance — [ ]
+### L.11 MCP governance — [x]
 Issue: #93
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: which MCP servers a project allows, gating of their tool calls by the human-in-the-loop rules, and masking of their output (hosts that cannot redact other tools can redact MCP output, fact 0031). Decision 0119 keeps MCP out of the helper contract.
 Done-when: the interview is recorded and a plan with steps exists for it.
+Result, 2026-10-12: the interview is recorded in decision 0138 and the build is planned in `docs/plans/mcp-governance.md` (seven steps).
 
 ### L.12 go-getter as an MCP server — [ ]
 Issue: #94
