@@ -33,7 +33,7 @@ Issue: #93
 Class: plan · Needs: none · Check: `npm run check:plans`
 Do: interview the owner, then plan: which MCP servers a project allows, gating of their tool calls by the human-in-the-loop rules, and masking of their output (hosts that cannot redact other tools can redact MCP output, fact 0031). Decision 0119 keeps MCP out of the helper contract.
 Done-when: the interview is recorded and a plan with steps exists for it.
-Result, 2026-10-12: the interview is recorded in decision 0138 and the build is planned in `docs/plans/mcp-governance.md` (seven steps).
+Result, 2026-10-12: the interview is recorded in decision 0138 and the build is planned in `docs/plans/archive/mcp-governance.md` (seven steps).
 
 ### L.12 go-getter as an MCP server — [x]
 Issue: #94
