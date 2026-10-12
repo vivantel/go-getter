@@ -52,7 +52,7 @@ export function buildReport(project, run, { env = process.env } = {}) {
     `**Stops:** ${run.stop ? `${run.stop.code}${run.stop.step ? ` at step ${run.stop.step}` : ''}: ${run.stop.reason}` : 'none'}`,
     `**Denials:** ${denials.length ? denials.join('; ') : 'none'}`,
     `**Fix attempts:** ${attempts.length ? attempts.map(([s, n]) => `step ${s} ×${n}`).join('; ') : 'none'}`,
-    `**Spend:** $${spent.toFixed(2)}${run.spendCapUsd ? ` of a $${run.spendCapUsd} cap` : ' (no cap)'}`,
+    run.spendMetered === false ? `**Spend:** not metered on this host; the cap of $${run.spendCapUsd} could not bind` : `**Spend:** $${spent.toFixed(2)}${run.spendCapUsd ? ` of a $${run.spendCapUsd} cap` : ' (no cap)'}`,
     `**Approvals used:** run grants: ${run.grants.length ? run.grants.join(', ') : 'none'}; remembered shapes: ${remembered.length ? remembered.join(', ') : 'none'}`,
   ];
   return { text: `${lines.join('\n')}\n`, steps: inRange };

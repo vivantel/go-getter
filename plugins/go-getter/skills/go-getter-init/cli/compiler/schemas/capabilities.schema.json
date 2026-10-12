@@ -126,10 +126,11 @@
     "telemetry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["otel", "cost"],
+      "required": ["otel", "cost", "spendSource"],
       "properties": {
         "otel": { "type": "boolean" },
         "cost": { "type": "boolean" },
+        "spendSource": { "enum": ["none", "transcript", "stats"] },
         "logsPromptsByDefault": { "type": "boolean" },
         "promptLogOff": {
           "type": "object",

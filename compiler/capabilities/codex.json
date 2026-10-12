@@ -47,6 +47,7 @@
   "telemetry": {
     "otel": true,
     "cost": false,
+    "spendSource": "none",
     "logsPromptsByDefault": false
   },
   "sandbox": true,

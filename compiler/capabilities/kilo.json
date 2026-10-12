@@ -50,7 +50,8 @@
   },
   "telemetry": {
     "otel": false,
-    "cost": false
+    "cost": false,
+    "spendSource": "none"
   },
   "sandbox": false,
   "checkpointing": false,

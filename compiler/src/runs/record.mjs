@@ -59,14 +59,14 @@ export const activeRun = (project, { env = process.env, now = () => new Date() }
 export const lastRun = (project, { env = process.env, now = () => new Date() } = {}) => load(project, env, now()).entry.last;
 
 // Starts a run. `steps` are the plan step ids the run covers, in order. Refuses while one is active for the project.
-export function startRun(project, { plan, steps, through, hours = DEFAULT_HOURS, spendCapUsd = null, grants = [] }, { env = process.env, now = () => new Date() } = {}) {
+export function startRun(project, { plan, steps, through, hours = DEFAULT_HOURS, spendCapUsd = null, grants = [], spendMetered = null }, { env = process.env, now = () => new Date() } = {}) {
   if (typeof plan !== 'string' || !plan) throw new Error('a run needs a plan');
   if (!Array.isArray(steps) || !steps.length || steps.some((s) => typeof s !== 'string')) throw new Error('a run needs at least one step');
   if (!(Number.isFinite(hours) && hours > 0 && hours <= MAX_HOURS)) throw new Error(`the timeout must be above 0 and at most ${MAX_HOURS} hours`);
   const t = now();
   const { data, key, entry } = load(project, env, t);
   if (entry.active) throw new Error(`a run is already active for this project (plan ${entry.active.plan}, until ${entry.active.timeoutAt}); end it first with: go-getter run end`);
-  const record = { plan, steps, through: through ?? steps.at(-1), startedAt: t.toISOString(), timeoutAt: new Date(t.getTime() + hours * 3600_000).toISOString(), spendCapUsd, grants: [...new Set(grants)] };
+  const record = { plan, steps, through: through ?? steps.at(-1), startedAt: t.toISOString(), timeoutAt: new Date(t.getTime() + hours * 3600_000).toISOString(), spendCapUsd, grants: [...new Set(grants)], ...(spendMetered === false ? { spendMetered: false } : {}) };
   data.projects[key] = { active: record, last: entry.last };
   write(data, env);
   return record;
