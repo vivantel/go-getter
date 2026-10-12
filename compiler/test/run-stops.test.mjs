@@ -148,3 +148,14 @@ test('run start refuses while a spend cap is set and telemetry recording is off,
     assert.equal(activeRun(s.dir).spendCapUsd, 5);
   } finally { s.cleanup(); }
 });
+
+test('run start without --grant takes the shapes of the adopted run-grants answer, stored as one comma-separated string', () => {
+  const s = setup();
+  try {
+    mkdirSync(path.join(s.dir, 'docs/decisions'), { recursive: true });
+    writeFileSync(path.join(s.dir, 'docs/decisions/0001-g.md'), '---\nid: 0001-g\ntitle: g\nstatus: active\ndate: 2026-10-05\ntags: [roadmap]\ngo-getter:\n  run-grants: git-push, pr-create, pr-merge, pr-close\n---\n\n## Decision\n\nx\n');
+    const r = s.cli('run', 'start', 'docs/plans/p.md');
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(activeRun(s.dir).grants, ['git-push', 'pr-create', 'pr-merge', 'pr-close']);
+  } finally { s.cleanup(); }
+});
