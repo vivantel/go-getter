@@ -19,7 +19,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 ---
 
-### 1 How each host shows an MCP call — [ ]
+### 1 How each host shows an MCP call — [x]
 Issue: #168
 Class: explore · Needs: none · Check: `npm run check:tags`
 Do: from the hook payloads and permission formats in facts 0003 to 0008 and 0031 and the capability rows, write a fact listing, per host, the tool-name shape an MCP call has in a pre-tool and a post-tool payload, whether the hook can deny it and replace its result, and the native deny rule if any. Mark what is unconfirmed.
