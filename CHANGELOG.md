@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- The generated runner restores a missing `.go-getter/cli` copy from the release tag with plain git, and runs its npx fallback with `npm_config_allow_git=all`, so a fresh clone no longer loses enforcement to `EALLOWGIT` under npm 12.
+
 ## [0.3.3] - 2026-10-12
 
 ### Added
