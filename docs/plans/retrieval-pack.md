@@ -26,11 +26,12 @@ Do: fix, in one decision, the three parts of the contract of 0145 item 1, each s
 Done-when: a decision exists with the file fields, the conformance and scan declarations, the discovery file, the failure rules and the lifecycle owned by the tool, and the owner has accepted it.
 Result: decision 0146 accepted by sergemso 2026-10-12; the changes virage needs are listed at its end and feed step 2.
 
-### 2 Virage conforms — [ ]
+### 2 Virage conforms — [~]
 Issue: #213
 Class: plan · Needs: 1 · Human: the changes are made in the virage repository (the owner's); this repository waits for a release · Check: `npm run check:plans`
 Do: list as issues in the virage repository the changes fact 0038 shows are needed: a mode in which `configure()` registers no MCP entry and no hook; reading the generated file (ignore globs applied on top of `fileSets`, refusing a hosted embedder when the data class says so); a pre-index secret scan or an exposed hook for one; the local query endpoint of step 1 (the existing `query-serve` is stdio and parent-owned); `virage uninstall` also removing its `.mcp.json` and settings entries. Record the issue links and the release that meets them here.
 Done-when: the virage issues exist and this step's result line names the release that conforms.
+Result (2026-10-12): virage issues vivantel/virage#435 (conformance mode and declaration), #436 (read the index policy), #437 (pre-index secret scan), #438 (warm loopback endpoint), #439 (uninstall cleanup). Waiting for the virage release that meets them; the step stays in progress until it is named here.
 
 ### 3 The pack skeleton and the MCP entry — [ ]
 Issue: #214
