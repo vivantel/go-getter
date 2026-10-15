@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, chmodSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,7 +16,7 @@ function setup(version, npx) {
   writeFileSync(path.join(bin, 'npx'), `#!/bin/sh\n${npx}\n`);
   chmodSync(path.join(bin, 'npx'), 0o755);
   const run = (args, env = {}) =>
-    spawnSync('sh', [runner, ...args], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GO_GETTER_CLI: '', ...env } });
+    spawnSync('sh', [runner, ...args], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GO_GETTER_CLI: '', GO_GETTER_REPO: path.join(dir, 'no-such-repo'), ...env } });
   return { dir, run };
 }
 
@@ -77,5 +77,32 @@ test('the CLI copy in .go-getter/cli runs before npx, and GO_GETTER_CLI before t
   const override = path.join(dir, 'override.mjs');
   writeFileSync(override, 'console.log("override");');
   assert.equal(run(['check'], { GO_GETTER_CLI: override }).stdout.trim(), 'override');
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('a missing CLI copy is restored from the release tag with git, and npx is not used', () => {
+  const { dir, run } = setup('0.1.0', 'echo npx-was-called >&2; exit 1');
+  const repo = path.join(dir, 'repo');
+  spawnSync('mkdir', ['-p', path.join(repo, 'compiler/bin')]);
+  writeFileSync(path.join(repo, 'compiler/bin/go-getter.mjs'), 'console.log(`restored:${process.argv.slice(2).join(" ")}`);');
+  const git = (...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', ...args], { cwd: repo });
+  git('init', '-q');
+  git('add', '.');
+  git('commit', '-q', '-m', 'init');
+  git('tag', 'v0.1.0');
+  const res = run(['check'], { GO_GETTER_REPO: repo });
+  assert.equal(res.status, 0);
+  assert.equal(res.stdout.trim(), 'restored:check');
+  assert.match(res.stderr, /restored the CLI copy/);
+  assert.doesNotMatch(res.stderr, /npx-was-called/);
+  assert.equal(existsSync(path.join(dir, '.go-getter/cli/.git')), false);
+  assert.equal(run(['check'], { GO_GETTER_REPO: path.join(dir, 'gone') }).stdout.trim(), 'restored:check');
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('npx runs with git allowed for npm, unless the user already chose', () => {
+  const { dir, run } = setup('0.1.0', 'echo "allow:$npm_config_allow_git"');
+  assert.match(run(['check'], { npm_config_allow_git: '' }).stdout, /allow:all/);
+  assert.match(run(['check'], { npm_config_allow_git: 'none' }).stdout, /allow:none/);
   rmSync(dir, { recursive: true, force: true });
 });
