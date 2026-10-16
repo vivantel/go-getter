@@ -2,7 +2,7 @@
 // re-rendered with their recorded answers (new questions take their default, 0085), then the host outputs are applied
 // from the manifest. The plan is made by running the update on a scratch copy of the project and diffing the two trees,
 // so the printed plan is exactly what a real run writes.
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -189,7 +189,11 @@ export function planUpdate(project, opts) {
     if (files) {
       for (const rel of files) {
         mkdirSync(path.dirname(path.join(scratch, rel)), { recursive: true });
-        cpSync(path.join(project, rel), path.join(scratch, rel), { verbatimSymlinks: true });
+        const from = path.join(project, rel);
+        const stat = lstatSync(from);
+        if (stat.isSymbolicLink()) symlinkSync(readlinkSync(from), path.join(scratch, rel));
+        else if (stat.isDirectory()) mkdirSync(path.join(scratch, rel), { recursive: true });
+        else cpSync(from, path.join(scratch, rel));
       }
     } else {
       cpSync(project, scratch, { recursive: true, verbatimSymlinks: true, filter: (src) => src === project || !skipped(path.basename(src)) });

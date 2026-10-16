@@ -194,3 +194,12 @@ test('the plan ignores git-ignored build output and still counts ignored owned f
   assert.ok(!after.added.includes(owned), 'an owned file that git ignores is not reported as added');
   assert.ok(existsSync(path.join(dir, 'target/debug/big.bin')));
 });
+
+test('the plan copies a tracked symlink to a directory as a link', async () => {
+  const { root, dir } = fixture();
+  mkdirSync(path.join(dir, 'real'));
+  writeFileSync(path.join(dir, 'real/a.txt'), 'a');
+  (await import('node:fs')).symlinkSync('real', path.join(dir, 'link'));
+  execFileSync('git', ['add', 'link', 'real'], { cwd: dir });
+  assert.doesNotThrow(() => planUpdate(dir, { root, date: today }));
+});
