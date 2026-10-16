@@ -2,7 +2,7 @@
 // re-rendered with their recorded answers (new questions take their default, 0085), then the host outputs are applied
 // from the manifest. The plan is made by running the update on a scratch copy of the project and diffing the two trees,
 // so the printed plan is exactly what a real run writes.
-import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -113,18 +113,51 @@ export function runUpdate(project, { root, date, force = false }) {
   return { modified, notes };
 }
 
-// Path to content hash (or link target) for every file under `dir`, skipping `.git` at the top and `node_modules` anywhere.
-function tree(dir, rel = '') {
+// Path to content hash (or link target) for each of `files`, or for every file under `dir` when none are given
+// (skipping `.git` at the top and `node_modules` anywhere).
+function hashOf(dir, r) {
+  const stat = lstatSync(path.join(dir, r));
+  return stat.isSymbolicLink() ? `-> ${readlinkSync(path.join(dir, r))}` : createHash('sha256').update(readFileSync(path.join(dir, r))).digest('hex');
+}
+
+function tree(dir, files, rel = '') {
   const out = new Map();
+  if (files) {
+    for (const r of files) out.set(r, hashOf(dir, r));
+    return out;
+  }
   for (const name of readdirSync(path.join(dir, rel)).sort()) {
     if (name === 'node_modules' || (!rel && name === '.git')) continue;
     const r = rel ? `${rel}/${name}` : name;
-    const stat = lstatSync(path.join(dir, r));
-    if (stat.isDirectory()) for (const [k, v] of tree(dir, r)) out.set(k, v);
-    else out.set(r, stat.isSymbolicLink() ? `-> ${readlinkSync(path.join(dir, r))}` : createHash('sha256').update(readFileSync(path.join(dir, r))).digest('hex'));
+    if (lstatSync(path.join(dir, r)).isDirectory()) for (const [k, v] of tree(dir, undefined, r)) out.set(k, v);
+    else out.set(r, hashOf(dir, r));
   }
   return out;
 }
+
+// The files an update works on: what git tracks or would add (so build output such as `target/` is not copied), plus
+// the generated files the manifest owns even when git ignores them (`.go-getter/cli`). Undefined outside a git repository.
+function projectFiles(project) {
+  if (!existsSync(path.join(project, '.git'))) return undefined;
+  let listed;
+  try {
+    listed = execFileSync('git', ['ls-files', '-z', '-c', '-o', '--exclude-standard'], { cwd: project, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return undefined;
+  }
+  const files = new Set(listed.split('\0').filter(Boolean));
+  for (const rel of Object.keys(readManifest(project)?.files ?? {})) files.add(rel);
+  for (const rel of [...files]) if (rel.split('/').includes('node_modules') || (!existsSync(path.join(project, rel)) && !isLink(project, rel))) files.delete(rel);
+  return [...files].sort();
+}
+
+const isLink = (project, rel) => {
+  try {
+    return lstatSync(path.join(project, rel)).isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
 
 const gitOut = (cwd, ...args) => {
   try {
@@ -152,9 +185,17 @@ function copyGitState(project, scratch) {
 export function planUpdate(project, opts) {
   const scratch = mkdtempSync(path.join(tmpdir(), 'gg-update-'));
   try {
-    cpSync(project, scratch, { recursive: true, verbatimSymlinks: true, filter: (src) => src === project || !skipped(path.basename(src)) });
+    const files = projectFiles(project);
+    if (files) {
+      for (const rel of files) {
+        mkdirSync(path.dirname(path.join(scratch, rel)), { recursive: true });
+        cpSync(path.join(project, rel), path.join(scratch, rel), { verbatimSymlinks: true });
+      }
+    } else {
+      cpSync(project, scratch, { recursive: true, verbatimSymlinks: true, filter: (src) => src === project || !skipped(path.basename(src)) });
+    }
     copyGitState(project, scratch);
-    const before = tree(project);
+    const before = tree(project, files);
     const { modified, notes } = runUpdate(scratch, opts);
     const after = tree(scratch);
     const added = [...after.keys()].filter((k) => !before.has(k));

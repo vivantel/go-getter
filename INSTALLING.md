@@ -166,6 +166,8 @@ npx --yes github:vivantel/go-getter update --dry-run
 npx --yes github:vivantel/go-getter update
 ```
 
+Where npm refuses GitHub fetches (`EALLOWGIT`), the `npx` lines fail. Run the same command from a copy of the CLI instead: the project's own `node .go-getter/cli/compiler/bin/go-getter.mjs update` once it has one, otherwise the `go-getter-init` skill's `cli/compiler/bin/go-getter.mjs` or `compiler/bin/go-getter.mjs` of a go-getter checkout at the release tag (`git clone --depth 1 --branch v<version> https://github.com/vivantel/go-getter`). `update` also vendors the current `.go-getter/cli`, so the project's hooks stop calling npx.
+
 `update` re-renders each adopted pack from the answers recorded in `docs/` (a question added since takes its default), then updates the host files. It prints one plan (docs re-rendered, files added, changed or removed) and applies it on confirmation, or with `--yes`. A project without a manifest gets one on its first `update`. A session start prints one line when the project is older than the installed go-getter, and `apply --check` fails on the mismatch.
 
 A file, key or block you edited since go-getter wrote it is skipped and reported as `modified`, and the command exits non-zero. `--force` overwrites or removes it.

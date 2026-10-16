@@ -1,7 +1,7 @@
 // go-getter update (decision 0090): older pack version to newer in one run, then a no-op, and a dry run that writes nothing.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -178,4 +178,19 @@ test('a pack-rendered decision still in draft counts as adopted: update keeps it
   runUpdate(dir, { root, date: today });
   assert.deepEqual(readdirSync(path.join(dir, 'docs/decisions')).filter((f) => f.includes('instruction-file-cap')), ['0001-instruction-file-cap.md']);
   assert.equal(fm(dir, 'docs/decisions/0001-instruction-file-cap.md').status, 'draft');
+});
+
+test('the plan ignores git-ignored build output and still counts ignored owned files', () => {
+  const { root, dir } = fixture();
+  writeFileSync(path.join(dir, '.gitignore'), 'target/\n');
+  mkdirSync(path.join(dir, 'target/debug'), { recursive: true });
+  writeFileSync(path.join(dir, 'target/debug/big.bin'), 'x');
+  const before = planUpdate(dir, { root, date: today });
+  assert.ok(![...before.added, ...before.changed, ...before.removed].some((p) => p.startsWith('target/')));
+  const m = readManifest(dir);
+  const owned = Object.keys(m.files)[0];
+  writeFileSync(path.join(dir, '.gitignore'), `target/\n${owned}\n`);
+  const after = planUpdate(dir, { root, date: today });
+  assert.ok(!after.added.includes(owned), 'an owned file that git ignores is not reported as added');
+  assert.ok(existsSync(path.join(dir, 'target/debug/big.bin')));
 });
