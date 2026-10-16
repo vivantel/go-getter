@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.5] - 2026-10-16
+
+### Fixed
+
+- `go-getter update` no longer fails on a project with large build output. Its plan runs on a temporary copy of the project that took everything but `.git` and `node_modules` (a 7 GB Rust `target/` filled the disk); it now copies what git tracks or would add, plus the generated files the manifest owns even when git ignores them.
+- `INSTALLING.md` gives an upgrade route that does not need npx, for installs where npm refuses GitHub fetches (`EALLOWGIT`): run `update` from the project's `.go-getter/cli`, the init skill's bundled CLI or a clone of the release tag.
+
+### Upgrading
+
+A project installed before 0.3.4 whose hooks print `EALLOWGIT` runs `update` from a copy of the CLI (see "Updating" in `INSTALLING.md`); that writes `.go-getter/cli` and the hooks stop calling npx.
+
 ## [0.3.4] - 2026-10-15
 
 ### Fixed
