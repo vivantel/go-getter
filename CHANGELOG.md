@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.6] - 2026-10-24
+
+### Fixed
+
+- The generated `.github/workflows/go-getter-checks.yml` can now satisfy projects' CI-hardening rules, which could not be met on a hash-tracked file that must not be edited. An active decision's `go-getter: ci-workflow:` key sets `permissions: per-job`, a `concurrency` block (`group`, `cancel-in-progress`), and the `checkout` and `setup-node` action refs. Without the key the workflow is unchanged. The header comment is the documented marker for recognising generated workflows (#227).
+
 ## [0.3.5] - 2026-10-16
 
 ### Fixed
