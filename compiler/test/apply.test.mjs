@@ -238,3 +238,21 @@ test('apply vendors the CLI, the runner uses it with npx unavailable, and a go-g
   rmSync(dir, { recursive: true, force: true });
   assert.deepEqual(Object.keys(planApply(repoRoot, { hosts: ['claude-code'], skills: false }).outputs).filter((p) => p.startsWith('.go-getter/cli/')), []);
 });
+
+test('the generated CI workflow takes permissions, concurrency and action refs from the ci-workflow setting', () => {
+  const options = {
+    permissions: 'per-job',
+    concurrency: { group: '${{ github.workflow }}-${{ github.ref }}', 'cancel-in-progress': true },
+    checkout: 'actions/checkout@abc # v9',
+    'setup-node': 'actions/setup-node@def # v9',
+  };
+  const yml = ciWorkflow({ checks: { test: 'npm test' }, node: { version: '22' }, options });
+  assert.doesNotMatch(yml, /^permissions:/m);
+  assert.equal(yml.match(/^    permissions:\n      contents: read$/gm).length, 2);
+  assert.match(yml, /^concurrency:\n  group: .*\n  cancel-in-progress: true$/m);
+  assert.doesNotMatch(yml, /3d3c42e|820762786/);
+  assert.equal(yml.match(/actions\/checkout@abc # v9/g).length, 2);
+  assert.equal(yml.match(/actions\/setup-node@def # v9/g).length, 2);
+  assert.match(ciWorkflow(), /^permissions:\n  contents: read$/m);
+  assert.doesNotMatch(ciWorkflow(), /concurrency/);
+});
