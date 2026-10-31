@@ -28,4 +28,4 @@ A person who follows go-getter's docs can still be stopped by a layer go-getter 
 - **Doctor only:** nobody runs it before the first refusal. Apply prints it only when something is freed, so it adds no noise otherwise.
 - **Writing the rule with `--force` or a confirm:** one step for the person, but go-getter would grant permissions on the person's behalf and own a file that is theirs; refused.
 - **Hard-coded command lists per host:** simple, drifts from the catalog; refused.
-- **Cost accepted:** a suggestion can be pasted and still not help (the classifier may judge the context, not only the command), and a project on Kilo or OpenCode gets nothing until their layer is confirmed.
+- **Cost accepted:** a suggestion can be pasted and still not help (the classifier may judge the context, not only the command; and for the plan-issue verbs under `writes: ask` the committed ask rule beats an allow rule on Claude Code, so the rule is a try, not a promise), and a project on Kilo or OpenCode gets nothing until their layer is confirmed.

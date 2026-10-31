@@ -98,7 +98,7 @@ go-getter's guardrails decide whether a human is asked; a host can add its own c
 {"permissions":{"allow":["Bash(gh pr merge:*)","Bash(node compiler/bin/go-getter.mjs plan issue create:*)"]}}
 ```
 
-Keep it out of git with `echo .claude/settings.local.json >> .git/info/exclude`. You add it yourself, from your own shell or with the `!` prefix at the prompt, which runs a command in the session (`! echo ... >> .git/info/exclude`). go-getter will not write this file and an agent must not: granting permissions to oneself is the boundary the host enforces. Each rule names one command, with no wider wildcard. Committed ask rules still win over an allow rule, so force-push and branch deletion keep asking.
+Keep it out of git with `echo .claude/settings.local.json >> .git/info/exclude`. You add it yourself, from your own shell or with the `!` prefix at the prompt, which runs a command in the session (`! echo ... >> .git/info/exclude`). go-getter will not write this file and an agent must not: granting permissions to oneself is the boundary the host enforces. Each rule names one command, with no wider wildcard. Committed ask rules still win over an allow rule, so force-push and branch deletion keep asking, and a rule for the `plan issue` verbs may not help while the tracker answer is `writes: ask`.
 
 ## MCP servers
 
