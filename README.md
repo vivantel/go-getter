@@ -71,6 +71,6 @@ Not covered: prompts, secrets already in history, values re-encoded by an approv
 
 `npm test` (unit), `npm run build` and `npm run check:generated` (golden output), `npm run eval` (behavior evals), `npm run check:*` (guardrails). Releases are gated on all three layers ([decision 0013](docs/decisions/0013-layered-verification-gate.md)). Decisions and guardrails live in [`docs/`](docs/decisions/); the plan and its status are in [`docs/plans/`](docs/plans/v0.2-agent-core-hardening.md) (`go-getter plan status|next|start|done`).
 
-**Status:** v0.4.0.
+**Status:** v0.4.1.
 
 The name means *one who gets things done* — it has nothing to do with the Go language.
