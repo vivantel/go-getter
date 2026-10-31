@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - 2026-10-31
+
+### Added
+
+- `go-getter doctor` and the `apply` report print the allow rules a person may add to `.claude/settings.local.json` when the host's own permission layer refuses a command the project frees (`hitl` `free-commands`) or routes through `plan issue` (`tracker` `writes`). go-getter only prints them and never writes the file; `INSTALLING.md` explains when and how to add one.
+- `go-getter interview next|validate` moves the setup questions out of the init skill into a pure verb the active agent renders. Packs can offer profiles (named answer bundles) and tier low-stakes questions advanced, an answers file can seed an interview, and `update --accept-defaults` takes the recommended answer for questions no artifact records, after a dry run that lists each one.
+- `go-getter mcp serve`, a stdio MCP server (JSON-RPC 2.0) for hosts that restrict or prompt on every shell call. This release ships the transport only; its tool list is empty until the pack tool declarations land.
+
 ## [0.3.6] - 2026-10-24
 
 ### Fixed
