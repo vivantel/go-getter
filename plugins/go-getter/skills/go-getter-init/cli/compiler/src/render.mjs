@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, append
 import path from 'node:path';
 import { stringifyFrontmatter } from './frontmatter.mjs';
 import { readTagVocabulary } from './artifacts.mjs';
-import { ANY_ANSWER } from './packs.mjs';
+import { ANY_ANSWER, checkAnswer } from './packs.mjs';
 
 const KIND_DIR = { decisions: 'decisions', facts: 'facts', guardrails: 'guardrails', procedures: 'skills' };
 const NUMBERED = new Set(['decisions', 'facts']);
@@ -15,22 +15,6 @@ function addDetectVars(vars, prefix, value) {
   if (Array.isArray(value)) vars[prefix] = value.join(', ');
   else if (typeof value === 'object') for (const [k, v] of Object.entries(value)) addDetectVars(vars, `${prefix}.${k}`, v);
   else vars[prefix] = String(value);
-}
-
-function checkAnswer(q, a) {
-  const type = q.type ?? 'choice';
-  if (type === 'choice') {
-    for (const opt of [].concat(a)) if (!q.options.some((o) => o.id === opt)) throw new Error(`answer "${opt}" is not an option of "${q.id}"`);
-    if (!q.multi && Array.isArray(a)) throw new Error(`question "${q.id}" takes one answer`);
-    return;
-  }
-  if (type === 'text' ? typeof a !== 'string' : !Array.isArray(a) || a.some((x) => typeof x !== 'string')) {
-    throw new Error(`question "${q.id}" takes ${type === 'text' ? 'a string' : 'an array of strings'}`);
-  }
-  if (q.pattern) {
-    const re = new RegExp(q.pattern);
-    for (const item of [].concat(a)) if (!re.test(item)) throw new Error(`answer "${item}" does not match the pattern of "${q.id}" (${q.pattern})`);
-  }
 }
 
 // Answers recorded under an option id the pack has since renamed (`renamed` on a question), mapped to the new id.
