@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "attribute",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -11,14 +11,14 @@
     },
     {
       "name": "autonomous-run",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md"
       ]
     },
     {
       "name": "bootstrap",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -27,7 +27,7 @@
     },
     {
       "name": "brainstorm",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -36,7 +36,7 @@
     },
     {
       "name": "capture",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -45,7 +45,7 @@
     },
     {
       "name": "changelog",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -54,7 +54,7 @@
     },
     {
       "name": "clarify",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -63,7 +63,7 @@
     },
     {
       "name": "conform",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -72,7 +72,7 @@
     },
     {
       "name": "go-getter-init",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "cli/compiler/adapters/claude-code.mjs",
@@ -245,7 +245,7 @@
     },
     {
       "name": "lint",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -254,7 +254,7 @@
     },
     {
       "name": "onboard",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -263,7 +263,7 @@
     },
     {
       "name": "query",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -272,7 +272,7 @@
     },
     {
       "name": "quickstart",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -281,7 +281,7 @@
     },
     {
       "name": "refactor-plan",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -290,7 +290,7 @@
     },
     {
       "name": "roadmap",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -299,7 +299,7 @@
     },
     {
       "name": "uninstall",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
