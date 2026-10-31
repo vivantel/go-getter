@@ -81,6 +81,15 @@
             "file": { "type": "string" },
             "format": { "enum": ["claude-permissions", "opencode-permission"] }
           }
+        },
+        "userAllow": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "format"],
+          "properties": {
+            "file": { "type": "string" },
+            "format": { "enum": ["claude-permissions"] }
+          }
         }
       }
     },

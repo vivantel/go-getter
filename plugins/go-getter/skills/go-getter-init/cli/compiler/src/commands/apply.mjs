@@ -5,6 +5,7 @@ import { planApply, applyPlan, diffApply } from '../apply.mjs';
 import { planRemove, applyRemove } from '../remove.mjs';
 import { readManifest, drift, installedPackage } from '../manifest.mjs';
 import { HOSTS } from '../capabilities.mjs';
+import { allowSuggestions, formatSuggestions } from '../allow-rules.mjs';
 
 export default function applyCommand({ root, args }) {
   let project = process.cwd();
@@ -57,6 +58,7 @@ export default function applyCommand({ root, args }) {
     console.log(`  otel ${host}: ${r.status === 'emitted' ? `emitted in ${r.file}` : `unavailable (${r.reason})`}`);
   }
   for (const n of plan.notes ?? []) console.log(`  ${n}`);
+  for (const line of formatSuggestions(allowSuggestions(project, plan.hosts))) console.log(`  ${line}`);
   for (const m of modified) console.error(`  modified: ${m.path} (${m.reason}); skipped, use --force to overwrite or remove it`);
   return modified.length ? 1 : 0;
 }
