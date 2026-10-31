@@ -133,3 +133,4 @@ id,title,tags,status
 0144-a-spend-cap-on-a-host-without-a-cost-source-warns-and-starts,"A spend cap on a host with no cost source is reported, not refused; sources are read, never installed","cost, enforcement, host-agents",active
 0145-retrieval-tools-follow-a-go-getter-contract,"A retrieval tool follows a go-getter contract (no hooks or MCP entry of its own, go-getter's ignore input, a warm local query daemon); the pack waits for virage to conform","practice-packs, hooks, security",active
 0146-retrieval-contract-v0,"Retrieval contract v0 is three files (index policy, declaration, endpoint discovery) and a loopback JSON endpoint the tool owns","practice-packs, hooks, security",active
+0152-apply-and-doctor-print-allow-rules-for-commands-a-host-classifier-may-refuse,"go-getter prints the allow rules a person may add for commands the project frees or approves, and never writes them","hooks, claude-code, enforcement, host-agents",draft

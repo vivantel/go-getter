@@ -41,6 +41,10 @@
     "ask": {
       "file": ".claude/settings.json",
       "format": "claude-permissions"
+    },
+    "userAllow": {
+      "file": ".claude/settings.local.json",
+      "format": "claude-permissions"
     }
   },
   "routing": {
