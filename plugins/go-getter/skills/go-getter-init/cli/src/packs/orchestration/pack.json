@@ -162,6 +162,30 @@
       ]
     }
   ],
+  "profiles": [
+    {
+      "topic": "task-isolation",
+      "id": "worktrees",
+      "label": "A worktree per task, up to three at once",
+      "tradeoff": "Agents cannot overwrite each other; one checkout and one cold build per task.",
+      "recommended": true,
+      "answers": { "isolation": "worktree-per-task", "worktree-location": "sibling-dir", "max-concurrent": "3" }
+    },
+    {
+      "topic": "task-isolation",
+      "id": "one-tree-in-turn",
+      "label": "Branches in one working tree, one task at a time",
+      "tradeoff": "One checkout and no extra builds; tasks wait for each other.",
+      "answers": { "isolation": "branches-in-one-tree", "max-concurrent": "1" }
+    },
+    {
+      "topic": "task-isolation",
+      "id": "no-isolation",
+      "label": "No isolation, one agent at a time",
+      "tradeoff": "Nothing to set up; relies on running a single agent and on guardrails alone.",
+      "answers": { "isolation": "no-isolation", "max-concurrent": "1" }
+    }
+  ],
   "outputs": {
     "roster": {
       "five-roles": {
