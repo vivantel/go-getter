@@ -164,7 +164,7 @@ export function writeOutputs(targetRoot, outputs, { copy = process.platform === 
     const dest = path.join(targetRoot, rel);
     mkdirSync(path.dirname(dest), { recursive: true });
     if ('symlink' in entry) symlinks.push([dest, entry.symlink]);
-    else writeFileSync(dest, entry.content);
+    else writeFileSync(dest, entry.content, entry.mode ? { mode: entry.mode } : undefined);
   }
   // Symlinks last, so copy mode can copy their already-written targets.
   for (const [dest, target] of symlinks) {

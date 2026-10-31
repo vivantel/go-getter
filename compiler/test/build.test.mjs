@@ -146,3 +146,24 @@ test('go-getter-init carries a CLI copy that runs from where it is installed (de
     rmSync(installed, { recursive: true, force: true });
   }
 });
+
+test('the Claude Code plugin ships an executable bin/go-getter that runs the bundled CLI (decision 0153)', () => {
+  const root = path.resolve(here, '..', '..');
+  const outputs = compile({ root, hosts: ['claude-code'] });
+  assert.equal(outputs['plugins/go-getter/bin/go-getter'].mode, 0o755);
+  const installed = mkdtempSync(path.join(tmpdir(), 'go-getter-shim-'));
+  try {
+    writeOutputs(installed, outputs);
+    const shim = path.join(installed, 'plugins/go-getter/bin/go-getter');
+    assert.ok(lstatSync(shim).mode & 0o111, 'the shim is executable');
+    const packs = spawnSync(shim, ['packs'], { cwd: installed, encoding: 'utf8' });
+    assert.equal(packs.status, 0, packs.stderr);
+    assert.match(packs.stdout, /^context@/m);
+    rmSync(path.join(installed, 'plugins/go-getter/skills/go-getter-init/cli'), { recursive: true });
+    const missing = spawnSync(shim, ['packs'], { cwd: installed, encoding: 'utf8' });
+    assert.equal(missing.status, 127);
+    assert.match(missing.stderr, /bundled CLI is missing/);
+  } finally {
+    rmSync(installed, { recursive: true, force: true });
+  }
+});
