@@ -33,7 +33,7 @@ Done-when: tests show a pack's tools listed when adopted and absent when not, an
 ### 3 The read tools — [ ]
 Issue: #178
 Class: implement · Effort: high · Needs: 2 · Check: `node --test compiler/test/mcp-tools.test.mjs`
-Do: declare and serve, in the owning packs, plan status and next, refs, coverage, run status and next, and reading the knowledge base (list and get decisions, facts, guardrails and skills); each verb's logic is refactored where needed into a function that returns data (the CLI prints it, the server returns it), because the CLI verbs print and return exit codes and would corrupt the protocol stream; output passes stateless masking (a label per kind, no numbering), and inputs are ids resolved under `docs/` and `docs/plans/`, never paths.
+Do: declare and serve, in the owning packs, plan status and next, refs, coverage, run status and next, reading the knowledge base (list and get decisions, facts, guardrails and skills), and `interview next|validate` (decision 0147: pure functions of a pack and an answers object, never a path, no write tool); each verb's logic is refactored where needed into a function that returns data (the CLI prints it, the server returns it), because the CLI verbs print and return exit codes and would corrupt the protocol stream; output passes stateless masking (a label per kind, no numbering), and inputs are ids resolved under `docs/` and `docs/plans/`, never paths.
 Done-when: tests show each tool returning the same data its CLI verb prints, nothing but protocol messages on stdout, a secret in a result masked, a path or `../` input refused, and a project without the pack not offered the tool.
 
 ### 4 Opt-in wiring — [ ]

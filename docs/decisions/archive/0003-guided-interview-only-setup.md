@@ -1,11 +1,12 @@
 ---
 id: 0003-guided-interview-only-setup
 title: Project setup is a guided interview with recommended defaults, not auto-applied presets
-status: active
+status: superseded
 date: 2026-10-04
 tags: [interview, positioning, configuration]
 track: product
 accepted-by: sergemso
+superseded-by: 0150-a-pack-may-offer-profiles-that-expand-into-visible-answers
 ---
 
 ## Decision
