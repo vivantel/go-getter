@@ -24,6 +24,11 @@ export function currentAnswers(artifacts) {
       const id = g['model-registry']?.providers?.[0]?.id;
       if (typeof id === 'string' && id) answers.provider ??= id;
     }
+    // `mcp-servers` (asked only for mcp-policy: allowlist) has no decision of its own either: the mcp-policy decision holds
+    // the servers as the comma-joined text its template wrote, an empty one for an empty list.
+    if (g['pack-answer'] === 'mcp-policy' && g['pack-option'] === 'allowlist' && typeof g['mcp-servers'] === 'string') {
+      answers['mcp-servers'] ??= g['mcp-servers'].split(',').map((x) => x.trim()).filter(Boolean);
+    }
   }
   return answers;
 }
