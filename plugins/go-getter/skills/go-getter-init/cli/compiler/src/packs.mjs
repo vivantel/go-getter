@@ -6,6 +6,29 @@ import { validate } from './schema.mjs';
 // Outputs of a text/list question sit under this key and apply whatever the answer is.
 export const ANY_ANSWER = '*';
 
+// Packs whose answers set how data, secrets or gated commands are handled: their questions are always asked (decision 0151).
+// The interview's answer that opens a topic's questions one by one instead of choosing a profile.
+export const CUSTOMISE = 'customise';
+
+export const ALWAYS_BASIC_PACKS = new Set(['hitl', 'restricted-data', 'data-policy', 'sanitization']);
+
+// Throws when `a` is not a valid answer to question `q` (option ids, type, pattern).
+export function checkAnswer(q, a) {
+  const type = q.type ?? 'choice';
+  if (type === 'choice') {
+    for (const opt of [].concat(a)) if (!q.options.some((o) => o.id === opt)) throw new Error(`answer "${opt}" is not an option of "${q.id}"`);
+    if (!q.multi && Array.isArray(a)) throw new Error(`question "${q.id}" takes one answer`);
+    return;
+  }
+  if (type === 'text' ? typeof a !== 'string' : !Array.isArray(a) || a.some((x) => typeof x !== 'string')) {
+    throw new Error(`question "${q.id}" takes ${type === 'text' ? 'a string' : 'an array of strings'}`);
+  }
+  if (q.pattern) {
+    const re = new RegExp(q.pattern);
+    for (const item of [].concat(a)) if (!re.test(item)) throw new Error(`answer "${item}" does not match the pattern of "${q.id}" (${q.pattern})`);
+  }
+}
+
 const compareVersions = (a, b) => {
   const [x, y] = [a, b].map((v) => v.split('.').map(Number));
   return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
@@ -136,6 +159,9 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
     }
   }
 
+  validateTiers(pack, questions, errors);
+  validateProfiles(pack, questions, errors);
+
   for (const { ns, parts } of placeholdersIn(pack.outputs)) {
     const label = `{{${[ns, ...parts].join('.')}}}`;
     if ((ns === 'answer' || ns === 'label') && !questions.has(parts[0])) errors.push(`placeholder ${label}: unknown question`);
@@ -145,6 +171,52 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
     else if (!['answer', 'label', 'id', 'pack', 'detect'].includes(ns)) errors.push(`placeholder ${label}: unknown namespace`);
   }
   return errors;
+}
+
+// Decision 0151 item 5: a question that cannot be answered by its default, that changes which guardrails a pack produces, or
+// that sets how data, secrets or gated commands are handled is basic whatever its author declares.
+function validateTiers(pack, questions, errors) {
+  pack.questions.forEach((q, i) => {
+    if (q.tier !== 'advanced') return;
+    const at = `$.questions[${i}].tier`;
+    if (ALWAYS_BASIC_PACKS.has(pack.id)) errors.push(`${at}: questions of pack "${pack.id}" set how data, secrets or gated commands are handled and stay basic`);
+    if (q.options) {
+      const signature = (o) => JSON.stringify((pack.outputs[q.id]?.[o.id]?.guardrails ?? []).map((g) => [g.slug, g.enforcement]));
+      if (new Set(q.options.map(signature)).size > 1) errors.push(`${at}: "${q.id}" changes which guardrails the pack produces, so it stays basic`);
+    } else if (q.default === undefined) errors.push(`${at}: "${q.id}" has no default, so it stays basic`);
+  });
+}
+
+// Decision 0150: profiles are alternatives per topic, each answering questions of this pack with valid answers.
+function validateProfiles(pack, questions, errors) {
+  const seen = new Set();
+  const topicOf = new Map();
+  const recommended = new Map();
+  (pack.profiles ?? []).forEach((p, i) => {
+    const at = `$.profiles[${i}]`;
+    if (seen.has(`${p.topic}/${p.id}`)) errors.push(`${at}.id: duplicate profile "${p.id}" in topic "${p.topic}"`);
+    seen.add(`${p.topic}/${p.id}`);
+    if (!Object.keys(p.answers).length) errors.push(`${at}.answers: a profile answers at least one question`);
+    if (p.id === CUSTOMISE) errors.push(`${at}.id: "${CUSTOMISE}" is reserved`);
+    if (p.recommended) {
+      if (recommended.has(p.topic)) errors.push(`${at}.recommended: topic "${p.topic}" already has a recommended profile`);
+      recommended.set(p.topic, p.id);
+    }
+    for (const [qid, a] of Object.entries(p.answers)) {
+      const q = questions.get(qid);
+      if (!q) {
+        errors.push(`${at}.answers.${qid}: no such question`);
+        continue;
+      }
+      if (topicOf.has(qid) && topicOf.get(qid) !== p.topic) errors.push(`${at}.answers.${qid}: question is already covered by topic "${topicOf.get(qid)}"`);
+      topicOf.set(qid, p.topic);
+      try {
+        checkAnswer(q, a);
+      } catch (err) {
+        errors.push(`${at}.answers.${qid}: ${err.message}`);
+      }
+    }
+  });
 }
 
 export function validateAllPacks(root, files = listPackFiles(root)) {

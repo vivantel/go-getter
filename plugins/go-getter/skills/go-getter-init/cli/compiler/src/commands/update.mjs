@@ -1,5 +1,7 @@
 // go-getter update --nudge prints the session-start drift line (nothing when current).
-// go-getter update [--yes] [--dry-run] [--force] [--project <dir>]
+// go-getter update [--yes] [--dry-run] [--force] [--accept-defaults] [--project <dir>]
+// --accept-defaults takes the default of each answer no artifact records (decision 0148): it lists them, stops at --dry-run,
+// and otherwise writes only after an interactive confirmation (it refuses --yes and a non-interactive run).
 // Brings the generated output up to the installed go-getter: prints the plan, then applies it with --yes or on confirmation.
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
@@ -12,12 +14,14 @@ export default async function updateCommand({ root, args }) {
   let dryRun = false;
   let force = false;
   let nudge = false;
+  let acceptDefaults = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--project') project = path.resolve(args[++i]);
     else if (args[i] === '--yes') yes = true;
     else if (args[i] === '--dry-run') dryRun = true;
     else if (args[i] === '--force') force = true;
     else if (args[i] === '--nudge') nudge = true;
+    else if (args[i] === '--accept-defaults') acceptDefaults = true;
     else throw new Error(`update: unknown argument ${args[i]}`);
   }
   if (nudge) {
@@ -25,7 +29,15 @@ export default async function updateCommand({ root, args }) {
     if (line) console.log(line);
     return 0;
   }
-  const opts = { root, date: new Date().toISOString().slice(0, 10), force };
+  if (acceptDefaults && yes) {
+    console.error('update: --accept-defaults is confirmed by a person after the plan is listed; it cannot be combined with --yes');
+    return 2;
+  }
+  if (acceptDefaults && !dryRun && !process.stdin.isTTY) {
+    console.error('update: --accept-defaults needs an interactive confirmation; run it with --dry-run to list the defaults');
+    return 2;
+  }
+  const opts = { root, date: new Date().toISOString().slice(0, 10), force, acceptDefaults };
   let plan;
   try {
     plan = planUpdate(project, opts);

@@ -3,7 +3,6 @@
 id,title,tags,status
 0001-go-getter-product-scope-and-name,"go-getter sets up the agent harness and SDLC practices for AI-driven development with minimal effort","positioning, harness, roadmap",active
 0002-six-host-agents-from-v0-1,"v0.1 supports seven host agents - Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, GitHub Copilot","host-agents, agent-agnostic, packaging",active
-0003-guided-interview-only-setup,"Project setup is a guided interview with recommended defaults, not auto-applied presets","interview, positioning, configuration",active
 0005-neutral-source-compiler-architecture,"Author content once in a neutral source and compile it to each host agent's native files","architecture, compiler, generated-files, agent-agnostic",active
 0008-declarative-practice-packs,"Practice areas are declarative packs in two families - harness packs and SDLC packs - driven by one init skill","practice-packs, interview, architecture, harness",active
 0009-tiered-enforcement-git-ci-floor,"Rules are enforced in tiers, with host-independent git hooks and CI as the floor","enforcement, git-hooks, ci, hooks",active
@@ -133,4 +132,9 @@ id,title,tags,status
 0144-a-spend-cap-on-a-host-without-a-cost-source-warns-and-starts,"A spend cap on a host with no cost source is reported, not refused; sources are read, never installed","cost, enforcement, host-agents",active
 0145-retrieval-tools-follow-a-go-getter-contract,"A retrieval tool follows a go-getter contract (no hooks or MCP entry of its own, go-getter's ignore input, a warm local query daemon); the pack waits for virage to conform","practice-packs, hooks, security",active
 0146-retrieval-contract-v0,"Retrieval contract v0 is three files (index policy, declaration, endpoint discovery) and a loopback JSON endpoint the tool owns","practice-packs, hooks, security",active
+0147-the-interview-is-a-pure-read-only-cli-verb-and-a-read-mcp-tool,"The interview's question logic is a pure read-only verb, `interview next|validate`, which the active agent renders; an MCP wrapper serves it to adopted projects only","interview, practice-packs, compiler, hooks",active
+0148-update-may-take-recommended-defaults-for-unrecorded-answers-after-a-dry-run,"`update` may take recommended defaults for answers no artifact records, only after a dry run that lists each one, and renders them as draft","interview, configuration, generated-files, enforcement",active
+0149-an-answers-file-may-seed-an-interview,"An answers file from another project or a profile may seed an interview as untrusted data, validated and shown before it is rendered","interview, practice-packs, security",active
+0150-a-pack-may-offer-profiles-that-expand-into-visible-answers,"A pack may offer profiles, named answer bundles for one topic that expand into per-question answers; setup stays a guided interview","interview, practice-packs, configuration, positioning",active
+0151-a-pack-question-may-be-advanced-and-then-takes-its-recommended-answer,"A pack question may be tiered advanced; the interview then takes its recommended answer, renders its decision and lists it in the dry run","interview, practice-packs, configuration",active
 0152-apply-and-doctor-print-allow-rules-for-commands-a-host-classifier-may-refuse,"go-getter prints the allow rules a person may add for commands the project frees or approves, and never writes them","hooks, claude-code, enforcement, host-agents",draft

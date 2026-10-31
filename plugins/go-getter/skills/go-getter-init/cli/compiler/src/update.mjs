@@ -15,6 +15,7 @@ import { gitSetting } from './reconcile.mjs';
 import { loadPack } from './packs.mjs';
 import { adoptedArtifacts, applyReconfigure, planReconfigure, currentAnswers } from './reconfigure.mjs';
 import { activeQuestions, renameAnswers, withFallbacks } from './render.mjs';
+import { autoAnswer } from './interview.mjs';
 
 const skipped = (name) => name === '.git' || name === 'node_modules';
 
@@ -64,7 +65,7 @@ function relabelTakenOver(project, root, notes) {
   }
 }
 
-function reRender(project, root, date, notes) {
+function reRender(project, root, date, notes, { acceptDefaults = false } = {}) {
   relabelTakenOver(project, root, notes);
   for (const id of Object.keys(adoptedPacks(project))) {
     const packFile = path.join(root, 'src/packs', id, 'pack.json');
@@ -80,13 +81,40 @@ function reRender(project, root, date, notes) {
     const known = renameAnswers(pack, currentAnswers(adopted));
     const adoptedAt = String(adopted[0]?.data['go-getter']?.['generated-by'] ?? '').split('@')[1] ?? '0.0.0';
     const isNew = (q) => q.since && compareVersions(q.since, adoptedAt) > 0;
-    const missing = activeQuestions(pack, withFallbacks(pack, known)).filter((q) => known[q.id] === undefined && !isNew(q)).map((q) => q.id);
+    // An advanced question (decision 0151) takes its default whether or not it was recorded; with --accept-defaults (0148) so
+    // does any other question that has one. The values taken are listed, never silent. Taking one can open a gated question.
+    const filled = {};
+    const taken = [];
+    const stuck = new Set();
+    const gaps = () => activeQuestions(pack, withFallbacks(pack, { ...known, ...filled })).filter((q) => known[q.id] === undefined && filled[q.id] === undefined && !isNew(q));
+    for (let missing = gaps(); missing.length; missing = gaps()) {
+      let progressed = false;
+      for (const q of missing) {
+        if (q.tier !== 'advanced' && !acceptDefaults) continue;
+        const value = autoAnswer(q, {});
+        if (value === undefined) {
+          stuck.add(q.id);
+          continue;
+        }
+        filled[q.id] = value;
+        progressed = true;
+        if (q.tier !== 'advanced') taken.push({ q, value });
+      }
+      if (!progressed) break;
+    }
+    const missing = gaps();
     if (missing.length) {
-      notes.push(`pack ${id}: no recorded answer for ${missing.join(', ')}; left as it is. Run go-getter reconfigure ${id} --current, add those answers to an answers file and run go-getter reconfigure ${id} --answers <file>`);
+      const ids = missing.map((q) => q.id).join(', ');
+      const options = acceptDefaults && stuck.size ? ` (${[...stuck].join(', ')} has no default to take)` : '';
+      notes.push(`pack ${id}: no recorded answer for ${ids}${options}; left as it is. Run go-getter interview next ${id} --current to be asked only those, or go-getter reconfigure ${id} --current, add those answers to an answers file and run go-getter reconfigure ${id} --answers <file>; go-getter update --accept-defaults takes the defaults of those that have one`);
       continue;
     }
+    for (const { q, value } of taken) {
+      const enforcing = q.options ? [].concat(value).some((o) => pack.outputs[q.id]?.[o]?.guardrails?.length) : Boolean(pack.outputs[q.id]?.['*']?.guardrails?.length);
+      notes.push(`default taken: ${id} ${q.id} = ${[].concat(value).join(', ')}${enforcing ? ' (renders guardrails)' : ''}`);
+    }
     // Decisions an update adds are proposals (decision 0091): rendered as draft, for the owner to accept.
-    const result = planReconfigure({ project, pack, answers: currentAnswers(adopted), date, detect: {}, draft: true });
+    const result = planReconfigure({ project, pack, answers: { ...currentAnswers(adopted), ...filled }, date, detect: {}, draft: true });
     const artifacts = result.plan.artifacts.map((a) => keepDate(project, a));
     const differs = (rel, content) => !existsSync(path.join(project, rel)) || readFileSync(path.join(project, rel), 'utf8') !== content;
     result.plan = {
@@ -99,14 +127,14 @@ function reRender(project, root, date, notes) {
 }
 
 // Runs the whole update on `project`; returns the files apply left as `modified`.
-export function runUpdate(project, { root, date, force = false }) {
+export function runUpdate(project, { root, date, force = false, acceptDefaults = false }) {
   const notes = [];
   const manifest = readManifest(project);
   if (manifest && manifest.schema > SCHEMA) {
     throw new Error(`the manifest has schema ${manifest.schema}, newer than this go-getter (${SCHEMA}); install a newer go-getter`);
   }
   if (!manifest) bootstrap(project);
-  reRender(project, root, date, notes);
+  reRender(project, root, date, notes, { acceptDefaults });
   const plan = planApply(project, { force });
   notes.push(...(plan.notes ?? []).map((n) => n.replace(/^note: /, '')));
   const { modified } = applyPlan(project, plan);
