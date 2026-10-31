@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.1] - 2026-10-31
+
+### Fixed
+
+- The Claude Code plugin now ships `bin/go-getter`, so a skill's bare `go-getter <command>` (for example `go-getter refs --staged` in `attribute`) runs the CLI bundled with `go-getter-init`. Before, nothing put the command on the PATH after a plugin install, the agent reported go-getter as not installed and chose `Refs:` trailers by hand. If the bundled CLI or Node is missing, the command exits 127 with the reason.
+
 ## [0.4.0] - 2026-10-31
 
 ### Added
