@@ -23,7 +23,7 @@ The owner's attention was the bottleneck on 2026-10-31: they relayed one-word an
 
 **Rules the design fixes (do not re-decide):** quality gates are never dropped for speed; releases stay human-approved (batched); the four ask-triggers of 0155 are the only reasons an agent stops to ask; the metric comes from a deterministic report, never an agent estimate; no new runtime dependency.
 
-### T1 Throughput report — [ ] ‖
+### T1 Throughput report — [x] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-day.test.mjs`
 Context: fact 0040 was measured by hand from host transcripts (`~/.claude/projects/<project>/*.jsonl`) and `gh pr list`. The telemetry code is in `compiler/src/telemetry/`; command files are in `compiler/src/commands/` (see `telemetry.mjs`, `watch.mjs` for the shape). Transcripts hold metadata (timestamps, tool names, whether a turn is a human text turn); prompt text must not be stored (`telemetry-records-metadata-only`).
 Do: add `go-getter metrics day [--date D]` printing, for the date: active minutes (gaps under 10 min), wall minutes, human text turns, merged PRs, lines added and removed, median open-to-merge minutes, and human minutes per merged PR. Read transcripts through the existing host readers where they exist; read PRs through the tracker/`gh` adapter. Counts and times only, no message text.
