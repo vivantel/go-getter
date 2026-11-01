@@ -255,7 +255,15 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
 // `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
-export const gateArgs = (args = {}) => ({ classes: list(args.classes ?? 'irreversible,outward'), extra: list(args.extra), free: normaliseFree(list(args.free)), goGetter: list(args['go-getter']), grantable: normaliseFree(list(args.grantable)), provider: String(args.provider ?? DEFAULT_PROVIDER).trim() });
+// `go-getter ship` pushes, opens and merges a pull request, so it is gated whenever the outward class is and the project has not freed all three (decision 0157).
+const SHIP_PARTS = ['git-push', 'pr-create', 'pr-merge'];
+const shipGated = (classes, free) => classes.includes('outward') && !SHIP_PARTS.every((id) => free.includes(id));
+export const gateArgs = (args = {}) => {
+  const classes = list(args.classes ?? 'irreversible,outward');
+  const free = normaliseFree(list(args.free));
+  const goGetter = [...new Set([...list(args['go-getter']), ...(shipGated(classes, free) ? ['ship'] : [])])];
+  return { classes, extra: list(args.extra), free, goGetter, grantable: normaliseFree(list(args.grantable)), provider: String(args.provider ?? DEFAULT_PROVIDER).trim() };
+};
 
 // The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script
 // of a checkout. A call spelled any other way is still recognised by the hook, which reads what it runs (invocation.mjs).

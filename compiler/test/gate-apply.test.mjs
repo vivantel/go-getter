@@ -10,7 +10,7 @@ import { planApply, applyPlan, diffApply } from '../src/apply.mjs';
 import { readManifest } from '../src/manifest.mjs';
 import { HOSTS } from '../src/capabilities.mjs';
 import { packageCapabilities } from '../src/governance.mjs';
-import { CATALOG, nativeRules, withAskRules, gateEntries } from '../src/gate.mjs';
+import { CATALOG, nativeRules, withAskRules, gateEntries, goGetterSpellings } from '../src/gate.mjs';
 import { runTier3 } from '../src/enforce.mjs';
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
@@ -69,7 +69,7 @@ test('apply writes the native ask rules of the three hosts, records them and ins
   const dir = project();
   adopt(dir);
   const claude = read(dir, '.claude/settings.json');
-  assert.deepEqual(claude.permissions.ask, ['Bash(make deploy *)', ...rules('claude-code')]);
+  assert.deepEqual(claude.permissions.ask, ['Bash(make deploy *)', ...rules('claude-code')]); // the hook asks for `go-getter ship` itself
   for (const rel of ['kilo.json', 'opencode.json']) {
     const bash = read(dir, rel).permission.bash;
     for (const glob of Object.keys(rules('kilo'))) if (glob !== 'git push --force*') assert.equal(bash[glob], 'ask', `${rel} ${glob}`);
@@ -78,7 +78,7 @@ test('apply writes the native ask rules of the three hosts, records them and ins
   assert.deepEqual(manifest.shared['.claude/settings.json'].find((i) => i.path.join('.') === 'permissions.ask').items, rules('claude-code'));
   const kiloKeys = manifest.shared['kilo.json'].map((i) => i.path.at(-1));
   assert.ok(kiloKeys.includes('git push *') && kiloKeys.includes('rm -rf*') && !kiloKeys.includes('ls *'));
-  assert.deepEqual(manifest.shared['opencode.json'].map((i) => i.path.slice(0, 2)), Object.keys(rules('opencode')).map(() => ['permission', 'bash']));
+  assert.deepEqual(manifest.shared['opencode.json'].map((i) => i.path.slice(0, 2)), [...Object.keys(rules('opencode')), ...goGetterSpellings(dir)].map(() => ['permission', 'bash'])); // plus `go-getter ship` in each spelling (decision 0154)
   assert.ok(manifest.shared['opencode.json'].every((i) => i.kind === 'key' && !('replaced' in i)));
   // the gate is tier 2, so the hook is installed: it hands gated commands over on the other hosts
   assert.ok(claude.hooks.PreToolUse.length);

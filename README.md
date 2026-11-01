@@ -67,9 +67,15 @@ The `sanitization` pack (0.6.0) keeps secrets and personal data away from the mo
 
 Not covered: prompts, secrets already in history, values re-encoded by an approved command, and hosts without a blocking pre-tool hook.
 
+## Shipping a change
+
+`go-getter ship --why "<intent>"` takes a branch from working tree to merge with no model: it runs the adopted guardrail checks, writes the commit message and pull request description (intent first, `Refs:` trailers from `go-getter refs`), pushes, opens the pull request, waits for CI and squash-merges on green. It stops on a red check or red CI and leaves the pull request open; `--no-merge` stops after opening it, `--dry-run` writes nothing and `--review` adds a read-only Claude review of the diff that can stop the run. It needs `git`, an `origin` and the `gh` CLI, and is gated wherever pushes, pull requests and merges are ([decision 0157](docs/decisions/0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected.md)).
+
 ## Develop
 
 `npm test` (unit), `npm run build` and `npm run check:generated` (golden output), `npm run eval` (behavior evals), `npm run check:*` (guardrails). Releases are gated on all three layers ([decision 0013](docs/decisions/0013-layered-verification-gate.md)). Decisions and guardrails live in [`docs/`](docs/decisions/); the plan and its status are in [`docs/plans/`](docs/plans/archive/v0.2-agent-core-hardening.md) (`go-getter plan status|next|start|done`).
+
+`npm run e2e:lifecycle` runs the whole path with a real Claude Code in an isolated config dir: install the plugin from this checkout, set up a scratch repository through the init skill, run the generated checks and ship a change (a fake `gh` stands in for GitHub; it needs a Claude login and spends under a dollar; the login travels as an access token in the environment, never copied). `npm test` (unit), `npm run build` and `npm run check:generated` (golden output), `npm run eval` (behavior evals), `npm run check:*` (guardrails). Releases are gated on all three layers ([decision 0013](docs/decisions/0013-layered-verification-gate.md)). Decisions and guardrails live in [`docs/`](docs/decisions/); the plan and its status are in [`docs/plans/`](docs/plans/v0.2-agent-core-hardening.md) (`go-getter plan status|next|start|done`).
 
 **Status:** v0.4.1.
 

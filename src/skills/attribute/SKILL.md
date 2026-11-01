@@ -29,3 +29,7 @@ This skill only runs when explicitly invoked. Never apply its conventions to a p
    - `Intent` — drawn from the commits' body paragraphs.
    - `What changed` — a brief factual summary.
    - `Refs` — the collected artifact paths.
+
+## Shipping
+
+When the user wants the change committed, pushed, opened as a pull request and merged once CI is green, run `go-getter ship --why "<intent>"` instead of the individual git and gh commands: it writes the message and description from the rules above, and stops on a red check or red CI (`--no-merge` opens the pull request and stops; `--dry-run` shows what it would do). It is gated like a push, a pull request and a merge, so expect a prompt where the project gates them.
