@@ -20,7 +20,7 @@ Any session, fresh or interrupted, resumes from this file alone:
 
 | Step | Marker | Branch | Worktree (`../go-getter-wt/…`) | Merged | Next action |
 |---|---|---|---|---|---|
-| T1 throughput report | `[x]` | `feat/state-checking-gate` | `state-checking-gate` | no | run capture, conform, attribute, then open the PR (needs go-ahead) |
+| T1 throughput report | `[x]` | `feat/state-checking-gate` | `state-checking-gate` | yes (#245, `a84e8d9`) | none; create its issue with `go-getter plan issue` |
 | T2 dogfood install | `[~]` | `feat/dogfood-install` | `dogfood-install` | no | run `go-getter doctor` on a fresh clone; check the stale-pin test; PR |
 | T3 ship verb | `[~]` | `feat/ship-verb` | `ship` | no | run the Check; add any missing Done-when case; squash the duplicate-titled commits |
 | decision 0159 (ask only when unrecoverable) | draft, uncommitted | `docs/automation-first-gates` | `automation-first` | no | commit it; then re-read 0155 and T7 against it |
@@ -49,7 +49,7 @@ Class: implement · Needs: none · Check: `node --test compiler/test/metrics-day
 Context: fact 0040 was measured by hand from host transcripts (`~/.claude/projects/<project>/*.jsonl`) and `gh pr list`. The telemetry code is in `compiler/src/telemetry/`; command files are in `compiler/src/commands/` (see `telemetry.mjs`, `watch.mjs` for the shape). Transcripts hold metadata (timestamps, tool names, whether a turn is a human text turn); prompt text must not be stored (`telemetry-records-metadata-only`).
 Do: add `go-getter metrics day [--date D]` printing, for the date: active minutes (gaps under 10 min), wall minutes, human text turns, merged PRs, lines added and removed, median open-to-merge minutes, and human minutes per merged PR. Read transcripts through the existing host readers where they exist; read PRs through the tracker/`gh` adapter. Counts and times only, no message text.
 Done-when: the test feeds fixture transcripts and PR JSON and gets the exact figures above; the report prints no prompt text; running it for 2026-10-31 on a machine with the transcripts reproduces fact 0040's counts.
-Progress 2026-11-01 · `feat/state-checking-gate` · `../go-getter-wt/state-checking-gate` · `8608967` · done: `metrics day` in `compiler/src/metrics/day.mjs`; `metrics-day.test.mjs` 5/5 pass; reproduces fact 0040 (5 PRs, +2193/-158) · next: PR (not opened).
+Progress 2026-11-01 · `feat/state-checking-gate` · `../go-getter-wt/state-checking-gate` · `a84e8d9` · done: `metrics day` in `compiler/src/metrics/day.mjs`; `metrics-day.test.mjs` 5/5 pass; reproduces fact 0040 (5 PRs, +2193/-158); merged as #245 · next: none.
 
 ### T2 Dogfood install — [~] ‖
 Class: implement · Needs: none · Check: `go-getter doctor`
