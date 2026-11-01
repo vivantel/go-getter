@@ -1,7 +1,8 @@
 ---
 id: 0120-gated-commands-may-be-freed-by-name
 title: A project may let named outward-facing commands run without a human; irreversible ones never
-status: active
+status: superseded
+superseded-by: 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable
 date: 2026-10-11
 tags: [practice-packs, hooks, enforcement]
 track: process

@@ -23,7 +23,7 @@ Any session, fresh or interrupted, resumes from this file alone:
 | T1 throughput report | `[x]` | `feat/state-checking-gate` | `state-checking-gate` | yes (#245, `a84e8d9`) | none; create its issue with `go-getter plan issue` |
 | T2 dogfood install | `[~]` | `feat/dogfood-install` | `dogfood-install` | no | run `go-getter doctor` on a fresh clone; check the stale-pin test; PR |
 | T3 ship verb | `[~]` | `feat/ship-verb` | `ship` | no | run the Check; add any missing Done-when case; squash the duplicate-titled commits |
-| decision 0159 (ask only when unrecoverable) | draft, uncommitted | `docs/automation-first-gates` | `automation-first` | no | commit it; then re-read 0155 and T7 against it |
+| decision 0159 (ask only when unrecoverable) | active | `docs/automation-first-gates` | `automation-first` | in PR | land it; then G1-G3 (Phase 0), then run `go-getter apply` here |
 | interview follow-ups (#233-#237) | plan added | `feat/pack-tiers-and-profiles` | `pack-tiers` | no | outside this roadmap; land or rebase |
 | T4-T10, Phases 2-6 | `[ ]` | none | none | no | see each step |
 
@@ -33,6 +33,48 @@ Any session, fresh or interrupted, resumes from this file alone:
 - **Foreign packs** (#184 manifest entry, digest and vendoring; #185 content rule; #186 author guide; #187 adopt): decision 0142 waits for someone who asks to write a pack. Plan text is in `docs/plans/archive/third-party-packs.md`, steps 3 to 6. Budgets (W1, W2) are not held.
 - **Helper protocol** (#189): waits for a second implementation of a kind or a third party who asks (0142). Text in `docs/plans/archive/backlog.md`, L.18.
 - **Start a run by confirmation** (#166): needs draft decision 0137 accepted and softens the human-only start of a run; postponed 2026-10-12. Text in `docs/plans/archive/backlog.md`, L.16.
+
+---
+
+## Phase 0 — Automation-first gates
+
+Decision `docs/decisions/0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable.md` fixes the design; read it first (it supersedes 0120 and narrows 0095). The hitl pack (`src/packs/hitl/`) and the gate (`compiler/src/gate.mjs`, `hook.mjs`) are where the work lands. This phase comes before the throughput phase so that `ship`, the redirect hook and the gate stack are built on the new gate model.
+
+**Rules the design fixes (do not re-decide):** a stop depends on repository state, not the command name; production release, publish and repository settings stay human-approved; the project declares free channels, everything unlisted is production; a hook-less host runs free with a git-hook floor and a checkpoint; at most one go-getter prompt per merged PR; `reset --hard` on uncommitted work, force-push and `rm -rf` outside a temporary directory still ask.
+
+### G1 State-checking gate — [ ]
+Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/gate-state.test.mjs`
+Context: today `gate.mjs` matches command text and the hitl pack writes native ask rules for `git branch -D`, `git reset --hard`, `git rebase` and similar (91 rules in `.claude/settings.json`). An ask rule beats an allow rule on Claude Code, so a state-dependent command must not get a native ask rule.
+Do: add a state check to the gate for the commands whose danger depends on state: `git branch -D` (safe when the tip is reachable from a remote branch, the default branch or a merged PR), `git reset --hard` (safe on a clean tree), `git rebase` (safe on a branch with no remote counterpart), and removing a clean worktree. Drop their native ask rules; the hook decides, asking where the host supports a hook ask and denying with the guide (G3) where it does not. Commands whose danger is not state-dependent keep their rules.
+Done-when: tests show each safe case running without a stop and each unsafe case (a branch with unpushed commits, a dirty tree, an unpublished rebase target) stopping, and `go-getter apply --check` clean with the dropped rules gone from the generated settings.
+
+### G2 Free release channels — [ ] ‖
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/release-channels.test.mjs`
+Context: the catalog has `release-create`, `package-publish`, `git-tag-create` and `repo-settings` (`compiler/src/gate.mjs`); decision 0159 item 2.
+Do: add a hitl pack answer `free-channels` (a list such as prerelease versions, npm dist-tags or named stage environments; empty by default, recommended default stays production-gated); a release or publish to a listed channel runs without a human and anything unlisted stays gated; creating a tag is free. Regenerate the guardrail and decision records from the pack.
+Done-when: tests show a listed channel released without a stop, an unlisted channel stopping, a tag created freely, and `repo-settings` still gated.
+
+### G3 A stop that guides and is logged — [ ]
+Class: implement · Effort: high · Needs: G1 · Check: `node --test compiler/test/gate-stop.test.mjs`
+Context: the redirect and denial messages come from `compiler/src/hook.mjs`; approvals live in `approvals` (decision 0130 run grants); telemetry records metadata only (`telemetry-records-metadata-only`).
+Do: every stop prints what would be lost, the safe alternative (a verb, or a checkpoint taken first) and an approve-and-remember choice that records an approval so the same case does not ask again; each stop is logged as metadata (command class, reason, outcome), never command text or content.
+Done-when: tests show the message carrying loss, alternative and the remember choice, a remembered approval not asking twice, and a log record with no command text.
+
+### G4 Hook-less host floor — [ ]
+Class: implement · Effort: medium · Needs: G1 · Check: `node --test compiler/test/gate-floor.test.mjs`
+Context: Copilot, Kilo and OpenCode have no blocking pre-tool hook (see the enforcement debt in `docs/plans/archive/v0.2-agent-core-hardening.md`); decision 0159 item 3.
+Do: on a host without a blocking hook, write no ask rules for state-dependent commands and rely on the git-hook floor plus a checkpoint taken before the action; `go-getter coverage` shows the tier per host and what remains unprotected.
+Done-when: tests show no ask rule written for the three hosts, a checkpoint taken before a state-dependent command where the host can run one, and `coverage` stating the residual risk.
+
+### G5 Ask-point audit and the prompt counter — [ ]
+Class: review · Needs: G1, G2, G3 · Check: `go-getter:lint`
+Do: inventory every point where go-getter asks a human (native ask rules, hitl gates, interview questions, defaults); record for each what it protects and whether it can be freed, defaulted or removed; apply the changes that decision 0159 already allows; record the rest as steps here or as superseding decisions, one at a time; and record the result as a fact. `go-getter metrics day` (T1) reports prompts per merged PR from the stop log of G3.
+Done-when: a fact lists every ask point with its disposition, no ask point is left without a stated protection, and the prompt rate is reported.
+
+### G6 Say the promise — [ ]
+Class: implement · Needs: G5 · Check: `npm run check:plans && npm run check:guardrails`
+Do: state the automation-first promise and the one-prompt-per-merged-PR budget in the README tagline area and in INSTALLING.md, describe the free-channels answer, and run the full `go-getter:lint` skill.
+Done-when: lint reports no errors and the README states the budget and where it is measured.
 
 ---
 
@@ -48,7 +90,7 @@ The owner's attention was the bottleneck on 2026-10-31: they relayed one-word an
 Issue: #247
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-day.test.mjs`
 Context: fact 0040 was measured by hand from host transcripts (`~/.claude/projects/<project>/*.jsonl`) and `gh pr list`. The telemetry code is in `compiler/src/telemetry/`; command files are in `compiler/src/commands/` (see `telemetry.mjs`, `watch.mjs` for the shape). Transcripts hold metadata (timestamps, tool names, whether a turn is a human text turn); prompt text must not be stored (`telemetry-records-metadata-only`).
-Do: add `go-getter metrics day [--date D]` printing, for the date: active minutes (gaps under 10 min), wall minutes, human text turns, merged PRs, lines added and removed, median open-to-merge minutes, and human minutes per merged PR. Read transcripts through the existing host readers where they exist; read PRs through the tracker/`gh` adapter. Counts and times only, no message text.
+Do: add `go-getter metrics day [--date D]` printing, for the date: active minutes (gaps under 10 min), wall minutes, human text turns, merged PRs, lines added and removed, median open-to-merge minutes, and human minutes per merged PR, and go-getter approval prompts per merged PR from the stop log (G3). Read transcripts through the existing host readers where they exist; read PRs through the tracker/`gh` adapter. Counts and times only, no message text.
 Done-when: the test feeds fixture transcripts and PR JSON and gets the exact figures above; the report prints no prompt text; running it for 2026-10-31 on a machine with the transcripts reproduces fact 0040's counts.
 Progress 2026-11-01 · `feat/state-checking-gate` · `../go-getter-wt/state-checking-gate` · `a84e8d9` · done: `metrics day` in `compiler/src/metrics/day.mjs`; `metrics-day.test.mjs` 5/5 pass; reproduces fact 0040 (5 PRs, +2193/-158); merged as #245 · next: none.
 
@@ -67,7 +109,7 @@ Done-when: tests with a fake `gh` show the happy path merging once, a red check 
 Progress 2026-11-01 · `feat/ship-verb` · `../go-getter-wt/ship` · `6d3bc4d` · done (committed, not yet re-run by me): `compiler/src/ship.mjs` and `commands/ship.mjs`, a `gate.mjs` change, attribute-skill note, CI status errors read as errors, staged refs listed in the PR body · next: run the Check and map its tests to the four Done-when cases; `fe164f2` and `e7bc5be` share a title, so squash on merge.
 
 ### T4 Redirect hook and allow-rules — [ ]
-Class: implement · Needs: T3, H2 · Check: `node --test compiler/test/redirect-hook.test.mjs`
+Class: implement · Needs: T3, H2, G1 · Check: `node --test compiler/test/redirect-hook.test.mjs`
 Context: decision 0157; guardrail `raw-commands-redirect-to-verbs`. The hook machinery is `compiler/src/hook.mjs` and `compiler/src/checkpoint-trigger.mjs`; H2 moves `hook.mjs` behind the adapter registry first, so this step does not conflict with it. `go-getter doctor` already prints allow rules for commands a host layer blocks (PR #238).
 Do: add a pre-tool rule that denies raw `git push`, `gh pr create`, `gh pr merge` and release sequences when `ship` or `release` covers them, with a message naming the verb; give `ship` and `release --batch` entries in the doctor allow-rule output; the git-hook floor (0009) covers hosts with no blocking hook. Keep a documented escape: a human may run the raw command.
 Done-when: tests show each raw sequence denied with the verb named, the verbs themselves allowed, and the doctor output listing the allow-rules; `go-getter verify` passes with the guardrail's `enforcement` raised from tier 1 to tier 2 with a `run`.
@@ -91,7 +133,7 @@ Do: add an unattended mode to the interview verbs (`--defaults`): take the recom
 Done-when: tests show a defaulted answer writing a draft artifact, each trigger stopping the run with a clear reason, and the digest listing all five kinds of item from fixtures.
 
 ### T8 Gate-stack runner and audit picker — [ ]
-Class: implement · Needs: T3 · Check: `node --test compiler/test/gate-stack.test.mjs`
+Class: implement · Needs: T3, G3 · Check: `node --test compiler/test/gate-stack.test.mjs`
 Context: decision 0158. The reviewer agent is read-only (`reviewer-read-only`); the verification gate is `compiler/src/gate.mjs` and `verify.mjs`; `conform` is a plugin skill that checks a diff against decisions and guardrails.
 Do: make `ship` run, in order, the step `Check`, a conform pass, a reviewer pass on a fresh context given only the diff, brief and decisions, then CI, and record each result in the run record; add `go-getter audit pick` choosing about 20% of merged PRs at random plus every PR the reviewer flagged, written to the digest. A failed audit must be recordable as a new check, guardrail or reviewer instruction (`audit fail <pr> --as check|guardrail|instruction`).
 Done-when: tests show `ship` refusing to merge when any gate fails, the reviewer pass receiving no author transcript, the picker including all flagged PRs and a seeded random sample, and an audit failure creating the follow-up artifact stub.

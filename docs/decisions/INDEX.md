@@ -109,7 +109,6 @@ id,title,tags,status
 0117-tracker-backed-plans,"An optional tracker pack makes issues the source of truth for plan steps, with writes through go-getter's own verbs only","roadmap, practice-packs, tooling",active
 0118-extension-architecture-core-and-edges,"go-getter keeps a small core and moves the open-ended edges behind interfaces that can later become helper processes","architecture, roadmap, compiler",active
 0119-helper-contract-v0,"A helper is a pinned executable behind a JSON contract; its output is untrusted data and MCP is only a possible backend","architecture, roadmap, enforcement",active
-0120-gated-commands-may-be-freed-by-name,"A project may let named outward-facing commands run without a human; irreversible ones never","practice-packs, hooks, enforcement",active
 0123-plans-in-github,"Plan steps live in GitHub Issues","practice-packs, roadmap",active
 0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",active
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
@@ -144,3 +143,4 @@ id,title,tags,status
 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree,"Up to 10 agents run at once, each in its own worktree on its own branch","practice-packs, agent-roles, harness",active
 0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",active
 0158-merge-requires-a-gate-stack-and-a-sampled-human-audit,"An agent merges only after a gate stack passes, and the owner audits a sample of merged PRs","verification, ci, agent-roles",active
+0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository state","positioning, hooks, enforcement, guardrail, roadmap",active
