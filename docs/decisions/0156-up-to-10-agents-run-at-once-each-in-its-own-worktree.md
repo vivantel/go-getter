@@ -8,6 +8,9 @@ track: process
 accepted-by: sergemso
 go-getter:
   max-concurrent: "10"
+  generated-by: orchestration@0.1.2
+  pack-answer: max-concurrent
+  pack-option: "10"
 ---
 
 ## Decision

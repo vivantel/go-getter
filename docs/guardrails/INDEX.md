@@ -26,7 +26,7 @@ cache-hygiene-rule,"No mid-task model, effort or instruction-file change; switch
 compaction-timing-rule,"Context is compacted at task boundaries","practice-packs, harness, guardrail",active
 reviewer-read-only,"The reviewer must not modify files","practice-packs, agent-roles, guardrail",active
 parallel-tasks-use-worktrees,"Parallel tasks must each use their own worktree","practice-packs, agent-roles, guardrail",active
-max-concurrent-agents-rule,"No more than 3 agents run at once","practice-packs, agent-roles, guardrail",active
+max-concurrent-agents-rule,"No more than 10 agents run at once","practice-packs, agent-roles, guardrail",active
 human-escalation-rule,"Agents must hand over to a human when blocked, before irreversible actions and on a guardrail denial","practice-packs, agent-roles, guardrail",active
 handoff-has-brief-result-evidence,"Handoffs must carry a brief, a result and evidence","practice-packs, agent-roles, guardrail",active
 restricted-paths-denied,"Agents must not touch restricted paths and none may be committed","practice-packs, governance, guardrail",active
