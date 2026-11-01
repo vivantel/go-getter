@@ -24,6 +24,7 @@
     "check:node-floor": "node compiler/bin/go-getter.mjs check node-floor",
     "check:self-adoption": "node compiler/bin/go-getter.mjs check self-adoption",
     "check:versions": "node compiler/bin/go-getter.mjs check versions",
+    "check:plugin-pin": "node compiler/bin/go-getter.mjs check plugin-pin",
     "check:deps": "node compiler/bin/go-getter.mjs check deps",
     "check:packs": "node compiler/bin/go-getter.mjs check packs",
     "check:plans": "node compiler/bin/go-getter.mjs check plans",
