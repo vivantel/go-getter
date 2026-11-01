@@ -1,8 +1,8 @@
 # Pack boundaries and neutral ids (L.14) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
 
-Written 2026-10-11 for backlog item L.14 (`docs/plans/backlog.md`, issue #123) from decision `docs/decisions/0129-pack-boundaries-neutral-ids-and-a-retrieval-pack.md` (items 1 to 3); read it first, it fixes the design. Work order: `docs/decisions/0131-pack-boundaries-then-the-run-approvals-then-mcp.md` (this plan runs first).
+Written 2026-10-11 for backlog item L.14 (`docs/plans/archive/backlog.md`, issue #123) from decision `docs/decisions/0129-pack-boundaries-neutral-ids-and-a-retrieval-pack.md` (items 1 to 3); read it first, it fixes the design. Work order: `docs/decisions/0131-pack-boundaries-then-the-run-approvals-then-mcp.md` (this plan runs first).
 
 ## What you are building (read first)
 

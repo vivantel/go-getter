@@ -37,3 +37,4 @@ id,title,tags,status
 0037-where-each-host-exposes-tokens-or-cost,"Only Claude Code (transcript, status line, -p JSON), Codex (exec JSON) and OpenCode and Kilo (session export) give a per-session source of tokens or cost; Cursor, Gemini CLI and Copilot give none","cost, hooks, host-agents",active
 0038-virage-integration-surface,"Virage registers MCP and hooks only for Claude Code; its prompt hook injects retrieved chunks without a tool call; it has no secret scan and no restricted-path input","tooling, security, hooks",active
 0039-generated-ci-workflow-is-configurable,"The generated CI workflow takes permissions, concurrency and action refs from an active decision's ci-workflow key",ci,active
+0040-oct-31-throughput-baseline-and-friction,"Oct 31 throughput baseline and where the owner's time went","roadmap, dogfooding, cost",active

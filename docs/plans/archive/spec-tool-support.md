@@ -1,8 +1,8 @@
 # Spec-tool support — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
 
-Written 2026-10-10 from an interview with the repo owner (`sergemso`) for backlog item L.2 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0075-spec-tools-are-detected-and-tolerated.md` (read it first; it fixes the scope). Facts: `docs/facts/0029-openspec-layout-and-workflow.md` (confirmed against OpenSpec 1.14.1 on 2026-10-10), `docs/decisions/0099-git-workflow-pack-covers-branches-commits-and-prs.md` (one change = one branch = one PR).
+Written 2026-10-10 from an interview with the repo owner (`sergemso`) for backlog item L.2 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0075-spec-tools-are-detected-and-tolerated.md` (read it first; it fixes the scope). Facts: `docs/facts/0029-openspec-layout-and-workflow.md` (confirmed against OpenSpec 1.14.1 on 2026-10-10), `docs/decisions/0099-git-workflow-pack-covers-branches-commits-and-prs.md` (one change = one branch = one PR).
 
 ## What you are building (read first)
 

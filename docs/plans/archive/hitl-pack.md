@@ -1,8 +1,8 @@
 # Human-in-the-loop gates pack (component 8) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Needs`, `Check`.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Needs`, `Check`.
 
-Written 2026-10-09 by a `go-getter:roadmap` interview with the repo owner (`sergemso`) for step C.3 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0094-gated-actions-need-human-approval.md` (read it first; it fixes the design). Related: decision 0043 (the advisory handover rule, pack orchestration), fact 0009 (host capability matrix), facts 0003-0008 (host surfaces), decision 0015 (configure host harnesses, own no runtime).
+Written 2026-10-09 by a `go-getter:roadmap` interview with the repo owner (`sergemso`) for step C.3 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0094-gated-actions-need-human-approval.md` (read it first; it fixes the design). Related: decision 0043 (the advisory handover rule, pack orchestration), fact 0009 (host capability matrix), facts 0003-0008 (host surfaces), decision 0015 (configure host harnesses, own no runtime).
 
 ## What you are building (read first)
 

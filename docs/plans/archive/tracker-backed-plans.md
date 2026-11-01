@@ -1,8 +1,8 @@
 # Tracker-backed plans (L.7) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
 
-Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.7 of `docs/plans/v0.2-agent-core-hardening.md`. Decisions: `docs/decisions/0117-tracker-backed-plans.md` (what is built) and `docs/decisions/0118-extension-architecture-core-and-edges.md` (the WorkSource interface and the in-process-first rule); read both first, they fix the design.
+Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.7 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decisions: `docs/decisions/0117-tracker-backed-plans.md` (what is built) and `docs/decisions/0118-extension-architecture-core-and-edges.md` (the WorkSource interface and the in-process-first rule); read both first, they fix the design.
 
 ## What you are building (read first)
 
@@ -73,7 +73,7 @@ Done-when: `check:packs` and `check:self-adoption` pass; a project answering `ji
 Issue: #82
 Class: implement · Needs: 7 · Check: `node compiler/bin/go-getter.mjs plan next docs/plans/archive/tracker-backed-plans.md | grep -q ' #[0-9]'`
 **Creating issues is outward-facing: needs the owner's go-ahead, after reading the dry run.**
-Do: run `go-getter plan issue --dry-run create <step>` for every pending step of the plans in `docs/plans/` (the open backlog items are steps of `docs/plans/backlog.md`) and show it to the owner; check no text carries non-public information. On approval create the issues, which writes `Issue:` onto each step, and change the "Remaining work" paragraph of `AGENTS.md` (outside the generated block) to say that open work is the repository's issues and the plan files hold the step text. A step already done stays in the file only.
+Do: run `go-getter plan issue --dry-run create <step>` for every pending step of the plans in `docs/plans/` (the open backlog items are steps of `docs/plans/archive/backlog.md`) and show it to the owner; check no text carries non-public information. On approval create the issues, which writes `Issue:` onto each step, and change the "Remaining work" paragraph of `AGENTS.md` (outside the generated block) to say that open work is the repository's issues and the plan files hold the step text. A step already done stays in the file only.
 Done-when: `go-getter plan next` names a pending step from its issue; every pending step has `Issue:`; closing one issue with `go-getter plan issue close` makes `plan status` show it done; `go-getter:lint` finds no stale pointer to the old workflow.
 
 ### 9 Tracker plan: docs, lint and close — [x]

@@ -46,3 +46,4 @@ no-secrets-in-added-lines,"Added lines must not contain secrets","practice-packs
 pii-masked-in-tool-output,"Personal data is masked in tool output","practice-packs, governance, security, guardrail",active
 tracker-writes-follow-the-answer,"Writes to the plan tracker follow the project's answer","practice-packs, hooks, guardrail",active
 mcp-arguments-hold-no-secret,"MCP calls carry no secret","practice-packs, hooks, guardrail",active
+raw-commands-redirect-to-verbs,"When a go-getter verb covers an action, the raw git or gh form is denied with a pointer to the verb","hooks, enforcement, guardrail",active

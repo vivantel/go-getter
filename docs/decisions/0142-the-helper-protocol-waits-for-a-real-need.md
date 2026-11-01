@@ -12,7 +12,7 @@ accepted-by: sergemso
 
 Amends the build triggers of 0119 and item 4 of 0140. The helper protocol is built only when **a second implementation of a kind exists, or a third party asks to write one**. The third trigger of 0119, "the trust steps of L.9 exist", is dropped: those steps are written by this project, so counting them would start the protocol on no outside need.
 
-Backlog item L.18 (the protocol plan) therefore waits for one of the two triggers, and its `Human:` field says so. The same applies to the speculative parts of the neighbouring plans: foreign pack vendoring and the author guide (`docs/plans/third-party-packs.md` steps 3 to 5) and the MCP server (`docs/plans/mcp-server.md`) start when someone asks for them, not when they are next in order. The budgets of `third-party-packs` steps 1 and 2 improve the existing Jira and GitHub sources and are not held.
+Backlog item L.18 (the protocol plan) therefore waits for one of the two triggers, and its `Human:` field says so. The same applies to the speculative parts of the neighbouring plans: foreign pack vendoring and the author guide (`docs/plans/archive/third-party-packs.md` steps 3 to 5) and the MCP server (`docs/plans/archive/mcp-server.md`) start when someone asks for them, not when they are next in order. The budgets of `third-party-packs` steps 1 and 2 improve the existing Jira and GitHub sources and are not held.
 
 ## Why
 

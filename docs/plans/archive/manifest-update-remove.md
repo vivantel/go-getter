@@ -1,6 +1,6 @@
 # Manifest, update and remove — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Needs`, `Check`.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Needs`, `Check`.
 
 Written 2026-10-06 by a `go-getter:roadmap` interview with the repo owner (`sergemso`). Decisions: `docs/decisions/0089-apply-records-ownership-in-a-manifest.md`, `0090-update-and-remove-work-from-the-manifest.md`, `0091-decisions-activate-on-acceptance-or-adoption.md` (all draft until accepted or adopted, 0091). Fact: `docs/facts/0033-apply-keeps-no-record-of-what-it-wrote.md`. Guardrail (draft): `docs/guardrails/owned-files-never-clobbered.md`.
 
