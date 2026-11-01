@@ -6,6 +6,27 @@ Written 2026-11-01 as the one active plan. It replaces the plans `backlog`, `hos
 
 Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter:capture`, `go-getter:conform`, `go-getter:attribute`; at each phase boundary run `go-getter:lint`. Read the guardrails a step governs before changing code: `no-runtime-dependencies`, `owned-files-never-clobbered`, `generated-host-files-not-hand-edited`, `neutral-source-has-no-host-specific-language`, `telemetry-records-metadata-only`, `restricted-paths-denied`.
 
+## Resume protocol (re-entrant, self-checkpointing)
+
+Any session, fresh or interrupted, resumes from this file alone:
+
+1. Read the **Status board** below, then `git worktree list` and `git log master..<branch>` for the step you take. The board and git must agree; if they do not, git wins and you fix the board first.
+2. Take the first step that is `[~]` (finish it), else the first `[ ]` whose `Needs` are all `[x]`. Never start a step whose branch is on the board; continue it in that worktree.
+3. Every active step carries a `Progress` line: `date · branch · worktree · last commit · done · next`. Rewrite it in the same commit as the work, so a commit is a checkpoint and a crash loses at most the uncommitted diff.
+4. Mark `[~]` on the first commit. Mark `[x]` when the step's `Check` passes; the board's `Merged` column says whether it has landed. A step done on a branch but unmerged stays `[x]`; do not redo it.
+5. Before stopping for any reason, commit (a `wip:` commit on the step branch is fine), update the `Progress` line and the board row, and write the next action as something a fresh session can run.
+
+**Status board (2026-11-01, from `git worktree list` and `git log master..`)**
+
+| Step | Marker | Branch | Worktree (`../go-getter-wt/…`) | Merged | Next action |
+|---|---|---|---|---|---|
+| T1 throughput report | `[x]` | `feat/state-checking-gate` | `state-checking-gate` | no | run capture, conform, attribute, then open the PR (needs go-ahead) |
+| T2 dogfood install | `[~]` | `feat/dogfood-install` | `dogfood-install` | no | run `go-getter doctor` on a fresh clone; check the stale-pin test; PR |
+| T3 ship verb | `[~]` | `feat/ship-verb` | `ship` | no | run the Check; add any missing Done-when case; squash the duplicate-titled commits |
+| decision 0159 (ask only when unrecoverable) | draft, uncommitted | `docs/automation-first-gates` | `automation-first` | no | commit it; then re-read 0155 and T7 against it |
+| interview follow-ups (#233-#237) | plan added | `feat/pack-tiers-and-profiles` | `pack-tiers` | no | outside this roadmap; land or rebase |
+| T4-T10, Phases 2-6 | `[ ]` | none | none | no | see each step |
+
 ## Held (not steps; each waits for something outside the plan)
 
 - **Retrieval pack** (#214 skeleton and MCP entry, #215 injection hook, #216 index governance, #218 adopt): decision 0145 holds the whole pack until a virage release conforms (V2). Plan text is in `docs/plans/archive/retrieval-pack.md`, steps 3, 4, 5, 7; move them back here when V2 is done.
@@ -23,23 +44,26 @@ The owner's attention was the bottleneck on 2026-10-31: they relayed one-word an
 
 **Rules the design fixes (do not re-decide):** quality gates are never dropped for speed; releases stay human-approved (batched); the four ask-triggers of 0155 are the only reasons an agent stops to ask; the metric comes from a deterministic report, never an agent estimate; no new runtime dependency.
 
-### T1 Throughput report — [ ] ‖
+### T1 Throughput report — [x] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-day.test.mjs`
 Context: fact 0040 was measured by hand from host transcripts (`~/.claude/projects/<project>/*.jsonl`) and `gh pr list`. The telemetry code is in `compiler/src/telemetry/`; command files are in `compiler/src/commands/` (see `telemetry.mjs`, `watch.mjs` for the shape). Transcripts hold metadata (timestamps, tool names, whether a turn is a human text turn); prompt text must not be stored (`telemetry-records-metadata-only`).
 Do: add `go-getter metrics day [--date D]` printing, for the date: active minutes (gaps under 10 min), wall minutes, human text turns, merged PRs, lines added and removed, median open-to-merge minutes, and human minutes per merged PR. Read transcripts through the existing host readers where they exist; read PRs through the tracker/`gh` adapter. Counts and times only, no message text.
 Done-when: the test feeds fixture transcripts and PR JSON and gets the exact figures above; the report prints no prompt text; running it for 2026-10-31 on a machine with the transcripts reproduces fact 0040's counts.
+Progress 2026-11-01 · `feat/state-checking-gate` · `../go-getter-wt/state-checking-gate` · `8608967` · done: `metrics day` in `compiler/src/metrics/day.mjs`; `metrics-day.test.mjs` 5/5 pass; reproduces fact 0040 (5 PRs, +2193/-158) · next: PR (not opened).
 
-### T2 Dogfood install — [ ] ‖
+### T2 Dogfood install — [~] ‖
 Class: implement · Needs: none · Check: `go-getter doctor`
 Context: on 2026-10-31 the plugin was not installed in this repo, so `/go-getter:*` skills were missing and the plugin cache (0.3.6) lagged the repo. Decision 0010 (self-hosting ratchet) says this repo uses go-getter. Do not clobber uncommitted host files (`owned-files-never-clobbered`).
 Do: make `go-getter apply` the way this repo gets its host files, enable the repo's own plugin at its current version in the project settings, and make `go-getter doctor` report a plugin/CLI version mismatch with the fix. Add a CI check that fails when the repo's pinned plugin version is older than its latest tag.
 Done-when: in a fresh clone, `go-getter apply` followed by starting the host lists the `go-getter:*` skills; `go-getter doctor` exits 0 and prints no version mismatch; the CI check fails on a deliberately stale pin in a test.
+Progress 2026-11-01 · `feat/dogfood-install` · `../go-getter-wt/dogfood-install` · `fc8de1d` · done (committed, not yet re-run by me): project settings pin the repo's own plugin to a release tag; `plugin-pin` check, CI step and `plugin-pin.test.mjs`; `apply` and `doctor` changed; a decision for it · next: verify each Done-when item by running it, then PR.
 
-### T3 The ship verb — [ ] ‖
+### T3 The ship verb — [~] ‖
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/ship.test.mjs`
 Context: decision 0157; branch `feat/ship-verb` already holds 3 commits toward it, so start from there. Existing pieces: `go-getter watch` (`compiler/src/watch.mjs`, `--until done` for CI), the tracker adapter (`compiler/src/trackers/`), `refs` (`commands/refs.mjs`), `checkpoint`. `docs/skills/working-a-change.md` fixes branch, commit and merge rules (Conventional Commit title, squash merge with green CI, never on `master`).
 Do: add `go-getter ship [--plan P --step S]`: verify branch name and a clean worktree, run the step's `Check`, build the commit message and PR body from the diff, the step and the `Refs:` of artifacts the diff touches, push, open the PR, watch CI to a conclusion, squash-merge only on green, and print a one-line result. It takes a checkpoint first, stops without merging on any red check, and is an approved-once gated action per run (0130), not per call. No model is used.
 Done-when: tests with a fake `gh` show the happy path merging once, a red check leaving the PR open, a bad branch name refused, and a checkpoint taken before the push.
+Progress 2026-11-01 · `feat/ship-verb` · `../go-getter-wt/ship` · `6d3bc4d` · done (committed, not yet re-run by me): `compiler/src/ship.mjs` and `commands/ship.mjs`, a `gate.mjs` change, attribute-skill note, CI status errors read as errors, staged refs listed in the PR body · next: run the Check and map its tests to the four Done-when cases; `fe164f2` and `e7bc5be` share a title, so squash on merge.
 
 ### T4 Redirect hook and allow-rules — [ ]
 Class: implement · Needs: T3, H2 · Check: `node --test compiler/test/redirect-hook.test.mjs`
