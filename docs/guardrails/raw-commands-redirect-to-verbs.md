@@ -10,9 +10,12 @@ derivation-note: Given verbs that are token-free and have one allow-rule, hand-r
 go-getter:
   enforcement:
     - tier: 1
-      check: Instruction until the redirect hook ships (plan `docs/plans/roadmap.md` step T4 raises this to tier 2 with a run)
+      check: Use go-getter ship for commit-to-merge where no hook denies the raw commands
+    - tier: 2
+      check: The pre-tool hook denies a raw git push, gh pr create or gh pr merge and names the verb
+      run: builtin:redirect-to-verb verbs="git-push=go-getter ship,pr-create=go-getter ship,pr-merge=go-getter ship"
 ---
 
 ## Guardrail
 
-Use `go-getter ship` and `go-getter release --batch` for commit-to-merge and release. A raw `git push`, `gh pr create`, `gh pr merge` or release sequence that a verb covers is denied with the verb's name. Advisory (tier 1) until the redirect hook ships.
+Use `go-getter ship` and `go-getter release --batch` for commit-to-merge and release. A raw `git push`, `gh pr create`, `gh pr merge` or release sequence that a verb covers is denied with the verb's name. Hosts with a blocking pre-tool hook deny them; the others rely on the instruction. A person may still run the raw command themselves.

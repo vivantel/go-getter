@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { collectEnforcement } from './enforce.mjs';
 import { catalogFor, gateArgs, DEFAULT_PROVIDER } from './gate.mjs';
+import { redirectVerbs } from './hook.mjs';
 import { writeMode, VERBS } from './trackers/write.mjs';
 import { packageCapabilities } from './governance.mjs';
 import { detect } from './detect.mjs';
@@ -30,6 +31,10 @@ export function suggestedCommands(project) {
       if (entry.class !== 'outward' || !g.free.includes(entry.id)) continue;
       for (const glob of entry.native ?? []) if (NARROW.test(glob)) out.set(glob.slice(0, -2), `${entry.id} runs without asking (hitl free-commands)`);
     }
+  }
+  // A verb that replaces raw commands must itself run without a prompt, or the redirect only moves the stop (decision 0157).
+  for (const e of collectEnforcement(project).filter((x) => x.tier === 2 && x.parsed?.kind === 'builtin' && x.parsed.id === 'redirect-to-verb')) {
+    for (const verb of new Set(redirectVerbs(e.parsed.args).values())) out.set(verb.replace(/^go-getter\b/, runner(project)), `replaces ${[...redirectVerbs(e.parsed.args)].filter(([, v]) => v === verb).map(([id]) => id).join(', ')} (${e.guardrail})`);
   }
   const mode = writeMode(project);
   if (mode !== 'off') for (const verb of VERBS) out.set(`${runner(project)} plan issue ${verb}`, `plan issue ${verb} ${mode === 'allow' ? 'runs without asking' : 'asks a human'} (tracker writes: ${mode})`);
