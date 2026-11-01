@@ -1,8 +1,8 @@
 # Run spend (L.19) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
 
-Written 2026-10-12 for backlog item L.19 (`docs/plans/backlog.md`, issue #194). Facts first: `docs/facts/0037-where-each-host-exposes-tokens-or-cost.md` lists the cost source per host and what is unconfirmed. Decision: `docs/decisions/0144-a-spend-cap-on-a-host-without-a-cost-source-warns-and-starts.md`; it fixes the design. It amends item 6 of `docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md`.
+Written 2026-10-12 for backlog item L.19 (`docs/plans/archive/backlog.md`, issue #194). Facts first: `docs/facts/0037-where-each-host-exposes-tokens-or-cost.md` lists the cost source per host and what is unconfirmed. Decision: `docs/decisions/0144-a-spend-cap-on-a-host-without-a-cost-source-warns-and-starts.md`; it fixes the design. It amends item 6 of `docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md`.
 
 ## What you are building (read first)
 

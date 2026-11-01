@@ -1,8 +1,8 @@
 # Runbook compilation spike — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
 
-Written 2026-10-10 from an interview with the repo owner (`sergemso`) for backlog item L.3 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0104-behavior-is-a-layer-over-knowledge-artifacts.md` (read it first; it fixes the model). Related: 0034 (procedures live in skills loaded on demand), 0066 (go-getter owns the artifact format), the artifact model `src/shared/artifact-model.md`, guardrails `one-statement-one-job` and `token-economy`.
+Written 2026-10-10 from an interview with the repo owner (`sergemso`) for backlog item L.3 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0104-behavior-is-a-layer-over-knowledge-artifacts.md` (read it first; it fixes the model). Related: 0034 (procedures live in skills loaded on demand), 0066 (go-getter owns the artifact format), the artifact model `src/shared/artifact-model.md`, guardrails `one-statement-one-job` and `token-economy`.
 
 ## What you are building (read first)
 

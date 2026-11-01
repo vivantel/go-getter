@@ -1,8 +1,8 @@
 # Sanitization slices S2-S4 — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
 
-Written 2026-10-10 from an interview with the repo owner (`sergemso`) for backlog item L.4 of `docs/plans/v0.2-agent-core-hardening.md`. Decisions: `docs/decisions/0106-scanning-and-masking-share-one-pattern-library.md` (S2, S3) and `docs/decisions/0107-secret-run-and-put-are-limited-to-approved-commands-and-sources.md` (S4); read both first, they fix the design. They refine `docs/decisions/0072-restricted-paths-have-access-modes.md`, whose first slice (S1: access modes recorded, hook fix, value-based output redaction) is done. Facts: 0027 (Claude Code secret levers), 0030 and 0031 (output redaction and read deny levers per host).
+Written 2026-10-10 from an interview with the repo owner (`sergemso`) for backlog item L.4 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decisions: `docs/decisions/0106-scanning-and-masking-share-one-pattern-library.md` (S2, S3) and `docs/decisions/0107-secret-run-and-put-are-limited-to-approved-commands-and-sources.md` (S4); read both first, they fix the design. They refine `docs/decisions/0072-restricted-paths-have-access-modes.md`, whose first slice (S1: access modes recorded, hook fix, value-based output redaction) is done. Facts: 0027 (Claude Code secret levers), 0030 and 0031 (output redaction and read deny levers per host).
 
 ## What you are building (read first)
 

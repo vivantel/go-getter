@@ -1,8 +1,8 @@
 # Bootstrap go-getter — implementation plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to `docs/plans/v0.2-agent-core-hardening.md`. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to `docs/plans/archive/v0.2-agent-core-hardening.md`. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains.
 
-Written 2026-10-04 by `go-getter:roadmap` interviews with the repo owner (GitHub `sergemso`, org `vivantel`). **Archived 2026-10-05 (step 7.1):** every finished step stays here as history; the open steps (6.3, 6.4, 7.2, 7.3), the enforcement debt and the open questions moved to `docs/plans/v0.2-agent-core-hardening.md`.
+Written 2026-10-04 by `go-getter:roadmap` interviews with the repo owner (GitHub `sergemso`, org `vivantel`). **Archived 2026-10-05 (step 7.1):** every finished step stays here as history; the open steps (6.3, 6.4, 7.2, 7.3), the enforcement debt and the open questions moved to `docs/plans/archive/v0.2-agent-core-hardening.md`.
 
 ## What you are building (read first)
 
@@ -33,7 +33,7 @@ Core design — all in `docs/decisions/`; read them before coding, they hold rat
 
 ## Known enforcement debt and open questions
 
-Moved to `docs/plans/v0.2-agent-core-hardening.md` on 2026-10-05; the open questions of this plan were resolved by steps 4.1 and 6.1 (JSON pack format; keyless evals) and 1.7 (DLP reach, recorded in fact 0009).
+Moved to `docs/plans/archive/v0.2-agent-core-hardening.md` on 2026-10-05; the open questions of this plan were resolved by steps 4.1 and 6.1 (JSON pack format; keyless evals) and 1.7 (DLP reach, recorded in fact 0009).
 
 ---
 
@@ -282,13 +282,13 @@ Context: the owner asked (2026-10-05) that go-getter not use or rely on the form
 Done-when: `npm test`, every `check:*` and `go-getter apply --check` pass with `vendor/` and `scripts/` absent; no active artifact or source file names the former upstream.
 
 ### 6.3 Install smoke test per host — [>]
-Moved to step 0.1 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
+Moved to step 0.1 of `docs/plans/archive/v0.2-agent-core-hardening.md` (2026-10-05).
 Postponed by the owner (2026-10-05). `INSTALLING.md` marks every install untested until this runs. Installed here: Claude Code, Kilo, OpenCode; not installed: Codex, Cursor, Gemini CLI, Copilot.
 Do: on each of the seven hosts, install from the public repo per `INSTALLING.md`, run `init` for one pack on a scratch repo, confirm artifacts and enforcement files appear. File a GitHub issue per defect.
 Done-when: a seven-row table (host / installed / init works / defects) is in the PR description with no unexplained failures.
 
 ### 6.4 Tag v0.1.0 — [>]
-Moved to step 0.2 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
+Moved to step 0.2 of `docs/plans/archive/v0.2-agent-core-hardening.md` (2026-10-05).
 **Outward-facing: requires the owner's explicit go-ahead.**
 Do: first a release PR that bumps `package.json` to `0.1.0` and runs `npm run build` (every generated manifest must carry the version or `check:versions --tag` fails the release workflow), regenerates the 0.1.0 changelog section with `go-getter:changelog`, and passes a dry run of the release workflow; merge it, then tag `v0.1.0` and create the GitHub release from the changelog.
 Done-when: `check:versions --tag v0.1.0` passes; `gh release view v0.1.0 -R vivantel/go-getter` succeeds; the release workflow run for the tag is green.
@@ -298,18 +298,18 @@ Done-when: `check:versions --tag v0.1.0` passes; `gh release view v0.1.0 -R viva
 ## Phase 7 — Close-out
 
 ### 7.1 Re-evaluate the roadmap — [x]
-Result (2026-10-05): `go-getter:lint` found no structural error (notes: 0004's expiry condition unmet, its body still said "vendored", five decision-facts nothing cites). The owner's eight proposals were assessed against the decisions and facts; the owner chose the order in decision 0068, which supersedes 0004 (now archived; the guardrail `commit-subjects-are-conventional` was re-pointed to 0068). New decisions 0068-0074 and facts 0026-0029 record the outcome; drafts 0069, 0070, 0071 and 0074 await confirmation (v0.2 plan step 0.5). The v0.2 plan is `docs/plans/v0.2-agent-core-hardening.md`; this plan moved to `docs/plans/archive/`. Conform ran on the change set before its PR.
+Result (2026-10-05): `go-getter:lint` found no structural error (notes: 0004's expiry condition unmet, its body still said "vendored", five decision-facts nothing cites). The owner's eight proposals were assessed against the decisions and facts; the owner chose the order in decision 0068, which supersedes 0004 (now archived; the guardrail `commit-subjects-are-conventional` was re-pointed to 0068). New decisions 0068-0074 and facts 0026-0029 record the outcome; drafts 0069, 0070, 0071 and 0074 await confirmation (v0.2 plan step 0.5). The v0.2 plan is `docs/plans/archive/v0.2-agent-core-hardening.md`; this plan moved to `docs/plans/archive/`. Conform ran on the change set before its PR.
 Context: decision 0004 expires when v0.1.0 ships.
 Do: run `go-getter:lint` and `go-getter:conform`; review the post-v0.1 order with the owner; write `docs/plans/v0.2-calibration-observability.md` (routing calibration 0017, full observability, HITL gates, checkpointing); if the order changes, supersede 0004.
 Done-when: lint and conform report no errors; the v0.2 plan exists; 0004 is confirmed in a PR note or `superseded` with valid `superseded-by`.
 
 ### 7.2 Document the `go-getter:` key as go-getter's own — [>]
-Moved to step 0.3 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
+Moved to step 0.3 of `docs/plans/archive/v0.2-agent-core-hardening.md` (2026-10-05).
 Context: decision 0066 makes the key part of go-getter's artifact format; nothing is proposed to any other project.
 Do: add a section to `src/shared/artifact-model.md` describing the `go-getter:` frontmatter key (`enforcement` with tiers, `generated-by`, `pack-answer`, pack data), so the skills that read artifacts know it; rebuild.
 Done-when: the section exists once, the lint reports no unknown-key findings for it, `npm run check:generated` exits 0.
 
 ### 7.3 Consider a second dogfood repo — [>]
-Moved to step 0.4 of `docs/plans/v0.2-agent-core-hardening.md` (2026-10-05).
+Moved to step 0.4 of `docs/plans/archive/v0.2-agent-core-hardening.md` (2026-10-05).
 Do: ask the owner whether to adopt go-getter in another vivantel repo (0010 deferred this).
 Done-when: the answer is recorded in the 7.1 PR description; if yes, a follow-up plan exists.

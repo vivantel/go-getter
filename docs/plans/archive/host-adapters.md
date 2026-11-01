@@ -1,8 +1,10 @@
 # Host adapter boundary (L.10) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
+**Archived 2026-11-01**: open steps moved to `docs/plans/roadmap.md` (`[>]`); the Held list there names the ones that wait.
 
-Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.10 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0118-extension-architecture-core-and-edges.md`, whose host-adapter paragraph fixes the design; read it first. Runs in parallel with `docs/plans/archive/tracker-backed-plans.md`, which has priority.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
+
+Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.10 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0118-extension-architecture-core-and-edges.md`, whose host-adapter paragraph fixes the design; read it first. Runs in parallel with `docs/plans/archive/tracker-backed-plans.md`, which has priority.
 
 ## What you are building (read first)
 
@@ -22,32 +24,32 @@ Class: plan · Needs: none · Check: `npm run check:guardrails`
 Do: list, for each of the seven hosts, every place the compiler and runtime branch on it (apply outputs, agent renderers, hook config and payload parsing, capability row, coverage row, plugin files, session identity); write the table into a new fact and define the adapter interface from it (what a host answers, what is shared). Mark what the three first hosts need and what the deferred four keep.
 Done-when: the fact lists every per-host branch with file and line, and the interface names each answer an adapter gives; nothing in it depends on a helper process.
 
-### 2 Registry, conformance test and the Claude Code adapter — [ ]
+### 2 Registry, conformance test and the Claude Code adapter — [>]
 Issue: #85
 Class: implement · Effort: high · Needs: 1 · Check: `npm run check:generated && npm test`
 Do: add the adapter registry and a conformance test that runs every registered adapter through the interface (outputs are deterministic, owned files are marked, a missing capability is reported and never guessed). Move Claude Code's code behind an adapter module; `apply`, `agents`, `hook` and `coverage` reach it through the registry. Leave every other host on its present code through a wrapper adapter.
 The registry obeys decision 0119: an adapter takes and returns plain data, with no callbacks and no shared state, and the conformance test checks a JSON round trip.
 Done-when: no golden file changes; the conformance test passes for the Claude Code adapter and the wrapper and shows inputs and outputs unchanged by a JSON round trip; `go-getter apply --check` is clean in this repository.
 
-### 3 OpenCode and Kilo adapters — [ ] ‖
+### 3 OpenCode and Kilo adapters — [>] ‖
 Issue: #86
 Class: implement · Effort: high · Needs: 2 · Check: `npm run check:generated && npm test`
 Do: move OpenCode and Kilo behind adapters sharing one fork base (their agent and plugin formats differ only in paths and the plugin file location, fact 0005).
 Done-when: no golden file changes; both pass the conformance test; the Kilo-only differences (the plugin directory, the question tool, fact 0034) live in the Kilo module.
 
-### 4 Deferred hosts on the registry — [ ] ‖
+### 4 Deferred hosts on the registry — [>] ‖
 Issue: #87
 Class: implement · Needs: 2 · Check: `npm run check:generated && npm test`
 Do: register Codex, Cursor, Gemini CLI and Copilot through wrapper adapters that call today's code, mark them `deferred` in the registry, and make `go-getter coverage` say so beside their unconfirmed shapes.
 Done-when: no golden file changes; the four hosts pass the conformance test through their wrappers; `coverage` shows them deferred.
 
-### 5 Contributor path — [ ]
+### 5 Contributor path — [>]
 Issue: #88
 Class: implement · Needs: 3, 4 · Check: `npm run check:guardrails && npm test`
 Do: add a fact template for a host's integration surface (what it accepts, what is confirmed and from which source and date, what is not), rewrite `docs/skills/adding-a-host-agent.md` as "write one adapter module, one fact, pass the conformance test", and add a scaffold command or a copyable skeleton module with a failing conformance case that names what is missing.
 Done-when: following the procedure from the skeleton produces an adapter that passes the conformance test for a fake host used in the tests; the skill names no step that edits `apply`, `agents` or `hook`.
 
-### 6 Host adapters: docs, lint and close — [ ]
+### 6 Host adapters: docs, lint and close — [>]
 Issue: #89
 Class: review · Needs: 5 · Check: `npm run check:plans && npm run check:guardrails`
 Do: describe the adapter boundary and the deferred hosts in README and INSTALLING.md, run the full `go-getter:lint` skill, mark L.10 done in the v0.2 plan backlog and archive this plan.

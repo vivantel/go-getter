@@ -1,8 +1,8 @@
 # State and checkpointing pack (component 9) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`.
 
-Written 2026-10-10 from an interview with the repo owner (`sergemso`) for step C.4 of `docs/plans/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0097-checkpoints-are-hidden-git-refs-taken-before-gated-actions.md` (read it first; it fixes the design). Related: decisions 0094/0095 (the gated catalog this pack hooks into), 0089/0090 (the manifest: files `apply` writes are tracked), fact 0009 (component 9 tiers), the pack procedure `docs/skills/adding-a-practice-pack.md`.
+Written 2026-10-10 from an interview with the repo owner (`sergemso`) for step C.4 of `docs/plans/archive/v0.2-agent-core-hardening.md`. Decision: `docs/decisions/0097-checkpoints-are-hidden-git-refs-taken-before-gated-actions.md` (read it first; it fixes the design). Related: decisions 0094/0095 (the gated catalog this pack hooks into), 0089/0090 (the manifest: files `apply` writes are tracked), fact 0009 (component 9 tiers), the pack procedure `docs/skills/adding-a-practice-pack.md`.
 
 ## What you are building (read first)
 

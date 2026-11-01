@@ -121,7 +121,7 @@ test("this repo's plans parse, including the archived plan", () => {
   const moved = archived.steps.find((s) => s.id === '6.2a');
   assert.equal(moved.class, 'implement');
   assert.ok(archived.steps.some((s) => s.marker === '>'));
-  const current = readPlan(path.join(root, 'docs/plans/v0.2-agent-core-hardening.md'));
+  const current = readPlan(path.join(root, 'docs/plans/archive/v0.2-agent-core-hardening.md'));
   const a2 = current.steps.find((s) => s.id === 'A.2');
   assert.deepEqual([a2.class, a2.effort, a2.needs, a2.check], ['implement', 'high', ['0.5'], 'npm test']);
 });

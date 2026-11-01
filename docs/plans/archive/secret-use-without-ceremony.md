@@ -1,8 +1,8 @@
 # Secret use without ceremony (L.13) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Check`. `‖` marks steps that can run in parallel.
 
-Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.13 (`docs/plans/backlog.md`). Decision: `docs/decisions/0126-secret-use-is-approved-once-per-user-and-bound-to-code.md`; read it first, it fixes the design. It refines `docs/decisions/0072-restricted-paths-have-access-modes.md` and `docs/decisions/0107-secret-run-and-put-are-limited-to-approved-commands-and-sources.md`.
+Written 2026-10-11 from an interview with the repo owner (`sergemso`) for backlog item L.13 (`docs/plans/archive/backlog.md`). Decision: `docs/decisions/0126-secret-use-is-approved-once-per-user-and-bound-to-code.md`; read it first, it fixes the design. It refines `docs/decisions/0072-restricted-paths-have-access-modes.md` and `docs/decisions/0107-secret-run-and-put-are-limited-to-approved-commands-and-sources.md`.
 
 ## What you are building (read first)
 
@@ -65,5 +65,5 @@ Done-when: tests show the rules for each spelling present, a lookalike not gated
 ### 7 Secret use: dogfood, docs and close — [x]
 Issue: #110
 Class: review · Needs: 2, 5, 6 · Check: `npm run check:plans && npm run check:guardrails`
-Do: with no symlink and no answer edit, run the Jira live check through `secret run` (first use prompts once, the second run is silent, an edit to the script asks again); describe approvals, the shared list, recognised installs and operand matching in INSTALLING.md and the README; note in 0072 and 0107 that 0126 refines them; run the full `go-getter:lint` skill; mark L.13 done in `docs/plans/backlog.md` and archive this plan.
+Do: with no symlink and no answer edit, run the Jira live check through `secret run` (first use prompts once, the second run is silent, an edit to the script asks again); describe approvals, the shared list, recognised installs and operand matching in INSTALLING.md and the README; note in 0072 and 0107 that 0126 refines them; run the full `go-getter:lint` skill; mark L.13 done in `docs/plans/archive/backlog.md` and archive this plan.
 Done-when: the live check passes through the prompt-once flow on this machine; lint reports no errors; the plan moves to `docs/plans/archive/`.

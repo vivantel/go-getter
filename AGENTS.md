@@ -91,6 +91,7 @@ Advisory:
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
 - Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
+- When a go-getter verb covers an action, the raw git or gh form is denied with a pointer to the verb (`raw-commands-redirect-to-verbs`)
 - Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
 - The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)

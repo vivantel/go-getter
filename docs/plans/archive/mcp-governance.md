@@ -1,8 +1,8 @@
 # MCP governance (L.11) — plan
 
-**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
 
-Written 2026-10-12 from an interview with the repo owner (`sergemso`) for backlog item L.11 (`docs/plans/backlog.md`, issue #93). Decision: `docs/decisions/0138-mcp-servers-are-allowlisted-and-their-calls-classed-masked-and-scanned.md`; read it first, it fixes the design. It sits on `docs/decisions/0119-helper-contract-v0.md` (the core never speaks MCP), `docs/decisions/0126-secret-use-is-approved-once-per-user-and-bound-to-code.md`, `docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md` and `docs/decisions/0135-gated-run-grants.md`.
+Written 2026-10-12 from an interview with the repo owner (`sergemso`) for backlog item L.11 (`docs/plans/archive/backlog.md`, issue #93). Decision: `docs/decisions/0138-mcp-servers-are-allowlisted-and-their-calls-classed-masked-and-scanned.md`; read it first, it fixes the design. It sits on `docs/decisions/0119-helper-contract-v0.md` (the core never speaks MCP), `docs/decisions/0126-secret-use-is-approved-once-per-user-and-bound-to-code.md`, `docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md` and `docs/decisions/0135-gated-run-grants.md`.
 
 ## What you are building (read first)
 
@@ -51,7 +51,7 @@ Done-when: tests show a secret and an email masked in an MCP result per supporti
 
 ### 6 Native rules — [>]
 Issue: #173
-Moved to `docs/plans/backlog.md` item L.20 on 2026-10-12: the rule forms are unconfirmed (fact 0036), nothing writes native deny rules yet, a deny must name the servers to refuse and only project MCP config files show them, and the hook already denies by server where the host shows it. Held until Cursor's allowlist needs it.
+Moved to `docs/plans/archive/backlog.md` item L.20 on 2026-10-12: the rule forms are unconfirmed (fact 0036), nothing writes native deny rules yet, a deny must name the servers to refuse and only project MCP config files show them, and the hook already denies by server where the host shows it. Held until Cursor's allowlist needs it.
 Class: implement · Effort: medium · Needs: 3 · Check: `npm run check:generated && node --test compiler/test/mcp-native.test.mjs`
 Do: where a host can deny a server natively (step 1), `apply` writes a deny rule for each server off the allowlist, and nothing for tool classes (a native rule on a tool would defeat approve-once and run grants), owned and removable like the other rules.
 Done-when: tests show the rules written, removed on update, and not hand-editable by the owned-files rule.
