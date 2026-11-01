@@ -73,7 +73,6 @@ Blocked by host hooks where the host supports it:
 - Irreversible and outward-facing commands need a human (`gated-actions-need-human-approval`)
 - MCP calls carry no secret (`mcp-arguments-hold-no-secret`)
 - Personal data is masked in tool output (`pii-masked-in-tool-output`)
-- Writes to the plan tracker follow the project's answer (`tracker-writes-follow-the-answer`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
 - Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
 
@@ -95,5 +94,6 @@ Advisory:
 - Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
 - The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
+- Writes to the plan tracker follow the project's answer (`tracker-writes-follow-the-answer`)
 
 <!-- go-getter:end -->

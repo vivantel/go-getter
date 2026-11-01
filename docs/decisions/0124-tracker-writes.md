@@ -1,7 +1,8 @@
 ---
 id: 0124-tracker-writes
 title: go-getter may write to the tracker with a human approving each write
-status: active
+status: superseded
+superseded-by: 0160-tracker-writes
 date: 2026-10-11
 tags: [practice-packs, roadmap]
 track: process
