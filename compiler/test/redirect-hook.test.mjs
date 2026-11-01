@@ -11,7 +11,7 @@ const VERBS = 'git-push=go-getter ship,pr-create=go-getter ship,pr-merge=go-gett
 const guardrail = (id, run) =>
   `---\nid: ${id}\ntitle: ${id} title\nstatus: active\ndate: 2026-11-01\ntags: [guardrail]\ngoverned-by: 0001-x\ngrounded-in: [0001-x]\nderivation-note: x\ngo-getter:\n  enforcement:\n    - tier: 2\n      check: c\n      run: ${run}\n---\n\n## Guardrail\n\nx\n`;
 
-function project({ redirect = `builtin:redirect-to-verb verbs="${VERBS}"`, gate = 'builtin:gate-command classes=irreversible,outward' } = {}) {
+function project({ redirect = `builtin:redirect-to-verb verbs="${VERBS}"`, gate = 'builtin:gate-command classes=irreversible,outward grantable=git-push,pr-create,pr-merge,pr-close' } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-redirect-'));
   mkdirSync(path.join(dir, 'docs/guardrails'), { recursive: true });
   writeFileSync(path.join(dir, 'AGENTS.md'), '# Project\n');
@@ -92,5 +92,19 @@ test('doctor lists the verb as an allow rule so the redirect does not just move 
     assert.match(ship.why, /git-push, pr-create, pr-merge/);
     const rules = allowSuggestions(dir, ['claude-code']);
     assert.ok(rules[0].rules.some((r) => /ship:\*\)$/.test(r)), JSON.stringify(rules));
+  });
+});
+
+test('the redirect is inactive while the gate stops the verb itself', () => {
+  const stopped = 'builtin:gate-command classes=irreversible,outward grantable=git-push,pr-create';
+  withProject({ gate: stopped }, (dir) => {
+    const d = evaluatePreTool(dir, bash('git push'), 'claude-code');
+    assert.doesNotMatch(d.reason ?? '', /raw-commands-redirect-to-verbs/);
+  });
+  const open = 'builtin:gate-command classes=irreversible,outward grantable=git-push,pr-create,pr-merge,pr-close';
+  withProject({ gate: open }, (dir) => {
+    const d = evaluatePreTool(dir, bash('git push'), 'claude-code');
+    assert.equal(d.deny, true);
+    assert.match(d.reason, /raw-commands-redirect-to-verbs/);
   });
 });
