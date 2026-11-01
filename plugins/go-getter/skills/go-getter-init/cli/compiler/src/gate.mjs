@@ -257,12 +257,14 @@ export const GATE_CLASSES = ['irreversible', 'outward'];
 // `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
 // `go-getter ship` pushes, opens and merges a pull request, so it is gated whenever the outward class is and the project has not freed all three (decision 0157).
 const SHIP_PARTS = ['git-push', 'pr-create', 'pr-merge'];
-const shipGated = (classes, free) => classes.includes('outward') && !SHIP_PARTS.every((id) => free.includes(id));
+// A part a run or a remembered approval may allow (`grantable`) does not stop `ship` either: decision 0159 asks a human only when something cannot be undone.
+const shipGated = (classes, free, grantable) => classes.includes('outward') && !SHIP_PARTS.every((id) => free.includes(id) || grantable.includes(id));
 export const gateArgs = (args = {}) => {
   const classes = list(args.classes ?? 'irreversible,outward');
   const free = normaliseFree(list(args.free));
-  const goGetter = [...new Set([...list(args['go-getter']), ...(shipGated(classes, free) ? ['ship'] : [])])];
-  return { classes, extra: list(args.extra), free, goGetter, grantable: normaliseFree(list(args.grantable)), provider: String(args.provider ?? DEFAULT_PROVIDER).trim() };
+  const grantable = normaliseFree(list(args.grantable));
+  const goGetter = [...new Set([...list(args['go-getter']), ...(shipGated(classes, free, grantable) ? ['ship'] : [])])];
+  return { classes, extra: list(args.extra), free, goGetter, grantable, provider: String(args.provider ?? DEFAULT_PROVIDER).trim() };
 };
 
 // The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script

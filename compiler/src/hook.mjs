@@ -404,7 +404,10 @@ function decidePreTool(project, payload, host) {
   const enforcement = collectEnforcement(project);
   checkpointBeforeCommand(project, enforcement, shellCommand(payload), host); // best effort, before the decision, never changes it
   // A covered raw command is redirected before any gate asks about it: the person is better served by the verb than by a prompt.
+  // Not while the gate stops the verb itself (the project lists none of its parts as freed or grantable): the redirect would only move the stop.
+  const shipStopped = enforcement.some((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command' && gateArgs(e.parsed.args).goGetter.includes('ship'));
   for (const e of enforcement) {
+    if (shipStopped) break;
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin' || e.parsed.id !== 'redirect-to-verb') continue;
     const redirected = redirectedCommand(e, payload);
     if (redirected) return redirected;
