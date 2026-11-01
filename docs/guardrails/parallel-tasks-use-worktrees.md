@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction only
-  generated-by: orchestration@0.1.1
+  generated-by: orchestration@0.1.2
   pack-answer: isolation
   pack-option: worktree-per-task
 ---

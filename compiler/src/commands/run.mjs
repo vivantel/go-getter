@@ -49,7 +49,11 @@ export default async function runCommand({ args }) {
     if (sub === 'next' && rest.every((a) => a === '--json')) {
       const r = nextInRun(project);
       if (rest.includes('--json')) console.log(JSON.stringify(r, null, 2));
-      else if (r.step) console.log(`next: step ${r.step.id} ${r.step.title}${r.step.check ? `\ncheck: ${r.step.check}` : ''}${r.step.doneWhen ? `\ndone-when: ${r.step.doneWhen}` : ''}`);
+      else if (r.step) {
+        const line = (st) => `step ${st.id} ${st.title}${st.check ? `\ncheck: ${st.check}` : ''}${st.doneWhen ? `\ndone-when: ${st.doneWhen}` : ''}`;
+        console.log(`next: ${line(r.step)}`);
+        for (const st of r.steps.slice(1)) console.log(`parallel: ${line(st)}`);
+      }
       else if (r.done) console.log('the run range is finished; a person ends the run with: go-getter run end');
       else console.log(`stop (${r.stop.code}): ${r.stop.reason}; hand over to the user`);
       return r.step ? 0 : r.done ? 0 : 1;

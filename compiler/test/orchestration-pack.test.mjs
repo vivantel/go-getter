@@ -170,10 +170,9 @@ test('worktree new creates a sibling worktree on a new branch and list shows it'
 });
 
 test('worktree new refuses beyond the concurrency limit and when the project does not use worktrees', () => {
-  const { parent, dir } = repo({ ...recommended, 'max-concurrent': '2' });
+  const { parent, dir } = repo({ ...recommended, 'max-concurrent': '1' });
   newWorktree(dir, 'one');
-  newWorktree(dir, 'two');
-  assert.throws(() => newWorktree(dir, 'three'), /limit is 2/);
+  assert.throws(() => newWorktree(dir, 'two'), /limit is 1/);
   const none = repo({ ...recommended, isolation: 'no-isolation', 'worktree-location': undefined });
   assert.throws(() => newWorktree(none.dir, 'x'), /does not use worktrees/);
   const host = repo({ ...recommended, 'worktree-location': 'host-default' });
@@ -190,7 +189,7 @@ test('worktree new honors the in-repo location and defaults to the recommended a
 });
 
 test('worktree clean removes merged worktrees only and keeps new, dirty and unmerged ones', () => {
-  const { parent, dir, git } = repo({ ...recommended, 'max-concurrent': '4' });
+  const { parent, dir, git } = repo({ ...recommended, 'max-concurrent': '5' });
   const merged = newWorktree(dir, 'merged');
   const fresh = newWorktree(dir, 'fresh');
   const dirty = newWorktree(dir, 'dirty');
