@@ -371,6 +371,26 @@ function recordDenial(project, result) {
   }
 }
 
+// Raw commands a go-getter verb covers (decision 0157): `verbs="git-push=go-getter ship,pr-merge=go-getter ship"` maps catalog ids to the
+// verb that replaces them. A call that runs one is denied with the verb named; the verb itself never matches (it pushes and merges from
+// its own process, not through the host), and a person may still run the raw command themselves (at the prompt, `! <command>`).
+export const redirectVerbs = (args = {}) =>
+  new Map(String(args.verbs ?? '').split(',').map((x) => x.trim().split('=').map((y) => y.trim())).filter(([id, verb]) => id && verb));
+
+function redirectedCommand(entry, payload) {
+  const command = shellCommand(payload);
+  if (typeof command !== 'string' || !command.trim()) return null;
+  const verbs = redirectVerbs(entry.parsed.args);
+  if (!verbs.size) return null;
+  const hits = matchGated(command, { classes: ['irreversible', 'outward'] });
+  // A destructive form (`git push --force`) is not what the verb does: it stays with the gate.
+  if (hits.some((h) => h.class === 'irreversible')) return null;
+  const hit = hits.find((h) => verbs.has(h.id));
+  if (!hit) return null;
+  const text = command.length > 120 ? `${command.slice(0, 120)}…` : command;
+  return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI and merges on green). A person may still run the raw command themselves with "! <command>".` };
+}
+
 export function evaluatePreTool(project, payload, host) {
   const result = decidePreTool(project, payload, host);
   if (result.deny) recordDenial(project, result);
@@ -383,6 +403,12 @@ function decidePreTool(project, payload, host) {
   if (forged) return { deny: true, reason: forged };
   const enforcement = collectEnforcement(project);
   checkpointBeforeCommand(project, enforcement, shellCommand(payload), host); // best effort, before the decision, never changes it
+  // A covered raw command is redirected before any gate asks about it: the person is better served by the verb than by a prompt.
+  for (const e of enforcement) {
+    if (e.tier !== 2 || e.parsed?.kind !== 'builtin' || e.parsed.id !== 'redirect-to-verb') continue;
+    const redirected = redirectedCommand(e, payload);
+    if (redirected) return redirected;
+  }
   for (const e of enforcement) {
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin') continue;
     if (e.parsed.id === 'gate-command') {

@@ -73,6 +73,7 @@ Blocked by host hooks where the host supports it:
 - Irreversible and outward-facing commands need a human (`gated-actions-need-human-approval`)
 - MCP calls carry no secret (`mcp-arguments-hold-no-secret`)
 - Personal data is masked in tool output (`pii-masked-in-tool-output`)
+- When a go-getter verb covers an action, the raw git or gh form is denied with a pointer to the verb (`raw-commands-redirect-to-verbs`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
 - Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
 
@@ -90,7 +91,6 @@ Advisory:
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
 - Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
-- When a go-getter verb covers an action, the raw git or gh form is denied with a pointer to the verb (`raw-commands-redirect-to-verbs`)
 - Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
 - The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
