@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { stateCheck } from '../src/gate-state.mjs';
+import { evaluatePreTool } from '../src/hook.mjs';
 import { cleanGitEnv } from '../src/git-env.mjs';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', env: cleanGitEnv(process.env), stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -82,3 +83,29 @@ test('a command the check cannot read is unsafe', () => {
   assert.equal(stateCheck('git-reset-hard', 'sh -c "git reset --hard"', tmpdir(), run).safe, false);
   assert.equal(stateCheck('git-reset-hard', 'git reset --hard', path.join(tmpdir(), 'no-such-dir-gg'), run).safe, false);
 });
+
+test('the hook lets a safe state-dependent command through and stops an unsafe one: asks where the host can, denies elsewhere', () => withRepo(({ work }) => {
+  mkdirSync(path.join(work, 'docs/guardrails'), { recursive: true });
+  writeFileSync(path.join(work, 'docs/guardrails/gated.md'), '---\nid: gated\ntitle: gated\nstatus: active\ndate: 2026-11-02\ntags: [guardrail]\ngoverned-by: 0001-x\ngrounded-in: [0001-x]\nderivation-note: x\ngo-getter:\n  enforcement:\n    - tier: 2\n      check: c\n      run: builtin:gate-command classes=irreversible,outward\n---\n\n## Guardrail\n\nx\n');
+  writeFileSync(path.join(work, 'AGENTS.md'), '# P\n');
+  git(work, 'add', '.');
+  git(work, 'commit', '-qm', 'rules');
+  git(work, 'push', '-q');
+  git(work, 'checkout', '-q', '-b', 'topic');
+  const call = (command, host) => evaluatePreTool(work, { tool_name: 'Bash', tool_input: { command } }, host);
+  for (const host of ['claude-code', 'codex', 'opencode']) {
+    for (const command of ['git reset --hard origin/master', 'git rebase master', 'git branch -D nothere']) {
+      const d = call(command, host);
+      assert.ok(!d.deny && !d.ask, `${host}: ${command} runs`);
+    }
+  }
+  writeFileSync(path.join(work, 'a'), 'dirty');
+  const asked = call('git reset --hard', 'claude-code');
+  assert.equal(asked.ask, true);
+  assert.match(asked.reason, /uncommitted changes/);
+  const denied = call('git reset --hard', 'codex');
+  assert.equal(denied.deny, true);
+  assert.match(denied.reason, /uncommitted changes/);
+  assert.equal(call('cd /tmp && git reset --hard', 'codex').deny, true, 'a changed directory cannot be read');
+  assert.equal(call('git push --force', 'codex').deny, true, 'a command that does not depend on state still stops');
+}));

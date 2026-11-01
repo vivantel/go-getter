@@ -21,14 +21,12 @@ const PLAN = (n) => `# P — plan\n\n**Status legend**: x\n\n${[1, 2, 3].map((i)
 const GATE = 'builtin:gate-command classes=irreversible,outward free=\\"\\" grantable=\\"git-push, pr-create, pr-merge, pr-close, comment-post\\"';
 const TRACKER = 'builtin:gate-command classes=\\"\\" go-getter=\\"plan issue create,plan issue comment,plan issue close\\"';
 
-// Everything a run must leave to a human, with a command that does it.
+// Everything a run must leave to a human, with a command that does it. Reset, rebase, branch delete and worktree removal are
+// not here: they stop only in an unsafe repository state (gate-state.test.mjs).
 const ALWAYS_HUMAN = {
   'git-push-force': 'git push --force origin main',
   'git-push-delete': 'git push origin :old',
-  'git-reset-hard': 'git reset --hard HEAD~3',
-  'git-rebase': 'git rebase -i HEAD~3',
   'git-filter-branch': 'git filter-repo --path a',
-  'git-branch-delete': 'git branch -D shared',
   'git-tag-delete': 'git tag -d v1',
   'git-tag-create': 'git tag v1',
   'release-create': 'gh release create v1',
@@ -90,9 +88,10 @@ test('on a host with native ask rules the always-human set keeps its ask rule, a
   const caps = loadCapabilities(root);
   const entries = gateEntries([{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'irreversible,outward', grantable: 'git-push, pr-create, pr-merge, pr-close' } } }]);
   const rules = nativeRules('claude-code', entries, caps);
-  for (const glob of ['Bash(git push --force*)', 'Bash(git push -f*)', 'Bash(git reset --hard*)', 'Bash(git rebase *)', 'Bash(git branch -D*)', 'Bash(git tag *)', 'Bash(gh release create *)', 'Bash(npm publish *)', 'Bash(gh repo edit *)', 'Bash(gh secret set *)', 'Bash(gh api -X *)']) {
+  for (const glob of ['Bash(git push --force*)', 'Bash(git push -f*)', 'Bash(git tag *)', 'Bash(gh release create *)', 'Bash(npm publish *)', 'Bash(gh repo edit *)', 'Bash(gh secret set *)', 'Bash(gh api -X *)']) {
     assert.ok(rules.includes(glob), glob);
   }
+  for (const glob of ['Bash(git reset --hard*)', 'Bash(git rebase *)', 'Bash(git branch -D*)']) assert.ok(!rules.includes(glob), `${glob} is decided by the hook from the repository state`);
 });
 
 test('a shape that cannot be approved is refused at every door: the grant, the command line and a hand-edited record', () => {

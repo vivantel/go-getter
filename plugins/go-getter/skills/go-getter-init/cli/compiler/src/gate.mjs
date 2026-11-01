@@ -33,18 +33,21 @@ const ENTRIES = [
   { id: 'git-push-delete', class: 'irreversible', description: 'deletes a remote branch or tag',
     pattern: new RegExp(`^${GIT}push${END}(?:${hasFlag(`${flag('d')}|--delete`)}|${hasFlag(':\\S+')})`),
     examples: { match: ['git push --delete origin old', 'git push origin :old', 'git push -d origin old'], noMatch: ['git push origin main'] } },
-  { id: 'git-reset-hard', class: 'irreversible', description: 'discards uncommitted work',
+  { id: 'git-reset-hard', class: 'irreversible', stateful: true, description: 'discards uncommitted work',
     pattern: new RegExp(`^${GIT}reset${ARGS}\\s+--hard${END}`),
     examples: { match: ['git reset --hard', 'git reset --hard origin/main'], noMatch: ['git reset HEAD file', 'git reset --soft HEAD~1'] } },
-  { id: 'git-rebase', class: 'irreversible', description: 'rewrites commit history',
+  { id: 'git-rebase', class: 'irreversible', stateful: true, description: 'rewrites commit history',
     pattern: new RegExp(`^${GIT}rebase${END}`),
     examples: { match: ['git rebase main', 'git rebase -i HEAD~3', 'git rebase --abort'], noMatch: ['git status', 'git pull --rebase'] } },
   { id: 'git-filter-branch', class: 'irreversible', description: 'rewrites the whole history',
     pattern: new RegExp(`^${GIT}filter-(?:branch|repo)${END}`),
     examples: { match: ['git filter-branch --tree-filter x', 'git filter-repo --path a'], noMatch: ['git log --follow x'] } },
-  { id: 'git-branch-delete', class: 'irreversible', description: 'force-deletes a branch',
+  { id: 'git-branch-delete', class: 'irreversible', stateful: true, description: 'force-deletes a branch',
     pattern: new RegExp(`^${GIT}branch${ARGS}\\s+(?:${flag('D')}|-df|-fd|--delete\\s+--force)${END}`),
     examples: { match: ['git branch -D old', 'git branch -df old'], noMatch: ['git branch', 'git branch -d merged', 'git branch new'] } },
+  { id: 'git-worktree-remove', class: 'irreversible', stateful: true, description: 'removes a worktree and any uncommitted files in it',
+    pattern: new RegExp(`^${GIT}worktree\\s+remove${END}`),
+    examples: { match: ['git worktree remove ../wt', 'git worktree remove --force ../wt'], noMatch: ['git worktree list', 'git worktree add ../wt'] } },
   { id: 'git-tag-delete', class: 'irreversible', description: 'deletes a tag',
     pattern: new RegExp(`^${GIT}tag${ARGS}\\s+(?:${flag('d')}|--delete)${END}`),
     examples: { match: ['git tag -d v1', 'git tag --delete v1'], noMatch: ['git tag -l', 'git tag v1'] } },
@@ -103,14 +106,13 @@ export const DEFAULT_PROVIDER = 'github';
 // than `matchGated` in the first two cases and less in the last two, so the hook is not a substitute (decision 0094).
 const around = (base, ...flags) => flags.flatMap((f) => [`${base} ${f}`, `${base} * ${f}`]);
 const sql = (tool) => ['DROP *', 'drop *', 'TRUNCATE*', 'truncate*', 'DELETE FROM*', 'delete from*'].map((w) => `${tool} *${w}`);
+// A `stateful` entry has no native rule: an ask rule beats an allow rule on Claude Code, and these are dangerous only in some states
+// (`gate-state.mjs`), so the hook decides each call (decision 0159, roadmap G1).
 const NATIVE = {
   'git-push-force': [...around('git push', '-f*', '--force*', '+*')],
   // `:**`, not `:*`: a trailing `:*` is the hosts' legacy prefix syntax, so `git push * :*` would read its `*` literally.
   'git-push-delete': [...around('git push', '-d*', '--delete*', ':**')],
-  'git-reset-hard': around('git reset', '--hard*'),
-  'git-rebase': ['git rebase *'],
   'git-filter-branch': ['git filter-branch *', 'git filter-repo *'],
-  'git-branch-delete': [...around('git branch', '-D*', '-df*', '-fd*', '--delete --force*', '--force --delete*')],
   'git-tag-delete': around('git tag', '-d*', '--delete*'),
   'rm-rf': [...around('rm', '-rf*', '-fr*', '-Rf*', '-fR*', '-r -f*', '-f -r*', '--recursive --force*', '--force --recursive*')],
   'sql-destructive': ['psql', 'mysql', 'sqlite3'].flatMap(sql),
@@ -216,7 +218,7 @@ export function matchGated(command, { classes = ['irreversible', 'outward'], ext
     for (const e of wanted) {
       if (!hits.has(e.id) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw)) {
         hits.add(e.id);
-        found.push(e);
+        found.push({ ...e, segment: raw });
       }
     }
     for (const x of extras) {
