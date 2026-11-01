@@ -105,7 +105,8 @@ const around = (base, ...flags) => flags.flatMap((f) => [`${base} ${f}`, `${base
 const sql = (tool) => ['DROP *', 'drop *', 'TRUNCATE*', 'truncate*', 'DELETE FROM*', 'delete from*'].map((w) => `${tool} *${w}`);
 const NATIVE = {
   'git-push-force': [...around('git push', '-f*', '--force*', '+*')],
-  'git-push-delete': [...around('git push', '-d*', '--delete*', ':*')],
+  // `:**`, not `:*`: a trailing `:*` is the hosts' legacy prefix syntax, so `git push * :*` would read its `*` literally.
+  'git-push-delete': [...around('git push', '-d*', '--delete*', ':**')],
   'git-reset-hard': around('git reset', '--hard*'),
   'git-rebase': ['git rebase *'],
   'git-filter-branch': ['git filter-branch *', 'git filter-repo *'],
