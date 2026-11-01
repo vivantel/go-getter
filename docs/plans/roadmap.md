@@ -24,7 +24,7 @@ Any session, fresh or interrupted, resumes from this file alone:
 | T2 dogfood install | `[~]` | `feat/dogfood-install` | `dogfood-install` | no | run `go-getter doctor` on a fresh clone; check the stale-pin test; PR |
 | T3 ship verb | `[x]` | `feat/ship-verb` | `ship` | yes (#242, `72f8327`) | none; checkpoint-before-push added and tested |
 | decision 0159 (ask only when unrecoverable) | active | `docs/automation-first-gates` | `automation-first` | yes (#250) | build G1-G3 (Phase 0); this repo's answers were already applied (#252, #253) |
-| G7 ship runs unprompted in a default project | `[~]` | `fix/ship-default-no-stop` | `ship-default` | no | write the tests, then the fix in `gate.mjs`; ship with `go-getter ship --no-merge` |
+| G7 ship runs unprompted in a default project | `[x]` | `fix/ship-default-no-stop` | `ship-default` | yes (#255, `38dd5cd`) | none |
 | interview follow-ups (#233-#237) | plan added | `feat/pack-tiers-and-profiles` | `pack-tiers` | no | outside this roadmap; land or rebase |
 | T4-T10, Phases 2-6 | `[ ]` | none | none | no | see each step |
 
@@ -77,13 +77,13 @@ Class: implement · Needs: G5 · Check: `npm run check:plans && npm run check:gu
 Do: state the automation-first promise and the one-prompt-per-merged-PR budget in the README tagline area and in INSTALLING.md, describe the free-channels answer, and run the full `go-getter:lint` skill.
 Done-when: lint reports no errors and the README states the budget and where it is measured.
 
-### G7 Ship runs unprompted in a default project — [~]
+### G7 Ship runs unprompted in a default project — [x]
 Issue: #254
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/gate-ship.test.mjs compiler/test/dogfood-gates.test.mjs`
 Context: `shipGated` in `compiler/src/gate.mjs` gates `go-getter ship` unless git-push, pr-create and pr-merge are all in the gate's `free` list. The hitl pack's `free-commands` defaults to empty, so a new project stops on every `ship` while the redirect hook (`raw-commands-redirect-to-verbs`, T4) sends the agent from raw commands to it. `run-grants` already defaults to git-push, pr-create, pr-merge and pr-close, the shapes a remembered approval or run may allow. Decision 0159: ask only when something cannot be undone; `ship` checks, takes a checkpoint and merges only on green. This repo already frees the three parts by its own answers (decisions 0160, 0161), so its behaviour does not change; the bug is the default.
 Do: gate `ship` only when one of its three parts is neither freed nor grantable (`gateArgs` already parses both lists). Keep the stop for a project that deliberately lists none of them. Regenerate with `go-getter apply`; the generated host files, AGENTS.md and plugin copies must stay in sync.
 Done-when: tests show a default hitl project (nothing freed, default grants) does not gate `ship`; a project whose grants omit pr-merge still gates it; the redirect hook is not active while `ship` is gated (a doctor or hook test); `check generated|neutral|guardrails` and `npm test` pass.
-Progress 2026-11-02 · `fix/ship-default-no-stop` · `../go-getter-wt/ship-default` · committed · done: `shipGated` counts grantable parts, redirect hook off while `ship` is gated, tests in `gate-ship.test.mjs` and `redirect-hook.test.mjs`, plugin copies rebuilt; `npm test` and the three checks pass · next: ship with `go-getter ship --no-merge`.
+Progress 2026-11-02 · `fix/ship-default-no-stop` · merged in #255 (`38dd5cd`) · done: `shipGated` counts grantable parts, redirect hook off while `ship` is gated, tests added, `npm test` and checks green · next: none.
 
 ---
 
