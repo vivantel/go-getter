@@ -51,3 +51,7 @@ Run `gg interview next <pack-id> --current` to be asked only what the project ha
 ## Update an adopted project
 
 Run `gg update --dry-run` first. A pack it leaves as it is names the questions with no recorded answer: ask only those with `gg interview next <pack-id> --current`. `gg update --accept-defaults --dry-run` lists the default each of them would take; apply it only after the user has read that list, and let them run it themselves, since it needs their confirmation.
+
+## Unattended mode
+
+When the user has approved a plan and asked for no interruptions (decision 0155), run `gg interview next <pack-id> --answers <file> --defaults` instead of the loop in step 3. It takes each recommended option, writes the answers file and a `draft` decision per answer with the reason, and exits 3 when a trigger stops it: hard to reverse, changes a committed decision, data-class or security impact, spend over budget. Pass `--risk <file>` (`{ "<question-id>": { "irreversible" | "supersedes" | "dataClass": "<reason>", "costUsd": <n> } }`) for what you know of a question, and `--budget <usd>` with `--spent <usd>` to bound spend. On a stop, show the user the reason and ask only that question; never answer it yourself. The drafts are reviewed later with `gg digest`.
