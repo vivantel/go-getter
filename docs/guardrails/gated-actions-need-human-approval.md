@@ -2,7 +2,7 @@
 id: gated-actions-need-human-approval
 title: Irreversible and outward-facing commands need a human
 status: active
-date: 2026-10-11
+date: 2026-11-01
 tags: [practice-packs, hooks, guardrail]
 governed-by: 0095-gated-actions
 grounded-in: [0095-gated-actions, 0043-human-escalation]
@@ -11,7 +11,7 @@ go-getter:
   enforcement:
     - tier: 2
       check: Host ask rules and the pre-tool hook gate these commands
-      run: builtin:gate-command classes=irreversible,outward extra="" free="git-push, gh-pr-merge" grantable="git-push, pr-create, pr-merge, pr-close"
+      run: builtin:gate-command classes=irreversible,outward extra="" free="git-push, pr-create, pr-merge" grantable="git-push, pr-create, pr-merge, pr-close"
   generated-by: hitl@0.6.0
   pack-answer: gated-classes
   pack-option: both

@@ -112,7 +112,7 @@ id,title,tags,status
 0123-plans-in-github,"Plan steps live in GitHub Issues","practice-packs, roadmap",active
 0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",superseded
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
-0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
+0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0129-pack-boundaries-neutral-ids-and-a-retrieval-pack,"Each concern has one pack, provider ids are neutral, and memory beyond the knowledge base is a provider-neutral retrieval pack","practice-packs, roadmap, architecture",active
 0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops,"An autonomous run is a plan range the operator starts, with approve-once for outward commands, preconditions checked at use and bounded stops","hooks, enforcement, roadmap, practice-packs",active
 0131-pack-boundaries-then-the-run-approvals-then-mcp,"Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers","milestones, roadmap, harness",active
@@ -145,3 +145,4 @@ id,title,tags,status
 0158-merge-requires-a-gate-stack-and-a-sampled-human-audit,"An agent merges only after a gate stack passes, and the owner audits a sample of merged PRs","verification, ci, agent-roles",active
 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository state","positioning, hooks, enforcement, guardrail, roadmap",active
 0160-tracker-writes,"go-getter may write to the tracker without asking","practice-packs, roadmap",active
+0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
