@@ -26,7 +26,9 @@ Any session, fresh or interrupted, resumes from this file alone:
 | decision 0159 (ask only when unrecoverable) | active | `docs/automation-first-gates` | `automation-first` | yes (#250) | build G1-G3 (Phase 0); this repo's answers were already applied (#252, #253) |
 | G7 ship runs unprompted in a default project | `[x]` | `fix/ship-default-no-stop` | `ship-default` | yes (#255, `38dd5cd`) | none |
 | interview follow-ups (#233-#237) | plan added | `feat/pack-tiers-and-profiles` | `pack-tiers` | no | outside this roadmap; land or rebase |
-| T4-T10, Phases 2-6 | `[ ]` | none | none | no | see each step |
+| T6 ten agents, conflict-aware scheduling | `[x]` | `feat/ten-agents-conflict-scheduling` | `ten-agents` | yes (#258, `0943320`) | none |
+| T7 default-and-log and the digest | `[x]` | `feat/default-and-log-digest` | `default-and-log-digest` | yes (#259, `6507dba`) | none; T8 writes the digest's audit file |
+| T4, T5, T8-T10, Phases 2-6 | `[ ]` | none | none | no | see each step |
 
 ## Held (not steps; each waits for something outside the plan)
 
@@ -129,17 +131,19 @@ Context: on 2026-10-31 two of five PRs were release chores. Releases are gated a
 Do: add `go-getter release --batch`: collect merged-since-last-tag changes, compute the version bump from Conventional Commit types, write the changelog entry and version files, open the release PR, run the three verification layers, and merge only after a recorded human approval (`approvals`). Never run without that approval.
 Done-when: tests show the bump derived from commit types, a refusal without approval, a refusal when a verification layer fails, and one release PR covering several merged changes.
 
-### T6 Ten agents with conflict-aware scheduling — [ ] ‖
+### T6 Ten agents with conflict-aware scheduling — [x] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/worktree.test.mjs compiler/test/run-next.test.mjs`
 Context: decision 0156 supersedes 0042; the pack answer is `max-concurrent` in the orchestration pack (see `docs/skills/adding-a-practice-pack.md`); the guardrail `max-concurrent-agents-rule` and `go-getter worktree new` (`compiler/src/worktree.mjs`) enforce the limit. `go-getter run next` (`compiler/src/runs/next.mjs`) picks the next ready step.
 Do: add `10` as a pack option for `max-concurrent`, reconfigure this repo so 0042 becomes `superseded` with `superseded-by: 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree` and the guardrail text follows; make `run next` return up to the free slots, never two steps whose `Do` text names the same file path, and never a step whose `Needs` are not `[x]`.
 Done-when: tests show `worktree new` allowing 10 and refusing the 11th, `run next` returning disjoint parallel steps, and `go-getter lint` passing with 0042 superseded.
+Progress 2026-11-02 · `feat/ten-agents-conflict-scheduling` · merged in #258 (`0943320`) · done: `max-concurrent` option 10, 0042 superseded by 0156, `run next` returns disjoint parallel `steps`, tests added; `npm test` and the checks pass; lint was checked by hand because `go-getter lint` is a plugin skill, not a CLI verb · next: none.
 
-### T7 Default-and-log and the digest — [ ] ‖
+### T7 Default-and-log and the digest — [x] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/digest.test.mjs`
 Context: decision 0155, procedure `reviewing-the-daily-digest`. Interview skills (`plugins/go-getter/skills/`) ask one question at a time and wait. Draft decisions use `status: draft`.
 Do: add an unattended mode to the interview verbs (`--defaults`): take the recommended option, write a `draft` decision or fact with the reason, and stop only on the four triggers of 0155 (hard to reverse, changes a committed decision, data-class or security impact, spend over budget). Add `go-getter digest` listing logged defaults, stopped triggers, merged PRs, spend and the audit sample since the last digest.
 Done-when: tests show a defaulted answer writing a draft artifact, each trigger stopping the run with a clear reason, and the digest listing all five kinds of item from fixtures.
+Progress 2026-11-02 · `feat/default-and-log-digest` · merged in #259 (`6507dba`) · done: `interview next --defaults` (exit 3 on the four triggers, draft decisions), `go-getter digest [--mark]`, `digest.test.mjs` · next: T8's `audit pick` must write the `audit.json` the digest reads (`{prs: [int], flagged: [int]}`); record that shape in T8 or a fact.
 
 ### T8 Gate-stack runner and audit picker — [ ]
 Class: implement · Needs: T3, G3 · Check: `node --test compiler/test/gate-stack.test.mjs`
