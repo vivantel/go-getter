@@ -52,7 +52,7 @@ Do: add a state check to the gate for the commands whose danger depends on state
 Done-when: tests show each safe case running without a stop and each unsafe case (a branch with unpushed commits, a dirty tree, an unpublished rebase target) stopping, and `go-getter apply --check` clean with the dropped rules gone from the generated settings.
 Progress 2026-11-02 · `feat/state-checking-gate-g1` · `../go-getter-wt/gate-state` · done: `compiler/src/gate-state.mjs` (branch -D, reset --hard, rebase, worktree remove), native rules dropped for them, hook asks or denies by host with the reason, `git-worktree-remove` added to the catalog, `apply --check` clean and the dropped rules gone from `.claude/settings.json` · next: ship; G3 supplies the guide text for hosts that cannot ask.
 
-### G2 Free release channels — [ ] ‖
+### G2 Free release channels — [x] ‖
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/release-channels.test.mjs`
 Context: the catalog has `release-create`, `package-publish`, `git-tag-create` and `repo-settings` (`compiler/src/gate.mjs`); decision 0159 item 2.
 Do: add a hitl pack answer `free-channels` (a list such as prerelease versions, npm dist-tags or named stage environments; empty by default, recommended default stays production-gated); a release or publish to a listed channel runs without a human and anything unlisted stays gated; creating a tag is free. Regenerate the guardrail and decision records from the pack.

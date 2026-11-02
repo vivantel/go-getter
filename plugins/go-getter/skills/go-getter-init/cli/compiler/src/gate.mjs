@@ -203,11 +203,36 @@ const ALIASES = {
 };
 export const normaliseFree = (ids = []) => ids.flatMap((id) => ALIASES[id] ?? [id]);
 
+// Creating a tag is free (decision 0159 item 2): it is local until pushed, and the push has its own entry.
+export const ALWAYS_FREE = ['git-tag-create'];
+
+// The entries whose danger depends on the channel they target, and the channels a project may list as free: a pre-release
+// (`gh release create --prerelease`, or a version with a pre-release part) and an npm dist-tag other than `latest`.
+// Every other target is production. The channel is read from the masked command, so quoted text cannot name one.
+export const CHANNEL_ENTRIES = ['release-create', 'package-publish'];
+export const CHANNEL_SHAPE = /^(?:prerelease|dist-tag:(?!latest$)[A-Za-z0-9._-]+)$/;
+const PRERELEASE_VERSION = /^v?\d+\.\d+\.\d+-[0-9A-Za-z]/;
+export function channelOf(id, command) {
+  const words = command.trim().split(/\s+/);
+  if (id === 'release-create') {
+    if (words.some((w) => w === '--prerelease' || w === '-p' || w === '--prerelease=true')) return 'prerelease';
+    // Only the word right after `create` names the release; a flag's value must not be read as one.
+    return words[3] && PRERELEASE_VERSION.test(words[3]) ? 'prerelease' : 'production';
+  }
+  if (id === 'package-publish') {
+    const tags = words.flatMap((w, i) => (w === '--tag' ? [words[i + 1]] : w.startsWith('--tag=') ? [w.slice(6)] : []));
+    const tag = tags.at(-1);
+    return tag && /^[A-Za-z0-9._-]+$/.test(tag) && tag !== 'latest' ? `dist-tag:${tag}` : 'production';
+  }
+  return 'production';
+}
+
 // `free` lists catalog ids the project lets run without a human (outward entries only, `gateEntries` rejects others).
-export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [], provider = DEFAULT_PROVIDER } = {}) {
+// `channels` lists the release and publish channels that run without a human; an unlisted channel is production and stays gated.
+export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [], channels = [], provider = DEFAULT_PROVIDER } = {}) {
   if (typeof command !== 'string' || !command.trim()) return [];
   const freed = normaliseFree(free);
-  const wanted = catalogFor(provider).filter((e) => classes.includes(e.class) && !freed.includes(e.id));
+  const wanted = catalogFor(provider).filter((e) => classes.includes(e.class) && !freed.includes(e.id) && !ALWAYS_FREE.includes(e.id));
   const extras = extra.map(String).filter((s) => s.trim()).map(parseExtra);
   const hits = new Set();
   const found = [];
@@ -216,7 +241,7 @@ export function matchGated(command, { classes = ['irreversible', 'outward'], ext
     const masked = seg.masked.slice(cut).trim();
     const raw = seg.raw.slice(cut).trim();
     for (const e of wanted) {
-      if (!hits.has(e.id) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw)) {
+      if (!hits.has(e.id) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw) && !(CHANNEL_ENTRIES.includes(e.id) && channels.includes(channelOf(e.id, masked)))) {
         hits.add(e.id);
         found.push({ ...e, segment: raw });
       }
@@ -266,7 +291,7 @@ export const gateArgs = (args = {}) => {
   const free = normaliseFree(list(args.free));
   const grantable = normaliseFree(list(args.grantable));
   const goGetter = [...new Set([...list(args['go-getter']), ...(shipGated(classes, free, grantable) ? ['ship'] : [])])];
-  return { classes, extra: list(args.extra), free, goGetter, grantable, provider: String(args.provider ?? DEFAULT_PROVIDER).trim() };
+  return { classes, extra: list(args.extra), free, channels: list(args.channels), goGetter, grantable, provider: String(args.provider ?? DEFAULT_PROVIDER).trim() };
 };
 
 // The ways go-getter is typed that a host's glob rules can name: the project runner, a go-getter on PATH, npx, and the entry script
@@ -292,6 +317,8 @@ export function gateEntries(enforcement, { project } = {}) {
     if (!PROVIDER_IDS.includes(args.provider)) throw new Error(`guardrail ${e.guardrail}: gate-command provider must be one of ${PROVIDER_IDS.join(', ')}, not ${args.provider}`);
     const unfree = args.free.filter((id) => CATALOG.find((c) => c.id === id)?.class !== 'outward');
     if (unfree.length) throw new Error(`guardrail ${e.guardrail}: gate-command free must name outward catalog commands, not ${unfree.join(', ')}`);
+    const badChannels = args.channels.filter((c) => !CHANNEL_SHAPE.test(c));
+    if (badChannels.length) throw new Error(`guardrail ${e.guardrail}: gate-command channels must be prerelease or dist-tag:<name> (not latest), not ${badChannels.join(', ')}`);
     for (const x of args.extra.filter(isRegexExtra)) {
       try {
         new RegExp(x.slice(1, x.lastIndexOf('/')), x.slice(x.lastIndexOf('/') + 1));
@@ -302,8 +329,9 @@ export function gateEntries(enforcement, { project } = {}) {
     return args;
   });
   // An entry is gated when some gate covers its class and does not free it.
-  const gated = gates.flatMap((g) => catalogFor(g.provider).filter((e) => g.classes.includes(e.class) && !g.free.includes(e.id)));
-  const grantable = new Set(gates.flatMap((g) => g.grantable));
+  const gated = gates.flatMap((g) => catalogFor(g.provider).filter((e) => g.classes.includes(e.class) && !g.free.includes(e.id) && !ALWAYS_FREE.includes(e.id)));
+  // A listed channel runs freely, so the release and publish entries get no static ask rule (it would beat an allow rule): the hook decides.
+  const grantable = new Set([...gates.flatMap((g) => g.grantable), ...(gates.some((g) => g.channels.length) ? CHANNEL_ENTRIES : [])]);
   const gatedOnce = [...new Map(gated.map((e) => [e.id, grantable.has(e.id) ? { ...e, hookDecides: true } : e])).values()];
   // Subcommands gated by what the call runs: native globs for the usual spellings, for hosts whose hook cannot ask.
   const identity = [...new Set(gates.flatMap((g) => g.goGetter))].map((sub) => ({ id: `go-getter:${sub}`, class: 'outward', identity: sub.split(' '), native: goGetterSpellings(project).map((sp) => `${sp} ${sub} *`) }));

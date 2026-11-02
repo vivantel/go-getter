@@ -28,7 +28,6 @@ const ALWAYS_HUMAN = {
   'git-push-delete': 'git push origin :old',
   'git-filter-branch': 'git filter-repo --path a',
   'git-tag-delete': 'git tag -d v1',
-  'git-tag-create': 'git tag v1',
   'release-create': 'gh release create v1',
   'package-publish': 'npm publish',
   'repo-settings': 'gh repo edit --default-branch dev',
@@ -77,7 +76,6 @@ test('inside a run that grants everything it can, and with every approvable shap
       assert.equal(s.ask(command).deny, true, `${command} on a host whose hook cannot ask`);
     }
     // And a shape the run grants cannot be used to carry one of them along.
-    assert.equal(s.ask('git push origin feat/x && git tag v1').deny, true);
     assert.equal(s.ask('git push origin feat/x && gh release create v1').deny, true);
   } finally {
     s.cleanup();
@@ -88,7 +86,7 @@ test('on a host with native ask rules the always-human set keeps its ask rule, a
   const caps = loadCapabilities(root);
   const entries = gateEntries([{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'irreversible,outward', grantable: 'git-push, pr-create, pr-merge, pr-close' } } }]);
   const rules = nativeRules('claude-code', entries, caps);
-  for (const glob of ['Bash(git push --force*)', 'Bash(git push -f*)', 'Bash(git tag *)', 'Bash(gh release create *)', 'Bash(npm publish *)', 'Bash(gh repo edit *)', 'Bash(gh secret set *)', 'Bash(gh api -X *)']) {
+  for (const glob of ['Bash(git push --force*)', 'Bash(git push -f*)', 'Bash(gh release create *)', 'Bash(npm publish *)', 'Bash(gh repo edit *)', 'Bash(gh secret set *)', 'Bash(gh api -X *)']) {
     assert.ok(rules.includes(glob), glob);
   }
   for (const glob of ['Bash(git reset --hard*)', 'Bash(git rebase *)', 'Bash(git branch -D*)']) assert.ok(!rules.includes(glob), `${glob} is decided by the hook from the repository state`);
@@ -111,7 +109,7 @@ test('a shape that cannot be approved is refused at every door: the grant, the c
     assert.ok(Object.values(data.projects)[0].active.grants.includes('release-create'));
     for (const id of ['release-create', 'git-tag-create', 'package-publish']) assert.deepEqual(shapeAllowance(s.dir, id, 'x'), { allowed: false, never: true });
     assert.equal(s.ask('gh release create v1').deny, true);
-    assert.equal(s.ask('git tag v1').deny, true);
+    assert.ok(quiet(s.ask('git tag v1')), 'creating a tag is free (decision 0159)');
   } finally {
     s.cleanup();
   }

@@ -316,7 +316,7 @@ function shapeGate(project, entry, payload, host) {
   if (typeof command !== 'string' || !command || !args.grantable.length) return null;
   let hits;
   try {
-    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, provider: args.provider });
+    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, channels: args.channels, provider: args.provider });
   } catch {
     return null;
   }

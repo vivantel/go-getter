@@ -128,7 +128,6 @@
       "Bash(gh api * -X *)",
       "Bash(gh api * --method *)",
       "Bash(gh release create *)",
-      "Bash(git tag *)",
       "Bash(npm publish *)",
       "Bash(pnpm publish *)",
       "Bash(yarn publish *)",
