@@ -21,7 +21,7 @@ export default function approvalsCommand({ args }) {
       const shapes = listShapes(project);
       if (rest.includes('--json')) console.log(JSON.stringify(entries, null, 2)); // secret approvals only: the format other tools read
       else {
-        const lines = [...entries.map(describe), ...shapes.map((e) => `${e.id}  ${e.id.startsWith('mcp:') ? 'MCP write tool' : 'outward command shape'}, may run without asking while its preconditions hold  (approved ${e.approvedAt.slice(0, 10)})`)];
+        const lines = [...entries.map(describe), ...shapes.map((e) => `${e.id}  ${e.id.startsWith('mcp:') ? 'MCP write tool' : e.id.startsWith('stop:') ? 'stopped case (same command, same state)' : 'outward command shape'}, may run without asking while its preconditions hold  (approved ${e.approvedAt.slice(0, 10)})`)];
         console.log(lines.length ? lines.join('\n') : `no approvals for ${realpathSync(project)} (store: ${storeFile()})`);
       }
       return 0;

@@ -12,10 +12,11 @@ import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { stateCheck } from './gate-state.mjs';
+import { stopKey, stopReason, logStop } from './gate-stop.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
-import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape } from './secrets/approvals.mjs';
+import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved } from './secrets/approvals.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
 import { readPlan } from './plan.mjs';
@@ -234,7 +235,14 @@ function gatedCommand(entry, payload, host, project) {
   } catch {
     return null; // an invalid pattern gates nothing here rather than breaking every shell call; `apply` rejects it
   }
-  return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class, stateful: Boolean(hit.stateful), why: hit.why } : null;
+  if (!hit) return null;
+  const key = hit.stateful ? stopKey(hit.id, command, hit.why, project) : undefined;
+  // A person approved this exact case before (same command, same state): it runs, and the pass is logged.
+  if (key && shapeApproved(project, key)) {
+    logStop(project, host, { taskClass: hit.id, outcome: 'allowed', trigger: 'remembered' });
+    return null;
+  }
+  return { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, raw: command, id: hit.id, key, class: hit.class, stateful: Boolean(hit.stateful), why: hit.why };
 }
 
 // A gate-command entry's go-getter subcommands (`plan issue create`) are gated by what a call runs (decision 0126), whichever way
@@ -405,6 +413,10 @@ function redirectedCommand(entry, payload) {
 export function evaluatePreTool(project, payload, host) {
   const result = decidePreTool(project, payload, host);
   if (result.deny) recordDenial(project, result);
+  if (result.deny || result.ask) {
+    const guardrail = /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1];
+    logStop(project, host, { taskClass: result.stopClass ?? guardrail ?? 'hook', outcome: result.deny ? 'blocked' : 'escalated', trigger: result.deny ? 'deny' : 'ask' });
+  }
   return result;
 }
 
@@ -429,9 +441,16 @@ function decidePreTool(project, payload, host) {
       const shaped = shapeGate(project, e, payload, host);
       if (shaped && !shaped.allow) return shaped;
       const gated = shaped?.allow ? null : gatedCommand(e, payload, host, project);
-      if (gated?.stateful && canPrompt(host)) return { deny: false, ask: true, reason: `go-getter: "${gated.command}" would lose work: ${gated.why}. Approve this one?` };
-      if (gated?.stateful) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" would lose work (${gated.why}); push or commit first, or ask the user to run it themselves` };
-      if (gated) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" is an ${gated.class} command and needs a human; ask the user to run it themselves` };
+      if (gated?.stateful && canPrompt(host)) {
+        try {
+          addPendingShape(project, gated.key, gated.raw); // remembered once the person said yes and the call ran
+        } catch {
+          // not remembered: the person is asked again next time, which is safe
+        }
+        return { deny: false, ask: true, stopClass: gated.id, reason: stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: true }) };
+      }
+      if (gated?.stateful) return { deny: true, stopClass: gated.id, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: false })}` };
+      if (gated) return { deny: true, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false })}` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
       continue;

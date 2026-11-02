@@ -39,7 +39,7 @@ test('a gated command is denied on the hand-over hosts, in each host format', ()
   for (const host of HAND_OVER) {
     const decision = evaluatePreTool(dir, SHELL[host]('git push origin main'), host);
     assert.equal(decision.deny, true, host);
-    assert.equal(decision.reason, 'blocked by guardrail gated-actions: "git push origin main" is an outward command and needs a human; ask the user to run it themselves');
+    assert.equal(decision.reason, 'blocked by guardrail gated-actions: go-getter: "git push origin main" is stopped.\n  Lost: it is outward: nothing in this checkout undoes it\n  Instead: take a checkpoint first (`go-getter checkpoint`) and ask the user to run it themselves\n  Approve: this needs a human: ask the user to run it themselves ("! git push origin main"); this host cannot ask, so nothing is remembered');
     const out = respond(host, decision);
     if (host === 'copilot') assert.equal(JSON.parse(out.stdout).permissionDecision, 'deny');
     else assert.equal(out.code, 2);
@@ -55,7 +55,7 @@ test('the hosts with native ask rules are not gated by the hook for catalog comm
 
 test('the class of the first match is named', () => {
   const dir = project();
-  assert.match(evaluatePreTool(dir, SHELL.cursor('git push --force'), 'cursor').reason, /is an irreversible command/);
+  assert.match(evaluatePreTool(dir, SHELL.cursor('git push --force'), 'cursor').reason, /Lost: it is irreversible/);
   rmSync(dir, { recursive: true, force: true });
 });
 
