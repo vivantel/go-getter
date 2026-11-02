@@ -87,7 +87,7 @@ Do: gate `ship` only when one of its three parts is neither freed nor grantable 
 Done-when: tests show a default hitl project (nothing freed, default grants) does not gate `ship`; a project whose grants omit pr-merge still gates it; the redirect hook is not active while `ship` is gated (a doctor or hook test); `check generated|neutral|guardrails` and `npm test` pass.
 Progress 2026-11-02 · `fix/ship-default-no-stop` · merged in #255 (`38dd5cd`) · done: `shipGated` counts grantable parts, redirect hook off while `ship` is gated, tests added, `npm test` and checks green · next: none.
 
-### G8 Plan state reads the default branch — [ ]
+### G8 Plan state reads the default branch — [x]
 Issue: #261
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/plan-stale.test.mjs`
 Context: on 2026-11-02 `go-getter plan next` listed T6 and T7 as open from a feature branch that predated their merge (#258-#260), because it reads `docs/plans/` from the working tree. An agent then reported finished steps as pending. Open work is meant to come from the shared source (issues, default branch), not from whichever branch is checked out.
