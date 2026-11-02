@@ -8,7 +8,7 @@
     "data-policy": "0.6.0",
     "git-workflow": "0.1.1",
     "hitl": "0.6.0",
-    "orchestration": "0.1.1",
+    "orchestration": "0.1.2",
     "restricted-data": "0.6.0",
     "sanitization": "0.7.0",
     "telemetry": "0.1.0",
@@ -246,7 +246,7 @@
     "AGENTS.md": [
       {
         "kind": "block",
-        "hash": "sha256:920e7bb4048f74858d3e6e70b9ae23479a9032fc4499642a918c39a12a7a724b"
+        "hash": "sha256:099702b59f757b472451bda2912a7f80e45e14ffc2d0d680143207b56408b636"
       }
     ],
     "git-config": [

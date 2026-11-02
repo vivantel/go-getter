@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "orchestration",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "family": "harness",
   "components": [
     10
@@ -112,10 +112,30 @@
     },
     {
       "id": "max-concurrent",
-      "type": "text",
       "prompt": "How many agents may run at once?",
-      "pattern": "^[1-9][0-9]*$",
-      "default": "3"
+      "options": [
+        {
+          "id": "1",
+          "label": "1 agent",
+          "tradeoff": "No merge conflicts or cold caches; no parallel work."
+        },
+        {
+          "id": "3",
+          "label": "3 agents",
+          "tradeoff": "Some parallelism; each extra agent adds a cold cache and a merge to resolve.",
+          "recommended": true
+        },
+        {
+          "id": "5",
+          "label": "5 agents",
+          "tradeoff": "More parallel plan steps; more merges to resolve and more spend at once."
+        },
+        {
+          "id": "10",
+          "label": "10 agents",
+          "tradeoff": "The most parallel work; needs worktree isolation, per-step budgets and conflict-aware scheduling to stay cheap."
+        }
+      ]
     },
     {
       "id": "escalation",
@@ -604,7 +624,142 @@
       }
     },
     "max-concurrent": {
-      "*": {
+      "1": {
+        "decisions": [
+          {
+            "slug": "max-concurrent-agents",
+            "title": "At most {{answer.max-concurrent}} agents run at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "max-concurrent": "{{answer.max-concurrent}}"
+              }
+            },
+            "body": "## Decision\n\nRun at most {{answer.max-concurrent}} agents concurrently; `go-getter worktree new` refuses to exceed it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nEach concurrent agent adds a cold cache and a merge to resolve.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "max-concurrent-agents-rule",
+            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.max-concurrent}}",
+              "grounded-in": [
+                "{{id.decision.max-concurrent}}"
+              ],
+              "derivation-note": "Given the limit, each extra agent adds a cold cache and a merge."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction; worktree creation is refused beyond the limit"
+              }
+            ],
+            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+          }
+        ]
+      },
+      "3": {
+        "decisions": [
+          {
+            "slug": "max-concurrent-agents",
+            "title": "At most {{answer.max-concurrent}} agents run at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "max-concurrent": "{{answer.max-concurrent}}"
+              }
+            },
+            "body": "## Decision\n\nRun at most {{answer.max-concurrent}} agents concurrently; `go-getter worktree new` refuses to exceed it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nEach concurrent agent adds a cold cache and a merge to resolve.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "max-concurrent-agents-rule",
+            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.max-concurrent}}",
+              "grounded-in": [
+                "{{id.decision.max-concurrent}}"
+              ],
+              "derivation-note": "Given the limit, each extra agent adds a cold cache and a merge."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction; worktree creation is refused beyond the limit"
+              }
+            ],
+            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+          }
+        ]
+      },
+      "5": {
+        "decisions": [
+          {
+            "slug": "max-concurrent-agents",
+            "title": "At most {{answer.max-concurrent}} agents run at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "max-concurrent": "{{answer.max-concurrent}}"
+              }
+            },
+            "body": "## Decision\n\nRun at most {{answer.max-concurrent}} agents concurrently; `go-getter worktree new` refuses to exceed it (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nEach concurrent agent adds a cold cache and a merge to resolve.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "max-concurrent-agents-rule",
+            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "governed-by": "{{id.decision.max-concurrent}}",
+              "grounded-in": [
+                "{{id.decision.max-concurrent}}"
+              ],
+              "derivation-note": "Given the limit, each extra agent adds a cold cache and a merge."
+            },
+            "enforcement": [
+              {
+                "tier": 1,
+                "check": "Instruction; worktree creation is refused beyond the limit"
+              }
+            ],
+            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+          }
+        ]
+      },
+      "10": {
         "decisions": [
           {
             "slug": "max-concurrent-agents",

@@ -1,4 +1,4 @@
-// go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan] |
+// go-getter plan status|next [plan] [--json] [--from-default] | start <id> [plan] [--worktree <slug>] | done <id> [plan] |
 // issue create|comment|close <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]:
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
@@ -6,14 +6,18 @@ import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep
 import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
+import { planStaleness, planFromDefault, staleWarning } from '../plan-stale.mjs';
+import { cleanGitEnv } from '../git-env.mjs';
+import { execFileSync } from 'node:child_process';
 
-const USAGE = `usage: go-getter plan status|next [plan] [--json] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]`;
+const USAGE = `usage: go-getter plan status|next [plan] [--json] [--from-default] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]`;
 
 function parseArgs(sub, rest) {
   const flags = { json: false };
   const positional = [];
   for (let i = 0; i < rest.length; i++) {
     if (rest[i] === '--json' && ['status', 'next'].includes(sub)) flags.json = true;
+    else if (rest[i] === '--from-default' && ['status', 'next'].includes(sub)) flags.fromDefault = true;
     else if (rest[i] === '--worktree' && sub === 'start' && rest[i + 1] && !rest[i + 1].startsWith('--')) flags.worktree = rest[++i];
     else if (rest[i].startsWith('--')) return null;
     else positional.push(rest[i]);
@@ -43,6 +47,14 @@ function parseIssueArgs(args) {
   if (!VERBS.includes(verb) || positional.length < 1 || positional.length > 2 || o.text === null || o.reason === null) return null;
   if (o.stdin && o.text !== undefined) return null;
   return { ...o, id: positional[0], plan: positional[1] };
+}
+
+function currentBranch(cwd) {
+  try {
+    return execFileSync('git', ['branch', '--show-current'], { cwd, env: cleanGitEnv(process.env), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return '';
+  }
 }
 
 async function readStdin() {
@@ -100,6 +112,15 @@ export default async function planCommand({ args }) {
       console.error(`${opts.id}: check failed (${r.check}); marker unchanged\n${r.output}`);
       return 1;
     }
+    const stale = planStaleness(repoRoot(cwd));
+    const warning = staleWarning(stale, currentBranch(cwd));
+    if (warning) console.error(warning);
+    if (opts.fromDefault && stale.base) {
+      const plan = planFromDefault(repoRoot(cwd), file, stale.base);
+      const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
+      console.log(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
+      return 0;
+    }
     const listed = await callSource(source, 'list');
     if (!listed.ok) {
       console.error(listed.error.code === 'invalid-plan' ? 'plan: the plan does not parse:' : `plan: ${listed.error.message}`);
@@ -108,6 +129,7 @@ export default async function planCommand({ args }) {
     }
     const plan = { file: rel, steps: listed.result.steps };
     const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
+    if (sub === 'status' && opts.json) result.stale = stale.skipped ? null : stale.stale;
     console.log(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
     return 0;
   } catch (err) {

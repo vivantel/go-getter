@@ -1,7 +1,8 @@
 ---
 id: 0042-max-concurrent-agents
 title: At most 3 agents run at once
-status: active
+status: superseded
+superseded-by: 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
 track: process
