@@ -209,6 +209,13 @@ export function stepBody(text, step) {
   return out.join('\n').trim();
 }
 
+// What `plan start` prints so the step can be worked at once: the step's heading, prose and Check, and where to work.
+export function formatBrief(file, id, dir) {
+  const { step } = findStep(file, id);
+  const body = stepBody(readFileSync(file, 'utf8'), step);
+  return [`${step.id} ${step.title}`, body, step.check ? `Check: ${step.check}` : '', `Work in: ${dir}`].filter(Boolean).join('\n');
+}
+
 // --- start and done ----------------------------------------------------------------------------------------------
 
 const CHECK_TIMEOUT_MS = 30 * 60 * 1000;

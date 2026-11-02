@@ -221,6 +221,9 @@ test('plan start sets [~] once Needs are done, and refuses done, moved or waitin
   const start = run('plan', 'start', '3');
   assert.equal(start.status, 0, start.stderr);
   assert.equal(read(), LIFECYCLE.replace('### 3 Fails — [ ] ‖', '### 3 Fails — [~] ‖'));
+  assert.match(start.stdout, /^3 Fails/m);
+  assert.match(start.stdout, /^Check: /m);
+  assert.match(start.stdout, /^Work in: /m);
   assert.match(run('plan', 'start', '3').stdout, /already in progress/);
   assert.match(run('plan', 'start', '4').stderr, /step 4 needs 3, not done yet/);
   assert.match(run('plan', 'start', '1').stderr, /step 1 is done/);
@@ -235,6 +238,7 @@ test('plan start --worktree creates the worktree and sets the marker in its copy
   assert.equal(start.status, 0, start.stderr);
   const copy = path.join(parent, 'proj-wt', 'step-five', 'docs/plans/life.md');
   assert.match(start.stdout, /proj-wt\/step-five \(feat\/step-five\)/);
+  assert.ok(start.stdout.includes(`Work in: ${path.dirname(path.dirname(path.dirname(copy)))}`), 'the brief names the worktree');
   assert.equal(readFileSync(copy, 'utf8'), LIFECYCLE.replace('### 5 No check — [ ]', '### 5 No check — [~]'));
   assert.equal(read(), LIFECYCLE, 'the current checkout is untouched');
 });
