@@ -87,6 +87,13 @@ Do: gate `ship` only when one of its three parts is neither freed nor grantable 
 Done-when: tests show a default hitl project (nothing freed, default grants) does not gate `ship`; a project whose grants omit pr-merge still gates it; the redirect hook is not active while `ship` is gated (a doctor or hook test); `check generated|neutral|guardrails` and `npm test` pass.
 Progress 2026-11-02 · `fix/ship-default-no-stop` · merged in #255 (`38dd5cd`) · done: `shipGated` counts grantable parts, redirect hook off while `ship` is gated, tests added, `npm test` and checks green · next: none.
 
+### G8 Plan state reads the default branch — [ ]
+Issue: #261
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/plan-stale.test.mjs`
+Context: on 2026-11-02 `go-getter plan next` listed T6 and T7 as open from a feature branch that predated their merge (#258-#260), because it reads `docs/plans/` from the working tree. An agent then reported finished steps as pending. Open work is meant to come from the shared source (issues, default branch), not from whichever branch is checked out.
+Do: make `go-getter plan status|next` compare the working tree's plan files with the default branch's (`git fetch`, then `origin/<default>`); when the branch lacks commits that touch `docs/plans/`, print a warning naming the branch and the number of commits behind, and in `status --json` add a `stale` field (`next --json` stays an array; the warning goes to stderr). Offer `--from-default` to read the plan from the default branch. Read-only: no checkout, no write. Do not fail when offline; say the check was skipped.
+Done-when: tests with a temporary repo show a behind branch producing the warning and `stale: true`, an up-to-date branch producing neither, `--from-default` returning the default branch's step states, and an unreachable remote comparing with the last fetch and saying so.
+
 ---
 
 ## Phase 1 — Throughput: human minutes per merged outcome (50x stretch)
