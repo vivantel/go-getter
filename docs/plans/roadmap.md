@@ -45,11 +45,12 @@ Decision `docs/decisions/0159-a-human-is-asked-only-when-an-action-would-destroy
 
 **Rules the design fixes (do not re-decide):** a stop depends on repository state, not the command name; production release, publish and repository settings stay human-approved; the project declares free channels, everything unlisted is production; a hook-less host runs free with a git-hook floor and a checkpoint; at most one go-getter prompt per merged PR; `reset --hard` on uncommitted work, force-push and `rm -rf` outside a temporary directory still ask.
 
-### G1 State-checking gate — [ ]
+### G1 State-checking gate — [x]
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/gate-state.test.mjs`
 Context: today `gate.mjs` matches command text and the hitl pack writes native ask rules for `git branch -D`, `git reset --hard`, `git rebase` and similar (91 rules in `.claude/settings.json`). An ask rule beats an allow rule on Claude Code, so a state-dependent command must not get a native ask rule.
 Do: add a state check to the gate for the commands whose danger depends on state: `git branch -D` (safe when the tip is reachable from a remote branch, the default branch or a merged PR), `git reset --hard` (safe on a clean tree), `git rebase` (safe on a branch with no remote counterpart), and removing a clean worktree. Drop their native ask rules; the hook decides, asking where the host supports a hook ask and denying with the guide (G3) where it does not. Commands whose danger is not state-dependent keep their rules.
 Done-when: tests show each safe case running without a stop and each unsafe case (a branch with unpushed commits, a dirty tree, an unpublished rebase target) stopping, and `go-getter apply --check` clean with the dropped rules gone from the generated settings.
+Progress 2026-11-02 · `feat/state-checking-gate-g1` · `../go-getter-wt/gate-state` · done: `compiler/src/gate-state.mjs` (branch -D, reset --hard, rebase, worktree remove), native rules dropped for them, hook asks or denies by host with the reason, `git-worktree-remove` added to the catalog, `apply --check` clean and the dropped rules gone from `.claude/settings.json` · next: ship; G3 supplies the guide text for hosts that cannot ask.
 
 ### G2 Free release channels — [ ] ‖
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/release-channels.test.mjs`

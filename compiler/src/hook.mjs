@@ -11,6 +11,7 @@ import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
+import { stateCheck } from './gate-state.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
@@ -212,18 +213,28 @@ function shellText(payload) {
 // `{ command, class }` when a `gate-command` entry gates this call on this host, else null. Without a known host the call
 // is not gated: whether the host prompts natively cannot be told. A host with native ask rules prompts for the catalog and
 // the prefix extras; a `/regex/` extra has no native rule there, so the hook gates only those.
-function gatedCommand(entry, payload, host) {
+function gatedCommand(entry, payload, host, project) {
   if (!host) return null;
   const command = shellCommand(payload);
   if (!command) return null;
   const args = gateArgs(entry.parsed.args);
   let hit;
   try {
-    hit = matchGated(command, hasNativeAsk(host) ? { classes: [], extra: args.extra.filter(isRegexExtra) } : args)[0];
+    // A stateful entry has no native rule, so the hook judges it on every host: it passes when the repository state makes it safe.
+    const hits = hasNativeAsk(host)
+      ? [...matchGated(command, { classes: [], extra: args.extra.filter(isRegexExtra) }), ...matchGated(command, { ...args, extra: [] }).filter((h) => h.stateful)]
+      : matchGated(command, args);
+    const moved = /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command);
+    for (const h of hits) {
+      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read' } : stateCheck(h.id, h.segment, project)) : null;
+      if (state?.safe) continue;
+      hit = { ...h, why: state?.why };
+      break;
+    }
   } catch {
     return null; // an invalid pattern gates nothing here rather than breaking every shell call; `apply` rejects it
   }
-  return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class } : null;
+  return hit ? { command: command.length > 200 ? `${command.slice(0, 200)}…` : command, class: hit.class, stateful: Boolean(hit.stateful), why: hit.why } : null;
 }
 
 // A gate-command entry's go-getter subcommands (`plan issue create`) are gated by what a call runs (decision 0126), whichever way
@@ -417,7 +428,9 @@ function decidePreTool(project, payload, host) {
     if (e.parsed.id === 'gate-command') {
       const shaped = shapeGate(project, e, payload, host);
       if (shaped && !shaped.allow) return shaped;
-      const gated = shaped?.allow ? null : gatedCommand(e, payload, host);
+      const gated = shaped?.allow ? null : gatedCommand(e, payload, host, project);
+      if (gated?.stateful && canPrompt(host)) return { deny: false, ask: true, reason: `go-getter: "${gated.command}" would lose work: ${gated.why}. Approve this one?` };
+      if (gated?.stateful) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" would lose work (${gated.why}); push or commit first, or ask the user to run it themselves` };
       if (gated) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: "${gated.command}" is an ${gated.class} command and needs a human; ask the user to run it themselves` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;

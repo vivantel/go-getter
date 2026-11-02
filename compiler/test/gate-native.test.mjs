@@ -54,6 +54,8 @@ test('every catalog entry has globs that cover its match examples', () => {
   for (const host of NATIVE) {
     for (const entry of CATALOG) {
       const globs = globsOf(host, [entry]);
+      // A stateful entry has no native rule: the hook decides it from the repository state (gate-state.mjs)
+      if (entry.stateful) { assert.equal(globs.length, 0, `${entry.id} has no native globs`); continue; }
       assert.ok(globs.length, `${entry.id} has native globs`);
       // `git -C dir push` is matched by the hook-side matcher only (see the note on NATIVE in gate.mjs)
       for (const c of entry.examples.match.filter((c) => !/ -C /.test(c))) {
