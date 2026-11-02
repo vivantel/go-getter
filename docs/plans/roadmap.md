@@ -58,7 +58,7 @@ Context: the catalog has `release-create`, `package-publish`, `git-tag-create` a
 Do: add a hitl pack answer `free-channels` (a list such as prerelease versions, npm dist-tags or named stage environments; empty by default, recommended default stays production-gated); a release or publish to a listed channel runs without a human and anything unlisted stays gated; creating a tag is free. Regenerate the guardrail and decision records from the pack.
 Done-when: tests show a listed channel released without a stop, an unlisted channel stopping, a tag created freely, and `repo-settings` still gated.
 
-### G3 A stop that guides and is logged — [ ]
+### G3 A stop that guides and is logged — [x]
 Class: implement · Effort: high · Needs: G1 · Check: `node --test compiler/test/gate-stop.test.mjs`
 Context: the redirect and denial messages come from `compiler/src/hook.mjs`; approvals live in `approvals` (decision 0130 run grants); telemetry records metadata only (`telemetry-records-metadata-only`).
 Do: every stop prints what would be lost, the safe alternative (a verb, or a checkpoint taken first) and an approve-and-remember choice that records an approval so the same case does not ask again; each stop is logged as metadata (command class, reason, outcome), never command text or content.
