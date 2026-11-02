@@ -2,7 +2,7 @@
 // issue create|comment|close <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]:
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
-import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot } from '../plan.mjs';
+import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
 import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
@@ -101,6 +101,7 @@ export default async function planCommand({ args }) {
       const r = startStep(cwd, file, opts.id, { worktree: opts.worktree, states });
       if (r.worktree) console.log(`${r.worktree.path} (${r.worktree.branch})`);
       console.log(r.changed ? `${opts.id}: [~] in ${path.relative(cwd, r.file)}` : `${opts.id}: already in progress`);
+      console.log(`\n${formatBrief(r.file, opts.id, r.worktree ? r.worktree.path : repoRoot(cwd))}`);
       return 0;
     }
     if (sub === 'done') {
