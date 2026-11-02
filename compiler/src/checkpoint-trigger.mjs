@@ -24,7 +24,8 @@ function gatedId(enforcement, command) {
   const gates = enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').map((e) => gateArgs(e.parsed.args));
   const extra = gates.flatMap((g) => g.extra);
   const free = gates.length ? gates[0].free.filter((id) => gates.every((g) => g.free.includes(id))) : []; // freed by every gate
-  return matchGated(command, { classes: GATE_CLASSES, extra, free, provider: gates[0]?.provider })[0]?.id ?? null;
+  const channels = gates.length ? gates[0].channels.filter((c) => gates.every((g) => g.channels.includes(c))) : [];
+  return matchGated(command, { classes: GATE_CLASSES, extra, free, channels, provider: gates[0]?.provider })[0]?.id ?? null;
 }
 
 function take(project, trigger, label, host, keep) {

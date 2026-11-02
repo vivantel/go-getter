@@ -146,3 +146,4 @@ id,title,tags,status
 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository state","positioning, hooks, enforcement, guardrail, roadmap",active
 0160-tracker-writes,"go-getter may write to the tracker without asking","practice-packs, roadmap",active
 0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
+0162-gated-free-channels,"Release and publish channels that run without asking are listed","practice-packs, hooks",draft

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CATALOG, matchGated } from '../src/gate.mjs';
+import { CATALOG, ALWAYS_FREE, matchGated } from '../src/gate.mjs';
 
 const ids = (command, opts) => matchGated(command, opts).map((e) => e.id);
 
@@ -12,7 +12,8 @@ test('the catalog has both classes and unique ids', () => {
 for (const entry of CATALOG) {
   test(`${entry.id}: matches its examples and none of its non-examples`, () => {
     assert.ok(entry.examples.match.length && entry.examples.noMatch.length);
-    for (const c of entry.examples.match) assert.ok(ids(c).includes(entry.id), `should match: ${c}`);
+    // A tag is free (decision 0159 item 2): the entry stays for its examples and its id, but nothing gates it.
+    for (const c of entry.examples.match) assert.equal(ids(c).includes(entry.id), !ALWAYS_FREE.includes(entry.id), `should match: ${c}`);
     for (const c of entry.examples.noMatch) assert.ok(!ids(c).includes(entry.id), `should not match: ${c}`);
   });
 }

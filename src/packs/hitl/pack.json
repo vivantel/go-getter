@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "hitl",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "family": "harness",
   "components": [
     8
@@ -59,6 +59,21 @@
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
       "default": [],
       "since": "0.3.0",
+      "when": {
+        "question": "gated-classes",
+        "in": [
+          "both",
+          "outward"
+        ]
+      }
+    },
+    {
+      "id": "free-channels",
+      "type": "list",
+      "prompt": "Which release and publish channels may run without asking? prerelease (a release flagged as pre-release, or a version with a pre-release part such as 1.2.0-rc.1) or dist-tag:<name> (publishing to an npm dist-tag other than latest; latest is never free). Anything not listed is production and keeps asking. Creating a tag never asks.",
+      "pattern": "^(prerelease|dist-tag:[A-Za-z0-9._-]+)$",
+      "default": [],
+      "since": "0.7.0",
       "when": {
         "question": "gated-classes",
         "in": [
@@ -173,7 +188,7 @@
               {
                 "tier": 2,
                 "check": "Host ask rules and the pre-tool hook gate these commands",
-                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\" grantable=\"{{answer.run-grants}}\""
+                "run": "builtin:gate-command classes=irreversible,outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\" channels=\"{{answer.free-channels}}\" grantable=\"{{answer.run-grants}}\""
               }
             ],
             "body": "## Guardrail\n\nShell commands of the irreversible and outward-facing classes need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
@@ -261,7 +276,7 @@
               {
                 "tier": 2,
                 "check": "Host ask rules and the pre-tool hook gate these commands",
-                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\" grantable=\"{{answer.run-grants}}\""
+                "run": "builtin:gate-command classes=outward extra=\"{{answer.extra-patterns}}\" free=\"{{answer.free-commands}}\" channels=\"{{answer.free-channels}}\" grantable=\"{{answer.run-grants}}\""
               }
             ],
             "body": "## Guardrail\n\nShell commands of the outward-facing class need a human: do not run them yourself, ask the user to run them or approve them. Hosts with project ask rules prompt natively, because `go-getter apply` writes the rules into their settings. The other hosts get a hand-over: the pre-tool hook denies the command and the human runs it. `go-getter coverage` shows the tier per host. A mode that skips permission prompts defeats the native rules. A wrapped command (`sh -c`, `eval`) is matched on its literal text only.\n"
@@ -344,6 +359,24 @@
               "track": "process"
             },
             "body": "## Decision\n\nThe commands [{{answer.free-commands}}] run without a human, though they are outward-facing (pack {{pack.id}}@{{pack.version}}); an empty list frees none. Irreversible commands and every other outward-facing command still need a human.\n\n## Why\n\nA plain push to a feature branch is reversible, and a push to the default branch is stopped by a git hook or branch protection, so asking for each one adds friction without protection (decision 0120).\n"
+          }
+        ]
+      }
+    },
+    "free-channels": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "gated-free-channels",
+            "title": "Release and publish channels that run without asking are listed",
+            "tags": [
+              "practice-packs",
+              "hooks"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nA release or publish to the channels [{{answer.free-channels}}] runs without a human (pack {{pack.id}}@{{pack.version}}); an empty list frees none. A channel not listed is production and still needs a human, as does a repository settings change. Creating a tag never asks.\n\n## Why\n\nA pre-release or a non-default dist-tag does not reach the users of the production channel, so asking for each one adds friction without protection; production keeps its human (decision 0159 item 2).\n"
           }
         ]
       }

@@ -10,7 +10,7 @@ import { planApply, applyPlan, diffApply } from '../src/apply.mjs';
 import { readManifest } from '../src/manifest.mjs';
 import { HOSTS } from '../src/capabilities.mjs';
 import { packageCapabilities } from '../src/governance.mjs';
-import { CATALOG, nativeRules, withAskRules, gateEntries, goGetterSpellings } from '../src/gate.mjs';
+import { CATALOG, ALWAYS_FREE, nativeRules, withAskRules, gateEntries, goGetterSpellings } from '../src/gate.mjs';
 import { runTier3 } from '../src/enforce.mjs';
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
@@ -55,7 +55,7 @@ function snapshot(dir, rel = '') {
 
 const adopt = (dir, hosts = HOSTS) => applyPlan(dir, planApply(dir, { hosts, skills: false }));
 const read = (dir, rel) => JSON.parse(readFileSync(path.join(dir, rel), 'utf8'));
-const rules = (host, classes = ['irreversible', 'outward']) => nativeRules(host, CATALOG.filter((e) => classes.includes(e.class)), caps);
+const rules = (host, classes = ['irreversible', 'outward']) => nativeRules(host, CATALOG.filter((e) => classes.includes(e.class) && !ALWAYS_FREE.includes(e.id)), caps);
 
 // OpenCode's evaluation (`evaluate` in its permission module): the last rule, in config order, whose glob matches.
 function opencodeAction(permission, command) {

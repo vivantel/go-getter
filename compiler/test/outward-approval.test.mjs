@@ -146,7 +146,8 @@ test('shapes that are not grantable, and the always-human commands, keep asking 
     s.run(['pr-merge', 'pr-create', 'git-push']);
     assert.ok(quiet(s.ask('git push origin feat/x')), 'a plain push is granted');
     assert.equal(s.ask('gh pr close 2', 'codex').deny, true, 'not in this run\'s grants');
-    for (const command of ['gh release create v1', 'git tag v1', 'npm publish']) assert.equal(s.ask(command, 'codex').deny, true, command);
+    for (const command of ['gh release create v1', 'npm publish']) assert.equal(s.ask(command, 'codex').deny, true, command);
+    assert.ok(quiet(s.ask('git tag v1', 'codex')), 'creating a tag is free');
     assert.equal(s.ask('git push --force origin main', 'codex').deny, true);
     assert.equal(s.ask('git push origin main && gh release create v1', 'codex').deny, true, 'one allowed shape does not free the rest of the call');
   } finally {
@@ -165,7 +166,7 @@ test('the native ask rules drop the shapes the hook decides, only on hosts whose
       assert.ok(without.includes(glob), `${glob} is asked natively without grants`);
       assert.ok(!withGrants.includes(glob), `${glob} is left to the hook with grants`);
     }
-    assert.ok(withGrants.includes('Bash(gh release create *)') && withGrants.includes('Bash(git tag *)') && withGrants.includes('Bash(git push -f*)'), 'always-human commands keep their rules');
+    assert.ok(withGrants.includes('Bash(gh release create *)') && withGrants.includes('Bash(git push -f*)'), 'always-human commands keep their rules');
     const opencode = nativeRules('opencode', gateEntries(gate(GRANTABLE)), caps);
     assert.ok('gh pr merge *' in opencode, 'a host whose hook cannot ask keeps the native rule');
     assert.throws(() => gateEntries(gate('git-tag-create')), /grantable must name approvable commands/);
