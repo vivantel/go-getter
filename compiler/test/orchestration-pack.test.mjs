@@ -241,3 +241,22 @@ test('worktree clean also removes worktrees whose remote branch was deleted, kee
   assert.match(execFileSync('git', ['branch', '--list', squashed.branch], { cwd: dir, encoding: 'utf8' }), /feat\/squashed/);
   rmSync(parent, { recursive: true, force: true });
 });
+
+test('worktree clean removes a squash-merged worktree and keeps one whose changes are not on the target', () => {
+  const { parent, dir, git } = repo();
+  const squashed = newWorktree(dir, 'squashed-local');
+  const open = newWorktree(dir, 'still-open');
+  for (const [wt, files] of [[squashed, ['a.txt', 'b.txt']], [open, ['o.txt']]]) {
+    for (const f of files) {
+      writeFileSync(path.join(wt.path, f), `${f}\n`);
+      execFileSync('git', ['add', '-A'], { cwd: wt.path });
+      execFileSync('git', ['commit', '-q', '-m', f], { cwd: wt.path });
+    }
+  }
+  git('merge', '--squash', '-q', squashed.branch);
+  git('commit', '-q', '-m', 'squash');
+  const verdict = Object.fromEntries(planClean(dir).map((t) => [path.basename(t.path), [t.action, t.reason]]));
+  assert.deepEqual(verdict['squashed-local'], ['remove', 'squash-merged into main']);
+  assert.equal(verdict['still-open'][0], 'keep');
+  rmSync(parent, { recursive: true, force: true });
+});

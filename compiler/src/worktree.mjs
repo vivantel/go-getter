@@ -64,6 +64,15 @@ export function newWorktree(cwd, slug, { branch, from } = {}) {
   return { path: dir, branch: name };
 }
 
+// A squash merge leaves the branch tip outside the target's history, so ancestry misses it. Collapse the branch into one
+// commit on its merge base and ask `git cherry` whether the target already holds an equivalent patch.
+function squashMerged(main, branch, target) {
+  const base = tryGit(main, 'merge-base', target, branch);
+  if (!base) return false;
+  const synthetic = tryGit(main, '-c', 'user.name=go-getter', '-c', 'user.email=go-getter@localhost', 'commit-tree', `${branch}^{tree}`, '-p', base, '-m', 'squash');
+  return synthetic !== null && (tryGit(main, 'cherry', target, synthetic) ?? '').startsWith('-');
+}
+
 // Linked worktrees in the managed location, with what `clean` would do about each.
 export function planClean(cwd) {
   const trees = listWorktrees(cwd);
@@ -82,7 +91,8 @@ export function planClean(cwd) {
       // `worktree add -b` leaves one reflog entry; any commit adds another. A branch with no commits of its own is a task just started, not a merged one.
       const hasWork = (tryGit(main, 'reflog', 'show', '--format=%H', `refs/heads/${t.branch}`) ?? '').split('\n').filter(Boolean).length > 1;
       const behind = hasWork && tryGit(main, 'merge-base', '--is-ancestor', t.branch, target) !== null;
-      if (gone || behind) return { ...t, action: 'remove', reason: gone ? 'remote branch deleted' : `merged into ${target}` };
+      const squashed = hasWork && !behind && squashMerged(main, t.branch, target);
+      if (gone || behind || squashed) return { ...t, action: 'remove', reason: gone ? 'remote branch deleted' : `${squashed ? 'squash-merged' : 'merged'} into ${target}` };
       return { ...t, action: 'keep', reason: `not merged into ${target}` };
     });
 }
