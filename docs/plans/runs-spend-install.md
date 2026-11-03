@@ -1,0 +1,31 @@
+# Runs, spend and install — plan
+
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
+
+Split out of the former single `roadmap.md` on 2026-11-03 (decision 0165, plan `work-coordination.md`). Step text, ids and issue numbers are unchanged. The product-level index is `docs/plans/roadmap.md`. `Needs` lists ids in this plan only; a dependency on another plan is written in the step's Context until `work-coordination.md` step K1 makes `plan#id` parse. Live state of a step follows decision 0166 once K2 lands; until then update the marker and `Progress` line in place as before.
+
+## Phase 5 — Runs, spend and install
+
+### R1 Run polish: report gaps and plan-step stops — [ ] ‖
+Issue: #167
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/run-report.test.mjs compiler/test/run-stops.test.mjs`
+Do: the frictions the first dogfood run found (`docs/plans/archive/autonomous-run.md`, step 6 result): build a report for a run that timed out (today `run end` finds no active run); list merged pull requests from the default branch whatever branch `run end` runs on; print the end reason once and list only the approvals the run used, not every remembered shape; and decide whether a `Class: plan` step stops a run by default, since a design drafted for the owner's sign-off is not stopped unless it carries `Human:`. Also: a run whose plan was moved to `docs/plans/archive/` fails to build its report (`run end` reads the old path).
+Done-when: tests show the timed-out report, the merged list from another branch, the corrected report lines, and the chosen plan-step rule.
+
+### R2 Spend readers driven by capability data — [ ] ‖
+Issue: #220
+Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/spend-transcript.test.mjs compiler/test/spend-sessions.test.mjs compiler/test/run-spend-source.test.mjs`
+Do: a design review of the readers built for `docs/plans/archive/run-spend.md` found host knowledge hardcoded in three places (`PARSERS` in `spend/transcript.mjs`, `COMMANDS` in `spend/sessions.mjs`, the source branches in `spend/index.mjs`) where fact 0035 says capability rows are the only data-driven part. Make the row say how (`spendSource: {kind, format, command}`) and have a registry map a kind to its reader, so a new host edits data; split recording from deciding (`settleSpend(project, run)` called by `run next` and the report, so `nextInRun` stays a read); add a `coverage` field to the spend record (`lower-bound`, `shared-directory`) that the report prints beside the figure; cache `detect()` per call and give `spend.json` a schema version.
+Done-when: tests show a host added by a capability row alone, `nextInRun` writing nothing when `settleSpend` was not called, the report line carrying the coverage note, and an old `spend.json` read.
+
+### P1 Print the allow rules for freed and approved commands — [~]
+Class: implement · Effort: medium · Needs: none · Human: accept draft decision 0152 (decision 0091); no issue yet, create it with `go-getter plan issue create` once the owner has added the allow rule to their `.claude/settings.local.json` · Check: `node --test compiler/test/allow-rules.test.mjs`
+Context: decision 0152 fixes the design (go-getter prints allow rules and never writes them; an agent never writes `.claude/settings.local.json`; the rules come from the catalog and the plan-issue verbs, not a second list); `doctor` printing landed in PR #238. T4 extends the same output.
+Do: finish `go-getter doctor` and the same output in the `apply` report, `permissions.userAllow` in the capability schema and `claude-code.json`, the INSTALLING.md section, and tests (answer combinations, nothing freed, no file written, no wildcard wider than the command).
+Done-when: `doctor` and `apply` print the matching rules for a project that frees `pr-merge` or enables tracker writes and nothing otherwise, the project tree is unchanged by both, the checks pass, and a pull request is open.
+
+### S1 Install smoke test per host — [~]
+Class: debug · Needs: none · Human: the host steps need the owner's sessions on Kilo and OpenCode
+Progress 2026-10-09: static checks ran for all seven hosts and passed. Claude Code part 2 ran on a scratch repo: `tested`, with defects #18 (stale plugin cache while the version stays 0.0.0) and #19 (generated runner enforces nothing when npm blocks git fetches and `GO_GETTER_CLI` is unset). Kilo and OpenCode wait for the owner's sessions.
+Do: follow `docs/skills/install-smoke-test.md`; run its host steps on Kilo and OpenCode (`tested`); Codex, Cursor, Gemini CLI and Copilot stay `static-only`, said so in the release notes with a request for testers. File a GitHub issue per defect. `INSTALLING.md` marks every install untested until this runs.
+Done-when: a seven-row table (host / status / init works / defects) is in the description of the PR that completes this step and is copied into the release notes; every `tested` row has no unexplained failures; every `static-only` row says what was checked.

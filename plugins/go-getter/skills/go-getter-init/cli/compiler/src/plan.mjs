@@ -135,10 +135,15 @@ export function planFiles(root) {
   return files;
 }
 
+// The active plans: every plan directly under docs/plans, not the archive.
+export function activePlanFiles(root) {
+  return planFiles(root).filter((f) => path.dirname(f) === PLAN_DIR);
+}
+
 // The plan a command acts on: the argument, or the only active plan in docs/plans.
 export function resolvePlan(root, arg) {
   if (arg) return path.resolve(root, arg);
-  const active = planFiles(root).filter((f) => path.dirname(f) === PLAN_DIR);
+  const active = activePlanFiles(root);
   if (active.length === 1) return path.join(root, active[0]);
   throw new Error(active.length ? `several plans in ${PLAN_DIR}; name one (${active.join(', ')})` : `no plan in ${PLAN_DIR}`);
 }
@@ -250,7 +255,7 @@ const writeMarker = (file, id, marker) => writeFileSync(file, setMarker(readFile
 // worktree (`go-getter worktree new`) and sets the marker in that worktree's copy of the plan, so it lands with the step's branch.
 export function startStep(cwd, file, id, { worktree, states } = {}) {
   const { plan, step } = findStep(file, id);
-  if (step.marker === 'x' || step.marker === '>') throw new Error(`step ${id} is ${MARKERS[step.marker]}`);
+  if (step.marker === 'x' || step.marker === '>' || step.marker === '!') throw new Error(`step ${id} is ${MARKERS[step.marker]}${step.marker === '!' ? ' (unblock it first)' : ''}`);
   if (step.marker === '~' && !worktree) return { changed: false, file };
   // `states` (step id -> state) comes from the work source, so a step whose issue is still open is not done.
   const open = step.needs.filter((n) => (states?.get(n) ?? plan.steps.find((s) => s.id === n)?.state) !== 'done');

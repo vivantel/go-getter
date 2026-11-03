@@ -4,7 +4,7 @@ Guidance for AI agents working in this repository.
 
 ## What this repo is
 
-go-getter sets up the **agent harness** (the 12 components around a model: orchestration, tools, sandbox, context, memory, verification, guardrails/DLP, human-in-the-loop, checkpointing, multi-agent, cost & model routing, observability) and SDLC practices for a project, by configuring **host agents** (Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, Copilot). "Harness" never means a host agent. See `docs/decisions/0001-go-getter-product-scope-and-name.md` and `docs/facts/0002-agent-harness-and-host-agent-terminology.md`.
+go-getter sets up the **agent harness** (the 12 components around a model: orchestration, tools, sandbox, context, memory, verification, guardrails/DLP, human-in-the-loop, checkpointing, multi-agent, cost & model routing, observability) and SDLC practices for a project, by configuring **host agents** (Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, Copilot). "Harness" never means a host agent. Software delivery is the first fully supported domain; see `docs/decisions/0176-go-getter-coordinates-humans-and-agents-to-achieve-outcomes-in-any-domain.md` (it supersedes 0001), `docs/facts/0042-the-framework-map.md` and `docs/facts/0002-agent-harness-and-host-agent-terminology.md`.
 
 ## Knowledge base
 

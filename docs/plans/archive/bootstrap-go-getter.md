@@ -52,7 +52,7 @@ Context: license, ignore rules, a short agent instruction file and README before
 Do: create
 - `LICENSE` — MIT, `Copyright (c) 2026 vivantel`.
 - `.gitignore` — `node_modules/`, `.env`, `.env.*`, `.go-getter/state/`, `evals/scratch/`.
-- `AGENTS.md` — what this repo is (2 sentences, terminology "harness" vs "host agent", pointer to `docs/decisions/0001-go-getter-product-scope-and-name.md`); knowledge-base conventions; the interim working rules above; "Remaining work and step status live in `docs/plans/bootstrap-go-getter.md` — update markers as you go."
+- `AGENTS.md` — what this repo is (2 sentences, terminology "harness" vs "host agent", pointer to `docs/decisions/archive/0001-go-getter-product-scope-and-name.md`); knowledge-base conventions; the interim working rules above; "Remaining work and step status live in `docs/plans/bootstrap-go-getter.md` — update markers as you go."
 - `CLAUDE.md` — symlink to `AGENTS.md` (`ln -s AGENTS.md CLAUDE.md`), like the other host files.
 - `README.md` — one paragraph ("configures the agent harness and SDLC practices of six host agents..."), the host list, "v0.1 in progress", link to the plan.
 Done-when: all five exist; `ls -l CLAUDE.md` shows `CLAUDE.md -> AGENTS.md`; `LICENSE` begins `MIT License` / `Copyright (c) 2026 vivantel`; `.gitignore` contains `.go-getter/state/`.
@@ -64,7 +64,7 @@ Do: run `go-getter:lint`. Fix real problems. If only the `go-getter:` key is fla
 Done-when: lint reports no errors other than, at most, the known `go-getter:` extension; every `docs/*/INDEX.md` row matches an existing file.
 
 ### 0.4 Initial commit — [x]
-Do: `git init -b main`, `git add -A`, commit `chore: bootstrap repo with knowledge base and plan` with `Refs:` trailers for `docs/decisions/0001-go-getter-product-scope-and-name.md` and `docs/decisions/0010-self-hosting-ratchet.md`. Only this commit goes straight to `main`.
+Do: `git init -b main`, `git add -A`, commit `chore: bootstrap repo with knowledge base and plan` with `Refs:` trailers for `docs/decisions/archive/0001-go-getter-product-scope-and-name.md` and `docs/decisions/0010-self-hosting-ratchet.md`. Only this commit goes straight to `main`.
 Done-when: `git log --oneline` shows one commit on `main`; `git status` clean; `git ls-files -s CLAUDE.md` shows mode `120000`.
 
 ### 0.5 Create the GitHub repo — [x]

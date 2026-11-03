@@ -19,6 +19,7 @@ codex — concerns the OpenAI Codex host agent
 compiler — concerns the neutral-source-to-host-files compiler
 configuration — concerns where and how a project's chosen practices are declared
 copilot — concerns the GitHub Copilot host agent
+coordination — concerns work units, claims, scope, delegation and parallel actors
 cost — concerns token spend, pricing and cost models
 cursor — concerns the Cursor host agent
 dogfooding — concerns go-getter being used on its own repo
@@ -42,6 +43,7 @@ model-routing — concerns choosing a model/effort tier per step
 nodejs — concerns the Node.js implementation stack
 observability — concerns telemetry, logging and tracing of agent work
 opencode — concerns the OpenCode host agent
+outcomes — concerns outcome briefs, meters, readings and acceptance by measurement
 packaging — concerns plugin manifests and install/distribution
 positioning — concerns what the product is for and who it serves
 practice-packs — concerns declarative practice-pack data and schema (umbrella)

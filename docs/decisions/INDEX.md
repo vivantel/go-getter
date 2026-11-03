@@ -1,7 +1,6 @@
 # Decisions index (CSV)
 
 id,title,tags,status
-0001-go-getter-product-scope-and-name,"go-getter sets up the agent harness and SDLC practices for AI-driven development with minimal effort","positioning, harness, roadmap",active
 0002-six-host-agents-from-v0-1,"v0.1 supports seven host agents - Claude Code, Codex, Kilo, OpenCode, Cursor, Gemini CLI, GitHub Copilot","host-agents, agent-agnostic, packaging",active
 0005-neutral-source-compiler-architecture,"Author content once in a neutral source and compile it to each host agent's native files","architecture, compiler, generated-files, agent-agnostic",active
 0008-declarative-practice-packs,"Practice areas are declarative packs in two families - harness packs and SDLC packs - driven by one init skill","practice-packs, interview, architecture, harness",active
@@ -148,3 +147,20 @@ id,title,tags,status
 0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
 0162-gated-free-channels,"Release and publish channels that run without asking are listed","practice-packs, hooks",draft
 0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request,"ship means the whole way to merge, and pr is the verb for stopping at the pull request","hooks, enforcement, dogfooding",active
+0165-a-work-unit-is-one-recursive-contract-at-every-level,"A work unit is one recursive contract at every level of product > feature > plan > step; a plan is the default unit of delegation","coordination, roadmap, architecture",active
+0166-claims-are-leased-git-refs-and-status-lives-in-the-tracker,"Claims are entries in a per-feature compare-and-swap ledger with expiring leases that name their holder; status lives in the tracker issue, not in a shared file","coordination, roadmap, architecture",active
+0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units,"Declared scope and a merge queue prevent collisions between parallel units, and shared artifacts need no shared counter","coordination, ci, architecture",active
+0168-human-asks-are-parked-in-a-routed-queue-and-never-hold-a-worker,"A unit that needs a human is parked in a routed queue and releases its worker; a human's delay never blocks other units","coordination, hooks, agent-roles",active
+0169-go-getter-defines-a-pull-protocol-for-workers-and-runs-no-fleet,"go-getter defines a pull protocol for workers and runs no fleet; the agent cap is per worker","coordination, architecture, harness",active
+0170-flow-health-metrics-extend-the-throughput-metric,"Flow-health metrics extend the human-minutes headline; a rising rate is a regression to fix before more gates ship","coordination, observability, cost",active
+0171-grants-only-narrow-down-the-delegation-tree,"A delegated grant is a subset of its parent's, so authority can only shrink down the tree","coordination, hooks, security",active
+0172-validation-is-tiered-by-level-and-the-validator-is-never-the-author,"Validation is tiered by level, strictness rises up the tree, and the validator is never the author","coordination, verification, agent-roles",active
+0173-a-unit-has-a-lifecycle-with-retry-quarantine-cancel-and-a-pinned-brief-version,"A unit has a lifecycle with lease reclaim, a retry budget, quarantine, cancel and supersede, and a claim pins the brief version","coordination, roadmap, harness",active
+0174-ready-work-is-ordered-by-priority-under-wip-limits-and-status-is-computed-on-read,"Ready work is ordered by priority under WIP limits, new units pass an intake approval, and status is computed on read","coordination, roadmap, observability",active
+0175-partial-features-merge-behind-flags-and-flaky-checks-are-quarantined,"Partial features merge behind a flag until accepted, and flaky required checks are quarantined and owned","coordination, ci, verification",active
+0176-go-getter-coordinates-humans-and-agents-to-achieve-outcomes-in-any-domain,"go-getter coordinates humans and agents to achieve outcomes in any domain; software delivery is the first fully supported domain","positioning, coordination, roadmap",active
+0177-each-part-of-the-framework-owns-one-artifact-and-one-kind-of-decision,"Discover, decompose, deliver, measure and operate each own one artifact and one kind of decision","coordination, roadmap, architecture",active
+0178-an-outcome-is-accepted-when-its-meter-meets-its-target-over-a-window-with-attribution,"An outcome is accepted when its meter meets the target over a window and the attribution method holds","coordination, verification, roadmap",active
+0179-a-meter-is-a-first-class-instrument-and-a-reading-is-a-unit-any-capable-worker-claims,"A meter is a first-class instrument and a reading is a unit that any capable worker claims","coordination, observability, architecture",active
+0180-real-world-effects-are-classed-in-grants-and-delegable-only-inside-a-human-written-cap,"Real-world effects are classed in grants and delegable only inside a human-written cap","coordination, security, guardrail",active
+0181-capability-tags-filter-the-units-a-worker-is-offered-and-the-router-chooses-the-model,"Capability tags filter the units a worker is offered, and the router still chooses model and effort","coordination, model-routing, agent-roles",active

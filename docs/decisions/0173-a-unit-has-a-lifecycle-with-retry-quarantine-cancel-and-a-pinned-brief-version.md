@@ -1,0 +1,34 @@
+---
+id: 0173-a-unit-has-a-lifecycle-with-retry-quarantine-cancel-and-a-pinned-brief-version
+title: A unit has a lifecycle with lease reclaim, a retry budget, quarantine, cancel and supersede, and a claim pins the brief version
+status: active
+date: 2026-11-03
+tags: [coordination, roadmap, harness]
+track: process
+accepted-by: sergemso
+---
+
+## Decision
+
+1. **States:** `draft`, `ready`, `claimed`, `parked` (0168), `in-review` (acceptance, 0172), `done`, and the exits `blocked`, `quarantined`, `cancelled`, `superseded`. Every state and every counter (failures under the current claim, claimants so far) is a field of the unit's ledger entry (0166 item 1), so a project without a tracker computes all of them from the ledger; a unit that has never been claimed has no entry and is `ready` when it is in a merged plan file. A parent's state is computed from its children (0174).
+2. **Lease expiry reclaims.** When the lease of a leaf unit that is not parked lapses (a parent with live children and a parked unit never lapse, 0166) the unit returns to `ready`; the next claimant starts from the pushed unit branch and from the per-unit checkpoint ref `refs/go-getter/checkpoints/<unit>` that go-getter pushes with every heartbeat and on release (a lapse means the holder is gone, so it cannot push then), not from nothing and not from a local checkpoint on another machine.
+3. **Retry budget and quarantine.** A step may fail twice under one claim (0130 item 7); a unit may pass through three claimants. After that it is `quarantined`: out of `work next`, escalated as an ask to the parent's owner (0168), and never retried silently.
+4. **Cancel cascades.** Cancelling a unit cancels its unmerged descendants: their claims are released and their open branches closed. Merged work stays; undoing it needs a new unit (a revert), never a history rewrite.
+5. **Supersede links.** A unit made obsolete names its successor; open claims on it are released with that pointer.
+6. **The brief is versioned.** A claim pins the brief version (a content hash of the brief fields only, never the marker or other state). A change to the brief bumps the version; at its next heartbeat a worker on an older version learns of it and must re-read the brief before continuing, or release the unit. Work already merged stays valid unless acceptance fails.
+7. **A repeated guardrail denial on one unit** stops that unit (0130 item 8) and parks it with the denial recorded.
+
+It generalises the run stops of 0130 from a per-run rule to a per-unit one.
+
+## In force
+
+This decision takes effect with K9 (lifecycle). Until then the existing practice applies.
+
+## Why
+
+At thousands of units, crashed workers, failing units and changed requirements are routine. Without defined states, a lapsed lease loses work, a failing unit loops, a cancelled feature leaves children running, and children work from a stale brief.
+
+## Tradeoffs considered
+
+- **Leave recovery to the operator:** nothing to build; every incident is a human task, against the goal.
+- **Cost accepted:** a state machine and a hash per brief; a wrong cancel needs a revert unit to undo.
