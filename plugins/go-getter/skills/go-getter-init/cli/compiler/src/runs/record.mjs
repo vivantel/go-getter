@@ -110,3 +110,16 @@ export function noteStop(project, stop, { env = process.env, now = () => new Dat
   data.projects[key] = entry;
   write(data, env);
 }
+
+// Records one gate result of `ship` on the active run: { gate, status: 'pass'|'fail'|'skipped', at }. Names and statuses only.
+export function noteGate(project, gate, status, { env = process.env, now = () => new Date() } = {}) {
+  const t = now();
+  const { data, key, entry } = load(project, env, t);
+  if (!entry.active) return null;
+  const gates = (entry.active.gates ??= []);
+  gates.push({ gate, status, at: t.toISOString() });
+  if (gates.length > 50) gates.splice(0, gates.length - 50);
+  data.projects[key] = entry;
+  write(data, env);
+  return gates.length;
+}

@@ -31,6 +31,7 @@ export const COMMANDS = [
   { name: 'routing', usage: 'routing calibrate' },
   { name: 'metrics', usage: 'metrics day' },
   { name: 'digest', usage: 'digest [--since <iso>] [--mark]' },
+  { name: 'audit', usage: 'audit pick | audit fail <pr> --as check|guardrail|instruction' },
   { name: 'telemetry', usage: 'telemetry summary' },
   { name: 'mcp', usage: 'mcp serve' },
   { name: 'eval', usage: 'eval' },

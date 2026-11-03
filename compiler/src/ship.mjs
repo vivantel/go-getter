@@ -12,6 +12,9 @@ import { runTier3 } from './enforce.mjs';
 import { restrictedPatterns } from './hook.mjs';
 import { matchesAny } from './glob.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
+import { runGateStack } from './gate-stack.mjs';
+import { noteGate } from './runs/record.mjs';
+import { flagPr } from './audit.mjs';
 
 export const TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'];
 const SUBJECT = new RegExp(`^(?:${TYPES.join('|')})(?:\\([^)]+\\))?!?: \\S`);
@@ -58,9 +61,16 @@ export function ciOutcome(rows) {
   return 'success';
 }
 
+const noteCi = (project, status) => {
+  try {
+    noteGate(project, 'ci', status);
+  } catch {
+    // best effort, as for the other gates
+  }
+};
 // Polls `gh pr checks` until the pull request's CI concludes: resolves 'success' or 'none' (no checks reported within the grace
 // period); a failure, an unreadable status or a timeout throws. Shared by `pr`, `ship` and `release --batch`.
-export async function waitForCi({ gh, pr, verb, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, log = () => {} }) {
+export async function waitForCi({ gh, pr, verb, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, log = () => {}, project }) {
   const started = Date.now();
   let ci = 'success';
   for (;;) {
@@ -75,8 +85,10 @@ export async function waitForCi({ gh, pr, verb, intervalMs = 20_000, timeoutMs =
       rows = [];
     }
     const outcome = ciOutcome(rows);
+    if (outcome === 'failure' && project) noteCi(project, 'fail');
     if (outcome === 'failure') throw new ShipError(`${verb}: CI failed on ${rows.filter((x) => x.bucket === 'fail' || x.bucket === 'cancel').map((x) => x.name).join(', ')}; the pull request stays open: ${pr.url}`, 1);
     if (outcome === 'success') {
+      if (project) noteCi(project, 'pass');
       log('ci', `${rows.length} check${rows.length === 1 ? '' : 's'} green`);
       break;
     }
@@ -94,7 +106,7 @@ export async function waitForCi({ gh, pr, verb, intervalMs = 20_000, timeoutMs =
 // `go-getter pr`: checks, checkpoint, commit, push, the pull request and the wait for CI. It never merges; `ship` is this plus the merge.
 // Resolves with `ci` 'success' or 'none' (no checks reported in the grace period); a failure or a timeout throws.
 export async function openPr(project, opts = {}, run = defaultRunner, log = () => {}) {
-  const { verb = 'pr', title: titleArg, why: whyArg, dryRun = false, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, review } = opts;
+  const { verb = 'pr', title: titleArg, why: whyArg, dryRun = false, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, review, conform, check: stepCheck } = opts;
   const git = (...a) => run('git', a, { cwd: project });
   const gh = (...a) => run('gh', a, { cwd: project });
   const need = (r, what) => {
@@ -128,12 +140,6 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   if (failed.length) throw new ShipError(`${verb}: checks failed: ${failed.map((r) => `${r.guardrail}${r.message ? ` (${r.message})` : ''}`).join('; ')}`);
   checks.push(`guardrail checks: ${results.length} passed`);
   log('checks', `${results.length} guardrail checks passed`);
-  if (review) {
-    const r = await review({ project, base: base.name });
-    if (!r.ok) throw new ShipError(`${verb}: review found problems: ${r.summary}`);
-    checks.push(`review: ${r.summary}`);
-    log('review', r.summary);
-  }
 
   // 4 Attribute: the message from what the branch already holds, else from the arguments.
   const firstSubject = ahead ? git('log', '--format=%s', '--reverse', `origin/${base.name}..HEAD`).out.split('\n')[0] : null;
@@ -143,6 +149,9 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   const why = whyArg ?? (existingBody || null);
   if (!why) throw new ShipError(`${verb}: say why the change is made (the intent) with --why "<text>"`, 2);
   const refs = suggestRefs(project, { base: `origin/${base.name}` }).must.map((r) => r.path);
+  // 3b The rest of the gate stack (decision 0158), in order: the step Check, conform, a reviewer on a fresh context; CI follows below.
+  const stack = await runGateStack(project, { base: base.name, why, refs, check: stepCheck, conform, review, verb }, run, log, ShipError);
+  for (const g of stack.gates) if (g.status !== 'skipped') checks.push(`${g.gate}: ${g.summary || g.status}`);
   if (dryRun) {
     log('dry-run', `would ${verb === 'pr' ? 'open a pull request for' : 'ship'} "${title}" with ${refs.length} ref${refs.length === 1 ? '' : 's'}; nothing written`);
     return { dryRun: true, branch, title, refs };
@@ -171,10 +180,11 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
     pr = JSON.parse(need(gh('pr', 'view', branch, '--json', 'number,url,state'), 'gh pr view'));
   }
   log('pr', pr.url);
+  if (stack.flagged) flagPr(project, pr.number);
 
   // 7 CI: success merges, failure stops with the failing checks, no checks stops unless allowed.
-  const ci = await waitForCi({ gh, pr, verb, intervalMs, timeoutMs, noCiGraceMs, log });
-  return { branch, title, pr, ci, merged: false };
+  const ci = await waitForCi({ gh, pr, verb, intervalMs, timeoutMs, noCiGraceMs, log, project });
+  return { branch, title, pr, ci, merged: false, gates: [...stack.gates, { gate: 'ci', status: ci === 'success' ? 'pass' : 'none' }] };
 }
 
 // `go-getter ship`: `pr` and then the squash merge on green. No CI at all stops it unless the project allows merging without.
@@ -204,19 +214,29 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
 }
 
 
-// The optional review pass (`--review`): a read-only Claude Code run over the diff against the base, answering on a last
-// `VERDICT: PASS|FAIL <summary>` line. It gets no tools that write, and the brief names the decisions and guardrails to read.
-export function claudeReview(run = defaultRunner) {
-  return async ({ project, base }) => {
-    const prompt = [
-      `Review the change on this branch against origin/${base} (git diff origin/${base}...HEAD) as a strict, read-only reviewer.`,
-      'Check it against the decisions and guardrails under docs/ that it touches or implements, look for correctness bugs and missing tests, and do not modify anything.',
-      'End your answer with exactly one line: "VERDICT: PASS <one-sentence summary>" or "VERDICT: FAIL <the blocking problem>". Fail only for a real defect or a broken commitment, not for style.',
-    ].join(' ');
-    const r = run('claude', ['-p', prompt, '--permission-mode', 'plan', '--allowedTools', 'Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git show *)', '--max-budget-usd', '2'], { cwd: project });
-    if (r.code === 127) throw new ShipError('ship: --review needs the claude CLI on PATH', 127);
+// Claude-backed gate runners (`--conform`, `--review`). Each is a fresh read-only `claude -p` run whose prompt carries only the
+// diff, the brief and the decisions; the model gets no tool that writes and sees no transcript of the author's session.
+const gatePrompt = (task, { diff, brief, decisions }) => [
+  task,
+  'Read-only: modify nothing. End your answer with exactly one line: "VERDICT: PASS <one-sentence summary>" or "VERDICT: FAIL <the blocking problem>". Append " FLAG" after the summary of a PASS when a human should still read this change.',
+  `## Brief\n\n${brief}`,
+  `## Decisions and guardrails\n\n${decisions.map((d) => `### ${d.path}\n\n${d.text}`).join('\n\n') || '(none)'}`,
+  `## Diff\n\n${diff}`,
+].join('\n\n');
+
+function claudeGate(flag, task, project, run) {
+  return async (input) => {
+    const r = run('claude', ['-p', '--permission-mode', 'plan', '--allowedTools', 'Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git show *)', '--max-budget-usd', '2'], { cwd: project, input: gatePrompt(task, input) });
+    if (r.code === 127) throw new ShipError(`ship: ${flag} needs the claude CLI on PATH`, 127);
     const m = /VERDICT:\s*(PASS|FAIL)\s*(.*)$/m.exec(r.out);
-    if (!m) throw new ShipError(`ship: the review gave no verdict line (exit ${r.code}): ${(r.out || r.err).trim().split('\n').slice(-2).join(' | ')}`);
-    return { ok: m[1] === 'PASS', summary: m[2].trim() || m[1].toLowerCase() };
+    if (!m) throw new ShipError(`ship: the ${flag.slice(2)} pass gave no verdict line (exit ${r.code}): ${(r.out || r.err).trim().split('\n').slice(-2).join(' | ')}`);
+    const flagged = / FLAG$/.test(m[2]);
+    return { ok: m[1] === 'PASS', flagged, summary: m[2].replace(/ FLAG$/, '').trim() || m[1].toLowerCase() };
   };
 }
+
+export const claudeReview = (project, run = defaultRunner) =>
+  claudeGate('--review', 'You are a strict reviewer on a fresh context. Review the diff against the brief and the decisions and guardrails given. Look for correctness bugs, missing tests and broken commitments; fail only for a real defect, not style.', project, run);
+
+export const claudeConform = (project, run = defaultRunner) =>
+  claudeGate('--conform', 'Check whether this diff conforms to the decisions and guardrails given (the go-getter conform pass). Fail only for a clear conflict with an active decision or guardrail.', project, run);
