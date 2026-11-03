@@ -1,4 +1,4 @@
-// Dogfooding check (decision 0160): the plugin version this repo pins in project settings is not older than its latest release tag.
+// Dogfooding check (decision 0183): the plugin version this repo pins in project settings is not older than its latest release tag.
 import { compareVersions, latestTag, parseVersion, pinnedRef } from '../plugin-pin.mjs';
 
 export function pinProblem(ref, tag) {

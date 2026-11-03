@@ -1,4 +1,4 @@
-// Dogfood install (roadmap T2, decision 0160): the pinned plugin ref, the version check and the doctor mismatch line.
+// Dogfood install (roadmap T2, decision 0183): the pinned plugin ref, the version check and the doctor mismatch line.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync } from 'node:fs';

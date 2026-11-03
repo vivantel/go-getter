@@ -243,7 +243,7 @@ const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 // `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: knowledge base present (session-start nudges).
 // `pii`: the project masks PII in tool output (post-tool hook, and a session-end hook where the host has one, decision 0106).
 // `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
-// `plugin`: this project's own go-getter plugin ({ marketplace, repo, version }, decision 0160), enabled in Claude Code's project settings.
+// `plugin`: this project's own go-getter plugin ({ marketplace, repo, version }, decision 0183), enabled in Claude Code's project settings.
 export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, pii = false, mcp = false, read = (rel) => readJson(project, rel), plugin = null) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the
   // runtime as --project. Without a runner the hook warns and lets the call through (fail open, decision 0019).

@@ -20,12 +20,12 @@ Do: add `go-getter metrics day [--date D]` printing, for the date: active minute
 Done-when: the test feeds fixture transcripts and PR JSON and gets the exact figures above; the report prints no prompt text; running it for 2026-10-31 on a machine with the transcripts reproduces fact 0040's counts.
 Progress 2026-11-01 · `feat/state-checking-gate` · `../go-getter-wt/state-checking-gate` · `a84e8d9` · done: `metrics day` in `compiler/src/metrics/day.mjs`; `metrics-day.test.mjs` 5/5 pass; reproduces fact 0040 (5 PRs, +2193/-158); merged as #245 · next: none.
 
-### T2 Dogfood install — [~] ‖
+### T2 Dogfood install — [x] ‖
 Class: implement · Needs: none · Check: `go-getter doctor`
 Context: on 2026-10-31 the plugin was not installed in this repo, so `/go-getter:*` skills were missing and the plugin cache (0.3.6) lagged the repo. Decision 0010 (self-hosting ratchet) says this repo uses go-getter. Do not clobber uncommitted host files (`owned-files-never-clobbered`).
 Do: make `go-getter apply` the way this repo gets its host files, enable the repo's own plugin at its current version in the project settings, and make `go-getter doctor` report a plugin/CLI version mismatch with the fix. Add a CI check that fails when the repo's pinned plugin version is older than its latest tag.
 Done-when: in a fresh clone, `go-getter apply` followed by starting the host lists the `go-getter:*` skills; `go-getter doctor` exits 0 and prints no version mismatch; the CI check fails on a deliberately stale pin in a test.
-Progress 2026-11-01 · `feat/dogfood-install` · `../go-getter-wt/dogfood-install` · `fc8de1d` · done (committed, not yet re-run by me): project settings pin the repo's own plugin to a release tag; `plugin-pin` check, CI step and `plugin-pin.test.mjs`; `apply` and `doctor` changed; a decision for it · next: verify each Done-when item by running it, then PR.
+Result 2026-11-04: pin, `doctor` mismatch line and `plugin-pin` CI check rebased onto master as decision 0183 (0160 was taken); `plugin-pin.test.mjs` 6/6, `apply --check`, `check:generated`, `check:plans`, `check:guardrails` pass. On a machine whose plugin cache is older than the CLI, `doctor` prints the mismatch and the fix (`claude plugin update go-getter@go-getter`); it exits 0.
 
 ### T3 The ship verb — [x] ‖
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/ship.test.mjs`

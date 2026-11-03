@@ -17,7 +17,7 @@ export default function doctorCommand({ root, args }) {
   }
   const lines = formatSuggestions(allowSuggestions(project, hosts));
   console.log(lines.length ? lines.join('\n') : 'doctor: no command is freed or approved that a host permission layer needs a rule for');
-  // A plugin the host installed at another version than this CLI: the skills then run older instructions (decision 0160).
+  // A plugin the host installed at another version than this CLI: the skills then run older instructions (decision 0183).
   const cli = packageVersion(root);
   const plugin = installedPluginVersion(project);
   if (plugin && plugin !== cli) console.log(`doctor: the installed go-getter plugin is ${plugin} but the CLI is ${cli}; run "claude plugin update go-getter@go-getter" and restart the host`);

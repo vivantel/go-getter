@@ -1,4 +1,4 @@
-// The plugin this repo runs on (decision 0160): the version the host installed for a project, and the pin in project settings.
+// The plugin this repo runs on (decision 0183): the version the host installed for a project, and the pin in project settings.
 import path from 'node:path';
 import os from 'node:os';
 import { existsSync, readFileSync } from 'node:fs';
