@@ -79,6 +79,18 @@ test('removing a worktree: safe when clean, unsafe with uncommitted or untracked
   assert.equal(check('git-worktree-remove', `git worktree remove --force ${wt}`, work).safe, false);
 }));
 
+test('removing a worktree: unsafe on a detached HEAD whose commits no ref holds, safe once a branch holds them', () => withRepo(({ root, work }) => {
+  const wt = path.join(root, 'wt');
+  git(work, 'worktree', 'add', '-q', '--detach', wt, 'master');
+  assert.equal(check('git-worktree-remove', `git worktree remove ${wt}`, work).safe, true);
+  commit(wt, 'loose');
+  const r = check('git-worktree-remove', `git worktree remove ${wt}`, work);
+  assert.equal(r.safe, false);
+  assert.match(r.why, /detached HEAD/);
+  git(work, 'branch', 'keep', git(wt, 'rev-parse', 'HEAD'));
+  assert.equal(check('git-worktree-remove', `git worktree remove ${wt}`, work).safe, true);
+}));
+
 test('a command the check cannot read is unsafe', () => {
   assert.equal(stateCheck('git-reset-hard', 'sh -c "git reset --hard"', tmpdir(), run).safe, false);
   assert.equal(stateCheck('git-reset-hard', 'git reset --hard', path.join(tmpdir(), 'no-such-dir-gg'), run).safe, false);
