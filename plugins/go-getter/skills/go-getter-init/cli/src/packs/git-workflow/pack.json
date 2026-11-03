@@ -4,7 +4,7 @@
   "version": "0.1.2",
   "family": "sdlc",
   "title": "Git workflow",
-  "summary": "How a change moves from a branch to the default branch: branch names, working on the default branch, Refs trailers, and the fixed rules of Conventional Commit subjects, squash merge and green CI.",
+  "summary": "How a change moves from a branch to the default branch: branch names, working on the default branch, Refs trailers, whether a plan is delivered per step or as one pull request, and the fixed rules of Conventional Commit subjects, squash merge and green CI.",
   "questions": [
     {
       "id": "branch-pattern",
@@ -49,6 +49,24 @@
           "id": "off",
           "label": "Not used",
           "tradeoff": "No trailer convention and nothing to maintain; commits are not linked to decisions."
+        }
+      ]
+    },
+    {
+      "id": "plan-delivery",
+      "since": "0.1.2",
+      "prompt": "How is a plan delivered: one pull request per step, or one for the whole plan?",
+      "options": [
+        {
+          "id": "per-step",
+          "label": "One branch and pull request per plan step, merged on green before its issue closes",
+          "tradeoff": "Small reviews, a step's issue closes as it lands, and steps marked as parallel can run side by side in separate worktrees; a plan of many steps makes many pull requests.",
+          "recommended": true
+        },
+        {
+          "id": "per-plan",
+          "label": "One branch and one pull request for the whole plan, one commit per step",
+          "tradeoff": "One review and one merge for the plan, but a large diff, steps run one after another on one branch, a failure late in the plan holds back the steps before it, and the branch needs a rebase if the default branch moves under it."
         }
       ]
     }
@@ -348,6 +366,42 @@
               "track": "process"
             },
             "body": "## Decision\n\nCommits carry no `Refs:` trailers (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA `Refs:` trailer links a commit to the decision, fact or guardrail it implements, so the reason for a change can be found from the code.\n"
+          }
+        ]
+      }
+    },
+    "plan-delivery": {
+      "per-step": {
+        "decisions": [
+          {
+            "slug": "plan-delivery",
+            "title": "A plan is delivered one pull request per step",
+            "tags": [
+              "practice-packs",
+              "git-hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nEach step of a plan is its own change: a branch named for the step, one pull request, merged by squash once CI is green, after which the step's issue closes. Steps marked as parallel with no shared files may run at the same time, each in its own worktree. `go-getter ship` takes a step from working tree to merge (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nSmall pull requests are reviewed and reverted one at a time, and the plan's status follows the merged state of its issues.\n"
+          }
+        ]
+      },
+      "per-plan": {
+        "decisions": [
+          {
+            "slug": "plan-delivery",
+            "title": "A plan is delivered as one pull request for the whole plan",
+            "tags": [
+              "practice-packs",
+              "git-hooks",
+              "guardrail"
+            ],
+            "frontmatter": {
+              "track": "process"
+            },
+            "body": "## Decision\n\nA plan is one change: one branch named `feat/` plus the plan's file name, one commit per step with the step marked done in the plan file in the same commit, and one pull request opened with `go-getter pr` once the plan is done and merged with `go-getter ship`. Steps run one after another on that branch. The steps' issues close after the merge, with the usual approval (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe project prefers one review and one merge for a plan over many small ones, and accepts a larger diff, a late failure holding back earlier steps, and a rebase when the default branch moves.\n"
           }
         ]
       }
