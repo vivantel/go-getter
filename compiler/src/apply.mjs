@@ -243,7 +243,8 @@ const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 // `enabled`: tier-2 path guardrails exist (pre-tool hook). `session`: knowledge base present (session-start nudges).
 // `pii`: the project masks PII in tool output (post-tool hook, and a session-end hook where the host has one, decision 0106).
 // `stop`: the verification gate blocks "done" (stop hook; hosts that cannot block a stop get none).
-export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, pii = false, mcp = false, read = (rel) => readJson(project, rel)) {
+// `plugin`: this project's own go-getter plugin ({ marketplace, repo, version }, decision 0183), enabled in Claude Code's project settings.
+export function hostHookOutputs(project, hosts, enabled, session = false, stop = false, pii = false, mcp = false, read = (rel) => readJson(project, rel), plugin = null) {
   // A host may run hooks from a subdirectory: walk up to the project root that holds the runner and hand it to the
   // runtime as --project. Without a runner the hook warns and lets the call through (fail open, decision 0019).
   // The script is wrapped in `sh -c '...'` so it also works for a host that executes the command without a shell;
@@ -264,14 +265,21 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   // A host that can replace only MCP results (capability hooks.rewriteMcpOutput, Cursor) gets the post-tool hook when MCP governance is adopted (decision 0138 item 4).
   const canMaskMcp = (host) => mcp && caps[host]?.hooks?.rewriteMcpOutput === true && caps[host]?.hooks?.rewriteOutput !== true;
   // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
-  const wanted = (rel, host) => enabled || session || stop || (pii && canRedact(host)) || canMaskMcp(host) || existsSync(path.join(project, rel));
+  const wanted = (rel, host) => enabled || session || stop || (plugin && host === 'claude-code') || (pii && canRedact(host)) || canMaskMcp(host) || existsSync(path.join(project, rel));
   const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
   const plain = (host, event) => ({ hooks: [{ type: 'command', command: cmd(host, event) }] });
   // Sets or removes each of go-getter's events: [keys, entry-or-null].
   const events = (obj, list) => list.reduce((acc, [keys, entry]) => setEvent(acc, keys, entry), obj);
   for (const host of hosts) {
     if (host === 'claude-code' && wanted('.claude/settings.json', host)) {
-      out['.claude/settings.json'] = json(events(read('.claude/settings.json'), [
+      const current = read('.claude/settings.json');
+      // The marketplace is pinned to the release tag of the CLI that wrote it; other plugins and marketplaces are kept.
+      const withPlugin = !plugin ? current : {
+        ...current,
+        extraKnownMarketplaces: { ...current.extraKnownMarketplaces, [plugin.marketplace]: { source: { source: 'github', repo: plugin.repo, ref: `v${plugin.version}` } } },
+        enabledPlugins: { ...current.enabledPlugins, [`go-getter@${plugin.marketplace}`]: true },
+      };
+      out['.claude/settings.json'] = json(events(withPlugin, [
         [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
         [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
         [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
@@ -423,7 +431,7 @@ function foreignHostPaths(caps, targetHosts) {
     });
 }
 
-function packageVersion(packageRoot) {
+export function packageVersion(packageRoot) {
   try {
     return JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).version;
   } catch {
@@ -497,7 +505,9 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     outputs['.gemini/settings.json'] = json({ ...settings, context: { ...settings.context, fileName: [...names].sort() } });
   }
   const mcp = entries.some((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && ['mcp-allow', 'mcp-scan'].includes(e.parsed.id));
-  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, pii, mcp, read);
+  const selfPlugin = adoptedData(project, 'self-plugin');
+  const plugin = typeof selfPlugin?.repo === 'string' && typeof selfPlugin?.marketplace === 'string' ? { ...selfPlugin, version: packageVersion(packageRoot) } : null;
+  const hookOutputs = hostHookOutputs(project, targetHosts, preTool, detected.knowledgeBase, stop, pii, mcp, read, plugin);
   for (const p of Object.keys(hookOutputs)) if (SHARED_HOOK_FILES.includes(p)) remember(p);
   for (const [p, o] of Object.entries(hookOutputs)) {
     if (p === '.gemini/settings.json' && outputs[p]) {

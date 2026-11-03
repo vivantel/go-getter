@@ -53,6 +53,44 @@
   "shared": {
     ".claude/settings.json": [
       {
+        "kind": "key",
+        "path": [
+          "enabledPlugins",
+          "go-getter@go-getter"
+        ],
+        "value": true
+      },
+      {
+        "kind": "key",
+        "path": [
+          "extraKnownMarketplaces",
+          "go-getter",
+          "source",
+          "ref"
+        ],
+        "value": "v0.4.1"
+      },
+      {
+        "kind": "key",
+        "path": [
+          "extraKnownMarketplaces",
+          "go-getter",
+          "source",
+          "repo"
+        ],
+        "value": "vivantel/go-getter"
+      },
+      {
+        "kind": "key",
+        "path": [
+          "extraKnownMarketplaces",
+          "go-getter",
+          "source",
+          "source"
+        ],
+        "value": "github"
+      },
+      {
         "kind": "items",
         "path": [
           "hooks",
