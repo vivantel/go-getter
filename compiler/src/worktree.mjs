@@ -95,12 +95,15 @@ export function newWorktree(cwd, slug, { branch, from } = {}) {
   return withLock(main, () => {
     const trees = listWorktrees(cwd);
     const config = worktreeConfig(main);
+    // A resumed task: its branch already has a linked worktree. Hand that one back; it is not a new worktree, so the limit does not apply.
+    const name = branch ?? `feat/${slug}`;
+    const existing = trees.find((t) => !t.main && t.branch === name);
+    if (existing) return { path: existing.path, branch: name, existing: true };
     if (config.isolation !== 'worktree') throw new Error(`isolation is "${config.isolation}"; this project does not use worktrees`);
     if (config.location === 'host-default') throw new Error('worktree location is the host default; let the host agent create the worktree');
     if (trees.length - 1 >= config.max) throw new Error(`${trees.length - 1} worktrees already exist; the limit is ${config.max} concurrent agents (run "go-getter worktree clean" or finish a task)`);
     const dir = worktreeDir(main, config.location, slug);
     if (existsSync(dir)) throw new Error(`${dir} already exists`);
-    const name = branch ?? `feat/${slug}`;
     git(main, 'worktree', 'add', '-b', name, dir, from ?? defaultBranch(main));
     return { path: dir, branch: name };
   });

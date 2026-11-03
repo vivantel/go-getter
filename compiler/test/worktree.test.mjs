@@ -101,3 +101,16 @@ test('a lock left by a dead process does not block worktree new forever', () => 
     assert.ok(newWorktree(dir, 'after-crash').path);
   } finally { rmSync(parent, { recursive: true, force: true }); }
 });
+
+test('worktree new for a branch that already has a worktree returns it, even at the limit', () => {
+  const { parent, dir } = repo({ ...recommended, 'max-concurrent': '1' });
+  try {
+    const first = newWorktree(dir, 'resume-me');
+    assert.equal(first.existing, undefined);
+    const again = newWorktree(dir, 'resume-me');
+    assert.equal(again.path, first.path);
+    assert.equal(again.existing, true);
+    assert.equal(listWorktrees(dir).length, 2, 'no second worktree');
+    assert.throws(() => newWorktree(dir, 'another'), /limit is 1/);
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+});
