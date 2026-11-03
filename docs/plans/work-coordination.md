@@ -1,0 +1,148 @@
+# Work-unit coordination — plan
+
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in the step's own PR; once K2 lands, live state (claim, lease, progress) follows decision 0166 and no `Progress` line is written in git. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
+
+Written 2026-11-03 from an interview with the repo owner (`sergemso`). Goal: reframe go-getter as a task-solving framework in which humans and agents work thousands of units in parallel, alone and together, with few contradictions, little mutual blocking and little waiting on humans. Product index: `docs/plans/roadmap.md`. Every pending step needs its issue (`Issue: #N`); none exists yet, so create them with `go-getter plan issue` (a human approves each write).
+
+**Read first, in order:** fact `docs/facts/0041-coordination-hotspots-and-contradictions-in-the-current-design.md`; decisions `0165` (the unit), `0166` (claims), `0167` (scope, queue, ids), `0168` (parked asks), `0169` (pull protocol), `0170` (metrics), `0171` (grants), `0172` (validation), `0173` (lifecycle), `0174` (priority, roll-up), `0175` (flags, flakes). All are `draft` until K0. Procedures: `docs/skills/delegating-a-work-unit.md`, `answering-a-parked-ask.md`, `handling-a-failed-or-stalled-unit.md`, `accepting-a-unit.md`. Guardrails to raise to tier 2 as steps land: `work-only-under-a-live-claim`, `a-claim-names-its-holder`, `a-delegated-grant-never-exceeds-its-parent`, `a-change-stays-inside-its-units-scope`, `artifact-ids-have-no-shared-counter`, `a-unit-is-accepted-by-someone-other-than-its-author`, `unit-briefs-are-untrusted-input`. Also read `no-runtime-dependencies`, `owned-files-never-clobbered`, `telemetry-records-metadata-only`, `restricted-paths-denied`.
+
+**Rules the design fixes (do not re-decide):** a plan is the default unit of delegation and one contract serves every level (0165); a claim is an atomic ref with a lease and the tracker holds status, no shared board (0166); scope is declared and enforced, a serial merge queue integrates, ids and indexes have no shared counter (0167); a human ask parks the unit and frees its worker (0168); go-getter defines a pull protocol and runs no fleet, no daemon or server, no new runtime dependency (0169); grants only narrow (0171); the validator is never the author (0172). The code lives in `compiler/src/work/` (new) and `compiler/src/commands/work.mjs` (new); verbs print what they return and keep the library functions pure so the MCP read tools of `mcp-server.md` can reuse them.
+
+---
+
+## Phase A — The contract and the exclusion
+
+### K0 Accept the drafts — [x]
+Class: plan · Needs: none · Human: the owner accepts, amends or rejects decisions 0165-0175 (each `draft`) and the guardrails and procedures that follow from them; an `active` decision also gets `accepted-by` · Check: `npm run check:guardrails`
+Context: the decisions of this plan are drafts written in one interview. Steps that implement a rejected or amended decision would build the wrong thing, so none starts before this step is `[x]`.
+Do: read decisions 0165-0175; for each, set `status: active` with `accepted-by: <name>`, or amend, or supersede it with a new decision. Set the guardrails and procedures that follow from accepted decisions to `active`. Note in the Result line which were changed.
+Done-when: no decision from 0165 to 0175 is `draft`; the guardrails and procedures they ground are `active` or removed; `npm run check:guardrails` passes. Result line names what changed.
+Result 2026-11-03: the owner (`sergemso`) accepted decisions 0165-0175 as written, with the 2026-11-03 amendments to 0165, 0171 and 0172 (scope as resources, effects in grants, an outcome tier); the seven guardrails and four procedures of this plan are `active`, still advisory (tier 1) until their steps build the checks. `npm run check:guardrails` passes.
+
+### K1 The unit contract in the plan format — [ ]
+Class: implement · Effort: high · Needs: K0 · Check: `node --test compiler/test/plan-unit.test.mjs`
+Context: decision 0165. The step format and parser are in `compiler/src/plan.mjs`; decision 0069 defines `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `npm run check:plans` (`compiler/src/checks/`) parses every plan in `docs/plans/` and rejects an unknown id or a cycle. Today `Needs` lists ids in the same plan only; splitting the roadmap on 2026-11-03 forced two steps (T4, T8 in `docs/plans/throughput.md`) to carry their cross-plan dependencies as prose in `Context`. The existing plans must parse unchanged.
+Do: extend the parser and `go-getter plan status|next` with optional step fields `Scope:` (path globs, interfaces, shared artifacts), `Owner:` (`human`, `agent`, `either`), `Accept:` (a command), `Parent:` (a unit reference), `Priority:` (integer), `Flag:` and `Budget:`; accept `plan#id` in `Needs` and `Parent`; resolve cross-plan references and detect cross-plan cycles in `check plans`; default every new field so a plan without them behaves as before. A unit with no `Scope:` falls back to the paths named in its `Do` text (the rule in `compiler/src/runs/next.mjs`). Move the prose dependencies of T4 and T8 back into `Needs` as `host-adapters#H2`, `automation-first-gates#G1` and `automation-first-gates#G3`.
+Done-when: tests show every field parsed and defaulted, a cross-plan `Needs` resolved, a cross-plan cycle and an unknown cross-plan id rejected, `go-getter plan next` unchanged for the current plans, and `npm run check:plans` passing with T4 and T8 using `plan#id`.
+
+### K2 Claim, lease, heartbeat, release — [ ]
+Class: implement · Effort: high · Needs: K1 · Check: `node --test compiler/test/work-claim.test.mjs`
+Context: decision 0166; guardrails `work-only-under-a-live-claim`, `a-claim-names-its-holder`. Git is already the substrate (checkpoints are hidden refs, `compiler/src/checkpoint.mjs`; worktrees, `compiler/src/worktree.mjs`). Work sources are read through `callSource` in `compiler/src/trackers/worksource.mjs`; tracker writes follow the project's answer (decision 0160, guardrail `tracker-writes-follow-the-answer`) and only through the `plan issue` verbs. No new runtime dependency.
+Do: add `compiler/src/work/claim.mjs` and `go-getter work claim|heartbeat|release <unit>`. A claim creates `refs/go-getter/claims/<unit-id>` on the remote by an atomic push that fails if the ref exists; its content records holder kind (`human|agent|ci`) and id, lease expiry (default 30 min, configurable), brief version (a hash of the unit's text) and last heartbeat. Heartbeat and takeover of an expired lease are compare-and-swap pushes. A state change (claimed, released, expired) posts one comment on the unit's issue when tracker writes allow it; heartbeats never touch the tracker or the working tree. Without a remote, fall back to a local ref and say so. Make `go-getter plan status` compute a unit's state from the ref and merged state, not from a marker alone.
+Done-when: tests with a temporary bare remote show two concurrent claimants with exactly one winning, a heartbeat extending the lease, an expired lease taken over, a release freeing the unit, the holder recorded, heartbeats creating no tracker call and no working-tree change, and a missing remote falling back and saying so.
+
+### K3 `work next`: ready, scope-aware selection — [ ]
+Class: implement · Effort: medium · Needs: K1, K2 · Check: `node --test compiler/test/work-next.test.mjs`
+Context: decisions 0167 item 1 and 0169. Today `go-getter run next` (`compiler/src/runs/next.mjs`) returns up to the free slots and never two steps whose `Do` text names the same path (roadmap step T6). That rule is local to one machine and one plan.
+Do: add `compiler/src/work/scope.mjs` (overlap of two scopes: globs, owned interfaces, shared artifacts) and `compiler/src/work/next.mjs` with `go-getter work next [--owner-kind K] [--dry-run]`. A unit is ready when its `Needs` are `done`, it is not claimed, its scope overlaps no live claim (an overlapping unit is skipped and reported as queued behind that claim), and its `Owner` fits the caller. Make `run next` call the same overlap function so there is one rule. Order by plan order for now (K12 adds priority).
+Done-when: tests show a unit with unmet `Needs` skipped, an overlapping unit queued and reported, `Owner` filtering, `--dry-run` claiming nothing, `run next` returning the same disjoint sets as before for the T6 fixtures, and `node --test compiler/test/run-next.test.mjs` still passing.
+
+## Phase B — Collisions, integration, asks, authority
+
+### K4 Scope gate and change requests — [ ] ‖
+Class: implement · Effort: medium · Needs: K2, K3 · Check: `node --test compiler/test/work-scope-gate.test.mjs`
+Context: decision 0167 item 2; guardrail `a-change-stays-inside-its-units-scope`. The verification gate is `compiler/src/gate.mjs` and `compiler/src/verify.mjs`; `go-getter ship` (`compiler/src/ship.mjs`) runs the step's `Check` before pushing.
+Do: add `compiler/src/work/scope-gate.mjs` and wire it into `verify` and `ship`: the gate lists the paths of the diff and fails when any lies outside the claimed unit's scope, naming the paths. Add `go-getter work request <unit> --to <unit>` that files a change request as a comment on the target unit's issue, or a new child unit under its parent when the project allows tracker writes. Raise the guardrail's enforcement to tier 2 with a `run`.
+Done-when: tests show an in-scope diff passing, an out-of-scope path failing with its name, a change request recorded, and `go-getter verify` passing with the guardrail at tier 2.
+
+### K5 Collision-free artifact ids and generated indexes — [ ] ‖
+Class: implement · Effort: high · Needs: K0 · Check: `node --test compiler/test/artifact-ids.test.mjs`
+Context: decision 0167 item 4; guardrail `artifact-ids-have-no-shared-counter`; evidence in fact 0041. Today facts and decisions take the "next free number" and every artifact adds a row to its directory's `INDEX.md` (`shared/artifact-model.md`, `AGENTS.md`). Artifact code is in `compiler/src/artifacts.mjs`; frontmatter in `compiler/src/frontmatter.mjs`; the tags check is `check tags`.
+Do: add `go-getter artifacts index` that regenerates every `INDEX.md` from frontmatter, a `check` that fails when an index differs from its generation, and `go-getter artifacts assign` that gives a `draft-<unit>-<slug>` fact or decision its final `NNNN` (the highest on the default branch plus one) and rewrites references to it. Update `shared/artifact-model.md` and the filing rule in `AGENTS.md`'s source instruction to say drafts take a unit-scoped id and indexes are generated; keep reading existing `NNNN` artifacts unchanged. Regenerate host files with `go-getter apply` so the plugin copies and the instruction file stay in sync.
+Done-when: tests show the index regenerated byte-identically for the current tree, a hand-edited index failing the check, two draft ids assigned distinct numbers in sequence, and references rewritten; `npm run check:generated`, `check:neutral` and `npm test` pass.
+
+### K6 Merge queue — [ ]
+Class: implement · Effort: high · Needs: K4, K5 · Check: `node --test compiler/test/merge-queue.test.mjs`
+Context: decision 0167 item 3 and 0175 item 3. `go-getter ship` (`compiler/src/ship.mjs`, merged in #242 and reshaped by #269) takes a step from working tree to merge: it checks, pushes, opens the PR, watches CI and squash-merges on green. The gate stack of decision 0158 is `Check`, conform, reviewer, CI. `docs/plans/throughput.md` step T8 plans the stack runner; this step does not duplicate it.
+Do: add `compiler/src/work/queue.mjs` and `go-getter queue enqueue|run|status`. With the queue on (a pack answer), `ship` enqueues instead of merging. The queue takes one change at a time, rebases it on the default branch, reruns the gate that `ship` runs, assigns final artifact ids (K5), and merges on green; a red result returns the unit to its claimant with the failing check, and a failed required check is rerun once before that (0175). Where `gh` reports a native merge queue, use it and keep the same outputs. No daemon: `queue run` is a loop a worker or CI job calls.
+Done-when: tests with a fake `gh` show serial merging, a rebase conflict returning the unit, a red check returned after one rerun, a flake passing on rerun, final ids assigned at merge, and `ship` with the queue off behaving as before.
+
+### K7 Parked asks — [ ] ‖
+Class: implement · Effort: high · Needs: K2 · Check: `node --test compiler/test/work-asks.test.mjs`
+Context: decision 0168; procedure `docs/skills/answering-a-parked-ask.md`. The stop log and its messages are in `compiler/src/gate-stop.mjs` (decision 0159 item 4); approvals are in `compiler/src/commands/approvals.mjs`; the interview verbs have the four triggers of 0155 in `compiler/src/interview.mjs` and `compiler/src/digest.mjs`. Telemetry records metadata only (`telemetry-records-metadata-only`).
+Do: add `compiler/src/work/asks.mjs` and `go-getter work park <unit> --ask FILE`, `work asks [--mine]`, `work answer <ask> <choice>`. Parking sets the unit `parked`, releases the worker, extends the lease to a bounded maximum and records the ask (what is lost or changed, the recommended default, the evidence, class `reversible|irreversible`). Route by the unit's owner chain, then by declared path owners. Apply the timeout policy of 0168 item 3: a reversible ask takes the default and writes a `draft` decision; every other ask escalates up the chain and, past the last owner, marks the unit `blocked-by-human`. Answers record the answerer. Log metadata only (class, wait, outcome), never ask text.
+Done-when: tests show parking freeing the worker and keeping the claim, routing to the owner chain, an answer releasing the unit, a reversible default taken after timeout and logged as a draft, an irreversible ask escalating and never proceeding, and a log record holding no ask text.
+
+### K8 Narrowing grants — [ ] ‖
+Class: implement · Effort: high · Needs: K2 · Check: `node --test compiler/test/work-grant.test.mjs`
+Context: decision 0171; guardrail `a-delegated-grant-never-exceeds-its-parent`. The per-user run record and approved shapes are in `compiler/src/runs/shapes.mjs` and `compiler/src/commands/approvals.mjs` (decision 0130); the store is outside git and an agent cannot write it. Always-human actions are listed in decision 0130 item 4 and 0159 item 2.
+Do: add `compiler/src/work/grant.mjs` and `go-getter work grant <unit> --scope … --spend … --shapes … --asks … --data …`. A grant records scope, spend cap, command shapes, ask policy and data classes in the same protected store, with the issuer; the verb refuses a grant that is not a subset of the issuer's grant on every dimension and refuses any always-human action. A unit's spend counts against every ancestor's cap. The root grant is issued only by `go-getter run`-style human start. Raise the guardrail to tier 2.
+Done-when: tests show a subset grant accepted, a wider one refused on each dimension, an always-human shape refused, spend rolling up to an ancestor's cap and parking the unit as a spend ask, an agent unable to write the store, and `go-getter verify` passing with the guardrail at tier 2.
+
+### K9 Unit lifecycle and recovery — [ ]
+Class: implement · Effort: high · Needs: K2, K7 · Check: `node --test compiler/test/work-lifecycle.test.mjs`
+Context: decision 0173; procedure `docs/skills/handling-a-failed-or-stalled-unit.md`. Checkpoints (hidden refs) are in `compiler/src/checkpoint.mjs`. The run stops of decision 0130 items 6-8 are per run; plan step R1 in `docs/plans/runs-spend-install.md` polishes run reports and should be read first so the two do not diverge.
+Do: add `compiler/src/work/lifecycle.mjs` with the states of 0173 item 1 and the transitions between them; reclaim a lapsed lease from the previous claimant's last checkpoint and branch; enforce the retry budget (two failures per claim, three claimants) and quarantine into an ask to the parent's owner (K7); cancel cascades to unmerged descendants (claims released, open branches closed, merged work untouched); supersede links a successor; a claim pins the brief version and a heartbeat on an older version tells the worker to re-read or release; a repeated guardrail denial parks the unit.
+Done-when: tests show a lapsed lease resumed from the checkpoint, a third failing claimant quarantining the unit and raising an ask, a cancel cascading while leaving merged work, a supersede releasing claims with the pointer, a brief change flagged at the next heartbeat, and a repeated denial parking the unit.
+
+### K10 Tiered validation and acceptance — [ ]
+Class: implement · Effort: high · Needs: K2, K6 · Check: `node --test compiler/test/work-accept.test.mjs`
+Context: decision 0172; guardrail `a-unit-is-accepted-by-someone-other-than-its-author`; procedure `docs/skills/accepting-a-unit.md`. The reviewer agent is read-only (`reviewer-read-only`). Plan step T8 in `docs/plans/throughput.md` plans the gate-stack runner and `audit pick`; this step supplies the plan- and feature-level tiers that step then reuses.
+Do: add `compiler/src/work/accept.mjs` and `go-getter work accept <unit>`: refuse when the caller's worker id holds the unit or any descendant; run the unit's `Accept` command on the merged result (or behind its flag); for a feature also run cross-plan contract checks declared in its `Accept`; give a fresh-context reviewer only the brief and the result. A pass records the result and moves the unit to `done`; a failure re-opens it under its claim with the evidence. Add the escape rule: a defect recorded against a unit as found at a higher level than the one that merged it raises the sampling rate for the level below, and `audit pick` (T8) reads that rate. Make `done` refuse while a required `Accept` has not passed. Raise the guardrail to tier 2.
+Done-when: tests show the author refused, a passing acceptance recording the result, a failing one re-opening the unit, the reviewer given no transcript, `done` refused without a pass, and an escape raising the lower level's sampling rate.
+
+## Phase C — Order, visibility, measurement
+
+### K11 Rebase the dependent steps onto the new layer — [ ]
+Class: review · Needs: K3, K6, K7, K10 · Check: `npm run check:plans && npm run check:guardrails`
+Context: four existing steps overlap this plan and would otherwise duplicate it: T4 redirect hook and T8 gate-stack runner and audit picker and T9 plan drafting from a one-line goal (all in `docs/plans/throughput.md`), and G5 ask-point audit (`docs/plans/automation-first-gates.md`). Also R1 (`docs/plans/runs-spend-install.md`) against K9.
+Do: edit each step in place. T4: the raw-command denial also covers `work` and `queue` verbs with their allow rules. T8: `ship` runs the K6 queue and K10 tiers instead of building a second stack. T9: `plan draft` writes units with `Scope`, `Owner`, `Accept` and runs the K17 decomposition check. G5: the ask-point audit includes the parked-ask queue (K7) and the prompt counter reads per merged unit (0170). R1: drop what K9 covers. Keep issue numbers and done-whens consistent with the edits.
+Done-when: each of T4, T8, T9, G5 and R1 names the K step it uses and no longer describes work K3-K10 do; `npm run check:plans` and `npm run check:guardrails` pass.
+
+### K12 Priority, WIP limits and intake — [ ] ‖
+Class: implement · Effort: medium · Needs: K3 · Check: `node --test compiler/test/work-priority.test.mjs`
+Context: decision 0174 items 1-3. The pack answers for orchestration are in `src/packs/orchestration/pack.json` (adding an answer follows `docs/skills/adding-a-practice-pack.md`); `max-concurrent` is the per-worker default (0156).
+Do: in `compiler/src/work/next.mjs` order ready units by priority (inherited from the parent when unset), then by the length of the longest dependent chain, then by age; add WIP limits per worker and per feature (pack answers `wip-per-worker`, default the value of `max-concurrent`; `wip-per-feature`, default none) that `work next` honours; add intake: a unit is `draft` until it parses, declares scope and `Accept` where required, and its parent's owner approves it (`go-getter work approve <unit>`). Regenerate with `go-getter apply`.
+Done-when: tests show priority inheritance, critical-path ordering, a worker limit and a feature limit each stopping offers, a unit without scope or required `Accept` refused at approval, and `npm run check:generated` passing.
+
+### K13 `work tree`: status computed on read — [ ] ‖
+Class: implement · Effort: medium · Needs: K2, K7, K9 · Check: `node --test compiler/test/work-tree.test.mjs`
+Context: decision 0174 item 4. Status must never be stored in a file (0166). Sources: claim refs (K2), asks (K7), lifecycle (K9), the tracker, merged state.
+Do: add `compiler/src/work/tree.mjs` and `go-getter work tree [--json] [<unit>]` printing the tree with each node's state, a parent's state rolled up from its children, the critical path, units `blocked-by-human` and lapsed leases. Allow a short-lived read cache that holds no authority. Return data from a library function so the MCP read tools can reuse it (`docs/plans/mcp-server.md`, M3).
+Done-when: tests show a roll-up from fixtures of every state, the critical path, the blocked and lapsed lists, JSON output, and no file written by the verb.
+
+### K14 Flow-health metrics — [ ] ‖
+Class: implement · Effort: medium · Needs: K7, K9 · Check: `node --test compiler/test/metrics-flow.test.mjs`
+Context: decision 0170; `go-getter metrics day` is in `compiler/src/metrics/day.mjs` (decision 0154) and must keep its output. Counts and times only (`telemetry-records-metadata-only`).
+Do: add `compiler/src/metrics/flow.mjs` and `go-getter metrics flow [--since D]` reporting human wait per parked ask (p50, p90), the share of unit time `blocked-by-human`, prompts per merged unit, claim conflicts, scope violations and change requests per 100 units, rework per 100 merged, lease expiries, quarantined units, validation escapes per 100 merged units (K10) and, once K15 lands, the flake rate. Print the budget beside each figure when one is set.
+Done-when: tests feed fixtures and get the exact figures, show `metrics day` output unchanged, and show no ask text or command text in the output.
+
+## Phase D — Integration safety, trust, decomposition
+
+### K15 Flags and flaky-check quarantine — [ ] ‖
+Class: implement · Effort: medium · Needs: K6 · Check: `node --test compiler/test/work-flags-quarantine.test.mjs`
+Context: decision 0175. CI checks come through `go-getter ci` and `compiler/src/ci.mjs`; the merge queue is K6.
+Do: add `compiler/src/work/flags.mjs`: a feature's `Flag:` is recorded, its plans may merge behind it, and acceptance (K10) turns it on, a human act when the flag reaches production (0155, 0159). Add `compiler/src/work/quarantine.mjs`: a required check that fails then passes on the same commit with no code change is a flake observation; after three, quarantine it (still run and reported, removed from the required gate), file a unit to fix it, and never quarantine a check that is part of a unit's own `Accept`. Add a per-unit CI-run budget that parks the unit as a spend ask when reached. Add `go-getter lint`-style detection of a flag that outlives its feature.
+Done-when: tests show a flag turning on at acceptance and a production flag asking a human, three flake observations quarantining a check and filing its unit, an `Accept` check never quarantined, a budget reached parking the unit, and a stale flag reported.
+
+### K16 Worker identity and untrusted briefs — [ ] ‖
+Class: implement · Effort: medium · Needs: K2 · Check: `node --test compiler/test/work-brief.test.mjs compiler/test/work-identity.test.mjs`
+Context: decision 0166 item 5; guardrails `a-claim-names-its-holder` and `unit-briefs-are-untrusted-input`. Secret and personal-data patterns are in `compiler/src/secrets/patterns.mjs`. W1 in `docs/plans/worksource-budgets.md` adds the same masking to work-source fields; reuse its function when it lands, otherwise call the patterns directly.
+Do: add `compiler/src/work/brief.mjs` and `go-getter work brief <unit>` printing the unit's brief for a fresh session: the tracker's text is quoted as data under a header that says so, with control characters removed and secrets and personal data masked; authority comes from the grant, never the text. Add the holder check: a claim's holder id must match the author of the commits on the unit's branch (host session id, user or CI job name), flagged at `ship` and in the merge queue. Raise both guardrails to tier 2.
+Done-when: tests show tracker text printed quoted with the data header, an injected instruction in an issue not changing the grant, a secret and an email masked, a mismatched holder flagged, and `go-getter verify` passing with both guardrails at tier 2.
+
+### K17 Delegation and decomposition — [ ]
+Class: implement · Effort: medium · Needs: K1, K8, K12 · Check: `node --test compiler/test/work-decompose.test.mjs`
+Context: decision 0174 item 5; procedure `docs/skills/delegating-a-work-unit.md`. Plan step T9 in `docs/plans/throughput.md` drafts a plan from a goal and will call this check.
+Do: add `compiler/src/work/decompose.mjs` and `go-getter work decompose <unit>`: for a parent and its child units check that sibling scopes are disjoint or ordered by `Needs`, that each child's `Accept` is named by the parent's `Accept`, that budgets sum to no more than the parent's, and that no child's grant exceeds the parent's (K8); report each failure by unit. `work approve` (K12) runs it for parents.
+Done-when: tests show a clean decomposition passing and each of the four failures reported by child, and `work approve` refusing a parent that fails.
+
+## Phase E — Proof and adoption
+
+### K18 Synthetic soak test — [ ]
+Class: implement · Effort: high · Needs: K6, K7, K9, K12 · Check: `node --test compiler/test/work-soak.test.mjs`
+Context: "thousands in parallel" is a claim until tested. The protocol is git refs and local verbs, so it can be simulated on one machine with a temporary bare remote and in-process workers.
+Do: add `compiler/test/support/soak.mjs` and the test: generate 1,000 synthetic units across features with random `Needs`, overlapping scopes and priorities; run 50 in-process workers that pull, work (a fake that succeeds, fails or crashes at random), park asks that a fake human answers after a random delay, and enqueue to the merge queue. Assert: no unit has two holders at once, every non-quarantined unit reaches `done`, no deadlock (a run that stalls fails with the state), overlapping scopes never merge out of order, lapsed leases are reclaimed, and queue throughput and p90 ask wait are printed. Keep the default run under 60 seconds; a `--large` option runs 5,000 units.
+Done-when: the test passes with its assertions on the default size; a deliberately introduced double-claim bug and a deliberately removed lease expiry each make it fail.
+
+### K19 Raise enforcement, update the docs, retire the board — [ ]
+Class: implement · Needs: K4, K5, K8, K10, K13, K16 · Check: `npm run check:plans && npm run check:guardrails && npm run check:generated`
+Context: guardrails were written advisory (tier 1) until their checks existed. The 2026-11-01 roadmap's Resume protocol and Status board are gone from `docs/plans/roadmap.md` already; the working rules still live in `docs/skills/working-a-change.md`, the README and INSTALLING.md.
+Do: set each of the seven guardrails of this plan to its tier-2 enforcement where a step built the check (the claim and artifact-id guardrails get theirs here, from K2 and K5 and K6), update `docs/skills/working-a-change.md` (claim before work, scope, queue, acceptance, no `Progress` line in git), describe the work verbs and the unit model in README.md and INSTALLING.md, regenerate with `go-getter apply`, and run the full `go-getter:lint` skill.
+Done-when: lint reports no errors, every guardrail of this plan is tier 2 or states why not, the three docs describe the claim, scope, queue and acceptance, and the three checks pass.
+
+### K20 Dogfood and measure — [ ]
+Class: review · Needs: K14, K15, K17, K18, K19 · Human: needs a week of real use by at least two actors (two people, or one person and a cloud agent) before the figures mean anything · Check: `go-getter metrics flow`
+Context: baseline for the headline is fact 0040 (about 45 man-hours for about 20 h of attention on 2026-10-31) and decision 0154; flow budgets are set in this step from the first week.
+Do: run three plans of this repository (for example one each from `host-adapters.md`, `mcp-server.md` and `worksource-budgets.md`) as claimed units by two actors in parallel; run `go-getter metrics day` and `metrics flow` for each day; set the flow budgets of 0170; list friction by unit; record the result as a fact and name the next bottleneck as a new step here.
+Done-when: a fact records the measured human minutes per merged unit, the flow figures against their budgets and the friction found, `go-getter:lint` passes, and the next bottleneck is named as a step.

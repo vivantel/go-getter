@@ -1,7 +1,8 @@
 ---
 id: 0001-go-getter-product-scope-and-name
 title: go-getter sets up the agent harness and SDLC practices for AI-driven development with minimal effort
-status: active
+status: superseded
+superseded-by: 0176-go-getter-coordinates-humans-and-agents-to-achieve-outcomes-in-any-domain
 date: 2026-10-04
 tags: [positioning, harness, roadmap]
 track: product

@@ -15,3 +15,4 @@ id,title,tags,status
 0068-post-v0.1-milestone-sequence,"v0.2 hardens the agent core in three waves; git workflow and spec workflow follow in v0.3","milestones, roadmap, harness",superseded
 0128-post-v0.3-milestone-sequence,"v0.4 is the autonomous run contract with approve-once, then testing and memory; adapters, helpers and MCP follow","milestones, roadmap, harness",superseded
 0003-guided-interview-only-setup,"Project setup is a guided interview with recommended defaults, not auto-applied presets","interview, positioning, configuration",superseded
+0001-go-getter-product-scope-and-name,"go-getter sets up the agent harness and SDLC practices for AI-driven development with minimal effort","positioning, harness, roadmap",superseded

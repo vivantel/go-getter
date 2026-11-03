@@ -38,3 +38,5 @@ id,title,tags,status
 0038-virage-integration-surface,"Virage registers MCP and hooks only for Claude Code; its prompt hook injects retrieved chunks without a tool call; it has no secret scan and no restricted-path input","tooling, security, hooks",active
 0039-generated-ci-workflow-is-configurable,"The generated CI workflow takes permissions, concurrency and action refs from an active decision's ci-workflow key",ci,active
 0040-oct-31-throughput-baseline-and-friction,"Oct 31 throughput baseline and where the owner's time went","roadmap, dogfooding, cost",active
+0041-coordination-hotspots-and-contradictions-in-the-current-design,"Where the current design assumes one owner, one machine and shared files, and what contradicts at scale","coordination, roadmap, architecture",active
+0042-the-framework-map,"The framework's entities, how they relate, and which part owns each artifact","coordination, outcomes, architecture",active
