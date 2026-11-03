@@ -9,7 +9,7 @@ export default function worktreeCommand({ args }) {
   try {
     if (sub === 'new') {
       const made = newWorktree(process.cwd(), rest[0], { branch: flag('--branch'), from: flag('--from') });
-      console.log(`${made.path} (${made.branch})`);
+      console.log(`${made.path} (${made.branch})${made.existing ? ' (already exists)' : ''}`);
       return 0;
     }
     if (sub === 'list') {
