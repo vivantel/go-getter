@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-Claim a unit (`go-getter work claim`) before working on it, keep the lease alive, and stop when it lapses. Where the project requires claims (pack answer `require-claims`), `ship` refuses a branch whose unit has no live claim held by the caller. Advisory (tier 1) until work-coordination K2 adds that check.
+Claim a unit (`go-getter work claim`) before working on it, and stop when its lease lapses. Where the project requires claims (pack answer `require-claims`), `ship` refuses a branch whose unit has no live claim held by the caller. Advisory (tier 1) until work-coordination K16 adds that check (it needs the branch-to-unit link).

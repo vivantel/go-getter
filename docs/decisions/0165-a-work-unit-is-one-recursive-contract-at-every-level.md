@@ -20,6 +20,10 @@ go-getter coordinates humans and agents through **work units**. One unit shape s
 
 It extends 0069 (step format) and the hierarchy line of 0117, which said a work source may later declare a hierarchy: the hierarchy now lives in the unit contract, and a source only mirrors it. Decision 0001's scope is unchanged: go-getter coordinates by configuring host agents and by a protocol (0169), and owns no runtime (0015).
 
+## In force
+
+This decision takes effect with K1 (the plan format and ids); until then plans parse as before. Until then the existing practice applies.
+
 ## Why
 
 The reframing target is thousands of units worked in parallel by humans and agents, alone and together. Delegating at plan level (the output of one `roadmap` session) cuts coordination traffic by the number of steps per plan, and a recursive contract lets a feature owner, human or agent, hand plans on without a second tooling path per level.

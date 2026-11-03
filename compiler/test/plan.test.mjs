@@ -152,7 +152,7 @@ test('CLI: plan next and check plans on a fixture project', (t) => {
   assert.equal(all.status, 0);
   assert.match(all.stdout, /^== docs\/plans\/second\.md\n1\. 1 One \(implement\)$/m);
   assert.match(run('plan', 'status').stdout, /^== docs\/plans\/second\.md$/m);
-  assert.equal(run('plan', 'next', '--json').status, 2); // --json needs one plan named
+  assert.equal(run('plan', 'next', '--json').status, 1); // --json needs one plan named
   assert.match(run('plan', 'start', '1').stderr, /several plans in docs\/plans; name one/); // an id is ambiguous across plans
   assert.match(run('plan', 'next', 'docs/plans/second.md').stdout, /^1\. 1 One \(implement\)$/m);
   assert.equal(run('plan', 'bogus').status, 2);
@@ -262,5 +262,20 @@ test('plan start refuses a blocked step', () => {
   const r = spawnSync(process.execPath, [cli, 'plan', 'start', '1'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 1);
   assert.match(r.stderr, /step 1 is blocked \(unblock it first\)/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('plan next with several plans works from a subdirectory of the repository', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-plan-sub-'));
+  execFileSync('git', ['init', '-q'], { cwd: dir, env: cleanGitEnv(process.env) });
+  mkdirSync(path.join(dir, 'docs/plans'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/plans/a.md'), '### 1 Alpha — [ ]\n');
+  writeFileSync(path.join(dir, 'docs/plans/b.md'), '### 1 Beta — [x]\n');
+  const r = spawnSync(process.execPath, [cli, 'plan', 'next'], { cwd: path.join(dir, 'docs'), encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^== docs\/plans\/a\.md\n1\. 1 Alpha \(implement\)$/m);
+  assert.doesNotMatch(r.stdout, /Beta|b\.md/); // a plan with nothing ready prints no header
+  writeFileSync(path.join(dir, 'docs/plans/a.md'), '### 1 Alpha — [x]\n');
+  assert.match(spawnSync(process.execPath, [cli, 'plan', 'next'], { cwd: dir, encoding: 'utf8' }).stdout, /no step is ready in any plan/);
   rmSync(dir, { recursive: true, force: true });
 });

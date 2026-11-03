@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-A new fact or decision is filed as `draft-<unit>-<slug>`; the merge queue assigns its `NNNN`. `INDEX.md` rows are generated from frontmatter and not edited by hand. Advisory (tier 1) until work-coordination K5 and K6 enforce it; until then the filing rule of `AGENTS.md` ("next free number", a row per artifact) applies.
+A new fact or decision is filed as `draft-<unit>-<slug>`; the merge queue assigns its `NNNN`. `INDEX.md` rows are generated from frontmatter and not edited by hand. Advisory (tier 1) until work-coordination K5 and K6 enforce it; until then, and with the queue off, the filing rule of `AGENTS.md` ("next free number", a row per artifact) applies and `check` fails on a duplicate number.

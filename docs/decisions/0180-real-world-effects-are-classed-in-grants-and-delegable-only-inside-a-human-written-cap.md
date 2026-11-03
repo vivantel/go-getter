@@ -18,6 +18,10 @@ accepted-by: sergemso
 6. **Every real-world effect is logged** as metadata (class, amount or zone, unit, holder) and counts toward the unit's and its ancestors' caps.
 7. **A cap reached parks the unit** as an ask (0168).
 
+## In force
+
+This decision takes effect with D5 (effects and `go-getter act`). Until then the existing practice applies.
+
 ## Why
 
 An agent that buys, signs or acts physically needs authority a human can bound. A cap written by a human and narrowed down the tree gives a limited blast radius without a human per action, which "always human" would require and "project's own classes" would leave unsafe by default.

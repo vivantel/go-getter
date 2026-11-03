@@ -18,6 +18,10 @@ go-getter coordinates humans and agents working many units of work in parallel t
 
 This supersedes 0001, whose scope was "the agent harness and SDLC practices for AI-driven development".
 
+## In force
+
+This decision takes effect with D8 (the documents say the scope) and D7 (the skills); the name and packs are unchanged now. Until then the existing practice applies.
+
 ## Why
 
 The owner's goal is a framework that can start a new industry from nothing, not only ship software. Real-world feedback is digitisable (a meter with a refresh rate, read by a person, a service or an agent with a manipulator), so the software-specific parts (paths as scope, tests as acceptance) generalise to resources, meters and reviews. Keeping the name and packs avoids a rename that would break installs, while a new statement of scope removes the contradiction with 0001.

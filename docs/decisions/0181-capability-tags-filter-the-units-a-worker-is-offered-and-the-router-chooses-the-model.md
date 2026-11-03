@@ -15,6 +15,10 @@ accepted-by: sergemso
 3. **A worker advertises what it can do, not which model it will use.** The worker's router picks within the tags.
 4. **`Owner` still says who may do it** (`human`, `agent`, `either`); tags say what they need.
 
+## In force
+
+This decision takes effect with D6 (capability tags). Until then the existing practice applies.
+
 ## Why
 
 One pull protocol should serve people, agents and robots. A hard filter prevents a worker from claiming a unit it cannot do, which wastes claims at scale, and keeping model choice in the router preserves cost routing and the rule that plans never name a model.

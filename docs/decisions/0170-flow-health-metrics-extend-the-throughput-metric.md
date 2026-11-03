@@ -11,7 +11,7 @@ accepted-by: sergemso
 ## Decision
 
 1. **The headline stays.** Human minutes per merged outcome (0154), floor 5-10x and stretch 50x with quality unchanged. An outcome is a merged unit at any level; the unit's level is recorded.
-2. **Flow-health metrics are added**, each computed deterministically from claim refs, the stop and ask logs, the merge queue and CI results, never estimated by an agent, and each with a budget set when the first week of data exists:
+2. **Flow-health metrics are added**, each computed deterministically from the claims ledger, the stop and ask logs, the merge queue and CI results, never estimated by an agent, and each with a budget set when the first week of data exists:
    - human wait per parked ask (p50 and p90) and the share of unit time spent `blocked-by-human`;
    - go-getter approval prompts per merged unit (0159's budget, generalised from per merged PR);
    - claim conflicts, scope violations and change requests per 100 units;
@@ -23,6 +23,10 @@ accepted-by: sergemso
 4. `go-getter metrics day` keeps its output; `metrics flow` (work-coordination K14) adds the above.
 
 It extends 0154 and generalises 0159 item 5; it changes neither.
+
+## In force
+
+This decision takes effect with K14 (`metrics flow`); `metrics day` and its budget (0159 item 5) apply until then. Until then the existing practice applies.
 
 ## Why
 

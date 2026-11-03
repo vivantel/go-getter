@@ -11,9 +11,13 @@ accepted-by: sergemso
 ## Decision
 
 1. **Flags.** A feature whose plans merge before the whole is ready declares a `Flag`. Its plans merge to the default branch behind that flag, and the flag is turned on by the feature's acceptance (0172). Turning on a flag that reaches production is a release-level act and stays human (0155, 0159 item 2); a flag for a free channel (0162) does not.
-2. **Flaky checks.** A required check that fails and then passes on the same commit with no code change is **flaky**. After three observations it is quarantined: removed from the required gate, still run and reported, and owned by a unit that go-getter files automatically with the evidence. A check that is part of a unit's own `Accept` is never quarantined.
+2. **Flaky checks.** A required check that fails and then passes on the same commit with no code change is **flaky**. After three observations it is quarantined: removed from go-getter's own gate layer (the host's required status checks are repository settings and change only by a human, 0171 item 4), still run and reported, and owned by a unit that go-getter files automatically with the evidence. A check that is part of a unit's own `Accept` is never quarantined.
 3. **A flake does not stall the queue.** The merge queue (0167) reruns a failed required check once before returning the unit to its claimant; a second failure is a real failure.
 4. **CI capacity is a budget.** A unit's budget (0165) bounds its CI runs; the merge queue may batch units that pass together. Reaching the bound parks the unit as a spend ask (0168).
+
+## In force
+
+This decision takes effect with K15 (flags and quarantine). Until then the existing practice applies.
 
 ## Why
 

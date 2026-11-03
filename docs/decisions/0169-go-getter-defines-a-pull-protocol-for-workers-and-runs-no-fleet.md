@@ -15,6 +15,10 @@ accepted-by: sergemso
 3. **Dispatch is the operator's choice.** Who starts workers, and how many, is outside go-getter (a person starting sessions, a CI schedule, a cloud agent service). `work next` is safe to call from any number of them.
 4. **Starting is still a human act at the root.** A human starts the root claim (0130 item 1); below it, delegation follows narrowing grants (0171).
 
+## In force
+
+This decision takes effect with K3 (`work next`) and K2 (`claim`, `heartbeat`, `release`), each for its own verb. Until then the existing practice applies.
+
 ## Why
 
 Thousands of units cannot run on one machine, and a central coordinator is a runtime to host, secure and keep alive, against 0015 (configure host agents, own no runtime) and `no-runtime-dependencies`. A pull protocol over git keeps one source of truth that every host and every human already has.

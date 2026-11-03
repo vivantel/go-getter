@@ -27,6 +27,10 @@ accepted-by: sergemso
 
 It extends 0158 from the PR to every level and keeps 0013 and `release-requires-passing-gate` as the product tier.
 
+## In force
+
+This decision takes effect with K10 (acceptance); until then the PR-level stack of 0158 is the only validation. Until then the existing practice applies.
+
 ## Why
 
 0158 defines validation for one PR. A feature built from hundreds of PRs can be wrong while each PR is green, and a 20% sample of PRs cannot find that. Putting an independent acceptance at each level the owner delegates gives a quality bar that grows with the size of the outcome, while cheap steps stay cheap.

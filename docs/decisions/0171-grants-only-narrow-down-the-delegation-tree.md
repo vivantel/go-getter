@@ -15,10 +15,14 @@ accepted-by: sergemso
 3. **The root is human.** A human starts the root claim and issues the first grant (0130 item 1, 0169). Everything below can be issued by an agent within its grant, so no human act is needed per worker.
 4. **Never delegable,** whatever the grant (0130 item 4, 0159 item 2): force-push, history rewrite, deleting a shared branch, repository settings or branch protection, tags, releases and publishing to a channel not declared free.
 5. **Spend rolls up.** A unit's spend counts against every ancestor's cap; a cap reached parks the unit as an ask of class spend (0168).
-6. **Only a human writes the root grant.** The root entry must verify as signed by a listed human identity (git SSH signing); until signing exists it is accepted only when pushed by an identity listed with kind `human` in `docs/workers.md`. Every reader re-checks that each child entry's grant is a subset of its parent entry's and ignores one that is not, so a forged or widened grant has no effect. The per-user run record that starts a root run (0130) keeps its protection from an agent's writes; the trust assumption is the authenticity of the root entry, which this decision states and does not hide.
-7. **Per host.** On a host with no blocking pre-tool hook (Copilot, Kilo, OpenCode) a grant's scope, command shapes and spend are advisory and `go-getter coverage` says so; grants over money, physical and legal effects are issued only to workers on hosts with a blocking hook, or where `go-getter act` is the sole path to the effect (0180 item 5).
+6. **Only a human writes the root grant, and grants cannot be edited.** An entry's grant is immutable once written, and a reader ignores an entry whose grant is not a subset of its parent entry's or whose creating commit was not authored by the named issuer (0166 item 5). The root entry must be authored by an identity listed with kind `human` in `docs/workers.md`, which is a path only a human may change (a restricted path with required human review), and verify as signed once signing exists. Until then this check is **advisory**: an agent that pushes with a human's credentials passes it, so the trust assumption is that credentials are not shared with agents and that the host protects refs under `refs/go-getter/` from force-update and deletion (not every host does). The per-user run record that starts a root run (0130) keeps its protection from an agent's writes.
+7. **Per host.** Where `go-getter coverage` shows the hook layer of a host as advisory for human-in-the-loop, a grant's scope, command shapes and spend are advisory there and the report says so; grants over money, physical and legal effects are issued only to workers on a host with a blocking hook for them, or where `go-getter act` is the sole path to the effect (0180 item 5).
 
 It narrows 0130 item 1: starting a run remains human, but delegating below the root no longer needs a person for each worker.
+
+## In force
+
+This decision takes effect with K8 (grants) and, for effects, `discovery-and-outcomes.md` D5. Until then the existing practice applies.
 
 ## Why
 

@@ -17,6 +17,10 @@ accepted-by: sergemso
 5. **Failure is information.** A missed target or a broken attribution does not fail the delivery units; it re-opens the outcome in discover, which may keep, change or drop the hypothesis. The units' own acceptance (0172 lower tiers) stands.
 6. **Slice outcomes where possible.** A brief should name an early meter with a short window beside the final one, so a wrong direction shows before the long window ends.
 
+## In force
+
+This decision takes effect with D4 (acceptance by meter). Until then the existing practice applies.
+
 ## Why
 
 A metric moving does not prove a change moved it. Requiring the attribution method up front, and a window, turns a reading into evidence, at the cost of design effort and waiting that a target-only rule skips.

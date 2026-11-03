@@ -63,7 +63,7 @@ async function readStdin() {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-export default async function planCommand({ args }) {
+export default async function planCommand({ args, shared }) {
   const [sub, ...rest] = args;
   if (sub === 'issue') {
     const o = parseIssueArgs(rest);
@@ -92,28 +92,39 @@ export default async function planCommand({ args }) {
   }
   const cwd = process.cwd();
   // status and next with no plan named read every active plan, one header each; start and done need a name.
-  if (!opts.plan && (sub === 'status' || sub === 'next')) {
-    const active = activePlanFiles(repoRoot(cwd));
+  if (!opts.plan && !shared && (sub === 'status' || sub === 'next')) {
+    const root = repoRoot(cwd);
+    const active = activePlanFiles(root);
     if (active.length > 1) {
       if (opts.json) {
         console.error(`plan ${sub}: --json with several plans in docs/plans needs one named (${active.join(', ')})`);
-        return 2;
+        return 1;
       }
+      // the plans share one staleness check, so the fetch and the warning happen once, not once per plan
+      const stale = planStaleness(root);
+      const warning = staleWarning(stale, currentBranch(cwd));
+      if (warning) console.error(warning);
       let code = 0;
+      let anyReady = false;
       for (const rel of active) {
         const lines = [];
-        const log = console.log;
+        const { log, error } = console;
         console.log = (...a) => lines.push(a.join(' '));
+        console.error = (...a) => lines.push(a.join(' '));
         let c;
         try {
-          c = await planCommand({ args: [sub, rel, ...(opts.fromDefault ? ['--from-default'] : [])] });
+          c = await planCommand({ args: [sub, path.join(root, rel), ...(opts.fromDefault ? ['--from-default'] : [])], shared: { stale } });
         } finally {
           console.log = log;
+          console.error = error;
         }
         code = Math.max(code, c);
         const text = lines.join('\n');
-        if (sub === 'status' || !/^no step is ready/.test(text)) console.log(`== ${rel}\n${text}`);
+        const empty = sub === 'next' && /^no step is ready/.test(text);
+        if (!empty) anyReady = true;
+        if (sub === 'status' || !empty) console.log(`== ${rel}\n${text}`);
       }
+      if (sub === 'next' && !anyReady) console.log('no step is ready in any plan: every pending step needs one that is not done');
       return code;
     }
   }
@@ -139,8 +150,8 @@ export default async function planCommand({ args }) {
       console.error(`${opts.id}: check failed (${r.check}); marker unchanged\n${r.output}`);
       return 1;
     }
-    const stale = planStaleness(repoRoot(cwd));
-    const warning = staleWarning(stale, currentBranch(cwd));
+    const stale = shared?.stale ?? planStaleness(repoRoot(cwd));
+    const warning = shared ? null : staleWarning(stale, currentBranch(cwd));
     if (warning) console.error(warning);
     if (opts.fromDefault && stale.base) {
       const plan = planFromDefault(repoRoot(cwd), file, stale.base);

@@ -23,7 +23,7 @@ States the vocabulary of decisions 0165-0181 once. If this fact and a decision d
 | Reading | datum and unit | One measurement; a `measure` unit any capable worker claims | `refs/go-getter/readings/<meter>/<period>`, git refs outside the working tree |
 | Operating charter | artifact | What is live, owner, health meters and thresholds, escalation, retirement (0177) | `docs/operations/<id>.md` |
 | Incident unit, recurring unit | units | Unscheduled work from a crossed threshold; scheduled maintenance | plans, under the outcome that needs them |
-| Grant | authority | A subset of the parent's: scope, spend, command shapes, asks, data classes, effects with caps (0171, 0180) | per-user store outside git |
+| Grant | authority | A subset of the parent's: scope, spend, command shapes, asks, data classes, effects with caps (0171, 0180) | a field of the unit's claims-ledger entry (0171) |
 | Knowledge artifacts | decisions, facts, guardrails, procedures | What `/roadmap` and `capture` produce | `docs/{decisions,facts,guardrails,skills}/` |
 
 **Relations:** an outcome names one or more meters, and a meter can serve several outcomes. An outcome is served by one or more features, whose outcome-tier `Accept` points at it (0172). A feature has plans, a plan has steps. A unit has zero or one live claim, and a claim has one holder. A unit has one grant. A scheduled meter creates reading units over time. An operating charter serves one outcome and names the meters it watches.
