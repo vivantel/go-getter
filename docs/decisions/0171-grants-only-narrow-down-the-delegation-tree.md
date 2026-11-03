@@ -16,6 +16,7 @@ accepted-by: sergemso
 4. **Never delegable,** whatever the grant (0130 item 4, 0159 item 2): force-push, history rewrite, deleting a shared branch, repository settings or branch protection, tags, releases and publishing to a channel not declared free.
 5. **Spend rolls up.** A unit's spend counts against every ancestor's cap; a cap reached parks the unit as an ask of class spend (0168).
 6. **Grants are not state an agent can write for itself:** the store has the same protection as the approvals store; the hook reads it.
+7. **Per host.** On a host with no blocking pre-tool hook (Copilot, Kilo, OpenCode) a grant's scope, command shapes and spend are advisory and `go-getter coverage` says so; grants over money, physical and legal effects are issued only to workers on hosts with a blocking hook, or where `go-getter act` is the sole path to the effect (0180 item 5).
 
 It narrows 0130 item 1: starting a run remains human, but delegating below the root no longer needs a person for each worker.
 

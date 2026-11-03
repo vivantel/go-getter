@@ -14,13 +14,13 @@ States the vocabulary of decisions 0165-0181 once. If this fact and a decision d
 
 | Term | Kind | What it is | Lives in |
 |---|---|---|---|
-| Worker | actor | A human, agent or CI job that pulls units and holds claims; it has capability tags | named by a claim; no file |
+| Worker | actor | A human, agent or CI job that pulls units and holds claims; it has capability tags | named by a claim; listed in `docs/workers.md` when it uses the tracker front door |
 | Unit | work contract | One shape at every level (0165) | a plan file, a claim ref, a tracker issue |
 | Product, feature, plan, step | unit levels | Labels on units: a feature is one file under `docs/plans/`, a phase of it is a plan, a plan's checklist items are steps | `docs/plans/` |
 | Roadmap | skill and index | The `/roadmap` skill (decompose) and `docs/plans/roadmap.md` (the product index); not an artifact type | `src/skills/roadmap/`, `docs/plans/roadmap.md` |
 | Outcome brief | artifact | Hypothesis, meters, target, window, attribution, budget, caps (0178) | `docs/outcomes/<id>.md` |
 | Meter | artifact | An instrument: source, refresh rate, cost, noise (0179) | `docs/meters/<id>.md` |
-| Reading | datum and unit | One measurement; a `measure` unit any capable worker claims | `refs/go-getter/readings/<meter>`, a git ref outside the working tree |
+| Reading | datum and unit | One measurement; a `measure` unit any capable worker claims | `refs/go-getter/readings/<meter>/<period>`, git refs outside the working tree |
 | Operating charter | artifact | What is live, owner, health meters and thresholds, escalation, retirement (0177) | `docs/operations/<id>.md` |
 | Incident unit, recurring unit | units | Unscheduled work from a crossed threshold; scheduled maintenance | plans, under the outcome that needs them |
 | Grant | authority | A subset of the parent's: scope, spend, command shapes, asks, data classes, effects with caps (0171, 0180) | per-user store outside git |

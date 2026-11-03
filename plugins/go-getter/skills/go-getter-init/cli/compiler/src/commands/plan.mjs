@@ -2,7 +2,7 @@
 // issue create|comment|close <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]:
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
-import { resolvePlan, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
+import { resolvePlan, activePlanFiles, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
 import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
@@ -91,6 +91,32 @@ export default async function planCommand({ args }) {
     return 2;
   }
   const cwd = process.cwd();
+  // status and next with no plan named read every active plan, one header each; start and done need a name.
+  if (!opts.plan && (sub === 'status' || sub === 'next')) {
+    const active = activePlanFiles(repoRoot(cwd));
+    if (active.length > 1) {
+      if (opts.json) {
+        console.error(`plan ${sub}: --json with several plans in docs/plans needs one named (${active.join(', ')})`);
+        return 2;
+      }
+      let code = 0;
+      for (const rel of active) {
+        const lines = [];
+        const log = console.log;
+        console.log = (...a) => lines.push(a.join(' '));
+        let c;
+        try {
+          c = await planCommand({ args: [sub, rel, ...(opts.fromDefault ? ['--from-default'] : [])] });
+        } finally {
+          console.log = log;
+        }
+        code = Math.max(code, c);
+        const text = lines.join('\n');
+        if (sub === 'status' || !/^no step is ready/.test(text)) console.log(`== ${rel}\n${text}`);
+      }
+      return code;
+    }
+  }
   try {
     const file = resolvePlan(cwd, opts.plan);
     const rel = path.relative(cwd, file);

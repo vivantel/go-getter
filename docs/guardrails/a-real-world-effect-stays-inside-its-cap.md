@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-Take a money, physical or legal action only inside the cap in your grant. An action whose class is unknown, or that would exceed the cap, is not taken: park the unit with an ask (0168). Advisory (tier 1) until discovery-and-outcomes D5 adds the check.
+Take a money, physical or legal action only through `go-getter act` and inside the cap in your grant. An action whose class is unknown, or that would exceed the cap, is not taken: park the unit with an ask (0168). Advisory (tier 1) until discovery-and-outcomes D5 adds the check.

@@ -148,7 +148,12 @@ test('CLI: plan next and check plans on a fixture project', (t) => {
   assert.match(check.stderr, /archive\/old\.md:1: step 1 needs unknown step 2/);
   assert.equal(run('plan', 'next').status, 0); // archived plans are not candidates for the default plan
   writeFileSync(path.join(dir, 'docs/plans/second.md'), '### 1 One — [ ]\n');
-  assert.match(run('plan', 'next').stderr, /several plans in docs\/plans; name one/);
+  const all = run('plan', 'next'); // several active plans: each is read under its own header
+  assert.equal(all.status, 0);
+  assert.match(all.stdout, /^== docs\/plans\/second\.md\n1\. 1 One \(implement\)$/m);
+  assert.match(run('plan', 'status').stdout, /^== docs\/plans\/second\.md$/m);
+  assert.equal(run('plan', 'next', '--json').status, 2); // --json needs one plan named
+  assert.match(run('plan', 'start', '1').stderr, /several plans in docs\/plans; name one/); // an id is ambiguous across plans
   assert.match(run('plan', 'next', 'docs/plans/second.md').stdout, /^1\. 1 One \(implement\)$/m);
   assert.equal(run('plan', 'bogus').status, 2);
 });
@@ -248,4 +253,14 @@ test('the roadmap and refactor-plan skills emit the step fields and end with pla
     const text = readFileSync(path.join(root, 'src/skills', skill, 'SKILL.md'), 'utf8');
     for (const want of ['Class:', 'Needs:', 'Check:', 'Done-when:', 'go-getter plan next']) assert.ok(text.includes(want), `${skill} names ${want}`);
   }
+});
+
+test('plan start refuses a blocked step', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-plan-blocked-'));
+  mkdirSync(path.join(dir, 'docs/plans'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/plans/p.md'), '### 1 Held — [!]\nNeeds: none\n');
+  const r = spawnSync(process.execPath, [cli, 'plan', 'start', '1'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /step 1 is blocked \(unblock it first\)/);
+  rmSync(dir, { recursive: true, force: true });
 });
