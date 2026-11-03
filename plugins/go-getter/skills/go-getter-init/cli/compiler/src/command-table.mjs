@@ -13,7 +13,7 @@ export const COMMANDS = [
   { name: 'apply', usage: 'apply [--hosts <h1,h2>|all] [--check] [--force] | apply --remove [--dry-run]' },
   { name: 'update', usage: 'update [--yes] [--dry-run] [--force]' },
   { name: 'coverage', usage: 'coverage [--json]' },
-  { name: 'plan', usage: 'plan status|next|start|done|issue' },
+  { name: 'plan', usage: 'plan status|next|start|done|issue|draft|approve' },
   { name: 'run', usage: 'run start|status|next|attempt|end' },
   { name: 'worktree', usage: 'worktree new|list|clean' },
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },

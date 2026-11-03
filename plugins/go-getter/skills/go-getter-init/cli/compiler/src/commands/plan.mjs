@@ -10,8 +10,10 @@ import { callSource } from '../trackers/worksource.mjs';
 import { planStaleness, planFromDefault, staleWarning } from '../plan-stale.mjs';
 import { cleanGitEnv } from '../git-env.mjs';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { draftPlan, approvePlan, defaultPlanner, defaultReviewer, commandRunner } from '../plan-draft.mjs';
 
-const USAGE = `usage: go-getter plan status|next [plan] [--json] [--from-default] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]`;
+const USAGE = `usage: go-getter plan status|next [plan] [--json] [--from-default] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned] | draft "<goal>" [--planner <cmd>] [--reviewer <cmd>] [--risk <file>] | approve [plan]`;
 
 function parseArgs(sub, rest) {
   const flags = { json: false };
@@ -86,6 +88,52 @@ export default async function planCommand({ args, shared, io }) {
       return r.ok ? 0 : 1;
     } catch (err) {
       console.error(`plan issue ${o.verb}: ${err.message.split('\n')[0]}`);
+      return 1;
+    }
+  }
+  if (sub === 'draft') {
+    const o = { goal: [] };
+    for (let i = 0; i < rest.length; i++) {
+      if (['--planner', '--reviewer', '--risk'].includes(rest[i]) && rest[i + 1] !== undefined) o[rest[i].slice(2)] = rest[++i];
+      else if (rest[i].startsWith('--')) o.bad = true;
+      else o.goal.push(rest[i]);
+    }
+    if (o.bad || o.goal.length !== 1) {
+      console.error(USAGE);
+      return 2;
+    }
+    try {
+      const project = repoRoot(process.cwd());
+      const r = await draftPlan(project, o.goal[0], {
+        planner: o.planner ? commandRunner(o.planner, project) : defaultPlanner,
+        reviewer: o.reviewer ? commandRunner(o.reviewer, project) : defaultReviewer,
+        risk: o.risk ? JSON.parse(readFileSync(path.resolve(o.risk), 'utf8')) : {},
+      });
+      if (r.stopped) {
+        console.error(`plan draft: stopped at "${r.stopped.question}": ${r.stopped.triggers.map((t) => `${t.trigger} (${t.reason})`).join('; ')}`);
+        return 3;
+      }
+      const rel = path.relative(process.cwd(), r.file);
+      console.log(`${rel}: ${r.steps} steps, ${r.defaulted.length} defaulted decision${r.defaulted.length === 1 ? '' : 's'} logged as drafts\nnot started: a person approves the plan once with: go-getter plan approve ${rel}`);
+      return 0;
+    } catch (e) {
+      console.error(`plan draft: ${e.message.split('\n')[0]}`);
+      return 1;
+    }
+  }
+  if (sub === 'approve') {
+    if (rest.length > 1 || rest[0]?.startsWith('--')) {
+      console.error(USAGE);
+      return 2;
+    }
+    try {
+      const file = resolvePlan(process.cwd(), rest[0]);
+      const by = process.env.GIT_AUTHOR_NAME || execFileSync('git', ['config', 'user.name'], { env: cleanGitEnv(process.env), encoding: 'utf8' }).trim();
+      const r = approvePlan(file, { by });
+      console.log(r.changed ? `${path.relative(process.cwd(), file)}: ${r.text}` : `already ${r.text}`);
+      return 0;
+    } catch (e) {
+      console.error(`plan approve: ${e.message.split('\n')[0]}`);
       return 1;
     }
   }

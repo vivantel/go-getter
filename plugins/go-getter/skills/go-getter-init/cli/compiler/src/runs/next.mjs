@@ -3,7 +3,8 @@
 // Decision 0156: beyond that first step, `steps` also lists later pending steps for the free agent slots, never two whose
 // `Do` text names the same file and never one whose `Needs` are not done.
 import path from 'node:path';
-import { readPlan } from '../plan.mjs';
+import { readFileSync } from 'node:fs';
+import { readPlan, unapprovedReason } from '../plan.mjs';
 import { readLog } from '../telemetry/record.mjs';
 import { activeRun, noteStop } from './record.mjs';
 import { recordRunSpend } from '../spend/index.mjs';
@@ -21,6 +22,23 @@ export function spentUsd(project, run) {
 // File paths a step's `Do` text names: a path with a directory, or a bare name with a known extension.
 const FILE = /(?:[\w.@-]+\/)+[\w@-][\w.@-]*\.[A-Za-z][\w]*|\b[\w@-]+\.(?:mjs|cjs|js|ts|json|md|ya?ml|toml|sh|txt)\b/g;
 export const filesOf = (text) => new Set((String(text ?? '').match(FILE) ?? []).map((f) => f.replace(/^\.\//, '')));
+
+// A brief a fresh session can work from with no other prompt: the plan's goal, the step's why, files, do, done-when and check.
+export function stepBrief(file, step, text = readFileSync(file, 'utf8')) {
+  const goal = /^\*\*Goal\*\*:\s*(.+)$/m.exec(text)?.[1];
+  const f = step.fields;
+  const files = [...new Set([...(f.Files ?? '').split(/\s*,\s*/).filter(Boolean), ...filesOf(f.Do)])];
+  return [
+    `Step ${step.id} of ${path.basename(file)}: ${step.title}`,
+    ...(goal ? [`Goal of the plan: ${goal}`] : []),
+    `Why: ${f.Why ?? f.Context ?? goal ?? 'see the plan'}`,
+    `Files: ${files.length ? files.join(', ') : 'not named; find them from the Do text'}`,
+    ...(f.Do ? [`Do: ${f.Do}`] : []),
+    `Done-when: ${step.doneWhen ?? 'the Check passes'}`,
+    ...(step.check ? [`Check: ${step.check}`] : []),
+    'Work in your own worktree; mark the step with `go-getter plan start` and `go-getter plan done`.',
+  ].join('\n');
+}
 
 // Agent slots free for this run: the concurrency limit less the linked worktrees other than this one (at least 1).
 function freeSlots(project) {
@@ -47,9 +65,12 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
   if (run.spendCapUsd && spent >= run.spendCapUsd) return stop('spend-cap', `spend $${spent.toFixed(2)} has reached the cap of $${run.spendCapUsd}`);
   const plan = readPlan(path.join(project, run.plan));
   const byId = new Map(plan.steps.map((s) => [s.id, s]));
+  const planText = readFileSync(path.join(project, run.plan), 'utf8');
+  const unapproved = unapprovedReason(path.join(project, run.plan));
   for (const id of run.steps) {
     const step = byId.get(id);
     if (!step || ['done', 'moved'].includes(step.state)) continue;
+    if (unapproved) return stop('plan-unapproved', unapproved, id);
     if (step.human) return stop('human-needed', `step ${id} needs a person: ${step.human}`, id);
     if (step.state === 'blocked') return stop('human-needed', `step ${id} is blocked`, id);
     const attempts = run.counters?.attempts?.[id] ?? 0;
@@ -58,7 +79,7 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
     if (repeated) return stop('repeated-denial', `step ${id} was denied ${repeated[1]} times by ${repeated[0]}`, id);
     const open = step.needs.filter((n) => byId.get(n)?.state !== 'done');
     if (open.length) return stop('needs-open', `step ${id} needs ${open.join(', ')}, which is not done`, id);
-    const brief = (st, n) => ({ id: st.id, title: st.title, state: st.state, check: st.check ?? null, doneWhen: st.doneWhen ?? null, ...(st.fields.Issue ? { issue: st.fields.Issue } : {}), attempts: n });
+    const brief = (st, n) => ({ id: st.id, title: st.title, state: st.state, check: st.check ?? null, doneWhen: st.doneWhen ?? null, brief: stepBrief(path.join(project, run.plan), st, planText), ...(st.fields.Issue ? { issue: st.fields.Issue } : {}), attempts: n });
     const first = brief(step, attempts);
     const steps = [first];
     const taken = filesOf(step.fields.Do);

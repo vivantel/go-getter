@@ -70,12 +70,13 @@ Context: also needs G3 (`automation-first-gates.md`, done). Decision 0158. The r
 Do: make `ship` run, in order, the step `Check`, a conform pass, a reviewer pass on a fresh context given only the diff, brief and decisions, then CI, and record each result in the run record; add `go-getter audit pick` choosing about 20% of merged PRs at random plus every PR the reviewer flagged, written to the digest. A failed audit must be recordable as a new check, guardrail or reviewer instruction (`audit fail <pr> --as check|guardrail|instruction`).
 Done-when: tests show `ship` refusing to merge when any gate fails, the reviewer pass receiving no author transcript, the picker including all flagged PRs and a seeded random sample, and an audit failure creating the follow-up artifact stub.
 
-### T9 Plan drafting from a one-line goal — [ ]
+### T9 Plan drafting from a one-line goal — [x]
 Not blocked (decision 0182): build on today's plan format; `work-coordination.md` K11 later adds units with `Scope`, `Owner`, `Accept` and the K17 check. K1 restores `Needs: T7`.
 Class: implement · Needs: T7 · Check: `node --test compiler/test/plan-draft.test.mjs`
 Context: today the owner interviews, then hand-writes prompts for new sessions. The roadmap skill produces plans in the `go-getter plan` format; the planner agent is read-only. `go-getter run` hands the next step to a session.
 Do: add `go-getter plan draft "<goal>"`: run the unattended interview (T7) through the planner and reviewer agents, write the plan with `Check` commands and `‖` markers, and stop at the single plan approval of 0155. Make `go-getter run next` emit a self-contained brief for a fresh session from a step, so no prompt is hand-written.
 Done-when: tests show a goal producing a plan that `go-getter plan next` parses, every step having a `Check`, an approval recorded before any step starts, and `run next` printing a brief that names files, the why and the done-when.
+Result 2026-11-04 · `go-getter plan draft "<goal>" [--planner <cmd>] [--reviewer <cmd>] [--risk <file>]` (`compiler/src/plan-draft.mjs`): pluggable JSON-over-stdin runners, built-in deterministic ones make no model call; open questions take their recommended option through the T7 draft decisions and triggers; the plan is written with `**Approval**: pending`, `plan approve` records it, and `plan start` and `run next` refuse until then (stop `plan-unapproved`); `run next` steps carry a self-contained `brief`. Not done: K-layer fields (Scope/Owner/Accept); `plan approve` is not yet refused to an agent by the pre-tool hook.
 
 ### T10 Measure against the baseline — [ ]
 Class: review · Needs: T1, T4, T5, T6, T8, T9 · Human: run it as soon as those land, before the K plan finishes (0182);  needs a week of real use before the figures mean anything · Check: `go-getter metrics day`

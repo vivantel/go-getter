@@ -186,6 +186,7 @@
         "cli/compiler/src/mcp.mjs",
         "cli/compiler/src/metrics/day.mjs",
         "cli/compiler/src/packs.mjs",
+        "cli/compiler/src/plan-draft.mjs",
         "cli/compiler/src/plan-stale.mjs",
         "cli/compiler/src/plan.mjs",
         "cli/compiler/src/plugin-pin.mjs",
