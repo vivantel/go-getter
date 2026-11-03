@@ -164,7 +164,8 @@ test('worktree new creates a sibling worktree on a new branch and list shows it'
   assert.deepEqual(listWorktrees(dir).map((t) => [path.basename(t.path), t.branch, t.main]), [['app', 'main', true], ['login', 'feat/login', false]]);
   const out = spawnSync('node', [cli, 'worktree', 'list', '--json'], { cwd: made.path, encoding: 'utf8' });
   assert.equal(JSON.parse(out.stdout).length, 2);
-  assert.throws(() => newWorktree(dir, 'login'), /already exists|already/);
+  assert.deepEqual(newWorktree(dir, 'login'), { path: made.path, branch: 'feat/login', existing: true }, 'a second call returns the same worktree');
+  assert.throws(() => newWorktree(dir, 'other', { branch: 'feat/login' }), /already exists/, 'a new slug cannot take over a used branch name');
   assert.throws(() => newWorktree(dir, 'Bad Slug'), /slug/);
   rmSync(parent, { recursive: true, force: true });
 });
