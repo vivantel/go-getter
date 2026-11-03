@@ -128,6 +128,7 @@
         "cli/compiler/src/checks/tags.mjs",
         "cli/compiler/src/checks/versions.mjs",
         "cli/compiler/src/ci.mjs",
+        "cli/compiler/src/command-table.mjs",
         "cli/compiler/src/commands/.gitkeep",
         "cli/compiler/src/commands/apply.mjs",
         "cli/compiler/src/commands/approvals.mjs",

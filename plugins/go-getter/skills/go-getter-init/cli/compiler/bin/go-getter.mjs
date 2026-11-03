@@ -1,18 +1,23 @@
 #!/usr/bin/env node
-// go-getter CLI. Each command is a module under compiler/src/commands/ or compiler/src/checks/;
-// commands not implemented yet report so and exit 0, so npm scripts stay wired from day one.
+// go-getter CLI. Each command is a module under compiler/src/commands/ or compiler/src/checks/, listed in
+// compiler/src/command-table.mjs. An unknown command or check name exits 2, so a step whose Check names a verb
+// that does not exist yet cannot pass.
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import { isCommand, usageLine } from '../src/command-table.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const [command, ...args] = process.argv.slice(2);
 
+const checkNames = () => readdirSync(path.join(root, 'compiler/src/checks')).filter((f) => f.endsWith('.mjs')).map((f) => f.slice(0, -4)).sort();
+
 async function run(modulePath, label, rest) {
   const file = path.join(root, modulePath);
-  if (!existsSync(file)) {
-    console.log(`go-getter ${label}: not yet implemented`);
-    return 0;
+  if (!modulePath || !existsSync(file)) {
+    console.error(`go-getter: unknown ${label.startsWith('check ') ? 'check' : 'command'} "${label.replace(/^check /, '')}"`);
+    console.error(label.startsWith('check ') ? `checks: ${checkNames().join(', ')}` : usageLine());
+    return 2;
   }
   const mod = await import(file);
   return (await mod.default({ root, args: rest })) ?? 0;
@@ -23,14 +28,19 @@ async function main() {
     case undefined:
     case '--help':
     case 'help':
-      console.log('usage: go-getter <build|check <name>|detect|doctor|render-pack|interview|apply|update|plan|checkpoint|refs|pr|ship|mcp serve|secret|approvals|run|sandbox|route|routing calibrate|verify|ci status|watch|metrics day|digest|eval> [args]');
+      console.log(usageLine());
       return 0;
     case 'check': {
       const [name, ...rest] = args;
       if (!name || name.startsWith('--')) return run('compiler/src/commands/check.mjs', 'check', args);
-      return run(`compiler/src/checks/${name}.mjs`, `check ${name}`, rest);
+      return run(checkNames().includes(name) ? `compiler/src/checks/${name}.mjs` : '', `check ${name}`, rest);
     }
     default:
+      if (!isCommand(command)) {
+        console.error(`go-getter: unknown command "${command}"`);
+        console.error(usageLine());
+        return 2;
+      }
       return run(`compiler/src/commands/${command}.mjs`, command, args);
   }
 }
