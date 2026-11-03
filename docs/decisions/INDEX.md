@@ -148,3 +148,4 @@ id,title,tags,status
 0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
 0162-gated-free-channels,"Release and publish channels that run without asking are listed","practice-packs, hooks",draft
 0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request,"ship means the whole way to merge, and pr is the verb for stopping at the pull request","hooks, enforcement, dogfooding",active
+0164-plan-delivery,"A plan is delivered one pull request per step","practice-packs, git-hooks, guardrail",draft
