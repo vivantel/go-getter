@@ -265,6 +265,21 @@ test('plan start refuses a blocked step', () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+test('plan status with several plans keeps a failing plan\'s error on stderr and exits 1', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-plan-err-'));
+  execFileSync('git', ['init', '-q'], { cwd: dir, env: cleanGitEnv(process.env) });
+  mkdirSync(path.join(dir, 'docs/plans'), { recursive: true });
+  writeFileSync(path.join(dir, 'docs/plans/a.md'), '### 1 Alpha — [ ]\n');
+  writeFileSync(path.join(dir, 'docs/plans/b.md'), '### 1 Beta — [ ]\nNeeds: 9\n');
+  const r = spawnSync(process.execPath, [cli, 'plan', 'status'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /^== docs\/plans\/a\.md$/m);
+  assert.match(r.stdout, /^== docs\/plans\/b\.md$/m);
+  assert.match(r.stderr, /plan: the plan does not parse:/);
+  assert.doesNotMatch(r.stdout, /does not parse/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
 test('plan next with several plans works from a subdirectory of the repository', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-plan-sub-'));
   execFileSync('git', ['init', '-q'], { cwd: dir, env: cleanGitEnv(process.env) });

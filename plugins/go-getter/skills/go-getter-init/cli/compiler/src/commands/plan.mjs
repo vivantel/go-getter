@@ -2,6 +2,7 @@
 // issue create|comment|close <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned]:
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
+import { format } from 'node:util';
 import { resolvePlan, activePlanFiles, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
 import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
@@ -63,7 +64,10 @@ async function readStdin() {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-export default async function planCommand({ args, shared }) {
+export default async function planCommand({ args, shared, io }) {
+  // status and next write through `io` so the all-plans read can keep each plan's stdout and stderr apart
+  const out = io?.out ?? console.log;
+  const err = io?.err ?? console.error;
   const [sub, ...rest] = args;
   if (sub === 'issue') {
     const o = parseIssueArgs(rest);
@@ -107,22 +111,16 @@ export default async function planCommand({ args, shared }) {
       let code = 0;
       let anyReady = false;
       for (const rel of active) {
-        const lines = [];
-        const { log, error } = console;
-        console.log = (...a) => lines.push(a.join(' '));
-        console.error = (...a) => lines.push(a.join(' '));
-        let c;
-        try {
-          c = await planCommand({ args: [sub, path.join(root, rel), ...(opts.fromDefault ? ['--from-default'] : [])], shared: { stale } });
-        } finally {
-          console.log = log;
-          console.error = error;
-        }
+        const stdout = [];
+        const stderr = [];
+        const io = { out: (...a) => stdout.push(format(...a)), err: (...a) => stderr.push(format(...a)) };
+        const c = await planCommand({ args: [sub, path.join(root, rel), ...(opts.fromDefault ? ['--from-default'] : [])], shared: { stale }, io });
         code = Math.max(code, c);
-        const text = lines.join('\n');
-        const empty = sub === 'next' && /^no step is ready/.test(text);
+        const text = stdout.join('\n');
+        const empty = sub === 'next' && c === 0 && /^no step is ready/.test(text);
         if (!empty) anyReady = true;
-        if (sub === 'status' || !empty) console.log(`== ${rel}\n${text}`);
+        if (sub === 'status' || !empty || c !== 0) console.log(`== ${rel}${text ? `\n${text}` : ''}`);
+        for (const line of stderr) console.error(line);
       }
       if (sub === 'next' && !anyReady) console.log('no step is ready in any plan: every pending step needs one that is not done');
       return code;
@@ -152,26 +150,26 @@ export default async function planCommand({ args, shared }) {
     }
     const stale = shared?.stale ?? planStaleness(repoRoot(cwd));
     const warning = shared ? null : staleWarning(stale, currentBranch(cwd));
-    if (warning) console.error(warning);
+    if (warning) err(warning);
     if (opts.fromDefault && stale.base) {
       const plan = planFromDefault(repoRoot(cwd), file, stale.base);
       const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
-      console.log(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
+      out(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
       return 0;
     }
     const listed = await callSource(source, 'list');
     if (!listed.ok) {
-      console.error(listed.error.code === 'invalid-plan' ? 'plan: the plan does not parse:' : `plan: ${listed.error.message}`);
-      for (const p of listed.error.problems ?? []) console.error(`  ${p}`);
+      err(listed.error.code === 'invalid-plan' ? 'plan: the plan does not parse:' : `plan: ${listed.error.message}`);
+      for (const p of listed.error.problems ?? []) err(`  ${p}`);
       return 1;
     }
     const plan = { file: rel, steps: listed.result.steps };
     const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
     if (sub === 'status' && opts.json) result.stale = stale.skipped ? null : stale.stale;
-    console.log(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
+    out(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
     return 0;
-  } catch (err) {
-    console.error(`plan: ${(err.stderr?.toString().trim() || err.message).split('\n')[0]}`);
+  } catch (e) {
+    err(`plan: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
     return 1;
   }
 }
