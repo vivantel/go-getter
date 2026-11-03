@@ -87,7 +87,7 @@ Done-when: tests show the author refused, including after releasing the unit, a 
 
 ### K11 Rebase the dependent steps onto the new layer — [ ]
 Class: review · Needs: K3, K6, K7, K10, K17 · Check: `npm run check:plans && npm run check:guardrails`
-Context: five existing steps overlap this plan and would otherwise duplicate it: T4 redirect hook and T8 gate-stack runner and audit picker and T9 plan drafting from a one-line goal (all in `docs/plans/throughput.md`), and G5 ask-point audit (`docs/plans/automation-first-gates.md`). Also R1 (`docs/plans/runs-spend-install.md`) against K9.
+Context: since decision 0182 this step is a migration, not a gate: T4, T8, T9 and G5 are built first on today's layer and K11 moves them onto this one. Five existing steps overlap this plan and would otherwise duplicate it: T4 redirect hook and T8 gate-stack runner and audit picker and T9 plan drafting from a one-line goal (all in `docs/plans/throughput.md`), and G5 ask-point audit (`docs/plans/automation-first-gates.md`). Also R1 (`docs/plans/runs-spend-install.md`) against K9.
 Do: edit each step in place. T4: the raw-command denial also covers `work` and `queue` verbs with their allow rules. T8: `ship` runs the K6 queue and K10 tiers instead of building a second stack, and `audit pick` respects the per-human daily cap and routes the sample by `Owner-id` (0172 item 4). T9: `plan draft` writes units with `Scope`, `Owner`, `Accept` and runs the K17 decomposition check. G5: the ask-point audit includes the parked-ask queue (K7) and the prompt counter reads per merged unit (0170). R1: drop what K9 covers. Keep issue numbers and done-whens consistent with the edits.
 Done-when: each of T4, T8, T9, G5 and R1 names the K step it uses and no longer describes work K3-K10 do; `npm run check:plans` and `npm run check:guardrails` pass.
 
@@ -144,7 +144,8 @@ Do: set each of the seven guardrails of this plan to its tier-2 enforcement wher
 Done-when: lint reports no errors, every guardrail of this plan is tier 2 or states why not, the three docs describe the claim, scope, queue and acceptance, and the three checks pass.
 
 ### K20 Dogfood and measure — [ ]
-Class: review · Needs: K14, K15, K17, K18, K19 · Human: needs a week of real use by at least two actors (two people, or one person and a cloud agent) before the figures mean anything · Check: `go-getter metrics flow`
+Class: review · Needs: K3, K6, K7, K9 · Human: needs a week of real use by at least two actors (two people, or one person and a cloud agent) before the figures mean anything · Check: `go-getter metrics day`
+Slice (decision 0182): the core is K1-K7 and K9. This step runs on the core alone; K8, K10, K12-K19, K22 and K23 follow, and `metrics flow` figures are added once K14 lands.
 Context: baseline for the headline is fact 0040 (about 45 man-hours for about 20 h of attention on 2026-10-31) and decision 0154; flow budgets are set in this step from the first week.
 Do: run three plans of this repository (for example one each from `host-adapters.md`, `mcp-server.md` and `worksource-budgets.md`) as claimed units by two actors in parallel; run `go-getter metrics day` and `metrics flow` for each day; set the flow budgets of 0170; list friction by unit; record the result as a fact and name the next bottleneck as a new step here.
 Done-when: a fact records the measured human minutes per merged unit, the flow figures against their budgets and the friction found, `go-getter:lint` passes, and the next bottleneck is named as a step.

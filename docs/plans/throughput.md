@@ -35,8 +35,8 @@ Done-when: tests with a fake `gh` show the happy path merging once, a red check 
 Result 2026-11-03: merged in #242 (`72f8327`) and reshaped in #269 (ship always merges, `pr` stops at the pull request, decision 0163); marker corrected from the board that the split retired.
 Progress 2026-11-01 · `feat/ship-verb` · `../go-getter-wt/ship` · `6d3bc4d` · done (committed, not yet re-run by me): `compiler/src/ship.mjs` and `commands/ship.mjs`, a `gate.mjs` change, attribute-skill note, CI status errors read as errors, staged refs listed in the PR body · next: run the Check and map its tests to the four Done-when cases; `fe164f2` and `e7bc5be` share a title, so squash on merge.
 
-### T4 Redirect hook and allow-rules — [!]
-Blocked 2026-11-03 until `host-adapters.md` H2 is `[x]` (G1 is done) and `work-coordination.md` K11 has rebased this step; K1 then restores `Needs: T3, host-adapters#H2, work-coordination#K11`.
+### T4 Redirect hook and allow-rules — [ ]
+Blocked only by `host-adapters.md` H2 (decision 0182): build on today's verbs; `work-coordination.md` K11 later extends the denial to the `work` and `queue` verbs. K1 restores `Needs: T3, host-adapters#H2`.
 Class: implement · Needs: T3 · Check: `node --test compiler/test/redirect-hook.test.mjs`
 Context: also needs H2 (`host-adapters.md`, pending) and G1 (`automation-first-gates.md`, done); start only when H2 is `[x]`. Decision 0157; guardrail `raw-commands-redirect-to-verbs`. The hook machinery is `compiler/src/hook.mjs` and `compiler/src/checkpoint-trigger.mjs`; H2 moves `hook.mjs` behind the adapter registry first, so this step does not conflict with it. `go-getter doctor` already prints allow rules for commands a host layer blocks (PR #238).
 Do: add a pre-tool rule that denies raw `git push`, `gh pr create`, `gh pr merge` and release sequences when `ship` or `release` covers them, with a message naming the verb; give `ship` and `release --batch` entries in the doctor allow-rule output; the git-hook floor (0009) covers hosts with no blocking hook. Keep a documented escape: a human may run the raw command.
@@ -62,22 +62,22 @@ Do: add an unattended mode to the interview verbs (`--defaults`): take the recom
 Done-when: tests show a defaulted answer writing a draft artifact, each trigger stopping the run with a clear reason, and the digest listing all five kinds of item from fixtures.
 Progress 2026-11-02 · `feat/default-and-log-digest` · merged in #259 (`6507dba`) · done: `interview next --defaults` (exit 3 on the four triggers, draft decisions), `go-getter digest [--mark]`, `digest.test.mjs` · next: T8's `audit pick` must write the `audit.json` the digest reads (`{prs: [int], flagged: [int]}`); record that shape in T8 or a fact.
 
-### T8 Gate-stack runner and audit picker — [!]
-Blocked 2026-11-03 until `work-coordination.md` K11 has rebased this step onto K6 and K10; K1 then restores `Needs: T3, work-coordination#K11`.
+### T8 Gate-stack runner and audit picker — [ ]
+Not blocked (decision 0182): build on today's `ship`; `work-coordination.md` K11 later rebases it onto the K6 queue and K10 tiers. K1 restores `Needs: T3`.
 Class: implement · Needs: T3 · Check: `node --test compiler/test/gate-stack.test.mjs`
 Context: also needs G3 (`automation-first-gates.md`, done). Decision 0158. The reviewer agent is read-only (`reviewer-read-only`); the verification gate is `compiler/src/gate.mjs` and `verify.mjs`; `conform` is a plugin skill that checks a diff against decisions and guardrails.
 Do: make `ship` run, in order, the step `Check`, a conform pass, a reviewer pass on a fresh context given only the diff, brief and decisions, then CI, and record each result in the run record; add `go-getter audit pick` choosing about 20% of merged PRs at random plus every PR the reviewer flagged, written to the digest. A failed audit must be recordable as a new check, guardrail or reviewer instruction (`audit fail <pr> --as check|guardrail|instruction`).
 Done-when: tests show `ship` refusing to merge when any gate fails, the reviewer pass receiving no author transcript, the picker including all flagged PRs and a seeded random sample, and an audit failure creating the follow-up artifact stub.
 
-### T9 Plan drafting from a one-line goal — [!]
-Blocked 2026-11-03 until `work-coordination.md` K11 has rebased this step onto K17; K1 then restores `Needs: T7, work-coordination#K11`.
+### T9 Plan drafting from a one-line goal — [ ]
+Not blocked (decision 0182): build on today's plan format; `work-coordination.md` K11 later adds units with `Scope`, `Owner`, `Accept` and the K17 check. K1 restores `Needs: T7`.
 Class: implement · Needs: T7 · Check: `node --test compiler/test/plan-draft.test.mjs`
 Context: today the owner interviews, then hand-writes prompts for new sessions. The roadmap skill produces plans in the `go-getter plan` format; the planner agent is read-only. `go-getter run` hands the next step to a session.
 Do: add `go-getter plan draft "<goal>"`: run the unattended interview (T7) through the planner and reviewer agents, write the plan with `Check` commands and `‖` markers, and stop at the single plan approval of 0155. Make `go-getter run next` emit a self-contained brief for a fresh session from a step, so no prompt is hand-written.
 Done-when: tests show a goal producing a plan that `go-getter plan next` parses, every step having a `Check`, an approval recorded before any step starts, and `run next` printing a brief that names files, the why and the done-when.
 
 ### T10 Measure against the baseline — [ ]
-Class: review · Needs: T1, T4, T5, T6, T8, T9 · Human: needs a week of real use before the figures mean anything · Check: `go-getter metrics day`
+Class: review · Needs: T1, T4, T5, T6, T8, T9 · Human: run it as soon as those land, before the K plan finishes (0182);  needs a week of real use before the figures mean anything · Check: `go-getter metrics day`
 Context: baseline in fact 0040 (about 45 man-hours for about 20 h of attention on 2026-10-31); target in decision 0154 (floor 5-10x fewer human minutes per merged outcome, stretch 50x, quality unchanged).
 Do: after a week, run `go-getter metrics day` for each day, compare human minutes per merged outcome with the baseline, count audit failures and escaped defects, and record the result as a fact. If the floor is missed, name the bottleneck from the data and plan the next change; if audit failures exceed the agreed error rate, tighten gates (0158) before more speed.
 Done-when: a fact records the measured multiple and the audit-failure count, `go-getter:lint` passes, and the next bottleneck is named here as a new step.

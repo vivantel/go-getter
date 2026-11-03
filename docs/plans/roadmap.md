@@ -10,17 +10,17 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 
 | Feature | Plan | Order | Notes |
 |---|---|---|---|
-| Work-unit coordination (claims, scope, merge queue, parked asks, grants, validation, lifecycle, soak test) | `work-coordination.md` | first | New. The features below rebase onto it as its steps land; T4, T8, T9 and G5 are reviewed in K11. |
+| Work-unit coordination (claims, scope, merge queue, parked asks, grants, validation, lifecycle, soak test) | `work-coordination.md` | core slice (K1-K7, K9) in parallel with the rest; K20 dogfoods the core | New. Decision 0182: T4, T8, T9 and G5 are built first on today's layer and K11 migrates them later. |
 | Discovery and outcomes (outcome brief, meters, effects, capability tags, `/discover`) | `discovery-and-outcomes.md` | D2, D3, D7, D7a, D8 independent; D4-D6 blocked on `work-coordination.md` K9/K10, K8 and K3 | New. Decision 0176 widens the scope beyond software; D4, D5 and D6 extend K10, K8 and K1/K3. |
-| Automation-first gates | `automation-first-gates.md` | G4 independent; G5-G6 after K11 | G1-G3, G7, G8 done. |
-| Throughput: human minutes per merged outcome | `throughput.md` | T2, T3, T5 independent; T4 after H2 and K11; T8-T10 after K11 | T1, T3, T6, T7 done or merged. |
-| Host adapter boundary | `host-adapters.md` | independent | H2 first. |
+| Automation-first gates | `automation-first-gates.md` | G4, G5 independent; G6 after G5 | G1-G3, G7, G8 done. |
+| Throughput: human minutes per merged outcome | `throughput.md` | T2, T5, T8, T9 independent; T4 after H2; T10 after T4, T5, T8, T9 (run it before the K plan finishes) | T1, T3, T6, T7 done or merged. |
+| Host adapter boundary | `host-adapters.md` | independent | H2 first; it unblocks T4. |
 | go-getter as an MCP server | `mcp-server.md` | independent | M2 first. |
 | Work-source budgets | `worksource-budgets.md` | independent, before K2 where possible | K2 and K3 read work sources through `callSource`, so W1's budgets should land first. |
 | Runs, spend and install | `runs-spend-install.md` | independent | Review R1 against K9 (lifecycle) when K9 starts. |
 | Retrieval pack (two live steps) | this file, below | external | Waits for virage. |
 
-Independent features run in parallel from now. No cross-feature dependency is encoded beyond the "Order" column until K1 makes `plan#id` parse.
+Dogfood order (decision 0182): T2, P1, T5, R1, H2, G4, G5 first; then T4, T8, T9; then T10; the K core runs alongside and K20 measures it. Independent features run in parallel from now. No cross-feature dependency is encoded beyond the "Order" column until K1 makes `plan#id` parse.
 
 ## In flight at the split (2026-11-03, from the former status board)
 

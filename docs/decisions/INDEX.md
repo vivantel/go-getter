@@ -164,3 +164,4 @@ id,title,tags,status
 0179-a-meter-is-a-first-class-instrument-and-a-reading-is-a-unit-any-capable-worker-claims,"A meter is a first-class instrument and a reading is a unit that any capable worker claims","coordination, observability, architecture",active
 0180-real-world-effects-are-classed-in-grants-and-delegable-only-inside-a-human-written-cap,"Real-world effects are classed in grants and delegable only inside a human-written cap","coordination, security, guardrail",active
 0181-capability-tags-filter-the-units-a-worker-is-offered-and-the-router-chooses-the-model,"Capability tags filter the units a worker is offered, and the router still chooses model and effort","coordination, model-routing, agent-roles",active
+0182-the-throughput-steps-are-built-on-the-current-layer-and-migrated-later,"The throughput steps are built on the current layer and migrated to the work layer later","coordination, roadmap",draft

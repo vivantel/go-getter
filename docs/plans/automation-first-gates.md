@@ -35,8 +35,8 @@ Context: Copilot, Kilo and OpenCode have no blocking pre-tool hook (see the enfo
 Do: on a host without a blocking hook, write no ask rules for state-dependent commands and rely on the git-hook floor plus a checkpoint taken before the action; `go-getter coverage` shows the tier per host and what remains unprotected.
 Done-when: tests show no ask rule written for the three hosts, a checkpoint taken before a state-dependent command where the host can run one, and `coverage` stating the residual risk.
 
-### G5 Ask-point audit and the prompt counter — [!]
-Blocked 2026-11-03 until `work-coordination.md` K11 has added the parked-ask queue (K7) to its inventory; K1 then restores `Needs` with `work-coordination#K11`.
+### G5 Ask-point audit and the prompt counter — [ ]
+Not blocked (decision 0182): audit today's ask points; `work-coordination.md` K11 later adds the parked-ask queue (K7) to the inventory.
 Class: review · Needs: G1, G2, G3 · Check: `go-getter:lint`
 Do: inventory every point where go-getter asks a human (native ask rules, hitl gates, interview questions, defaults); record for each what it protects and whether it can be freed, defaulted or removed; apply the changes that decision 0159 already allows; record the rest as steps here or as superseding decisions, one at a time; and record the result as a fact. `go-getter metrics day` (T1) reports prompts per merged PR from the stop log of G3.
 Done-when: a fact lists every ask point with its disposition, no ask point is left without a stated protection, and the prompt rate is reported.
