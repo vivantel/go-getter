@@ -15,7 +15,7 @@ States the vocabulary of decisions 0165-0181 once. If this fact and a decision d
 | Term | Kind | What it is | Lives in |
 |---|---|---|---|
 | Worker | actor | A human, agent or CI job that pulls units and holds claims; it has capability tags | named by a claim; listed in `docs/workers.md` when it uses the tracker front door |
-| Unit | work contract | One shape at every level (0165) | a plan file, a claim ref, a tracker issue |
+| Unit | work contract | One shape at every level (0165) | a plan file, a claims-ledger entry, a tracker issue |
 | Product, feature, plan, step | unit levels | Labels on units: a feature is one file under `docs/plans/`, a phase of it is a plan, a plan's checklist items are steps | `docs/plans/` |
 | Roadmap | skill and index | The `/roadmap` skill (decompose) and `docs/plans/roadmap.md` (the product index); not an artifact type | `src/skills/roadmap/`, `docs/plans/roadmap.md` |
 | Outcome brief | artifact | Hypothesis, meters, target, window, attribution, budget, caps (0178) | `docs/outcomes/<id>.md` |
