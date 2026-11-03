@@ -20,13 +20,19 @@ test('the tracker answer is "allow": plan issue create, comment and close run wi
   }
 });
 
-test('go-getter ship runs without a stop here, and a raw push is sent to it', () => {
+test('go-getter pr and ship run without a stop here, a raw push is sent to pr and a raw merge to ship', () => {
   for (const runner of ['go-getter', 'node compiler/bin/go-getter.mjs']) {
-    const d = evaluatePreTool(repo, bash(`${runner} ship --why "x"`), 'claude-code');
-    assert.notEqual(d.deny, true, runner);
-    assert.notEqual(d.ask, true, runner);
+    for (const verb of ['pr', 'ship']) {
+      const d = evaluatePreTool(repo, bash(`${runner} ${verb} --why "x"`), 'claude-code');
+      assert.notEqual(d.deny, true, `${runner} ${verb}`);
+      assert.notEqual(d.ask, true, `${runner} ${verb}`);
+    }
   }
   const raw = evaluatePreTool(repo, bash('git push origin HEAD'), 'claude-code');
   assert.equal(raw.deny, true);
-  assert.match(raw.reason, /go-getter ship/);
+  assert.match(raw.reason, /go-getter pr/);
+  assert.doesNotMatch(raw.reason, /merges on green/);
+  const merge = evaluatePreTool(repo, bash('gh pr merge 7 --squash'), 'claude-code');
+  assert.equal(merge.deny, true);
+  assert.match(merge.reason, /go-getter ship.*merges on green/);
 });

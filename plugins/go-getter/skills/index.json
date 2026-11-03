@@ -147,6 +147,7 @@
         "cli/compiler/src/commands/pack.mjs",
         "cli/compiler/src/commands/packs.mjs",
         "cli/compiler/src/commands/plan.mjs",
+        "cli/compiler/src/commands/pr.mjs",
         "cli/compiler/src/commands/reconfigure.mjs",
         "cli/compiler/src/commands/refs.mjs",
         "cli/compiler/src/commands/render-pack.mjs",

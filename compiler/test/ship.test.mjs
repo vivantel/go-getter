@@ -34,13 +34,15 @@ function scratch({ branch = 'feat/add-thing' } = {}) {
   sh(work, 'remote', 'set-head', 'origin', '-a');
   sh(work, 'switch', '-qc', branch);
   const state = path.join(dir, 'gh-state.json');
-  const ship = (...args) => {
-    const r = spawnSync(process.execPath, [cli, 'ship', ...args], { cwd: work, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_FAKE_STATE: state, GO_GETTER_SHIP_NO_CI_GRACE_MS: '0' } });
+  const verb = (name, ...args) => {
+    const r = spawnSync(process.execPath, [cli, name, ...args], { cwd: work, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_FAKE_STATE: state, GO_GETTER_SHIP_NO_CI_GRACE_MS: '0' } });
     return { code: r.status, out: r.stdout, err: r.stderr };
   };
+  const ship = (...args) => verb('ship', ...args);
+  const pr = (...args) => verb('pr', ...args);
   const gh = () => JSON.parse(readFileSync(state, 'utf8'));
   const setGh = (patch) => writeFileSync(state, JSON.stringify({ ...(existsGh(state) ? gh() : {}), ...patch }));
-  return { dir, work, remote, ship, gh, setGh, sh: (...a) => sh(work, ...a) };
+  return { dir, work, remote, ship, pr, gh, setGh, sh: (...a) => sh(work, ...a) };
 }
 const existsGh = (f) => { try { readFileSync(f); return true; } catch { return false; } };
 
@@ -112,7 +114,7 @@ test('no CI checks stop the merge unless allowed', () => {
   assert.equal(s.gh().pr.state, 'MERGED');
 });
 
-test('--no-merge opens the pull request and stops; --dry-run writes nothing', () => {
+test('--dry-run writes nothing', () => {
   const s = scratch();
   writeFileSync(path.join(s.work, 'a.txt'), 'a\n');
   s.setGh({ checks: [[{ name: 'ci', bucket: 'pass' }]] });
@@ -121,10 +123,41 @@ test('--no-merge opens the pull request and stops; --dry-run writes nothing', ()
   assert.match(dry.out, /nothing written/);
   assert.equal(s.sh('status', '--porcelain'), '?? a.txt');
   assert.equal(s.sh('ls-remote', 'origin', 'refs/heads/feat/add-thing'), '');
-  const r = s.ship('--why', 'because', '--no-merge');
+  assert.equal(s.ship('--why', 'because', '--no-merge').code, 2, '--no-merge is gone: ship always merges');
+});
+
+test('pr opens the pull request, waits for CI and never merges', () => {
+  const s = scratch();
+  writeFileSync(path.join(s.work, 'a.txt'), 'a\n');
+  s.setGh({ checks: [[{ name: 'ci', bucket: 'pending' }], [{ name: 'ci', bucket: 'pass' }]] });
+  const r = s.pr('--why', 'because', '--interval', '0');
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, /opened https:\/\/example.test\/o\/r\/pull\/7/);
+  assert.match(r.out, /pr ci: 1 check green/);
+  assert.match(r.out, /pr: opened https:\/\/example.test\/o\/r\/pull\/7/);
   assert.equal(s.gh().pr.state, 'OPEN');
+  assert.equal(s.gh().merged, undefined);
+});
+
+test('pr fails on red CI and leaves the pull request open; dry-run previews it', () => {
+  const s = scratch();
+  writeFileSync(path.join(s.work, 'a.txt'), 'a\n');
+  const dry = s.pr('--why', 'because', '--dry-run');
+  assert.match(dry.out, /would open a pull request for/);
+  assert.equal(s.sh('ls-remote', 'origin', 'refs/heads/feat/add-thing'), '');
+  s.setGh({ checks: [[{ name: 'ci', bucket: 'fail' }]] });
+  const r = s.pr('--why', 'because');
+  assert.equal(r.code, 1);
+  assert.match(r.err, /^pr: CI failed on ci/m);
+  assert.equal(s.gh().pr.state, 'OPEN');
+});
+
+test('pr with no CI reports it and succeeds; --allow-no-ci belongs to ship only', () => {
+  const s = scratch();
+  writeFileSync(path.join(s.work, 'a.txt'), 'a\n');
+  const r = s.pr('--why', 'because');
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /pr ci: no checks reported/);
+  assert.equal(s.pr('--allow-no-ci').code, 2);
 });
 
 test('already-committed work ships with its own message, and a failed merge is reported', () => {

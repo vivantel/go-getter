@@ -1,7 +1,8 @@
 ---
 id: 0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected
 title: Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it
-status: active
+status: superseded
+superseded-by: 0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request
 date: 2026-11-01
 tags: [hooks, enforcement, dogfooding]
 track: process

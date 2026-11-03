@@ -69,7 +69,7 @@ Not covered: prompts, secrets already in history, values re-encoded by an approv
 
 ## Shipping a change
 
-`go-getter ship --why "<intent>"` takes a branch from working tree to merge with no model: it runs the adopted guardrail checks, writes the commit message and pull request description (intent first, `Refs:` trailers from `go-getter refs`), pushes, opens the pull request, waits for CI and squash-merges on green. It stops on a red check or red CI and leaves the pull request open; `--no-merge` stops after opening it, `--dry-run` writes nothing and `--review` adds a read-only Claude review of the diff that can stop the run. It needs `git`, an `origin` and the `gh` CLI, and is gated wherever pushes, pull requests and merges are ([decision 0157](docs/decisions/0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected.md)).
+`go-getter ship --why "<intent>"` takes a branch from working tree to merge with no model: it runs the adopted guardrail checks, writes the commit message and pull request description (intent first, `Refs:` trailers from `go-getter refs`), pushes, opens the pull request, waits for CI and squash-merges on green. It stops on a red check or red CI and leaves the pull request open; `--dry-run` writes nothing and `--review` adds a read-only Claude review of the diff that can stop the run. `go-getter pr` does the same up to and including the CI wait and never merges, for a pull request someone reviews first. It needs `git`, an `origin` and the `gh` CLI, and is gated wherever pushes, pull requests and merges are ([decision 0163](docs/decisions/0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request.md)).
 
 ## Develop
 

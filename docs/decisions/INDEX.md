@@ -141,9 +141,10 @@ id,title,tags,status
 0154-throughput-is-measured-in-human-minutes-per-merged-outcome,"Throughput is measured in human minutes per merged outcome, with a 5-10x floor and a 50x stretch","roadmap, dogfooding, cost",active
 0155-human-attention-goes-to-plan-approval-triggers-and-batched-releases,"Human attention goes to plan approval, four ask-triggers and batched releases; agents merge on green and log defaulted decisions","hooks, roadmap, agent-roles",active
 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree,"Up to 10 agents run at once, each in its own worktree on its own branch","practice-packs, agent-roles, harness",active
-0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",active
+0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",superseded
 0158-merge-requires-a-gate-stack-and-a-sampled-human-audit,"An agent merges only after a gate stack passes, and the owner audits a sample of merged PRs","verification, ci, agent-roles",active
 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository state","positioning, hooks, enforcement, guardrail, roadmap",active
 0160-tracker-writes,"go-getter may write to the tracker without asking","practice-packs, roadmap",active
 0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
 0162-gated-free-channels,"Release and publish channels that run without asking are listed","practice-packs, hooks",draft
+0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request,"ship means the whole way to merge, and pr is the verb for stopping at the pull request","hooks, enforcement, dogfooding",active

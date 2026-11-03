@@ -58,8 +58,10 @@ export function ciOutcome(rows) {
   return 'success';
 }
 
-export async function ship(project, opts = {}, run = defaultRunner, log = () => {}) {
-  const { title: titleArg, why: whyArg, merge = true, allowNoCi = false, dryRun = false, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, review } = opts;
+// `go-getter pr`: checks, checkpoint, commit, push, the pull request and the wait for CI. It never merges; `ship` is this plus the merge.
+// Resolves with `ci` 'success' or 'none' (no checks reported in the grace period); a failure or a timeout throws.
+export async function openPr(project, opts = {}, run = defaultRunner, log = () => {}) {
+  const { verb = 'pr', title: titleArg, why: whyArg, dryRun = false, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, review } = opts;
   const git = (...a) => run('git', a, { cwd: project });
   const gh = (...a) => run('gh', a, { cwd: project });
   const need = (r, what) => {
@@ -71,31 +73,31 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
   // 1 Preflight: a branch of its own, a remote, the tools.
   const branch = need(git('branch', '--show-current'), 'git branch') || null;
   const base = defaultBranch(project);
-  if (!branch) throw new ShipError('ship: HEAD is detached; switch to a branch named <type>/<slug>');
-  if (branch === base.name) throw new ShipError(`ship: you are on the default branch (${base.name}); work happens on <type>/<slug> branches (guardrail no-commits-on-the-default-branch)`);
-  if (!base.known) throw new ShipError('ship: cannot tell the default branch (no origin/HEAD); run `git remote set-head origin -a`');
-  if (git('remote', 'get-url', 'origin').code !== 0) throw new ShipError('ship: no remote named origin');
-  if (gh('--version').code !== 0) throw new ShipError('ship: the gh CLI is required (https://cli.github.com), and `gh auth login` must have been run', 127);
+  if (!branch) throw new ShipError(`${verb}: HEAD is detached; switch to a branch named <type>/<slug>`);
+  if (branch === base.name) throw new ShipError(`${verb}: you are on the default branch (${base.name}); work happens on <type>/<slug> branches (guardrail no-commits-on-the-default-branch)`);
+  if (!base.known) throw new ShipError(`${verb}: cannot tell the default branch (no origin/HEAD); run \`git remote set-head origin -a\``);
+  if (git('remote', 'get-url', 'origin').code !== 0) throw new ShipError(`${verb}: no remote named origin`);
+  if (gh('--version').code !== 0) throw new ShipError(`${verb}: the gh CLI is required (https://cli.github.com), and \`gh auth login\` must have been run`, 127);
   log('preflight', `branch ${branch} -> ${base.name}`);
 
   // 2 What is there to ship: uncommitted changes, commits ahead, or both.
   const status = need(git('status', '--porcelain'), 'git status').split('\n').filter(Boolean);
   const dirty = status.map((l) => l.slice(3).replace(/^"|"$/g, '').replace(/^.* -> /, ''));
   const ahead = Number(need(git('rev-list', '--count', `origin/${base.name}..HEAD`), 'git rev-list'));
-  if (!dirty.length && !ahead) throw new ShipError(`ship: nothing to ship; ${branch} has no changes against origin/${base.name}`);
+  if (!dirty.length && !ahead) throw new ShipError(`${verb}: nothing to ship; ${branch} has no changes against origin/${base.name}`);
   const restricted = dirty.filter((f) => matchesAny(f, restrictedPatterns(project)));
-  if (restricted.length) throw new ShipError(`ship: restricted paths changed, not staging: ${restricted.join(', ')} (guardrail restricted-paths-denied)`);
+  if (restricted.length) throw new ShipError(`${verb}: restricted paths changed, not staging: ${restricted.join(', ')} (guardrail restricted-paths-denied)`);
   log('scope', `${dirty.length} uncommitted file${dirty.length === 1 ? '' : 's'}, ${ahead} commit${ahead === 1 ? '' : 's'} ahead`);
 
   // 3 Checks: the adopted tier-3 guardrail checks, the same set as the pre-push hook.
   const results = await runTier3(project, { stage: 'pre-push' });
   const failed = results.filter((r) => !r.ok);
-  if (failed.length) throw new ShipError(`ship: checks failed: ${failed.map((r) => `${r.guardrail}${r.message ? ` (${r.message})` : ''}`).join('; ')}`);
+  if (failed.length) throw new ShipError(`${verb}: checks failed: ${failed.map((r) => `${r.guardrail}${r.message ? ` (${r.message})` : ''}`).join('; ')}`);
   checks.push(`guardrail checks: ${results.length} passed`);
   log('checks', `${results.length} guardrail checks passed`);
   if (review) {
     const r = await review({ project, base: base.name });
-    if (!r.ok) throw new ShipError(`ship: review found problems: ${r.summary}`);
+    if (!r.ok) throw new ShipError(`${verb}: review found problems: ${r.summary}`);
     checks.push(`review: ${r.summary}`);
     log('review', r.summary);
   }
@@ -103,13 +105,13 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
   // 4 Attribute: the message from what the branch already holds, else from the arguments.
   const firstSubject = ahead ? git('log', '--format=%s', '--reverse', `origin/${base.name}..HEAD`).out.split('\n')[0] : null;
   const title = titleArg ?? (dirty.length ? titleFromBranch(branch) : firstSubject);
-  if (!title || !SUBJECT.test(title)) throw new ShipError(`ship: need a Conventional Commit title (type: summary); pass --title (branch ${branch} gives ${titleFromBranch(branch) ?? 'none'})`, 2);
+  if (!title || !SUBJECT.test(title)) throw new ShipError(`${verb}: need a Conventional Commit title (type: summary); pass --title (branch ${branch} gives ${titleFromBranch(branch) ?? 'none'})`, 2);
   const existingBody = ahead ? git('log', '--format=%b', `origin/${base.name}..HEAD`).out.replace(/^Refs: .*$/gm, '').trim() : '';
   const why = whyArg ?? (existingBody || null);
-  if (!why) throw new ShipError('ship: say why the change is made (the intent) with --why "<text>"', 2);
+  if (!why) throw new ShipError(`${verb}: say why the change is made (the intent) with --why "<text>"`, 2);
   const refs = suggestRefs(project, { base: `origin/${base.name}` }).must.map((r) => r.path);
   if (dryRun) {
-    log('dry-run', `would ship "${title}" with ${refs.length} ref${refs.length === 1 ? '' : 's'}; nothing written`);
+    log('dry-run', `would ${verb === 'pr' ? 'open a pull request for' : 'ship'} "${title}" with ${refs.length} ref${refs.length === 1 ? '' : 's'}; nothing written`);
     return { dryRun: true, branch, title, refs };
   }
 
@@ -139,6 +141,7 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
 
   // 7 CI: success merges, failure stops with the failing checks, no checks stops unless allowed.
   const started = Date.now();
+  let ci = 'success';
   for (;;) {
     const r = gh('pr', 'checks', String(pr.number), '--json', 'name,bucket');
     let rows;
@@ -147,26 +150,41 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
       rows = JSON.parse(r.out);
     } catch {
       // gh printed no JSON: "no checks reported" means none yet; anything else (auth, network, rate limit) is an error, not a green light.
-      if (!/no checks reported/i.test(`${r.out}${r.err}`)) throw new ShipError(`ship: could not read CI status: ${(r.err || r.out).trim().split('\n')[0] || `gh exit ${r.code}`}; the pull request stays open: ${pr.url}`, 1);
+      if (!/no checks reported/i.test(`${r.out}${r.err}`)) throw new ShipError(`${verb}: could not read CI status: ${(r.err || r.out).trim().split('\n')[0] || `gh exit ${r.code}`}; the pull request stays open: ${pr.url}`, 1);
       rows = [];
     }
     const outcome = ciOutcome(rows);
-    if (outcome === 'failure') throw new ShipError(`ship: CI failed on ${rows.filter((x) => x.bucket === 'fail' || x.bucket === 'cancel').map((x) => x.name).join(', ')}; the pull request stays open: ${pr.url}`, 1);
+    if (outcome === 'failure') throw new ShipError(`${verb}: CI failed on ${rows.filter((x) => x.bucket === 'fail' || x.bucket === 'cancel').map((x) => x.name).join(', ')}; the pull request stays open: ${pr.url}`, 1);
     if (outcome === 'success') {
       log('ci', `${rows.length} check${rows.length === 1 ? '' : 's'} green`);
       break;
     }
     if (outcome === 'none' && Date.now() - started >= noCiGraceMs) {
-      if (!allowNoCi) throw new ShipError(`ship: no CI checks reported after ${Math.round(noCiGraceMs / 1000)}s; merge by hand or pass --allow-no-ci: ${pr.url}`, 3);
-      log('ci', 'no checks reported; continuing (--allow-no-ci)');
+      log('ci', `no checks reported after ${Math.round(noCiGraceMs / 1000)}s`);
+      ci = 'none';
       break;
     }
-    if (Date.now() - started >= timeoutMs) throw new ShipError(`ship: CI still pending after ${Math.round(timeoutMs / 60_000)} min; the pull request stays open: ${pr.url}`, 3);
+    if (Date.now() - started >= timeoutMs) throw new ShipError(`${verb}: CI still pending after ${Math.round(timeoutMs / 60_000)} min; the pull request stays open: ${pr.url}`, 3);
     await sleep(intervalMs);
   }
-  if (!merge) {
-    log('merge', 'skipped (--no-merge)');
-    return { branch, title, pr, merged: false };
+  return { branch, title, pr, ci, merged: false };
+}
+
+// `go-getter ship`: `pr` and then the squash merge on green. No CI at all stops it unless the project allows merging without.
+export async function ship(project, opts = {}, run = defaultRunner, log = () => {}) {
+  const { allowNoCi = false, ...rest } = opts;
+  const opened = await openPr(project, { ...rest, verb: 'ship' }, run, log);
+  if (opened.dryRun) return opened;
+  const { pr } = opened;
+  const git = (...a) => run('git', a, { cwd: project });
+  const gh = (...a) => run('gh', a, { cwd: project });
+  const need = (r, what) => {
+    if (r.code !== 0) throw new ShipError(`${what}: ${(r.err || r.out).trim().split('\n').slice(-3).join(' | ')}`);
+    return r.out.trim();
+  };
+  if (opened.ci === 'none') {
+    if (!allowNoCi) throw new ShipError(`ship: no CI checks reported; merge by hand or pass --allow-no-ci: ${pr.url}`, 3);
+    log('ci', 'no checks reported; continuing (--allow-no-ci)');
   }
 
   // 8 Merge by squash; gh may fail to switch branches in a worktree after merging, so the state decides.
@@ -174,9 +192,10 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
   const state = JSON.parse(need(gh('pr', 'view', String(pr.number), '--json', 'state'), 'gh pr view')).state;
   if (state !== 'MERGED') throw new ShipError(`ship: the pull request is ${state}, not merged: ${pr.url}`);
   log('merge', `squashed ${pr.url}`);
-  git('fetch', 'origin', base.name);
-  return { branch, title, pr, merged: true };
+  git('fetch', 'origin', defaultBranch(project).name);
+  return { ...opened, merged: true };
 }
+
 
 // The optional review pass (`--review`): a read-only Claude Code run over the diff against the base, answering on a last
 // `VERDICT: PASS|FAIL <summary>` line. It gets no tools that write, and the brief names the decisions and guardrails to read.
