@@ -282,15 +282,18 @@ const list = (s) => String(s ?? '').split(',').map((x) => x.trim()).filter(Boole
 // The `classes` and `extra` of a `builtin:gate-command` entry's arguments (comma-separated lists), for apply and the hook.
 export const GATE_CLASSES = ['irreversible', 'outward'];
 // `go-getter` lists go-getter subcommands (`plan issue create`) that are gated whichever way go-getter is run (decision 0126).
-// `go-getter ship` pushes, opens and merges a pull request, so it is gated whenever the outward class is and the project has not freed all three (decision 0157).
-const SHIP_PARTS = ['git-push', 'pr-create', 'pr-merge'];
-// A part a run or a remembered approval may allow (`grantable`) does not stop `ship` either: decision 0159 asks a human only when something cannot be undone.
-const shipGated = (classes, free, grantable) => classes.includes('outward') && !SHIP_PARTS.every((id) => free.includes(id) || grantable.includes(id));
+// `go-getter pr` pushes and opens a pull request, and `go-getter ship` does that and merges it (decisions 0157, 0163), so each is gated
+// whenever the outward class is and the project has not freed all of its parts.
+const VERB_PARTS = { pr: ['git-push', 'pr-create'], ship: ['git-push', 'pr-create', 'pr-merge'] };
+// A part a run or a remembered approval may allow (`grantable`) does not stop the verb either: decision 0159 asks a human only when something cannot be undone.
+const gatedVerbs = (classes, free, grantable) => Object.entries(VERB_PARTS)
+  .filter(([, parts]) => classes.includes('outward') && !parts.every((id) => free.includes(id) || grantable.includes(id)))
+  .map(([verb]) => verb);
 export const gateArgs = (args = {}) => {
   const classes = list(args.classes ?? 'irreversible,outward');
   const free = normaliseFree(list(args.free));
   const grantable = normaliseFree(list(args.grantable));
-  const goGetter = [...new Set([...list(args['go-getter']), ...(shipGated(classes, free, grantable) ? ['ship'] : [])])];
+  const goGetter = [...new Set([...list(args['go-getter']), ...gatedVerbs(classes, free, grantable)])];
   return { classes, extra: list(args.extra), free, channels: list(args.channels), goGetter, grantable, provider: String(args.provider ?? DEFAULT_PROVIDER).trim() };
 };
 

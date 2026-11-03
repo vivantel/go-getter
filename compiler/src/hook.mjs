@@ -396,7 +396,7 @@ function recordDenial(project, result) {
 export const redirectVerbs = (args = {}) =>
   new Map(String(args.verbs ?? '').split(',').map((x) => x.trim().split('=').map((y) => y.trim())).filter(([id, verb]) => id && verb));
 
-function redirectedCommand(entry, payload) {
+function redirectedCommand(entry, payload, stopped = new Set()) {
   const command = shellCommand(payload);
   if (typeof command !== 'string' || !command.trim()) return null;
   const verbs = redirectVerbs(entry.parsed.args);
@@ -404,10 +404,11 @@ function redirectedCommand(entry, payload) {
   const hits = matchGated(command, { classes: ['irreversible', 'outward'] });
   // A destructive form (`git push --force`) is not what the verb does: it stays with the gate.
   if (hits.some((h) => h.class === 'irreversible')) return null;
-  const hit = hits.find((h) => verbs.has(h.id));
+  // Not while the gate stops that verb itself: the redirect would only move the stop.
+  const hit = hits.find((h) => verbs.has(h.id) && !stopped.has(verbs.get(h.id).replace(/^go-getter /, '')));
   if (!hit) return null;
   const text = command.length > 120 ? `${command.slice(0, 120)}…` : command;
-  return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI and merges on green). A person may still run the raw command themselves with "! <command>".` };
+  return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI${verbs.get(hit.id) === 'go-getter ship' ? ' and merges on green' : ''}). A person may still run the raw command themselves with "! <command>".` };
 }
 
 export function evaluatePreTool(project, payload, host) {
@@ -428,11 +429,10 @@ function decidePreTool(project, payload, host) {
   checkpointBeforeCommand(project, enforcement, shellCommand(payload), host); // best effort, before the decision, never changes it
   // A covered raw command is redirected before any gate asks about it: the person is better served by the verb than by a prompt.
   // Not while the gate stops the verb itself (the project lists none of its parts as freed or grantable): the redirect would only move the stop.
-  const shipStopped = enforcement.some((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command' && gateArgs(e.parsed.args).goGetter.includes('ship'));
+  const stoppedVerbs = new Set(enforcement.filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').flatMap((e) => gateArgs(e.parsed.args).goGetter));
   for (const e of enforcement) {
-    if (shipStopped) break;
     if (e.tier !== 2 || e.parsed?.kind !== 'builtin' || e.parsed.id !== 'redirect-to-verb') continue;
-    const redirected = redirectedCommand(e, payload);
+    const redirected = redirectedCommand(e, payload, stoppedVerbs);
     if (redirected) return redirected;
   }
   for (const e of enforcement) {

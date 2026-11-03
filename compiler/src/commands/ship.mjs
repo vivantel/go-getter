@@ -1,13 +1,16 @@
-// go-getter ship [--title <type: summary>] [--why <intent>] [--no-merge] [--allow-no-ci] [--dry-run] [--review] [--interval <s>] [--timeout <min>] [--project <dir>]
-// Commit to merge in one deterministic command (decision 0157): checks, message with Refs, push, pull request, CI, squash merge on green.
+// go-getter ship [--title <type: summary>] [--why <intent>] [--allow-no-ci] [--dry-run] [--review] [--interval <s>] [--timeout <min>] [--project <dir>]
+// Commit to merge in one deterministic command (decisions 0157, 0163): checks, message with Refs, push, pull request, CI, squash merge on green.
+// `go-getter pr` is the same without the merge; both live here so the options stay one list.
 import path from 'node:path';
-import { ship, ShipError, claudeReview } from '../ship.mjs';
+import { ship, openPr, ShipError, claudeReview } from '../ship.mjs';
 import { repoRoot } from '../plan.mjs';
 
-const USAGE = 'usage: go-getter ship [--title "type: summary"] [--why "<intent>"] [--no-merge] [--allow-no-ci] [--dry-run] [--review] [--interval <seconds>] [--timeout <minutes>] [--project <dir>]';
+const SHIP_USAGE = 'usage: go-getter ship [--title "type: summary"] [--why "<intent>"] [--allow-no-ci] [--dry-run] [--review] [--interval <seconds>] [--timeout <minutes>] [--project <dir>]';
+const PR_USAGE = 'usage: go-getter pr [--title "type: summary"] [--why "<intent>"] [--dry-run] [--review] [--interval <seconds>] [--timeout <minutes>] [--project <dir>]';
 const VALUE = ['--title', '--why', '--interval', '--timeout', '--project'];
 
-export default async function shipCommand({ args }) {
+export async function runVerb(verb, args) {
+  const USAGE = verb === 'pr' ? PR_USAGE : SHIP_USAGE;
   const opts = {};
   let project = process.cwd();
   for (let i = 0; i < args.length; i++) {
@@ -26,8 +29,7 @@ export default async function shipCommand({ args }) {
         return 2;
       } else if (a === '--interval') opts.intervalMs = Number(v) * 1000;
       else opts.timeoutMs = Number(v) * 60_000;
-    } else if (a === '--no-merge') opts.merge = false;
-    else if (a === '--allow-no-ci') opts.allowNoCi = true;
+    } else if (a === '--allow-no-ci' && verb === 'ship') opts.allowNoCi = true;
     else if (a === '--dry-run') opts.dryRun = true;
     else if (a === '--review') opts.review = claudeReview();
     else {
@@ -37,9 +39,9 @@ export default async function shipCommand({ args }) {
   }
   if (process.env.GO_GETTER_SHIP_NO_CI_GRACE_MS) opts.noCiGraceMs = Number(process.env.GO_GETTER_SHIP_NO_CI_GRACE_MS);
   try {
-    const result = await ship(repoRoot(project), opts, undefined, (step, msg) => console.log(`ship ${step}: ${msg}`));
+    const result = await (verb === 'pr' ? openPr : ship)(repoRoot(project), verb === 'pr' ? { ...opts, verb } : opts, undefined, (step, msg) => console.log(`${verb} ${step}: ${msg}`));
     if (result.merged) console.log(`ship: merged ${result.pr.url}`);
-    else if (result.pr) console.log(`ship: opened ${result.pr.url}`);
+    else if (result.pr) console.log(`${verb}: opened ${result.pr.url}`);
     return 0;
   } catch (err) {
     if (!(err instanceof ShipError)) throw err;
@@ -47,3 +49,5 @@ export default async function shipCommand({ args }) {
     return err.code;
   }
 }
+
+export default ({ args }) => runVerb('ship', args);

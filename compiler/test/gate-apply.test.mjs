@@ -78,7 +78,7 @@ test('apply writes the native ask rules of the three hosts, records them and ins
   assert.deepEqual(manifest.shared['.claude/settings.json'].find((i) => i.path.join('.') === 'permissions.ask').items, rules('claude-code'));
   const kiloKeys = manifest.shared['kilo.json'].map((i) => i.path.at(-1));
   assert.ok(kiloKeys.includes('git push *') && kiloKeys.includes('rm -rf*') && !kiloKeys.includes('ls *'));
-  assert.deepEqual(manifest.shared['opencode.json'].map((i) => i.path.slice(0, 2)), [...Object.keys(rules('opencode')), ...goGetterSpellings(dir)].map(() => ['permission', 'bash'])); // plus `go-getter ship` in each spelling (decision 0154)
+  assert.deepEqual(manifest.shared['opencode.json'].map((i) => i.path.slice(0, 2)), [...Object.keys(rules('opencode')), ...goGetterSpellings(dir), ...goGetterSpellings(dir)].map(() => ['permission', 'bash'])); // plus `go-getter pr` and `go-getter ship` in each spelling (decisions 0154, 0163)
   assert.ok(manifest.shared['opencode.json'].every((i) => i.kind === 'key' && !('replaced' in i)));
   // the gate is tier 2, so the hook is installed: it hands gated commands over on the other hosts
   assert.ok(claude.hooks.PreToolUse.length);
