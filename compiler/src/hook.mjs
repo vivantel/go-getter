@@ -282,7 +282,7 @@ function approvalsStoreRefusal(project, payload) {
   if (typeof command === 'string') {
     for (const words of commandWords(command) ?? []) {
       const call = goGetterCall(words, { cwd: project });
-      if (call?.args[0] === 'approvals' && ['add', 'allow', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
+      if (call?.args[0] === 'approvals' && ['add', 'allow', 'release', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
       // A run changes what an agent may do without asking (decision 0130): a person starts and ends it.
       if (call?.args[0] === 'run' && ['start', 'end'].includes(call.args[1])) return `blocked: go-getter run ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
     }
