@@ -75,6 +75,10 @@ function worktreeRemove({ dir, rest }, run) {
     const dirty = run('git', ['status', '--porcelain'], abs);
     if (dirty === null) return bad(`cannot read the worktree ${t}`);
     if (dirty) return bad(`the worktree ${t} has uncommitted or untracked files`);
+    // A branch keeps its commits when its worktree goes; a detached HEAD that no branch, remote branch or tag holds does not.
+    if (run('git', ['branch', '--show-current'], abs) === '' && !run('git', ['for-each-ref', '--contains', 'HEAD', '--format=%(refname)', 'refs/heads', 'refs/remotes', 'refs/tags'], abs)) {
+      return bad(`the worktree ${t} is on a detached HEAD whose commits no branch or tag holds`);
+    }
   }
   return ok;
 }
