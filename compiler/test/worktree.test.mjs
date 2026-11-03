@@ -1,11 +1,11 @@
 // Decision 0156: up to 10 agents run at once, each in its own worktree; `worktree new` refuses the 11th.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync, existsSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { loadPack } from '../src/packs.mjs';
 import { planRender, applyRender } from '../src/render.mjs';
 import { newWorktree, listWorktrees, worktreeConfig } from '../src/worktree.mjs';
@@ -42,5 +42,62 @@ test('worktree new allows 10 concurrent worktrees and refuses the 11th', () => {
     for (let i = 1; i <= 10; i++) newWorktree(dir, `task-${i}`);
     assert.equal(listWorktrees(dir).length, 11, 'the main tree plus 10 linked');
     assert.throws(() => newWorktree(dir, 'task-11'), /limit is 10/);
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+});
+
+// A bare origin plus a clone, so fetching has something to do.
+function cloneOfOrigin() {
+  const { parent, dir } = repo(recommended);
+  const git = (cwd, ...a) => execFileSync('git', a, { cwd, stdio: 'ignore' });
+  const origin = path.join(parent, 'origin.git');
+  git(parent, 'init', '-q', '--bare', '-b', 'main', origin);
+  git(dir, 'remote', 'add', 'origin', origin);
+  git(dir, 'push', '-q', '-u', 'origin', 'main');
+  git(dir, 'remote', 'set-head', 'origin', 'main');
+  return { parent, dir, origin, git };
+}
+
+test('worktree new branches from the current origin default branch, not the last fetched one', () => {
+  const { parent, dir, origin, git } = cloneOfOrigin();
+  try {
+    const other = path.join(parent, 'other');
+    git(parent, 'clone', '-q', origin, other);
+    git(other, 'config', 'user.email', 't@t'); git(other, 'config', 'user.name', 't'); git(other, 'config', 'commit.gpgsign', 'false');
+    writeFileSync(path.join(other, 'later.txt'), 'x');
+    git(other, 'add', '.'); git(other, 'commit', '-q', '-m', 'later'); git(other, 'push', '-q', 'origin', 'main');
+    const made = newWorktree(dir, 'fresh');
+    assert.ok(existsSync(path.join(made.path, 'later.txt')));
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+});
+
+test('worktree new still works offline: a failed fetch falls back to what is known', () => {
+  const { parent, dir, origin, git } = cloneOfOrigin();
+  try {
+    rmSync(origin, { recursive: true, force: true });
+    assert.ok(newWorktree(dir, 'offline').path);
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+});
+
+test('concurrent worktree new calls cannot exceed the limit', async () => {
+  const { parent, dir } = repo({ ...recommended, 'max-concurrent': '3' });
+  try {
+    const script = `import { newWorktree } from ${JSON.stringify(path.join(root, 'compiler/src/worktree.mjs'))};
+      try { newWorktree(process.argv[1], process.argv[2]); } catch (e) { process.exit(3); }`;
+    const codes = await Promise.all(Array.from({ length: 6 }, (_, i) => new Promise((resolve) => {
+      spawn('node', ['--input-type=module', '-e', script, dir, `task-${i}`], { stdio: 'ignore' }).on('exit', resolve);
+    })));
+    assert.equal(codes.filter((c) => c === 0).length, 3);
+    assert.equal(listWorktrees(dir).length, 4);
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+});
+
+test('a lock left by a dead process does not block worktree new forever', () => {
+  const { parent, dir } = repo(recommended);
+  try {
+    const lock = path.join(dir, '.git', 'go-getter-worktree.lock');
+    mkdirSync(lock);
+    const old = new Date(Date.now() - 120000);
+    utimesSync(lock, old, old);
+    assert.ok(newWorktree(dir, 'after-crash').path);
   } finally { rmSync(parent, { recursive: true, force: true }); }
 });
