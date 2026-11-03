@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-A unit with an `Accept` check is not `done` until a worker other than any holder of it or its descendants has run the check and passed it. The acceptance reviewer receives the brief and the merged result, not the author's transcript. Advisory (tier 1) until work-coordination K10 refuses `done` otherwise.
+A unit with an `Accept` check is not `done` until a worker other than any holder of it or its descendants has run the check and passed it. The acceptance reviewer receives the brief and the merged result, not the author's transcript. Worker ids are self-declared until claims are signed, so this stops mistakes, not a worker that lies. Advisory (tier 1) until work-coordination K10 refuses `done` otherwise.

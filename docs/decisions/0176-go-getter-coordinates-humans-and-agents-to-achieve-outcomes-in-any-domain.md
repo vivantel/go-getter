@@ -14,7 +14,7 @@ go-getter coordinates humans and agents working many units of work in parallel t
 
 1. **Scope.** An outcome is a result in the world that a meter can read (0178). Software delivery is the first domain with full support: its harness packs, verification layers (0013) and SDLC practice packs stay as they are. Other domains use the same units (0165), meters (0179), grants (0171, 0180) and acceptance (0172), and add packs and checks as they are needed.
 2. **What does not change:** the name, the repository, the CLI, the plugin and the packs. go-getter still owns no runtime (0015) and has no runtime dependency.
-3. **Honesty about reach.** A domain is supported when its units have an `Accept` that someone other than the author can run, its effects are classed (0180) and its meters exist (0179). Until then a domain is possible but not supported, and the documentation says which.
+3. **Honesty about reach.** A domain is supported when its units have an `Accept` that someone other than the author can run, its effects are classed (0180) and its meters exist (0179). A worker without git push access takes part through the tracker (0166 item 6), so a tracker is a support condition for a domain whose workers are not all engineers. Until then a domain is possible but not supported, and the documentation says which.
 
 This supersedes 0001, whose scope was "the agent harness and SDLC practices for AI-driven development".
 
