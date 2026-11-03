@@ -1,7 +1,7 @@
 ---
 id: a-claim-names-its-holder
 title: A claim names its holder, and the holder is the author of the unit's commits
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, security, guardrail]
 governed-by: 0166-claims-are-leased-git-refs-and-status-lives-in-the-tracker
@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-Every claim records its holder's kind (human, agent or ci) and id. A claim whose holder does not match the author of the unit's commits is flagged at `ship` and in the merge queue. Advisory (tier 1) until work-coordination K16 adds the check.
+Every claim records its holder's kind (human, agent or ci) and id. A claim whose holder does not match the author of the unit's commits is flagged at `ship`. Advisory (tier 1) until work-coordination K16 adds the check.

@@ -17,7 +17,7 @@ States the vocabulary of decisions 0165-0181 once. If this fact and a decision d
 | Worker | actor | A human, agent or CI job that pulls units and holds claims; it has capability tags | named by a claim; no file |
 | Unit | work contract | One shape at every level (0165) | a plan file, a claim ref, a tracker issue |
 | Product, feature, plan, step | unit levels | Labels on units: a feature is one file under `docs/plans/`, a phase of it is a plan, a plan's checklist items are steps | `docs/plans/` |
-| Roadmap | skill and index | The `/roadmap` skill (decompose) and `docs/plans/roadmap.md` (the product index); not an artifact type | `skills/roadmap/`, `docs/plans/roadmap.md` |
+| Roadmap | skill and index | The `/roadmap` skill (decompose) and `docs/plans/roadmap.md` (the product index); not an artifact type | `src/skills/roadmap/`, `docs/plans/roadmap.md` |
 | Outcome brief | artifact | Hypothesis, meters, target, window, attribution, budget, caps (0178) | `docs/outcomes/<id>.md` |
 | Meter | artifact | An instrument: source, refresh rate, cost, noise (0179) | `docs/meters/<id>.md` |
 | Reading | datum and unit | One measurement; a `measure` unit any capable worker claims | next to the telemetry log, outside git |
@@ -38,7 +38,7 @@ States the vocabulary of decisions 0165-0181 once. If this fact and a decision d
 | Unit state: claim, lifecycle, acceptance | - | R | O | R | R |
 | Meter | R | R | - | O | R |
 | Reading | R | - | - | O | R |
-| Outcome acceptance verdict | R | R | - | O, run by a non-author worker | R |
+| Outcome acceptance verdict | R | R | O, run by a non-author worker over readings supplied by Measure | R | R |
 | Operating charter | R | R | R | R | O |
 | Decisions, guardrails, procedures | W | O | R | R | R |
 

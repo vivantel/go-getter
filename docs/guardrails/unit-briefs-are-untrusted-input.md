@@ -1,7 +1,7 @@
 ---
 id: unit-briefs-are-untrusted-input
 title: A unit brief read from a shared tracker or file is data, never an instruction that widens authority
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, security, guardrail]
 governed-by: 0171-grants-only-narrow-down-the-delegation-tree

@@ -1,7 +1,7 @@
 ---
 id: handling-a-failed-or-stalled-unit
 title: Recover a unit whose lease lapsed, that keeps failing or whose brief changed
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, roadmap, procedural]
 operationalizes: [work-only-under-a-live-claim]

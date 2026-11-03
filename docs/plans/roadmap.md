@@ -11,7 +11,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 | Feature | Plan | Order | Notes |
 |---|---|---|---|
 | Work-unit coordination (claims, scope, merge queue, parked asks, grants, validation, lifecycle, soak test) | `work-coordination.md` | first | New. The features below rebase onto it as its steps land; T4, T8, T9 and G5 are reviewed in K11. |
-| Discovery and outcomes (outcome brief, meters, effects, capability tags, `/discover`) | `discovery-and-outcomes.md` | D2, D3, D5-D7 after `work-coordination.md` K0-K3 | New. Decision 0176 widens the scope beyond software; D4, D5 and D6 extend K10, K8 and K1/K3. |
+| Discovery and outcomes (outcome brief, meters, effects, capability tags, `/discover`) | `discovery-and-outcomes.md` | D2, D3, D7, D7a, D8 independent; D4-D6 blocked on `work-coordination.md` K9/K10, K8 and K3 | New. Decision 0176 widens the scope beyond software; D4, D5 and D6 extend K10, K8 and K1/K3. |
 | Automation-first gates | `automation-first-gates.md` | G4-G6 after K3 | G1-G3, G7, G8 done. |
 | Throughput: human minutes per merged outcome | `throughput.md` | T2-T5 independent; T8-T10 after K11 | T1, T3, T6, T7 done or merged. |
 | Host adapter boundary | `host-adapters.md` | independent | H2 first. |

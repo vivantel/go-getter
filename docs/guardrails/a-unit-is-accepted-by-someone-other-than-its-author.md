@@ -1,7 +1,7 @@
 ---
 id: a-unit-is-accepted-by-someone-other-than-its-author
 title: A unit with an Accept check is accepted by a worker who is not its author
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, verification, guardrail]
 governed-by: 0172-validation-is-tiered-by-level-and-the-validator-is-never-the-author

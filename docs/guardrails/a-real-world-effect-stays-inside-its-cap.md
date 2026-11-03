@@ -1,7 +1,7 @@
 ---
 id: a-real-world-effect-stays-inside-its-cap
 title: A money, physical or legal effect stays inside the cap its grant carries, and an unclassed action is not delegated
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, security, guardrail]
 governed-by: 0180-real-world-effects-are-classed-in-grants-and-delegable-only-inside-a-human-written-cap
@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-Take a money, physical or legal action only inside the cap in your grant. An action whose class is unknown, or that would exceed the cap, is not taken: park the unit with an ask (0168). Advisory (tier 1) until discovery-and-outcomes D4 adds the check.
+Take a money, physical or legal action only inside the cap in your grant. An action whose class is unknown, or that would exceed the cap, is not taken: park the unit with an ask (0168). Advisory (tier 1) until discovery-and-outcomes D5 adds the check.

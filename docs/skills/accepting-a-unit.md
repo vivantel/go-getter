@@ -1,7 +1,7 @@
 ---
 id: accepting-a-unit
 title: Accept a plan or feature on the integrated result
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, verification, procedural]
 operationalizes: [a-unit-is-accepted-by-someone-other-than-its-author]

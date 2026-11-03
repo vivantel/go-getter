@@ -12,9 +12,9 @@ accepted-by: sergemso
 
 1. **Priority.** A unit has an integer priority, inherited from its parent unless set. `work next` orders ready units by priority, then by the length of the longest dependent chain behind them (the critical path), then by age.
 2. **WIP limits.** A limit per worker (default: the `max-concurrent` of 0156) and optionally per feature (a pack answer, default none). `work next` offers nothing above a limit, so one feature cannot starve the others.
-3. **Intake.** A new unit enters as `draft`. It becomes `ready` when it parses, declares scope and `Accept` where required (0165, 0172), and the owner of its parent approves it. This is the plan approval of 0155 item 1 applied at each level of delegation, once per unit, not once per run.
+3. **Intake.** A new unit enters as `draft`. It becomes `ready` when it parses, declares scope and `Accept` where required (0165, 0172), and the `Owner-id` of its parent approves it. This is the plan approval of 0155 item 1 applied at each level of delegation, once per unit, not once per run.
 4. **Status is computed on read** from claim refs, the tracker and merged state, and never stored in a file. `go-getter work tree` prints the tree with each node's state, the critical path, the units `blocked-by-human` and the units whose lease has lapsed, as text and as JSON.
-5. **The decomposition check.** Before a parent's children are approved, siblings' scopes must be disjoint or ordered by `Needs`, each child's `Accept` must contribute to the parent's, and the children's budgets must sum to no more than the parent's.
+5. **The decomposition check.** Before a parent's children are approved, siblings' scopes must be disjoint or ordered by `Needs`, each child's `Accept` must be referenced by the parent's `Accept`, and the children's budgets must sum to no more than the parent's.
 
 ## Why
 

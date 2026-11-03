@@ -11,7 +11,7 @@ accepted-by: sergemso
 ## Decision
 
 1. **States:** `draft`, `ready`, `claimed`, `parked` (0168), `in-review` (acceptance, 0172), `done`, and the exits `blocked`, `quarantined`, `cancelled`, `superseded`. A parent's state is computed from its children (0174).
-2. **Lease expiry reclaims.** When a lease lapses the unit returns to `ready`; the next claimant starts from the previous claimant's last checkpoint (the hidden refs of the checkpointing pack) and branch, not from nothing.
+2. **Lease expiry reclaims.** When the lease of a leaf unit that is not parked lapses (a parent with live children and a parked unit never lapse, 0166) the unit returns to `ready`; the next claimant starts from the previous claimant's last checkpoint (the hidden refs of the checkpointing pack) and branch, not from nothing.
 3. **Retry budget and quarantine.** A step may fail twice under one claim (0130 item 7); a unit may pass through three claimants. After that it is `quarantined`: out of `work next`, escalated as an ask to the parent's owner (0168), and never retried silently.
 4. **Cancel cascades.** Cancelling a unit cancels its unmerged descendants: their claims are released and their open branches closed. Merged work stays; undoing it needs a new unit (a revert), never a history rewrite.
 5. **Supersede links.** A unit made obsolete names its successor; open claims on it are released with that pointer.

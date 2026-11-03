@@ -1,7 +1,7 @@
 ---
 id: defining-an-outcome-brief
 title: Define an outcome brief that a meter can accept
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, roadmap, procedural]
 operationalizes: [an-outcome-needs-an-attribution-method]

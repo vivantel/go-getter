@@ -1,7 +1,7 @@
 ---
 id: artifact-ids-have-no-shared-counter
 title: A new fact or decision takes a unit-scoped draft id, and index rows are generated
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, knowledge-base, guardrail]
 governed-by: 0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units

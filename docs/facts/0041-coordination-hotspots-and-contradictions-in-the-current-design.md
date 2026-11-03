@@ -24,7 +24,7 @@ Read from the repository on 2026-11-03 for the reframing of decisions 0165-0175.
 - 0158 gates a PR (Check, conform, reviewer, CI) and samples about 20% of merged PRs; 0013 gates a release. No decision validates a plan, a feature or the integrated product between those.
 
 **Contradictions this creates (resolved by 0165-0175)**
-- Roadmap Resume protocol (in-commit `Progress`) against 0164 (one squashed PR per step): the board is edited in every step's PR.
+- Roadmap Resume protocol (in-commit `Progress`) against one squashed pull request per step (the git-workflow practice): the board is edited in every step's PR.
 - 0155 "the owner approves a plan once" and 0130 "starting a run is the human act" against delegation through many levels and workers.
 - 0156 "10 agents at once, steps that touch the same files are not run together" against thousands of units on several machines.
 - 0117 "Hierarchy: none in the first version" against a feature that one owner decomposes into plans.

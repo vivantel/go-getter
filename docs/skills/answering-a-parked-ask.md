@@ -1,10 +1,10 @@
 ---
 id: answering-a-parked-ask
 title: Answer a parked ask from the routed queue
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, hooks, procedural]
-operationalizes: [a-delegated-grant-never-exceeds-its-parent]
+operationalizes: [human-escalation-rule]
 ---
 
 ## Procedure

@@ -1,7 +1,7 @@
 ---
 id: a-change-stays-inside-its-units-scope
 title: A change touches only paths inside its unit's declared scope
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, verification, guardrail]
 governed-by: 0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units

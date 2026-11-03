@@ -1,7 +1,7 @@
 ---
 id: an-outcome-needs-an-attribution-method
 title: An outcome brief is not approved without a meter, a target, a window and an attribution method
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, verification, guardrail]
 governed-by: 0178-an-outcome-is-accepted-when-its-meter-meets-its-target-over-a-window-with-attribution
@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-An outcome brief names its meter, target, observation window and how the effect is isolated from other causes. One missing is refused at approval. Advisory (tier 1) until discovery-and-outcomes D1 adds the check.
+An outcome brief names its meter, target, observation window and how the effect is isolated from other causes. One missing is refused at approval. Advisory (tier 1) until discovery-and-outcomes D2 adds the check.

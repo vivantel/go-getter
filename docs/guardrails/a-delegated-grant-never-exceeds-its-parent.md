@@ -1,7 +1,7 @@
 ---
 id: a-delegated-grant-never-exceeds-its-parent
 title: A delegated grant never exceeds its parent's on any dimension
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, hooks, guardrail]
 governed-by: 0171-grants-only-narrow-down-the-delegation-tree
@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-A grant issued to a child unit is a subset of its parent's grant on scope, spend, command shapes, ask policy and data classes. Force-push, history rewrite, shared-branch deletion, repository settings, tags, releases and publishing are never delegated. Advisory (tier 1) until work-coordination K8 refuses a wider grant.
+A grant issued to a child unit is a subset of its parent's grant on scope, spend, command shapes, ask policy, data classes and real-world effects with their caps. Force-push, history rewrite, shared-branch deletion, repository settings, tags, releases and publishing are never delegated. Advisory (tier 1) until work-coordination K8 refuses a wider grant.

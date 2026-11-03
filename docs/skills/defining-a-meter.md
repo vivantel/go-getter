@@ -1,10 +1,10 @@
 ---
 id: defining-a-meter
 title: Define a meter and its refresh schedule
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, observability, procedural]
-operationalizes: [an-outcome-needs-an-attribution-method]
+operationalizes: [a-real-world-effect-stays-inside-its-cap]
 ---
 
 ## Procedure

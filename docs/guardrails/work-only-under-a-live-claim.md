@@ -1,7 +1,7 @@
 ---
 id: work-only-under-a-live-claim
 title: A unit is worked only under a live claim
-status: active
+status: draft
 date: 2026-11-03
 tags: [coordination, enforcement, guardrail]
 governed-by: 0166-claims-are-leased-git-refs-and-status-lives-in-the-tracker
@@ -15,4 +15,4 @@ go-getter:
 
 ## Guardrail
 
-Claim a unit (`go-getter work claim`) before working on it, keep the lease alive, and stop when it lapses. A branch for a unit whose claim is not held by the branch's author is not shipped. Advisory (tier 1) until work-coordination K2 adds the check at `ship`.
+Claim a unit (`go-getter work claim`) before working on it, keep the lease alive, and stop when it lapses. Where the project requires claims (pack answer `require-claims`), `ship` refuses a branch whose unit has no live claim held by the caller. Advisory (tier 1) until work-coordination K2 adds that check.
