@@ -277,6 +277,7 @@
         "cli/compiler/src/watch.mjs",
         "cli/compiler/src/work/claim.mjs",
         "cli/compiler/src/work/ledger.mjs",
+        "cli/compiler/src/work/next.mjs",
         "cli/compiler/src/work/ops.mjs",
         "cli/compiler/src/work/scope.mjs",
         "cli/compiler/src/worktree.mjs",

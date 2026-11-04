@@ -1,13 +1,14 @@
 // What an autonomous run does next (decision 0130 items 6-8): the next step of its range, or the reason to stop and hand over.
 // A stop is never skipped: the first step of the range that is not done decides, so a human-needed step blocks what follows it.
 // Decision 0156: beyond that first step, `steps` also lists later pending steps for the free agent slots, never two whose
-// `Do` text names the same file and never one whose `Needs` are not done.
+// scope (`Scope`, else the files the `Do` text names) overlaps, by the rule of `work/next.mjs`, and never one whose `Needs` are not done.
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { readPlan, unapprovedReason, filesOf, openNeeds, unitStates } from '../plan.mjs';
+import { readPlan, unapprovedReason, filesOf, openNeeds, unitStates, effectiveScope } from '../plan.mjs';
 import { readLog } from '../telemetry/record.mjs';
 import { activeRun, noteStop } from './record.mjs';
 import { recordRunSpend } from '../spend/index.mjs';
+import { overlapsAny } from '../work/next.mjs';
 import { listWorktrees, worktreeConfig } from '../worktree.mjs';
 
 export const MAX_ATTEMPTS = 2;
@@ -81,7 +82,7 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
     const brief = (st, n) => ({ id: st.id, title: st.title, state: st.state, check: st.check ?? null, doneWhen: st.doneWhen ?? null, brief: stepBrief(path.join(project, run.plan), st, planText), ...(st.fields.Issue ? { issue: st.fields.Issue } : {}), attempts: n });
     const first = brief(step, attempts);
     const steps = [first];
-    const taken = filesOf(step.fields.Do);
+    const taken = [{ unit: id, scope: effectiveScope(step) }];
     const limit = freeSlots(project);
     for (const later of run.steps.slice(run.steps.indexOf(id) + 1)) {
       if (steps.length >= limit) break;
@@ -90,9 +91,9 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
       if (openNeeds(plan, cand, external).length) continue;
       const n = run.counters?.attempts?.[later] ?? 0;
       if (n >= MAX_ATTEMPTS || Object.values(run.counters?.denials?.[later] ?? {}).some((d) => d >= MAX_DENIALS)) continue;
-      const files = filesOf(cand.fields.Do);
-      if ([...files].some((f) => taken.has(f))) continue;
-      files.forEach((f) => taken.add(f));
+      const scope = effectiveScope(cand);
+      if (overlapsAny(scope, taken)) continue;
+      taken.push({ unit: later, scope });
       steps.push(brief(cand, n));
     }
     return { step: first, steps };
