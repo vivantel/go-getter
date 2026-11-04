@@ -21,7 +21,7 @@ guardrails-declare-enforcement,"Every guardrail must declare how it is enforced"
 handoff-has-brief-result-evidence,"Handoffs must carry a brief, a result and evidence","practice-packs, agent-roles, guardrail",active
 human-escalation-rule,"Agents must hand over to a human when blocked, before irreversible actions and on a guardrail denial","practice-packs, agent-roles, guardrail",active
 instruction-file-within-cap,"The instruction file must stay within 150 lines","practice-packs, harness, guardrail",active
-max-concurrent-agents-rule,"No more than 10 agents run at once","practice-packs, agent-roles, guardrail",active
+max-concurrent-agents-rule,"No more than 10 agents run at once per worker","practice-packs, agent-roles, guardrail",active
 mcp-arguments-hold-no-secret,"MCP calls carry no secret","practice-packs, hooks, guardrail",active
 neutral-source-has-no-host-specific-language,"Neutral source must not name a host agent or its tools","agent-agnostic, compiler, guardrail",active
 no-commits-on-the-default-branch,"Work must not happen on the default branch","practice-packs, git-hooks, guardrail",active

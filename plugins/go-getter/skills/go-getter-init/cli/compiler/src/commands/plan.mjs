@@ -3,7 +3,7 @@
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
 import { format } from 'node:util';
-import { resolvePlan, activePlanFiles, planStatus, nextSteps, unitStates, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
+import { resolvePlan, stemOf, activePlanFiles, planStatus, nextSteps, unitStates, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
 import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
@@ -64,6 +64,13 @@ async function readStdin() {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(chunk);
   return Buffer.concat(chunks).toString('utf8');
+}
+
+// The status with the claims ledger's live claims laid over the markers (decision 0166 item 3).
+async function withClaims(root, file, status) {
+  const { claimOverlay } = await import('../work/ops.mjs');
+  const { remoteOf } = await import('../work/ledger.mjs');
+  return claimOverlay(root, stemOf(file), status, { remote: remoteOf(root) });
 }
 
 export default async function planCommand({ args, shared, io }) {
@@ -212,7 +219,7 @@ export default async function planCommand({ args, shared, io }) {
       return 1;
     }
     const plan = { file: rel, steps: listed.result.steps };
-    const result = sub === 'status' ? planStatus(plan) : nextSteps(plan, undefined, unitStates(repoRoot(cwd)));
+    const result = sub === 'status' ? await withClaims(repoRoot(cwd), file, planStatus(plan)) : nextSteps(plan, undefined, unitStates(repoRoot(cwd)));
     if (sub === 'status' && opts.json) result.stale = stale.skipped ? null : stale.stale;
     out(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
     return 0;

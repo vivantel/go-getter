@@ -85,7 +85,7 @@ Advisory:
 - Context is compacted at task boundaries (`compaction-timing-rule`)
 - Handoffs must carry a brief, a result and evidence (`handoff-has-brief-result-evidence`)
 - Agents must hand over to a human when blocked, before irreversible actions and on a guardrail denial (`human-escalation-rule`)
-- No more than 10 agents run at once (`max-concurrent-agents-rule`)
+- No more than 10 agents run at once per worker (`max-concurrent-agents-rule`)
 - A guardrail scoped to one skill's own procedure belongs in that skill (`no-redundant-guardrails`)
 - A guardrail describing a shipped skill's behavior must also be stated in that skill (`no-unenforced-guardrail`)
 - Noisy work is delegated only when the cost model says the handoff is cheaper (`noisy-work-rule`)
