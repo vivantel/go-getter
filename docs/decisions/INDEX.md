@@ -169,3 +169,4 @@ id,title,tags,status
 0185-a-pack-answer-is-data-and-becomes-a-decision-only-when-it-is-a-real-choice,"A pack answer is data and becomes a decision only when it is a real choice","practice-packs, knowledge-base",draft
 0186-an-approved-plan-and-the-run-grants-answer-are-the-authority-to-start-a-run,"An approved plan and the run-grants answer are the authority to start a run; starting is free","hooks, enforcement, roadmap",active
 0187-a-release-the-user-asks-for-in-the-chat-is-the-approval-to-merge-it,"A release the user asks for in the chat is the approval to merge it; no command is typed","hooks, enforcement, security",active
+0188-a-release-request-is-read-from-what-the-user-typed-by-a-small-model-and-bounded-by-code,"A release request is read from what the user typed by a small model and bounded by code, not matched to a phrase","hooks, enforcement, security",active

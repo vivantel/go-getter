@@ -49,7 +49,7 @@ export default async function hookCommand({ root, args }) {
   const dir = payload.cwd ? path.resolve(payload.cwd) : project;
   if (event === 'user-prompt') {
     try {
-      evaluateUserPrompt(dir, payload, host);
+      await evaluateUserPrompt(dir, payload, host);
     } catch {
       // never blocks and prints nothing: the typed approval remains
     }

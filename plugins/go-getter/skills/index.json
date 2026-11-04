@@ -204,6 +204,7 @@
         "cli/compiler/src/reconcile.mjs",
         "cli/compiler/src/reconfigure.mjs",
         "cli/compiler/src/refs.mjs",
+        "cli/compiler/src/release-intent.mjs",
         "cli/compiler/src/release-request.mjs",
         "cli/compiler/src/release.mjs",
         "cli/compiler/src/remove.mjs",

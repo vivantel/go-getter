@@ -11,7 +11,7 @@ import { defaultBranch } from './git-env.mjs';
 import { suggestRefs } from './refs.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
 import { shapeApproved, listShapes } from './secrets/approvals.mjs';
-import { takeRequest } from './release-request.mjs';
+import { peekRequest, resolveAsk, spendRequest } from './release-request.mjs';
 import { ShipError, defaultRunner, buildMessage, waitForCi } from './ship.mjs';
 
 const SEMVER = /^v?(\d+)\.(\d+)\.(\d+)$/;
@@ -143,33 +143,40 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     const [sha, subject, body] = r.split(SEP);
     return parseCommit(sha, subject, body);
   }).filter(Boolean).filter((c) => !isReleaseCommit(c));
-  const bump = bumpOf(commits, from);
+  let bump = bumpOf(commits, from);
   if (!bump) throw new ShipError(`release: nothing to release; no feat, fix, perf, revert or breaking change merged since ${lastTag ?? 'the start'}`);
-  const version = nextVersion(from, bump);
+  let version = nextVersion(from, bump);
   const head = need(git('rev-parse', `origin/${base.name}`), 'git rev-parse');
-  const approvalId = releaseApprovalId(version, head);
+  let approvalId = releaseApprovalId(version, head);
   log('plan', `${commits.length} change${commits.length === 1 ? '' : 's'} since ${lastTag ?? 'the start'}: ${bump} bump, ${from} -> ${version}`);
   if (dryRun) {
-    log('dry-run', `would release v${version}; approve it by asking for it in the chat ("release next ${bump}") or with: go-getter approvals release v${version} ${head} (default branch head ${head})`);
+    log('dry-run', `would release v${version}; approve it by asking for it in the chat ("release") or with: go-getter approvals release v${version} ${head} (default branch head ${head})`);
     return { dryRun: true, version, bump, commits, head, approved: shapeApproved(project, approvalId, env) };
   }
 
   // 3 The recorded human approval, before anything is written or sent (guardrail human-escalation-rule, decision 0094): typed, or the
-  // user's own request in the chat that the host's hooks saved and handed to this call (decision 0187). A request is spent here.
+  // user's own request in the chat that the host's hooks saved and handed to this call (decisions 0187, 0188). A typed approval for what
+  // the commits make wins; otherwise a request may raise the number (never lower it) and is spent here.
   let approvedBy = 'a person';
   if (!shapeApproved(project, approvalId, env)) {
-    const asked = takeRequest(project, { bump, version, head, now: now().getTime(), env });
-    if (asked.ok) {
+    const asked = peekRequest(project, { head, now: now().getTime(), env });
+    if (asked?.stale) throw new ShipError(`release: ${asked.stale}`, 2);
+    if (asked?.request) {
+      const r = resolveAsk(asked.request.release, { from, bump, version, nextVersion });
+      if (r.reason) throw new ShipError(`release: ${r.reason}`, 2);
+      if (!spendRequest(asked)) throw new ShipError('release: the request in the chat was already used; ask again', 2);
+      ({ version, bump } = r);
+      approvalId = releaseApprovalId(version, head);
       approvedBy = `the user in the chat (session ${createHash('sha256').update(String(asked.request.session)).digest('hex').slice(0, 8)})`;
       log('approval', `v${version} was asked for in the chat`);
-    } else if (asked.reason) throw new ShipError(`release: ${asked.reason}`, 2);
+    }
   }
   if (approvedBy === 'a person' && !shapeApproved(project, approvalId, env)) {
     const prefix = `release:v${version}@`;
     const stale = listShapes(project, env).map((e) => e.id).filter((id) => id.startsWith(prefix));
     const reapprove = `go-getter approvals release v${version} ${head}`;
     if (stale.length) throw new ShipError(`release: v${version} was approved for ${stale.map((id) => id.slice(prefix.length)).join(', ')} but ${base.name} is now at ${head}; re-approve the new head with: ${reapprove}`, 2);
-    throw new ShipError(`release: v${version} at ${base.name} ${head} is not approved; ask for it in the chat ("release next ${bump}") and run this again, or a person records the approval with: ${reapprove} (\`release --batch --dry-run\` lists what it would release)`, 2);
+    throw new ShipError(`release: v${version} at ${base.name} ${head} is not approved; ask for it in the chat ("release") and run this again, or a person records the approval with: ${reapprove} (\`release --batch --dry-run\` lists what it would release)`, 2);
   }
 
   // 4 A checkpoint (guardrail checkpoint-before-gated-action), then the release branch from the default branch.

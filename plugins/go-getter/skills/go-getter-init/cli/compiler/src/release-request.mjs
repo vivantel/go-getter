@@ -24,6 +24,12 @@ export function parseRelease(text) {
   return m[1] ? { bump: m[1] } : { version: m[2] };
 }
 
+export const MAX_MESSAGE_CHARS = 80;
+
+// A cost gate and not the understanding: only a short message with a word that could be about releasing is read by a model, so a
+// pasted document or an ordinary sentence costs nothing. The same test denies an agent scheduling such text for the user's turn.
+export const looksLikeReleaseTalk = (text) => typeof text === 'string' && text.trim().length > 0 && text.trim().length <= MAX_MESSAGE_CHARS && /\b(?:release|ship|publish|cut|go|patch|minor|major|prod|production|beta)\b/i.test(text);
+
 // The texts in a tool call's input that the host could later submit as the user's prompt (a scheduled task's prompt, a wake-up's
 // prompt, a message to the main conversation), found by the field names that carry them.
 const PROMPT_FIELDS = new Set(['prompt', 'message', 'text', 'body']);
@@ -98,8 +104,39 @@ export function claimRequest(project, { session, now = Date.now(), env = process
 // The fresh requests saved for this repository, for `approvals list`.
 export const pendingRequests = (project, { now = Date.now(), env = process.env } = {}) => readAll(dirs(env).requests, REQUEST_TTL_MS, now).map((r) => r.data).filter((r) => r.repo === repoKey(project));
 
-// The CLI's approval check: `{ ok: true }` and the request is spent, `{ ok: false, reason }` and it stays, or `{ ok: false }` when nothing was claimed.
-export function takeRequest(project, { bump, version, head, now = Date.now(), env = process.env }) {
+// The partial version a person says ("6", "0.3", "1.0", "v1.2.3") as a full one, or null.
+export function fullVersion(text) {
+  const m = /^v?(\d{1,4})(?:\.(\d{1,4}))?(?:\.(\d{1,4}))?$/.exec(String(text ?? '').trim());
+  return m ? `${Number(m[1])}.${Number(m[2] ?? 0)}.${Number(m[3] ?? 0)}` : null;
+}
+
+const RANK = { patch: 0, minor: 1, major: 2 };
+const parts = (v) => v.split('.').map(Number);
+export const compareFull = (a, b) => parts(a).reduce((d, x, i) => d || x - parts(b)[i], 0);
+// The bump a version is from the last one: the biggest part that changed.
+export const bumpBetween = (from, to) => { const [a, b] = [parts(from), parts(to)]; return a[0] !== b[0] ? 'major' : a[1] !== b[1] ? 'minor' : 'patch'; };
+
+// What a request lets ship, given what the commits make: `{ version, bump }`, or `{ reason }`. A bare request releases what the commits
+// make; a named bump may go up and never down (a feature cannot ship as a patch); a version must be above the last release and not
+// below what the commits require. What ships is still the commits at the head the person saw; only the number is theirs.
+export function resolveAsk(asked, { from, bump, version, nextVersion }) {
+  if (asked.version) {
+    const v = fullVersion(asked.version);
+    if (!v) return { reason: `${asked.version} is not a version` };
+    if (compareFull(v, from) <= 0) return { reason: `you asked for v${v}, which is not above the last release v${from}` };
+    if (compareFull(v, version) < 0) return { reason: `you asked for v${v} but the commits need at least v${version}; ask for that or higher` };
+    return { version: v, bump: bumpBetween(from, v) };
+  }
+  if (asked.bump) {
+    if (RANK[asked.bump] < RANK[bump]) return { reason: `you asked for a ${asked.bump} release but the commits make a ${bump} release (v${version}); a ${asked.bump} would hide that; ask for ${bump} or higher` };
+    return { version: nextVersion(from, asked.bump), bump: asked.bump };
+  }
+  return { version, bump };
+}
+
+// The newest claimed, unexpired request of this repository, if its head is still the default branch's head: `{ request, file, claim }`;
+// `{ stale }` (what to tell the person) when the newest moved on; null when nothing is claimed.
+export function peekRequest(project, { head, now = Date.now(), env = process.env }) {
   const repo = repoKey(project);
   const requests = readAll(dirs(env).requests, REQUEST_TTL_MS, now);
   const claimed = readAll(dirs(env).claims, CLAIM_TTL_MS, now)
@@ -107,25 +144,24 @@ export function takeRequest(project, { bump, version, head, now = Date.now(), en
     .map((claim) => ({ claim, request: requests.find((r) => r.id === claim.data.request) }))
     .filter((c) => c.request)
     .sort((a, b) => Date.parse(b.request.data.at) - Date.parse(a.request.data.at) || (a.request.id < b.request.id ? 1 : -1));
-  let reason;
-  for (const { claim, request } of claimed) {
-    const asked = request.data.release;
-    if (asked.bump && asked.bump !== bump) reason ??= `you asked for a ${asked.bump} release but the commits make a ${bump} release (v${version}); ask "release next ${bump}" to approve that`;
-    else if (asked.version && asked.version !== version) reason ??= `you asked for v${asked.version} but the commits make v${version}; ask "release v${version}" to approve that`;
-    else if (request.data.head !== head) reason ??= `the default branch moved after you asked (it was ${request.data.head.slice(0, 7)}, it is ${head.slice(0, 7)}), so what would ship is not what you saw; ask again`;
-    else {
-      try {
-        unlinkSync(request.file); // removed once: of two takers only one succeeds
-      } catch {
-        continue;
-      }
-      try {
-        unlinkSync(claim.file);
-      } catch {
-        // the claim expires on its own
-      }
-      return { ok: true, request: request.data };
-    }
+  if (!claimed.length) return null;
+  const fresh = claimed.find((c) => c.request.data.head === head);
+  if (fresh) return { request: fresh.request.data, file: fresh.request.file, claim: fresh.claim.file };
+  const old = claimed[0].request.data.head;
+  return { stale: `the default branch moved after you asked (it was ${old.slice(0, 7)}, it is ${head.slice(0, 7)}), so what would ship is not what you saw; ask again` };
+}
+
+// Spends a peeked request: removed once, so of two takers only one succeeds.
+export function spendRequest(peeked) {
+  try {
+    unlinkSync(peeked.file);
+  } catch {
+    return false;
   }
-  return reason ? { ok: false, reason } : { ok: false };
+  try {
+    unlinkSync(peeked.claim);
+  } catch {
+    // the claim expires on its own
+  }
+  return true;
 }
