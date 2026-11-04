@@ -22,7 +22,7 @@ It extends 0069 (step format) and the hierarchy line of 0117, which said a work 
 
 ## In force
 
-This decision takes effect with K1 (the plan format and ids); until then plans parse as before. Until then the existing practice applies.
+In force since K1 (2026-11-04): the plan parser reads the unit fields, plan and feature headers and `<file-stem>#<id>` references, and `check plans` resolves them across plans. Claims, scope enforcement and the other units of this contract take effect with their own steps.
 
 ## Why
 

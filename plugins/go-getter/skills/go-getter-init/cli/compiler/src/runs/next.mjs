@@ -4,7 +4,7 @@
 // `Do` text names the same file and never one whose `Needs` are not done.
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { readPlan, unapprovedReason } from '../plan.mjs';
+import { readPlan, unapprovedReason, filesOf, openNeeds, unitStates } from '../plan.mjs';
 import { readLog } from '../telemetry/record.mjs';
 import { activeRun, noteStop } from './record.mjs';
 import { recordRunSpend } from '../spend/index.mjs';
@@ -19,9 +19,7 @@ export function spentUsd(project, run) {
   return readLog(project).reduce((sum, r) => (Date.parse(r.ts) >= since && typeof r.cost === 'number' ? sum + r.cost : sum), 0);
 }
 
-// File paths a step's `Do` text names: a path with a directory, or a bare name with a known extension.
-const FILE = /(?:[\w.@-]+\/)+[\w@-][\w.@-]*\.[A-Za-z][\w]*|\b[\w@-]+\.(?:mjs|cjs|js|ts|json|md|ya?ml|toml|sh|txt)\b/g;
-export const filesOf = (text) => new Set((String(text ?? '').match(FILE) ?? []).map((f) => f.replace(/^\.\//, '')));
+export { filesOf };
 
 // A brief a fresh session can work from with no other prompt: the plan's goal, the step's why, files, do, done-when and check.
 export function stepBrief(file, step, text = readFileSync(file, 'utf8')) {
@@ -65,6 +63,7 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
   if (run.spendCapUsd && spent >= run.spendCapUsd) return stop('spend-cap', `spend $${spent.toFixed(2)} has reached the cap of $${run.spendCapUsd}`);
   const plan = readPlan(path.join(project, run.plan));
   const byId = new Map(plan.steps.map((s) => [s.id, s]));
+  const external = unitStates(project);
   const planText = readFileSync(path.join(project, run.plan), 'utf8');
   const unapproved = unapprovedReason(path.join(project, run.plan));
   for (const id of run.steps) {
@@ -77,7 +76,7 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
     if (attempts >= MAX_ATTEMPTS) return stop('red-attempts', `step ${id} failed ${attempts} fix attempts`, id);
     const repeated = Object.entries(run.counters?.denials?.[id] ?? {}).find(([, n]) => n >= MAX_DENIALS);
     if (repeated) return stop('repeated-denial', `step ${id} was denied ${repeated[1]} times by ${repeated[0]}`, id);
-    const open = step.needs.filter((n) => byId.get(n)?.state !== 'done');
+    const open = openNeeds(plan, step, external);
     if (open.length) return stop('needs-open', `step ${id} needs ${open.join(', ')}, which is not done`, id);
     const brief = (st, n) => ({ id: st.id, title: st.title, state: st.state, check: st.check ?? null, doneWhen: st.doneWhen ?? null, brief: stepBrief(path.join(project, run.plan), st, planText), ...(st.fields.Issue ? { issue: st.fields.Issue } : {}), attempts: n });
     const first = brief(step, attempts);
@@ -88,7 +87,7 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
       if (steps.length >= limit) break;
       const cand = byId.get(later);
       if (!cand || cand.state !== 'pending' || cand.human) continue;
-      if (cand.needs.some((n) => byId.get(n)?.state !== 'done')) continue;
+      if (openNeeds(plan, cand, external).length) continue;
       const n = run.counters?.attempts?.[later] ?? 0;
       if (n >= MAX_ATTEMPTS || Object.values(run.counters?.denials?.[later] ?? {}).some((d) => d >= MAX_DENIALS)) continue;
       const files = filesOf(cand.fields.Do);

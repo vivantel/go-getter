@@ -3,7 +3,7 @@
 // read a Markdown plan's steps, move one through its markers (decision 0069, plan A.2) and write to the step's GitHub issue (0117).
 import path from 'node:path';
 import { format } from 'node:util';
-import { resolvePlan, activePlanFiles, planStatus, nextSteps, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
+import { resolvePlan, activePlanFiles, planStatus, nextSteps, unitStates, formatStatus, formatNext, startStep, doneStep, repoRoot, formatBrief } from '../plan.mjs';
 import { trackerSource } from '../trackers/index.mjs';
 import { planIssue, relPlan, VERBS } from '../trackers/write.mjs';
 import { callSource } from '../trackers/worksource.mjs';
@@ -201,7 +201,7 @@ export default async function planCommand({ args, shared, io }) {
     if (warning) err(warning);
     if (opts.fromDefault && stale.base) {
       const plan = planFromDefault(repoRoot(cwd), file, stale.base);
-      const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
+      const result = sub === 'status' ? planStatus(plan) : nextSteps(plan, undefined, unitStates(repoRoot(cwd)));
       out(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
       return 0;
     }
@@ -212,7 +212,7 @@ export default async function planCommand({ args, shared, io }) {
       return 1;
     }
     const plan = { file: rel, steps: listed.result.steps };
-    const result = sub === 'status' ? planStatus(plan) : nextSteps(plan);
+    const result = sub === 'status' ? planStatus(plan) : nextSteps(plan, undefined, unitStates(repoRoot(cwd)));
     if (sub === 'status' && opts.json) result.stale = stale.skipped ? null : stale.stale;
     out(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
     return 0;

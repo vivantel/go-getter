@@ -36,8 +36,8 @@ Result 2026-11-03: merged in #242 (`72f8327`) and reshaped in #269 (ship always 
 Progress 2026-11-01 · `feat/ship-verb` · `../go-getter-wt/ship` · `6d3bc4d` · done (committed, not yet re-run by me): `compiler/src/ship.mjs` and `commands/ship.mjs`, a `gate.mjs` change, attribute-skill note, CI status errors read as errors, staged refs listed in the PR body · next: run the Check and map its tests to the four Done-when cases; `fe164f2` and `e7bc5be` share a title, so squash on merge.
 
 ### T4 Redirect hook and allow-rules — [ ]
-Blocked only by `host-adapters.md` H2 (decision 0182): build on today's verbs; `work-coordination.md` K11 later extends the denial to the `work` and `queue` verbs. K1 restores `Needs: T3, host-adapters#H2`.
-Class: implement · Needs: T3 · Check: `node --test compiler/test/redirect-hook.test.mjs`
+Needs `host-adapters.md` H2 (decision 0182): build on today's verbs; `work-coordination.md` K11 later extends the denial to the `work` and `queue` verbs.
+Class: implement · Needs: T3, host-adapters#H2 · Check: `node --test compiler/test/redirect-hook.test.mjs`
 Context: also needs H2 (`host-adapters.md`, pending) and G1 (`automation-first-gates.md`, done); start only when H2 is `[x]`. Decision 0157; guardrail `raw-commands-redirect-to-verbs`. The hook machinery is `compiler/src/hook.mjs` and `compiler/src/checkpoint-trigger.mjs`; H2 moves `hook.mjs` behind the adapter registry first, so this step does not conflict with it. `go-getter doctor` already prints allow rules for commands a host layer blocks (PR #238).
 Do: add a pre-tool rule that denies raw `git push`, `gh pr create`, `gh pr merge` and release sequences when `ship` or `release` covers them, with a message naming the verb; give `ship` and `release --batch` entries in the doctor allow-rule output; the git-hook floor (0009) covers hosts with no blocking hook. Keep a documented escape: a human may run the raw command.
 Done-when: tests show each raw sequence denied with the verb named, the verbs themselves allowed, and the doctor output listing the allow-rules; `go-getter verify` passes with the guardrail's `enforcement` raised from tier 1 to tier 2 with a `run`.
@@ -64,7 +64,7 @@ Done-when: tests show a defaulted answer writing a draft artifact, each trigger 
 Progress 2026-11-02 · `feat/default-and-log-digest` · merged in #259 (`6507dba`) · done: `interview next --defaults` (exit 3 on the four triggers, draft decisions), `go-getter digest [--mark]`, `digest.test.mjs` · next: T8's `audit pick` must write the `audit.json` the digest reads (`{prs: [int], flagged: [int]}`); record that shape in T8 or a fact.
 
 ### T8 Gate-stack runner and audit picker — [x]
-Not blocked (decision 0182): build on today's `ship`; `work-coordination.md` K11 later rebases it onto the K6 queue and K10 tiers. K1 restores `Needs: T3`.
+Not blocked (decision 0182): build on today's `ship`; `work-coordination.md` K11 later rebases it onto the K6 queue and K10 tiers.
 Class: implement · Needs: T3 · Check: `node --test compiler/test/gate-stack.test.mjs`
 Context: also needs G3 (`automation-first-gates.md`, done). Decision 0158. The reviewer agent is read-only (`reviewer-read-only`); the verification gate is `compiler/src/gate.mjs` and `verify.mjs`; `conform` is a plugin skill that checks a diff against decisions and guardrails.
 Do: make `ship` run, in order, the step `Check`, a conform pass, a reviewer pass on a fresh context given only the diff, brief and decisions, then CI, and record each result in the run record; add `go-getter audit pick` choosing about 20% of merged PRs at random plus every PR the reviewer flagged, written to the digest. A failed audit must be recordable as a new check, guardrail or reviewer instruction (`audit fail <pr> --as check|guardrail|instruction`).
@@ -73,7 +73,7 @@ Result 2026-11-04 · `feat/gate-stack` · done: `ship` runs `--check <cmd>`, `--
 Result 2026-11-04 (follow-up) · `feat/ship-gates-default` · `ship` and `pr` now run the gates by default: the Check of the step marked `[~]` in this worktree's plan (not `[~]` on origin; none found: `check: skipped: no step`), and conform and reviewer through `claude -p` unless `--no-conform` / `--no-review`, `GO_GETTER_SHIP_GATES=off`, no `claude` on PATH, no governance-eligible provider for internal data (`routing-governance-before-cost`) or a reached run spend cap (`skipped: <reason>`; each pass budget is capped at $2 or the cap left); `--check` still overrides; a failing gate stops before the commit. Tests: `ship-gates-default.test.mjs` with injected fake runners.
 
 ### T9 Plan drafting from a one-line goal — [x]
-Not blocked (decision 0182): build on today's plan format; `work-coordination.md` K11 later adds units with `Scope`, `Owner`, `Accept` and the K17 check. K1 restores `Needs: T7`.
+Not blocked (decision 0182): build on today's plan format; `work-coordination.md` K11 later adds units with `Scope`, `Owner`, `Accept` and the K17 check.
 Class: implement · Needs: T7 · Check: `node --test compiler/test/plan-draft.test.mjs`
 Context: today the owner interviews, then hand-writes prompts for new sessions. The roadmap skill produces plans in the `go-getter plan` format; the planner agent is read-only. `go-getter run` hands the next step to a session.
 Do: add `go-getter plan draft "<goal>"`: run the unattended interview (T7) through the planner and reviewer agents, write the plan with `Check` commands and `‖` markers, and stop at the single plan approval of 0155. Make `go-getter run next` emit a self-contained brief for a fresh session from a step, so no prompt is hand-written.
