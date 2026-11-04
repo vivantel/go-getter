@@ -57,7 +57,7 @@ test('a unit with unmet Needs is skipped and a human-owned unit is left to a per
   assert.ok(!ids(r.ready).includes('S2'));
   assert.match(r.skipped.find((s) => s.unit === 'feat#S2').reason, /needs S0/);
   assert.ok(!ids(r.ready).includes('S6'));
-  assert.deepEqual(ids(r.ready), ['S1', 'S4', 'S0']);
+  assert.deepEqual(ids(r.ready), ['S0', 'S1', 'S4']); // S0 first: S2 waits on it (critical path, decision 0174)
   assert.ok(ids(nextUnits(repo(), { ownerKind: 'human' }).ready).includes('S6'));
 });
 
@@ -98,6 +98,6 @@ test('--dry-run claims nothing and plain work next claims the first ready unit',
   const dry = run('--dry-run');
   assert.match(dry, /feat#S1: ready/);
   assert.equal(sh(dir, 'for-each-ref', 'refs/go-getter/claims'), '');
-  assert.match(run(), /feat#S1: claimed by agent w-t/);
+  assert.match(run(), /feat#S0: claimed by agent w-t/);
   assert.notEqual(sh(dir, 'for-each-ref', 'refs/go-getter/claims'), '');
 });

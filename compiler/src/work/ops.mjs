@@ -17,15 +17,16 @@ const entryFile = (unit) => `${unit.includes('#') ? unit.split('#')[1] : unit}.j
 const fail = (code, error, extra = {}) => ({ ok: false, code, error, ...extra });
 
 // Pack answers of the orchestration decisions that apply to claims.
-export function claimSettings(root) {
-  const data = Object.assign(
+export function orchestrationData(root) {
+  return Object.assign(
     {},
     ...readArtifacts(root, ['decisions'])
       .filter((d) => d.data.status === 'active' && String(d.data['go-getter']?.['generated-by'] ?? '').startsWith('orchestration@'))
       .map((d) => d.data['go-getter']),
   );
-  return claimConfig(data);
 }
+
+export const claimSettings = (root) => claimConfig(orchestrationData(root));
 
 // The caller's clock. A clock offset (to exercise skew) is honoured only with GO_GETTER_TEST_MODE=1, and says so on stderr.
 let warned = false;

@@ -112,3 +112,22 @@ export function overlap(a, b) {
 }
 
 export const scopesOverlap = (a, b) => overlap(a, b) !== null;
+
+// Whether the normalized token `p` covers `c`: `c` names only what `p` names (same resource; a path inside the directory or glob `p`).
+export function tokenCovers(p, c) {
+  if (p === c) return true;
+  if (isNamed(p) || isNamed(c)) return false;
+  if (!hasWild(p)) {
+    const a = segments(p);
+    return a.length <= segments(c).length && !hasWild(c) && isPrefix(a, segments(c));
+  }
+  const re = globRegex(p);
+  if (!hasWild(c)) return ancestorsOrSelf(segments(c)).some((x) => re.test(x));
+  return re.test(c); // a glob inside a glob: the parent's pattern matches the child's text (`src/**` covers `src/a/**`)
+}
+
+// The first token of `child` that `parent` does not cover, or null when the child's scope lies inside the parent's.
+export function uncovered(parent, child) {
+  const ps = scopeTokens(parent);
+  return scopeTokens(child).find((c) => !ps.some((p) => tokenCovers(p, c))) ?? null;
+}

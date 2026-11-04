@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "orchestration",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "family": "harness",
   "components": [
     10
@@ -228,6 +228,30 @@
       "default": "8",
       "since": "0.1.3",
       "prompt": "How many KB of brief fields may a delegated unit keep in the claims ledger before they spill to the tracker issue?"
+    },
+    {
+      "id": "pick-among",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "5",
+      "since": "0.1.4",
+      "prompt": "Among how many of the highest-priority ready work units does a worker pick, by a hash of its id, the one it claims?"
+    },
+    {
+      "id": "wip-per-worker",
+      "type": "text",
+      "pattern": "^(max-concurrent|[1-9][0-9]*)$",
+      "default": "max-concurrent",
+      "since": "0.1.4",
+      "prompt": "How many work units may one worker hold at once (a number, or `max-concurrent` to use the per-worker agent limit)?"
+    },
+    {
+      "id": "wip-per-feature",
+      "type": "text",
+      "pattern": "^(none|[1-9][0-9]*)$",
+      "default": "none",
+      "since": "0.1.4",
+      "prompt": "How many work units of one feature may be claimed at once across all workers (a number, or `none` for no limit)?"
     }
   ],
   "outputs": {
@@ -1230,6 +1254,72 @@
               }
             },
             "body": "## Decision\n\nA delegated unit keeps at most {{answer.brief-max}} KB of brief fields in the claims ledger (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe ledger is fetched by every claim, so each delegated brief in it must stay small; a brief over the cap is kept on the tracker issue instead, and the ledger holds a pointer to it.\n"
+          }
+        ]
+      }
+    },
+    "pick-among": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "work-pick-among",
+            "title": "Workers pick among the first {{answer.pick-among}} ready work units",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "pick-among": "{{answer.pick-among}}"
+              }
+            },
+            "body": "## Decision\n\nReady work is ordered by priority, and a worker takes one of the first {{answer.pick-among}} by a hash of its id (decision 0174 item 1). (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWorkers asking at the same time spread over several units instead of all contending for the first claim on the ledger (decision 0166 item 1); a larger number spreads more and follows the order less closely.\n"
+          }
+        ]
+      }
+    },
+    "wip-per-worker": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "work-wip-per-worker",
+            "title": "A worker holds at most {{answer.wip-per-worker}} work units at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "wip-per-worker": "{{answer.wip-per-worker}}"
+              }
+            },
+            "body": "## Decision\n\nA worker holds at most {{answer.wip-per-worker}} work units at once (`max-concurrent` stands for the agents answer); `go-getter work next` offers it nothing above that (decision 0174 item 2). (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA worker that holds many units finishes none quickly; the default follows the number of agents that may run at once (decision 0156).\n"
+          }
+        ]
+      }
+    },
+    "wip-per-feature": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "work-wip-per-feature",
+            "title": "At most {{answer.wip-per-feature}} work units of one feature are claimed at once",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "wip-per-feature": "{{answer.wip-per-feature}}"
+              }
+            },
+            "body": "## Decision\n\nAt most {{answer.wip-per-feature}} work units of one feature are claimed at once (`none` is no limit); `go-getter work next` offers nothing of a feature at its limit (decision 0174 item 2). (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nOne feature then cannot take every worker while the others wait; with no limit the order of priority alone decides.\n"
           }
         ]
       }
