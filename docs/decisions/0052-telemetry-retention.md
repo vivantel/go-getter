@@ -1,7 +1,8 @@
 ---
 id: 0052-telemetry-retention
 title: The metadata log keeps 30 days
-status: active
+status: superseded
+superseded-by: 0201-the-metadata-log-keeps-365-days
 date: 2026-10-05
 tags: [practice-packs, observability, harness]
 track: process
