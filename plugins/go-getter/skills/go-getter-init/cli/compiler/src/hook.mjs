@@ -2,7 +2,7 @@
 // Evaluates the project's tier-2 guardrail entries against the tool call and answers in the host's format.
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import os from 'node:os';
 import { collectEnforcement } from './enforce.mjs';
 import { matchesAny } from './glob.mjs';
@@ -12,6 +12,7 @@ import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
 import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { stateCheck } from './gate-state.mjs';
+import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords } from './shell.mjs';
@@ -213,6 +214,19 @@ function shellText(payload) {
   return command.map((w) => `'${String(w).replace(/'/g, `'\\''`)}'`).join(' ');
 }
 
+// The worktree a command moves into first (`cd <dir> && ...`) when it is a worktree of this repository and the command
+// changes directory nowhere else, so the state of the commands after it can be read there; null otherwise.
+function worktreeCd(command, project) {
+  const m = /^\s*cd\s+("[^"$`\\]+"|'[^']+'|[^\s;&|<>()$`\\"']+)\s*(?:&&|;)\s*/.exec(command);
+  if (!m || /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command.slice(m[0].length))) return null;
+  try {
+    const target = realpathSync(path.resolve(project, m[1].replace(/^(["'])(.*)\1$/, '$2')));
+    return listWorktrees(project).some((t) => t.path === target) ? target : null;
+  } catch {
+    return null;
+  }
+}
+
 // `{ command, class }` when a `gate-command` entry gates this call on this host, else null. Without a known host the call
 // is not gated: whether the host prompts natively cannot be told. A host with native ask rules prompts for the catalog and
 // the prefix extras; a `/regex/` extra has no native rule there, so the hook gates only those.
@@ -227,9 +241,10 @@ function gatedCommand(entry, payload, host, project) {
     const hits = hasNativeAsk(host)
       ? [...matchGated(command, { classes: [], extra: args.extra.filter(isRegexExtra) }), ...matchGated(command, { ...args, extra: [] }).filter((h) => h.stateful)]
       : matchGated(command, args);
-    const moved = /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command);
+    const dir = worktreeCd(command, project);
+    const moved = !dir && /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command);
     for (const h of hits) {
-      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read' } : stateCheck(h.id, h.segment, project)) : null;
+      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read' } : stateCheck(h.id, h.segment, dir ?? project)) : null;
       if (state?.safe) continue;
       hit = { ...h, why: state?.why };
       break;

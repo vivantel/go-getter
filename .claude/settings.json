@@ -68,6 +68,9 @@
     ]
   },
   "permissions": {
+    "additionalDirectories": [
+      "../go-getter-wt"
+    ],
     "ask": [
       "Bash(git push -f*)",
       "Bash(git push * -f*)",

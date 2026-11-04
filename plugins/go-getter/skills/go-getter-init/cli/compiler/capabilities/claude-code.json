@@ -45,6 +45,10 @@
     "userAllow": {
       "file": ".claude/settings.local.json",
       "format": "claude-permissions"
+    },
+    "workspaceDirs": {
+      "file": ".claude/settings.json",
+      "key": ["permissions", "additionalDirectories"]
     }
   },
   "routing": {
