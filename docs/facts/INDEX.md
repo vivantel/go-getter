@@ -33,10 +33,10 @@ id,title,tags,status
 0033-apply-keeps-no-record-of-what-it-wrote,"Until the manifest (0089), apply kept no record of what it wrote, so it could not undo settings or tell its content from the user's","generated-files, enforcement",active
 0034-kilo-question-tool-gated-by-client,"Kilo's question tool is on for the app, cli, desktop and vscode clients and otherwise needs KILO_ENABLE_QUESTION_TOOL","kilo, host-agents, interview",active
 0035-host-specific-branches-in-the-compiler-and-runtime,"Host knowledge sits in thirteen places across the compiler and the runtime; capability rows are the only data-driven part","architecture, compiler, host-agents, hooks",active
-0036-how-each-host-shows-an-mcp-call-to-hooks,"Only Claude Code and Codex are confirmed to show an MCP call as mcp__server__tool; Cursor shows no server; Cursor output can be replaced for MCP only","hooks, host-agents, security",active
+0036-how-each-host-shows-an-mcp-call-to-hooks,"Only Claude Code and Codex are confirmed to show an MCP call as mcp__server__tool; Cursor shows no server; Cursor's output can be replaced for MCP only","hooks, host-agents, security",active
 0037-where-each-host-exposes-tokens-or-cost,"Only Claude Code (transcript, status line, -p JSON), Codex (exec JSON) and OpenCode and Kilo (session export) give a per-session source of tokens or cost; Cursor, Gemini CLI and Copilot give none","cost, hooks, host-agents",active
 0038-virage-integration-surface,"Virage registers MCP and hooks only for Claude Code; its prompt hook injects retrieved chunks without a tool call; it has no secret scan and no restricted-path input","tooling, security, hooks",active
-0039-generated-ci-workflow-is-configurable,"The generated CI workflow takes permissions, concurrency and action refs from an active decision's ci-workflow key",ci,active
+0039-generated-ci-workflow-is-configurable,"The generated CI workflow takes permissions, concurrency and action refs from an active decision's ci-workflow key","ci",active
 0040-oct-31-throughput-baseline-and-friction,"Oct 31 throughput baseline and where the owner's time went","roadmap, dogfooding, cost",active
 0041-coordination-hotspots-and-contradictions-in-the-current-design,"Where the current design assumes one owner, one machine and shared files, and what contradicts at scale","coordination, roadmap, architecture",active
 0042-the-framework-map,"The framework's entities, how they relate, and which part owns each artifact","coordination, outcomes, architecture",active

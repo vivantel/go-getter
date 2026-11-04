@@ -1,5 +1,5 @@
 # Operating charters index (CSV)
 
-Hand-kept until generated indexes exist (work-coordination K5).
+Hand-kept: `go-getter artifacts index` does not cover this directory yet.
 
 id,title,status
