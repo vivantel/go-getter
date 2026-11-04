@@ -182,5 +182,6 @@ id,title,tags,status
 0198-merge-queue,"The merge queue is off: ship merges through it only when it is on","practice-packs, agent-roles, harness",draft
 0199-we-publish-a-position-and-system-paper-and-may-change-go-getter-to-support-it,"We publish a position-and-system paper on go-getter as a deterministic edge, and may change go-getter to support it","research, positioning, roadmap",active
 0200-the-paper-commits-to-five-claims-and-labels-the-scaling-claim-as-extrapolation,"The paper commits to five claims and labels the scaling claim as extrapolation","research, positioning, harness, enforcement",active
-0201-the-metadata-log-keeps-365-days,"The metadata log keeps 365 days","observability, harness",active
+0201-the-metadata-log-keeps-365-days,"The metadata log keeps 365 days","observability, harness",superseded
+0202-telemetry-retention,"The metadata log keeps 365 days","practice-packs, observability, harness",active
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft

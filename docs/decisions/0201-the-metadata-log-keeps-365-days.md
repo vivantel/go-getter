@@ -1,7 +1,8 @@
 ---
 id: 0201-the-metadata-log-keeps-365-days
 title: The metadata log keeps 365 days
-status: active
+status: superseded
+superseded-by: 0202-telemetry-retention
 date: 2026-11-04
 tags: [observability, harness]
 track: process
@@ -27,3 +28,7 @@ The cost is small and local: the log holds metadata only (decision 0051, fact 00
 
 - 0052 becomes `superseded`; its pack answer `retention: 30` no longer matches the adopted value, so `go-getter doctor` or the next `update` may flag the drift and the pack answer has to be re-recorded as 365.
 - The test in step P1 sets the value, writes a record dated 31 days ago and shows it survives a write.
+
+## Status note
+
+The pack-generated 0202-telemetry-retention now carries the value, so a later `go-getter reconfigure telemetry` finds its retention answer. This decision stays as the record of why the value is 365 and not 30.
