@@ -20,13 +20,19 @@ export function readOutcomes(root) {
     .sort()
     .map((n) => {
       const file = path.join(dir, n);
-      const { data, body } = parseFrontmatter(readFileSync(file, 'utf8'));
-      return { id: n.slice(0, -3), file: path.relative(root, file), data, body };
+      const brief = { id: n.slice(0, -3), file: path.relative(root, file), data: {}, body: '' };
+      try {
+        Object.assign(brief, parseFrontmatter(readFileSync(file, 'utf8')));
+      } catch (err) {
+        brief.parseError = err.message;
+      }
+      return brief;
     });
 }
 
 // Problems of one brief, each naming the field: `<file>: missing <field>` or `<file>: unknown meter "<id>"`.
 export function briefProblems(root, brief) {
+  if (brief.parseError) return [`${brief.file}: unreadable frontmatter (${brief.parseError})`];
   const problems = [];
   const d = brief.data ?? {};
   for (const key of REQUIRED) if (!filled(d[key])) problems.push(`${brief.file}: missing ${NAME[key] ?? key}`);

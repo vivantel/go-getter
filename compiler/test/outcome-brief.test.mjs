@@ -90,3 +90,14 @@ test('this repo declares the guardrail at tier 2 with a run', () => {
   const mine = collectEnforcement(repo).filter((e) => e.guardrail === 'an-outcome-needs-an-attribution-method');
   assert.ok(mine.some((e) => e.tier === 2 && e.run));
 });
+
+test('a brief with unreadable frontmatter is refused by name, not crashed on', () => {
+  const dir = project();
+  try {
+    writeFileSync(path.join(dir, 'docs/outcomes/broken.md'), '---\nid: [oops\n---\nbody\n');
+    const problems = outcomeProblems(dir, 'broken');
+    assert.equal(problems.length, 1);
+    assert.match(problems[0], /broken\.md: unreadable frontmatter/);
+    assert.equal(cli(dir, 'check', 'broken').status, 1);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
