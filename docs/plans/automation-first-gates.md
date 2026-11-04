@@ -31,7 +31,7 @@ Done-when: tests show the message carrying loss, alternative and the remember ch
 
 ### G4 Hook-less host floor — [x]
 Class: implement · Effort: medium · Needs: G1 · Check: `node --test compiler/test/gate-floor.test.mjs`
-Context: Copilot, Kilo and OpenCode have no blocking pre-tool hook (see the enforcement debt in `docs/plans/archive/v0.2-agent-core-hardening.md`); decision 0159 item 3.
+Context: Copilot, Kilo and OpenCode have a pre-tool hook that cannot ask a person (see the enforcement debt in `docs/plans/archive/v0.2-agent-core-hardening.md`); decision 0159 item 3.
 Do: on a host without a blocking hook, write no ask rules for state-dependent commands and rely on the git-hook floor plus a checkpoint taken before the action; `go-getter coverage` shows the tier per host and what remains unprotected.
 Done-when: tests show no ask rule written for the three hosts, a checkpoint taken before a state-dependent command where the host can run one, and `coverage` stating the residual risk.
 Progress 2026-11-04 · `feat/hookless-host-floor` · done: capability `hooks.gateFloor` (Copilot, Kilo, OpenCode; these have a blocking hook but cannot ask, so the plan's "hook-less" is read as "cannot ask and has no native rule for these commands"), the hook lets a state-dependent command run after a checkpoint and logs it as `allowed:floor`, `coverage` prints the tier per host and the residual risk, `compiler/test/gate-floor.test.mjs` · next: none.
