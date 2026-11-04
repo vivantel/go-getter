@@ -20,6 +20,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 | Runs, spend and install | `runs-spend-install.md` | independent | Review R1 against K9 (lifecycle) when K9 starts. |
 | Knowledge-base hygiene (pack answers as data, review of authored decisions) | `knowledge-base-hygiene.md` | Q1 first | New (0185, draft). Q2 and Q3 change the pack renderer and golden files; independent of the other plans. |
 | Deterministic-edge article (position-and-system paper, Zenodo then arXiv; decisions 0199, 0200) | plan lives in the paper repo: `strebulaev-articles/articles.deterministic-edge`, `docs/plans/deterministic-edge-article.md` | A1, A2, A4 independent; A3 after A1; interventions (A7) after A3 | Moved there 2026-11-04. go-getter changes it motivates (A7) are done here and cite 0199 and 0200. |
+| Paper instruments (telemetry retention, guardrail ids, approval events, enforcement origin, generated-share meter, bypass eval) | `paper-instruments.md` | P1 first (telemetry records are pruned from 2026-11-30); P2, P4, P6 independent; P3 after P2; P5 after P4 | New (2026-11-04), instruments for the deterministic-edge paper. No cutoff is set in this plan. |
 | Retrieval pack (two live steps) | this file, below | external | Waits for virage. |
 
 Independent features run in parallel from now.
