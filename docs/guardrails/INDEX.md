@@ -35,6 +35,7 @@ noisy-work-rule,"Noisy work is delegated only when the cost model says the hando
 one-statement-one-job,"A fact, guardrail or derivation-note states one thing","knowledge-management, guardrail",active
 owned-files-never-clobbered,"apply, update and remove must not overwrite or delete a modified owned item without --force","generated-files, enforcement, guardrail",active
 pack-questions-have-a-recommended-default,"Every choice question in a pack must name exactly one recommended option","practice-packs, interview, guardrail",active
+paper-numbers-are-reproducible,"Every figure in the paper cites a command that reproduces it and the side of an intervention it comes from","research, verification, guardrail",active
 parallel-tasks-use-worktrees,"Parallel tasks must each use their own worktree","practice-packs, agent-roles, guardrail",active
 pii-masked-in-tool-output,"Personal data is masked in tool output","practice-packs, governance, security, guardrail",active
 practice-ships-only-after-self-adoption,"A practice pack must not ship before this repo has adopted it","dogfooding, ci, guardrail",active

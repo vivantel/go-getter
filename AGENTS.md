@@ -90,6 +90,7 @@ Advisory:
 - A guardrail describing a shipped skill's behavior must also be stated in that skill (`no-unenforced-guardrail`)
 - Noisy work is delegated only when the cost model says the handoff is cheaper (`noisy-work-rule`)
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
+- Every figure in the paper cites a command that reproduces it and the side of an intervention it comes from (`paper-numbers-are-reproducible`)
 - Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
 - Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
