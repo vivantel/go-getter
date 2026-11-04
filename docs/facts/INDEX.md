@@ -40,3 +40,4 @@ id,title,tags,status
 0040-oct-31-throughput-baseline-and-friction,"Oct 31 throughput baseline and where the owner's time went","roadmap, dogfooding, cost",active
 0041-coordination-hotspots-and-contradictions-in-the-current-design,"Where the current design assumes one owner, one machine and shared files, and what contradicts at scale","coordination, roadmap, architecture",active
 0042-the-framework-map,"The framework's entities, how they relate, and which part owns each artifact","coordination, outcomes, architecture",active
+0043-ask-points-and-their-dispositions,"Every point where go-getter asks a human, what it protects and its disposition","hooks, enforcement, governance, roadmap",active
