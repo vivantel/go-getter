@@ -42,8 +42,9 @@ export function decisionsFor(project, refs, diff = '') {
 
 const sh = (project, run, command) => run('sh', ['-c', command], { cwd: project });
 
+// `check`, `conform` and `review` may each be a value, or `{ skip: '<reason>' }` to record why the gate did not run.
 // Runs the configured gates in order; a failing one is recorded and throws. Returns { gates: [{gate, status, summary}], flagged }.
-export async function runGateStack(project, { base, why, refs, check, conform, review, verb = 'ship' }, run, log, ShipError) {
+export async function runGateStack(project, { base, why, refs, check, checkLabel, conform, review, verb = 'ship' }, run, log, ShipError) {
   const gates = [];
   let flagged = false;
   const record = (gate, status, summary) => {
@@ -60,11 +61,11 @@ export async function runGateStack(project, { base, why, refs, check, conform, r
     throw new ShipError(gate === 'review' ? `${verb}: review found problems: ${summary}` : `${verb}: ${gate} gate failed: ${summary}`);
   };
 
-  if (check) {
+  if (check && typeof check === 'string') {
     const r = sh(project, run, check);
-    if (r.code !== 0) fail('check', `\`${check}\` exited ${r.code}: ${(r.err || r.out).trim().split('\n').slice(-2).join(' | ')}`);
-    record('check', 'pass', `\`${check}\``);
-  } else record('check', 'skipped', 'no step check given');
+    if (r.code !== 0) fail('check', `${checkLabel ? `${checkLabel} ` : ''}\`${check}\` exited ${r.code}: ${(r.err || r.out).trim().split('\n').slice(-2).join(' | ')}`);
+    record('check', 'pass', `${checkLabel ? `${checkLabel} ` : ''}\`${check}\``);
+  } else record('check', 'skipped', check?.skip ?? 'no step check given');
 
   let input = null;
   const inputOnce = () => {
@@ -75,8 +76,8 @@ export async function runGateStack(project, { base, why, refs, check, conform, r
     return input;
   };
   for (const [gate, runner] of [['conform', conform], ['review', review]]) {
-    if (!runner) {
-      record(gate, 'skipped', 'no runner configured');
+    if (!runner || typeof runner !== 'function') {
+      record(gate, 'skipped', runner?.skip ?? 'no runner configured');
       continue;
     }
     // A fresh object per pass holding only the three inputs.

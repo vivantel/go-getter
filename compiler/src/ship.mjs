@@ -15,6 +15,7 @@ import { createCheckpoint } from './checkpoint.mjs';
 import { runGateStack } from './gate-stack.mjs';
 import { noteGate } from './runs/record.mjs';
 import { flagPr } from './audit.mjs';
+import { stepForBranch } from './gate-defaults.mjs';
 
 export const TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'];
 const SUBJECT = new RegExp(`^(?:${TYPES.join('|')})(?:\\([^)]+\\))?!?: \\S`);
@@ -153,7 +154,15 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   if (!why) throw new ShipError(`${verb}: say why the change is made (the intent) with --why "<text>"`, 2);
   const refs = suggestRefs(project, { base: `origin/${base.name}` }).must.map((r) => r.path);
   // 3b The rest of the gate stack (decision 0158), in order: the step Check, conform, a reviewer on a fresh context; CI follows below.
-  const stack = await runGateStack(project, { base: base.name, why, refs, check: stepCheck, conform, review, verb }, run, log, ShipError);
+  // The Check defaults to the one of the step this branch works on; `check` given explicitly wins.
+  let check = stepCheck;
+  let checkLabel;
+  if (check === undefined) {
+    const step = stepForBranch(project, base.name, run);
+    check = step.check ?? { skip: step.reason };
+    checkLabel = step.check ? `step ${step.id}:` : undefined;
+  }
+  const stack = await runGateStack(project, { base: base.name, why, refs, check, checkLabel, conform, review, verb }, run, log, ShipError);
   for (const g of stack.gates) if (g.status !== 'skipped') checks.push(`${g.gate}: ${g.summary || g.status}`);
   if (dryRun) {
     log('dry-run', `would ${verb === 'pr' ? 'open a pull request for' : 'ship'} "${title}" with ${refs.length} ref${refs.length === 1 ? '' : 's'}; nothing written`);
@@ -227,9 +236,9 @@ const gatePrompt = (task, { diff, brief, decisions }) => [
   `## Diff\n\n${diff}`,
 ].join('\n\n');
 
-function claudeGate(flag, task, project, run) {
+function claudeGate(flag, task, project, run, budgetUsd = 2) {
   return async (input) => {
-    const r = run('claude', ['-p', '--permission-mode', 'plan', '--allowedTools', 'Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git show *)', '--max-budget-usd', '2'], { cwd: project, input: gatePrompt(task, input) });
+    const r = run('claude', ['-p', '--permission-mode', 'plan', '--allowedTools', 'Read Grep Glob Bash(git diff *) Bash(git log *) Bash(git show *)', '--max-budget-usd', String(budgetUsd)], { cwd: project, input: gatePrompt(task, input) });
     if (r.code === 127) throw new ShipError(`ship: ${flag} needs the claude CLI on PATH`, 127);
     const m = /VERDICT:\s*(PASS|FAIL)\s*(.*)$/m.exec(r.out);
     if (!m) throw new ShipError(`ship: the ${flag.slice(2)} pass gave no verdict line (exit ${r.code}): ${(r.out || r.err).trim().split('\n').slice(-2).join(' | ')}`);
@@ -238,8 +247,8 @@ function claudeGate(flag, task, project, run) {
   };
 }
 
-export const claudeReview = (project, run = defaultRunner) =>
-  claudeGate('--review', 'You are a strict reviewer on a fresh context. Review the diff against the brief and the decisions and guardrails given. Look for correctness bugs, missing tests and broken commitments; fail only for a real defect, not style.', project, run);
+export const claudeReview = (project, run = defaultRunner, budgetUsd) =>
+  claudeGate('--review', 'You are a strict reviewer on a fresh context. Review the diff against the brief and the decisions and guardrails given. Look for correctness bugs, missing tests and broken commitments; fail only for a real defect, not style.', project, run, budgetUsd);
 
-export const claudeConform = (project, run = defaultRunner) =>
-  claudeGate('--conform', 'Check whether this diff conforms to the decisions and guardrails given (the go-getter conform pass). Fail only for a clear conflict with an active decision or guardrail.', project, run);
+export const claudeConform = (project, run = defaultRunner, budgetUsd) =>
+  claudeGate('--conform', 'Check whether this diff conforms to the decisions and guardrails given (the go-getter conform pass). Fail only for a clear conflict with an active decision or guardrail.', project, run, budgetUsd);
