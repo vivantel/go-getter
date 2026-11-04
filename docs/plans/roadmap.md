@@ -21,7 +21,17 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 | Knowledge-base hygiene (pack answers as data, review of authored decisions) | `knowledge-base-hygiene.md` | Q1 first | New (0185, draft). Q2 and Q3 change the pack renderer and golden files; independent of the other plans. |
 | Retrieval pack (two live steps) | this file, below | external | Waits for virage. |
 
-Dogfood order (decision 0182; R4 first, because a run cannot start from the agent until it lands): T2, P1, T5, R1, H2, G4, G5 first; then T4, T8, T9; then T10; the K core runs alongside and K20 measures it. Independent features run in parallel from now. No cross-feature dependency is encoded beyond the "Order" column until K1 makes `plan#id` parse.
+Independent features run in parallel from now.
+
+## Dogfood order (revised 2026-11-04, decision 0182)
+
+What the first day of using go-getter on itself showed: four of six pull requests needed a hand-merged conflict in the same shared files (the decision index, the generated plugin copy, `hook.mjs`, `throughput.md`); a flaky `--review` test failed CI twice; and an agent could not start a run from the conversation. The order below removes those, in this sequence, so the work that follows can be done by go-getter itself.
+
+1. **Make the loop reliable (days).** Fix the flaky `--review` tests. Finish `ship` (T8 follow-up: review gates on by default, the step's Check read from the plan). R4: remove the human-only start, so an agent starts a step of an approved plan.
+2. **Stop the merge conflicts at the source.** K5 (no shared counter or hand-edited index). The generated plugin copy stays committed (owner's call, 2026-11-04); the merge queue (K6) regenerates it after each merge, so nobody resolves it by hand. Then K1 to K3 (a step is one contract, claim and lease, `work next`) and K6 (merge queue), so several agents can take steps without colliding.
+3. **Let go-getter drive the rest.** With 1 and 2 in place, run the remaining independent steps as approved plans: R1, R2, T4, G4, then G5 and G6, W1 and W2 (before K2 and K3 read work sources), M2.
+4. **Measure.** T10 after a week of real use, then K20.
+5. **Later or on an owner's call:** D2 to D9, M3 to M6, H3 to H6, the knowledge-base hygiene plan (Q1 needs the owner), V2 and V6 (waiting on virage and the owner).
 
 ## In flight at the split (2026-11-03, from the former status board)
 
