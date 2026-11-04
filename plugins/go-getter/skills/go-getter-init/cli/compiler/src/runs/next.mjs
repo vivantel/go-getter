@@ -6,8 +6,8 @@ import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { readPlan, unapprovedReason, filesOf, openNeeds, unitStates, effectiveScope } from '../plan.mjs';
 import { readLog } from '../telemetry/record.mjs';
+import { COVERAGES } from '../telemetry/schema.mjs';
 import { activeRun, noteStop } from './record.mjs';
-import { recordRunSpend } from '../spend/index.mjs';
 import { overlapsAny } from '../work/next.mjs';
 import { listWorktrees, worktreeConfig } from '../worktree.mjs';
 
@@ -15,6 +15,13 @@ export const MAX_ATTEMPTS = 2;
 export const MAX_DENIALS = 2;
 
 // Dollars spent since the run started, from the telemetry metadata log (records carry `cost`).
+// The coverage notes of the spend records of a run (see COVERAGES), in a fixed order.
+export function spendCoverageOf(project, run) {
+  const since = Date.parse(run.startedAt);
+  const seen = new Set(readLog(project).flatMap((r) => (Date.parse(r.ts) >= since && typeof r.cost === 'number' && r.coverage ? [r.coverage] : [])));
+  return COVERAGES.filter((c) => seen.has(c));
+}
+
 export function spentUsd(project, run) {
   const since = Date.parse(run.startedAt);
   return readLog(project).reduce((sum, r) => (Date.parse(r.ts) >= since && typeof r.cost === 'number' ? sum + r.cost : sum), 0);
@@ -50,8 +57,9 @@ function freeSlots(project) {
   }
 }
 
+// Read-only: spend is settled (`settleSpend`) by the caller, never here.
 // { step } for the next step to do, { done: true } when the range is finished, { stop: { code, step?, reason } } otherwise.
-export function nextInRun(project, { env = process.env, record = true, spendExec } = {}) {
+export function nextInRun(project, { env = process.env, record = true } = {}) {
   const run = activeRun(project, { env });
   if (!run) return { stop: { code: 'no-run', reason: 'no run is active' } };
   const stop = (code, reason, step) => {
@@ -59,7 +67,6 @@ export function nextInRun(project, { env = process.env, record = true, spendExec
     if (record) noteStop(project, s, { env });
     return { stop: s };
   };
-  if (run.spendCapUsd) recordRunSpend(project, run, undefined, spendExec);
   const spent = spentUsd(project, run);
   if (run.spendCapUsd && spent >= run.spendCapUsd) return stop('spend-cap', `spend $${spent.toFixed(2)} has reached the cap of $${run.spendCapUsd}`);
   const plan = readPlan(path.join(project, run.plan));

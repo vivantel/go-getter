@@ -150,7 +150,16 @@
       "properties": {
         "otel": { "type": "boolean" },
         "cost": { "type": "boolean" },
-        "spendSource": { "enum": ["none", "transcript", "sessions"] },
+        "spendSource": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "type": "string", "pattern": "^[a-z][a-z-]*$" },
+            "format": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+            "command": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" }
+          }
+        },
         "logsPromptsByDefault": { "type": "boolean" },
         "promptLogOff": {
           "type": "object",

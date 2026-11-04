@@ -1,11 +1,12 @@
 // The OpenCode and Kilo session reader (step 5 of docs/plans/archive/run-spend.md, fact 0037), with a stub for the host command.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { recordSessionSpend } from '../src/spend/sessions.mjs';
-import { recordRunSpend } from '../src/spend/index.mjs';
+import { settleSpend } from '../src/spend/index.mjs';
+import { readSpendState } from '../src/spend/emit.mjs';
 import { readLog } from '../src/telemetry/record.mjs';
 
 const decision = `---\nid: 0001-t\ntitle: t\nstatus: active\ndate: 2026-10-05\ntags: [x]\ngo-getter:\n  telemetry-recording: metadata-log\n---\n\nx\n`;
@@ -80,7 +81,33 @@ test('a missing command or unreadable output records nothing and does not throw;
     assert.deepEqual(recordSessionSpend(s.dir, 'opencode', new Date(T0).toISOString(), { exec: () => 'garbage' }), { records: 0, sessions: 0 });
     assert.deepEqual(recordSessionSpend(s.dir, 'cursor', new Date(T0).toISOString(), { exec: boom }), { records: 0, sessions: 0 });
     mkdirSync(path.join(s.dir, '.opencode'));
-    recordRunSpend(s.dir, { startedAt: new Date(T0).toISOString() }, { opencode: { telemetry: { spendSource: 'sessions' } } }, boom);
+    settleSpend(s.dir, { startedAt: new Date(T0).toISOString() }, { opencode: { telemetry: { spendSource: { kind: 'sessions', format: 'opencode-export', command: 'opencode' } } } }, boom);
     assert.deepEqual(readLog(s.dir), []);
+  } finally { s.cleanup(); }
+});
+
+const SRC = { kind: 'sessions', format: 'opencode-export', command: 'newhost' };
+
+test('a host added by a capability row alone is read: its command comes from the row and records carry the coverage', () => {
+  const s = setup();
+  try {
+    const { exec, calls } = stub(s.dir, [{ id: 'ses_1', updated: T0 + 3000 }], { ses_1: [msg('a', 'm-one', 0.5, { input: 1, output: 1 }, T0 + 1000)] });
+    assert.equal(recordSessionSpend(s.dir, 'newhost', new Date(T0).toISOString(), { exec, source: SRC, coverage: 'shared-directory' }).records, 1);
+    assert.equal(calls[0][0], 'newhost');
+    assert.equal(readLog(s.dir)[0].coverage, 'shared-directory');
+  } finally { s.cleanup(); }
+});
+
+test('an old unversioned spend.json is read, and the next write adds the version', () => {
+  const s = setup();
+  try {
+    mkdirSync(path.join(s.dir, '.go-getter/state'), { recursive: true });
+    writeFileSync(path.join(s.dir, '.go-getter/state/spend.json'), JSON.stringify({ 'opencode:ses_1': T0 + 1000 }));
+    assert.deepEqual(readSpendState(s.dir), { 'opencode:ses_1': T0 + 1000 });
+    const { exec } = stub(s.dir, [{ id: 'ses_1', updated: T0 + 3000 }], { ses_1: [msg('a', 'm-one', 0.5, { input: 1, output: 1 }, T0 + 1000), msg('b', 'm-one', 0.25, { input: 1, output: 1 }, T0 + 2000)] });
+    assert.equal(recordSessionSpend(s.dir, 'opencode', new Date(T0).toISOString(), { exec }).records, 1);
+    assert.equal(readLog(s.dir)[0].cost, 0.25); // the old watermark kept the first message from counting again
+    const raw = JSON.parse(readFileSync(path.join(s.dir, '.go-getter/state/spend.json'), 'utf8'));
+    assert.equal(raw.version, 1);
   } finally { s.cleanup(); }
 });

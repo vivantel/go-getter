@@ -6,8 +6,8 @@ import { readPlan } from '../plan.mjs';
 import { listShapes } from '../secrets/approvals.mjs';
 import { originRepo } from '../trackers/github.mjs';
 import { cleanGitEnv } from '../git-env.mjs';
-import { spentUsd } from './next.mjs';
-import { recordRunSpend } from '../spend/index.mjs';
+import { spentUsd, spendCoverageOf } from './next.mjs';
+import { settleSpend } from '../spend/index.mjs';
 
 // Pull requests merged since the run started: the `(#N)` a squash merge puts in the subject of a commit on this branch.
 function mergedPullRequests(project, since) {
@@ -18,6 +18,8 @@ function mergedPullRequests(project, since) {
     return [];
   }
 }
+
+const COVERAGE_NOTES = { 'lower-bound': 'a lower bound: part of the usage is not read', 'shared-directory': 'includes other sessions in this directory' };
 
 // Markdown report of a finished run record. `project` is the repository root.
 export function buildReport(project, run, { env = process.env, spendExec } = {}) {
@@ -33,8 +35,10 @@ export function buildReport(project, run, { env = process.env, spendExec } = {})
   const done = inRange.filter((s) => s.state === 'done');
   const open = inRange.filter((s) => s.state !== 'done');
   const reasonFor = (s) => (run.stop?.step === s.id ? `${run.stop.code}: ${run.stop.reason}` : run.stop && !run.stop.step ? `${run.stop.code}: ${run.stop.reason}` : s.human ? `needs a person: ${s.human}` : `not reached (run ${run.endReason})`);
-  if (run.spendCapUsd && run.spendMetered !== false) recordRunSpend(project, run, undefined, spendExec);
+  if (run.spendCapUsd && run.spendMetered !== false) settleSpend(project, run, undefined, spendExec);
   const spent = spentUsd(project, run);
+  const notes = spendCoverageOf(project, run).map((c) => COVERAGE_NOTES[c]);
+  const coverageNote = notes.length ? ` (${notes.join('; ')})` : '';
   const prs = mergedPullRequests(project, run.startedAt);
   const attempts = Object.entries(run.counters?.attempts ?? {});
   const denials = Object.entries(run.counters?.denials ?? {}).flatMap(([step, per]) => Object.entries(per).map(([id, n]) => `step ${step}: ${id} ×${n}`));
@@ -54,7 +58,7 @@ export function buildReport(project, run, { env = process.env, spendExec } = {})
     `**Stops:** ${run.stop ? `${run.stop.code}${run.stop.step ? ` at step ${run.stop.step}` : ''}: ${run.stop.reason}` : 'none'}`,
     `**Denials:** ${denials.length ? denials.join('; ') : 'none'}`,
     `**Fix attempts:** ${attempts.length ? attempts.map(([s, n]) => `step ${s} ×${n}`).join('; ') : 'none'}`,
-    run.spendMetered === false ? `**Spend:** not metered on this host; the cap of $${run.spendCapUsd} could not bind` : `**Spend:** $${spent.toFixed(2)}${run.spendCapUsd ? ` of a $${run.spendCapUsd} cap` : ' (no cap)'}`,
+    run.spendMetered === false ? `**Spend:** not metered on this host; the cap of $${run.spendCapUsd} could not bind` : `**Spend:** $${spent.toFixed(2)}${run.spendCapUsd ? ` of a $${run.spendCapUsd} cap` : ' (no cap)'}${coverageNote}`,
     `**Approvals used:** run grants: ${run.grants.length ? run.grants.join(', ') : 'none'}; remembered shapes: ${remembered.length ? remembered.join(', ') : 'none'}`,
   ];
   return { text: `${lines.join('\n')}\n`, steps: inRange };

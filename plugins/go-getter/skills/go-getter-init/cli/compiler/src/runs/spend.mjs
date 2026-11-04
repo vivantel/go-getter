@@ -6,7 +6,7 @@ const STOPS_THAT_STILL_APPLY = 'the timeout, red fix attempts, repeated denials 
 // to print (null when every host can meter, or when there is no cap).
 export function spendCoverage(hosts, caps, spendCapUsd) {
   if (!spendCapUsd) return { metered: true, notice: null };
-  const sourceOf = (h) => caps[h]?.telemetry?.spendSource ?? 'none';
+  const sourceOf = (h) => caps[h]?.telemetry?.spendSource?.kind ?? 'none';
   const blind = hosts.filter((h) => sourceOf(h) === 'none');
   const metered = hosts.length > 0 && blind.length < hosts.length;
   if (metered && !blind.length) return { metered, notice: null };

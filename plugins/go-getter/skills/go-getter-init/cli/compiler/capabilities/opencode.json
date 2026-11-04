@@ -52,7 +52,7 @@
   "telemetry": {
     "otel": false,
     "cost": false,
-    "spendSource": "sessions"
+    "spendSource": { "kind": "sessions", "format": "opencode-export", "command": "opencode" }
   },
   "sandbox": false,
   "checkpointing": false,

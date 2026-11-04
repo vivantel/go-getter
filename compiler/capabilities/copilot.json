@@ -46,7 +46,7 @@
   "telemetry": {
     "otel": false,
     "cost": false,
-    "spendSource": "none"
+    "spendSource": { "kind": "none" }
   },
   "sandbox": true,
   "checkpointing": false,

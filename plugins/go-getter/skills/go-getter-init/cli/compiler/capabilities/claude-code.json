@@ -79,7 +79,7 @@
   "telemetry": {
     "otel": true,
     "cost": true,
-    "spendSource": "transcript",
+    "spendSource": { "kind": "transcript", "format": "claude-code-jsonl" },
     "logsPromptsByDefault": false
   },
   "sandbox": true,
