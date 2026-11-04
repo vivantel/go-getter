@@ -29,6 +29,7 @@
   "hooks": {
     "config": ".kilo/plugin/go-getter.js",
     "blockPreTool": true,
+    "gateFloor": true,
     "rewriteToolInput": false,
     "rewriteOutput": true,
     "blockStop": false,

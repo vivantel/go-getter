@@ -1,6 +1,7 @@
 // Harness coverage report (plan 4.6, fitness function of decision 0008): for each of the 12 harness
 // components (fact 0002), the adopted packs covering it and the strongest tier reached on each host.
 import { readArtifacts } from './artifacts.mjs';
+import { STATEFUL } from './gate-state.mjs';
 import { hostIds } from './hosts/registry.mjs';
 
 const HOSTS = hostIds();
@@ -60,6 +61,10 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
         mcpOnly: inHostEntries.some((e) => /^builtin:mcp-(allow|scan)\b/.test(e.run ?? '')) ? mcpOnly : [],
       };
     }
+    // How a state-dependent command is decided on each host (decision 0159): the hook asks, the hook hands over, or the floor lets it run.
+    if (c === 8 && entries.some((e) => e.tier === 2 && /^builtin:gate-command\b/.test(e.run ?? ''))) {
+      row.stateTiers = Object.fromEntries(hosts.map((h) => [h, caps[h]?.hooks?.gateFloor ? 'floor' : caps[h]?.hooks?.askPreTool ? 'ask' : 'hand-over']));
+    }
     if (c === 9) row.nativeRestore = Object.fromEntries(hosts.filter((h) => caps[h]?.checkpointRestore).map((h) => [h, caps[h].checkpointRestore]));
     return row;
   });
@@ -82,6 +87,18 @@ export function formatCoverage(rows, hosts = HOSTS) {
     if (masking.none.length) parts.push(`not on ${masking.none.join(', ')} (the host cannot replace tool output)`);
     if (masking.mcpOnly?.length) parts.push(`MCP results alone on ${masking.mcpOnly.join(', ')} (the host replaces only those)`);
     lines.push(`Tool-output masking (component 7): ${parts.join('; ')}.`);
+  }
+  const states = rows.find((r) => r.component === 8)?.stateTiers;
+  if (states) {
+    const of = (tier) => hosts.filter((h) => states[h] === tier);
+    const parts = [];
+    if (of('ask').length) parts.push(`${of('ask').join(', ')} ask a person when the state shows work would be lost`);
+    if (of('hand-over').length) parts.push(`${of('hand-over').join(', ')} stop and hand over to a person (the hook cannot ask)`);
+    if (of('floor').length) parts.push(`${of('floor').join(', ')} run it after a checkpoint, with no stop (floor)`);
+    lines.push(`State-dependent commands (${STATEFUL.join(', ')}): ${parts.join('; ')}.`);
+    if (of('floor').length) {
+      lines.push(`Residual risk on ${of('floor').join(', ')}: the floor is the git hooks plus a working-tree checkpoint, so a state-dependent command is not stopped even when the state shows work would be lost. Not protected: commits that exist only on a deleted or rebased branch (recoverable from the reflog until git collects them, not from the checkpoint, which holds the working tree) and the uncommitted files of a removed worktree (the checkpoint holds only the working tree the command runs in).`);
+    }
   }
   const checkpoints = rows.find((r) => r.component === 9);
   if (!checkpoints?.packs.length) return lines.join('\n\n');
