@@ -1,4 +1,4 @@
-// go-getter approvals list [--json] | add <secret-path> -- <command> [args...] | allow <shape> | release <version> | revoke (<id> | <shape> | --all)
+// go-getter approvals list [--json] | add <secret-path> -- <command> [args...] | allow <shape> | release <version> [<sha>] | revoke (<id> | <shape> | --all)
 // Personal approvals: to use a secret file (decision 0126) and to run an outward command shape without asking (decision 0130).
 // `release <version>` records the human approval `go-getter release --batch` needs before it merges (decision 0094): a release is never an approvable shape.
 // `add`, `allow`, `release` and `revoke` change what an agent may do, so a person runs them; the pre-tool hook refuses an agent's call.
@@ -8,7 +8,7 @@ import { APPROVABLE, isApprovable } from '../gate.mjs';
 import { restrictedPatterns } from '../hook.mjs';
 import { matchesAny } from '../glob.mjs';
 import { repoRoot } from '../plan.mjs';
-import { releaseApprovalId } from '../release.mjs';
+import { releaseApprovalId, releaseHead } from '../release.mjs';
 
 const USAGE = 'usage: go-getter approvals list [--json] | add <secret-path> -- <command> [args...] | allow <shape> | revoke (<id> | <shape> | --all)';
 
@@ -52,14 +52,16 @@ export default function approvalsCommand({ args }) {
       console.log(`approved ${entry.id}: it may run without asking in this project while its preconditions hold`);
       return 0;
     }
-    if (sub === 'release' && rest.length === 1) {
-      const version = releaseApprovalId(rest[0]);
-      if (!version) {
-        console.error('approvals: a release is approved by its version, such as v1.2.3');
-        return 2;
+    if (sub === 'release' && (rest.length === 1 || rest.length === 2)) {
+      const head = releaseHead(project);
+      const sha = rest[1] ? (head.startsWith(rest[1].toLowerCase()) && rest[1].length >= 7 ? head : null) : head;
+      const id = sha && releaseApprovalId(rest[0], sha);
+      if (!id) {
+        console.error(rest[1] && !sha ? `approvals: ${rest[1]} is not the default branch head (${head}); run \`release --batch --dry-run\` again` : 'approvals: a release is approved by its version, such as v1.2.3');
+        return rest[1] && !sha ? 1 : 2;
       }
-      const entry = addShape(project, version, { host: process.env.GO_GETTER_HOST });
-      console.log(`approved ${entry.id}: \`go-getter release --batch\` may merge the release pull request for that version`);
+      const entry = addShape(project, id, { host: process.env.GO_GETTER_HOST });
+      console.log(`approved ${entry.id}: \`go-getter release --batch\` may merge the release pull request for that version while the default branch is at that commit`);
       return 0;
     }
     if (sub === 'revoke' && rest.length === 1) {

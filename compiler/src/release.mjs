@@ -9,7 +9,7 @@ import path from 'node:path';
 import { defaultBranch } from './git-env.mjs';
 import { suggestRefs } from './refs.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
-import { shapeApproved } from './secrets/approvals.mjs';
+import { shapeApproved, listShapes } from './secrets/approvals.mjs';
 import { ShipError, defaultRunner, buildMessage, waitForCi } from './ship.mjs';
 
 const SEMVER = /^v?(\d+)\.(\d+)\.(\d+)$/;
@@ -18,7 +18,20 @@ const SEP = '\u001f';
 const END = '\u001e';
 
 // The approval id for a version spelled `1.2.3` or `v1.2.3`; null when it is not a plain release version.
-export const releaseApprovalId = (version) => (SEMVER.test(String(version)) ? `release:v${String(version).replace(/^v/, '')}` : null);
+// The approval is bound to the exact default-branch head it was given for: `release:vX.Y.Z@<sha>`.
+export const releaseApprovalId = (version, sha) => (SEMVER.test(String(version)) && /^[0-9a-f]{40}$/.test(String(sha)) ? `release:v${String(version).replace(/^v/, '')}@${sha}` : null);
+
+// The origin default branch's head sha after a fetch, for `approvals release` (a given sha or prefix must resolve to it or to an ancestor-free exact match).
+export function releaseHead(project, run = defaultRunner) {
+  const git = (...a) => run('git', a, { cwd: project });
+  const base = defaultBranch(project);
+  if (!base.known) throw new ShipError('release: cannot tell the default branch (no origin/HEAD); run `git remote set-head origin -a`');
+  const f = git('fetch', '--tags', 'origin', base.name);
+  if (f.code !== 0) throw new ShipError(`git fetch: ${(f.err || f.out).trim()}`);
+  const r = git('rev-parse', `origin/${base.name}`);
+  if (r.code !== 0) throw new ShipError(`git rev-parse: ${(r.err || r.out).trim()}`);
+  return r.out.trim();
+}
 
 // One merged commit: { sha, type, scope, breaking, description, subject } or null when its subject is not a Conventional Commit.
 export function parseCommit(sha, subject, body = '') {
@@ -131,15 +144,22 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
   const bump = bumpOf(commits, from);
   if (!bump) throw new ShipError(`release: nothing to release; no feat, fix, perf, revert or breaking change merged since ${lastTag ?? 'the start'}`);
   const version = nextVersion(from, bump);
-  const approvalId = releaseApprovalId(version);
+  const head = need(git('rev-parse', `origin/${base.name}`), 'git rev-parse');
+  const approvalId = releaseApprovalId(version, head);
   log('plan', `${commits.length} change${commits.length === 1 ? '' : 's'} since ${lastTag ?? 'the start'}: ${bump} bump, ${from} -> ${version}`);
   if (dryRun) {
-    log('dry-run', `would release v${version}; a person approves it first with: go-getter approvals release v${version}`);
-    return { dryRun: true, version, bump, commits, approved: shapeApproved(project, approvalId, env) };
+    log('dry-run', `would release v${version}; a person approves it first with: go-getter approvals release v${version} ${head} (default branch head ${head})`);
+    return { dryRun: true, version, bump, commits, head, approved: shapeApproved(project, approvalId, env) };
   }
 
   // 3 The recorded human approval, before anything is written or sent (guardrail human-escalation-rule, decision 0094).
-  if (!shapeApproved(project, approvalId, env)) throw new ShipError(`release: v${version} is not approved; a person records the approval with: go-getter approvals release v${version} (\`release --batch --dry-run\` lists what it would release)`, 2);
+  if (!shapeApproved(project, approvalId, env)) {
+    const prefix = `release:v${version}@`;
+    const stale = listShapes(project, env).map((e) => e.id).filter((id) => id.startsWith(prefix));
+    const reapprove = `go-getter approvals release v${version} ${head}`;
+    if (stale.length) throw new ShipError(`release: v${version} was approved for ${stale.map((id) => id.slice(prefix.length)).join(', ')} but ${base.name} is now at ${head}; re-approve the new head with: ${reapprove}`, 2);
+    throw new ShipError(`release: v${version} at ${base.name} ${head} is not approved; a person records the approval with: ${reapprove} (\`release --batch --dry-run\` lists what it would release)`, 2);
+  }
 
   // 4 A checkpoint (guardrail checkpoint-before-gated-action), then the release branch from the default branch.
   const original = git('branch', '--show-current').out.trim();

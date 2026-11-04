@@ -83,8 +83,10 @@ test('the bump comes from the Conventional Commit types', () => {
   assert.equal(nextVersion('0.4.1', 'patch'), '0.4.2');
   assert.equal(nextVersion('0.4.1', 'minor'), '0.5.0');
   assert.equal(nextVersion('1.4.1', 'major'), '2.0.0');
-  assert.equal(releaseApprovalId('1.2.3'), 'release:v1.2.3');
-  assert.equal(releaseApprovalId('v1.2'), null);
+  const sha = 'a'.repeat(40);
+  assert.equal(releaseApprovalId('1.2.3', sha), `release:v1.2.3@${sha}`);
+  assert.equal(releaseApprovalId('v1.2', sha), null);
+  assert.equal(releaseApprovalId('1.2.3', 'abc'), null);
   const entry = changelogEntry('0.5.0', '2026-11-04', [c('feat(plugin): pin it'), c('fix: stop it'), c('docs: words'), c('perf: faster')]);
   assert.equal(entry, '## [0.5.0] - 2026-11-04\n\n### Added\n\n- plugin: pin it\n\n### Fixed\n\n- stop it\n\n### Changed\n\n- faster\n');
 });
@@ -97,7 +99,8 @@ test('the dry run reports the bump derived from the merged commits and writes no
   const r = s.batch('--dry-run');
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /3 changes since v0\.4\.1: minor bump, 0\.4\.1 -> 0\.5\.0/);
-  assert.match(r.out, /go-getter approvals release v0\.5\.0/);
+  const head = sh(s.work, 'rev-parse', 'origin/main');
+  assert.match(r.out, new RegExp(`go-getter approvals release v0\\.5\\.0 ${head}`));
   assert.equal(s.sh('status', '--porcelain'), '');
   assert.equal(existsSync(path.join(s.dir, 'gh-state.json')) ? s.gh().calls.some((c) => c[0] === 'pr' && c[1] === 'create') : false, false);
 });
@@ -107,7 +110,7 @@ test('without a recorded approval it refuses before writing or sending anything'
   s.merge('feat: add the verb (#12)');
   const r = s.batch();
   assert.equal(r.code, 2);
-  assert.match(r.err, /v0\.5\.0 is not approved/);
+  assert.match(r.err, /v0\.5\.0 at main \w+ is not approved/);
   assert.match(r.err, /go-getter approvals release v0\.5\.0/);
   assert.equal(s.sh('branch', '--list', 'chore/release-*'), '');
   assert.equal(s.sh('status', '--porcelain'), '');
@@ -117,12 +120,40 @@ test('without a recorded approval it refuses before writing or sending anything'
   assert.equal(s.batch().code, 2);
 });
 
+test('an approval for an old head is refused after a new commit lands; the matching head passes; a wrong version is refused', () => {
+  const s = scratch();
+  s.merge('feat: add the verb (#12)');
+  assert.equal(s.approve('v0.5.0').code, 0);
+  const old = sh(s.work, 'rev-parse', 'origin/main');
+  s.merge('fix: a late change (#15)');
+  s.sh('fetch', 'origin');
+  const head = s.sh('rev-parse', 'origin/main');
+  const r = s.batch();
+  assert.equal(r.code, 2);
+  assert.ok(r.err.includes(old) && r.err.includes(head), 'names both shas');
+  assert.ok(r.err.includes(`go-getter approvals release v0.5.0 ${head}`), 're-approve command');
+  assert.equal(s.sh('branch', '--list', 'chore/release-*'), '');
+  // A sha that is not the head is not recorded.
+  assert.equal(s.run(['approvals', 'release', 'v0.5.0', old]).code, 1);
+  // The matching head passes.
+  assert.equal(s.run(['approvals', 'release', 'v0.5.0', head]).code, 0);
+  s.setGh({ checks: [{ name: 'ci', bucket: 'pass' }] });
+  assert.equal(s.batch().code, 0);
+  // A wrong version never matches.
+  const t = scratch();
+  t.merge('feat: add the verb (#12)');
+  assert.equal(t.approve('v0.4.2').code, 0);
+  const w = t.batch();
+  assert.equal(w.code, 2);
+  assert.match(w.err, /v0\.5\.0 at main .* is not approved/);
+});
+
 test('a failing verification layer refuses the release and leaves nothing pushed or opened', () => {
   for (const layer of ['test', 'generated', 'eval']) {
     const s = scratch();
     s.merge('fix: repair the thing (#11)');
+    s.merge('fix: another (#14)', '', `FAIL_${layer}`);
     assert.equal(s.approve('v0.4.2').code, 0);
-    s.merge('fix: another (#14)', '', `FAIL_${layer}`); // same bump, so the approval stays valid
     const r = s.batch();
     assert.equal(r.code, 1, `${layer}: ${r.err}`);
     assert.match(r.err, /verification layer .* failed/);
