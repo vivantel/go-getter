@@ -36,11 +36,18 @@ Do: on a host without a blocking hook, write no ask rules for state-dependent co
 Done-when: tests show no ask rule written for the three hosts, a checkpoint taken before a state-dependent command where the host can run one, and `coverage` stating the residual risk.
 Progress 2026-11-04 · `feat/hookless-host-floor` · done: capability `hooks.gateFloor` (Copilot, Kilo, OpenCode; these have a blocking hook but cannot ask, so the plan's "hook-less" is read as "cannot ask and has no native rule for these commands"), the hook lets a state-dependent command run after a checkpoint and logs it as `allowed:floor`, `coverage` prints the tier per host and the residual risk, `compiler/test/gate-floor.test.mjs` · next: none.
 
-### G5 Ask-point audit and the prompt counter — [ ]
+### G5 Ask-point audit and the prompt counter — [x]
 Not blocked (decision 0182): audit today's ask points; `work-coordination.md` K11 later adds the parked-ask queue (K7) to the inventory.
 Class: review · Needs: G1, G2, G3 · Check: `go-getter:lint`
 Do: inventory every point where go-getter asks a human (native ask rules, hitl gates, interview questions, defaults); record for each what it protects and whether it can be freed, defaulted or removed; apply the changes that decision 0159 already allows; record the rest as steps here or as superseding decisions, one at a time; and record the result as a fact. `go-getter metrics day` (T1) reports prompts per merged PR from the stop log of G3.
 Done-when: a fact lists every ask point with its disposition, no ask point is left without a stated protection, and the prompt rate is reported.
+Progress 2026-11-04 · `docs/ask-point-audit` · done: fact 0043 lists 21 ask points with protection and disposition, no change applied (none clearly allowed by 0159), prompt rate reported as unmeasurable (`metrics day` has no stop-log reader) · next: G5a, and superseding decisions for rows 7 (comment-post free by default) and 11 (tracker `writes` default `allow`).
+
+### G5a Report prompts per merged PR — [ ]
+Class: implement · Effort: low · Needs: G5 · Check: `node --test compiler/test/metrics-day.test.mjs`
+Context: fact 0043 found `go-getter metrics day` reports `mergedPrs` and `humanTurns` but never reads the `gate:stop` records of G3, so the one-prompt-per-merged-PR budget (0159 item 5) cannot be checked.
+Do: count `gate:stop` records with `trigger: ask` per day in `compiler/src/metrics/day.mjs` and report `prompts` and `promptsPerMergedPr` (null with no merged PR); metadata only.
+Done-when: a test with a stop log and merged PRs shows both fields; `check generated|neutral|guardrails` and `npm test` pass.
 
 ### G6 Say the promise — [ ]
 Class: implement · Needs: G5 · Check: `npm run check:plans && npm run check:guardrails`
