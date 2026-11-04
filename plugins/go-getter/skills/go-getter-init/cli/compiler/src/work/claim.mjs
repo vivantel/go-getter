@@ -87,7 +87,8 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // never replaced by another claimant, and a lapsed one only after its expiry plus the margin.
 // More guards, each optional: `beatsOf(id, unit)` gives the times of a worker's heartbeats for a unit, so a takeover must also wait out the holder's last
 // beat before it; `maxLeaseMs` ({ human, agent, ci }) caps `leaseMs` and so `expires`; `nowMs` rejects a `created` in the future;
-// `allowParked` (off until K7 supplies a validated parking path) accepts a `parked` state, which otherwise is ignored.
+// `allowParked` (off until K7 supplies a validated parking path) accepts any `parked` state; without it only a parked entry that released
+// its scope for a change request (`ask.kind` `change-request`, K4) counts, and any other is ignored.
 export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsOf, maxLeaseMs, nowMs, allowParked = false } = {}) {
   let good = null;
   const ignored = [];
@@ -99,8 +100,8 @@ export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsO
       bad(shape);
       continue;
     }
-    if (e.state === 'parked' && !allowParked) {
-      bad('state parked has no validated source yet (decision 0168 arrives with K7), so it is ignored and the lease applies');
+    if (e.state === 'parked' && !allowParked && !(e.scope.length === 0 && e.ask?.kind === 'change-request')) {
+      bad('state parked has no validated source (only a change request that released the scope parks a claim until K7), so it is ignored and the lease applies');
       continue;
     }
     if (maxLeaseMs && e.leaseMs > maxLeaseMs[e.holder.kind]) {
