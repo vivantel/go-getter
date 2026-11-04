@@ -1,6 +1,7 @@
 // go-getter approvals list [--json] | add <secret-path> -- <command> [args...] | allow <shape> | release <version> [<sha>] | revoke (<id> | <shape> | --all)
 // Personal approvals: to use a secret file (decision 0126) and to run an outward command shape without asking (decision 0130).
 // `release <version>` records the human approval `go-getter release --batch` needs before it merges (decision 0094): a release is never an approvable shape.
+// A release the user asks for in the chat is the other route to that approval (decision 0187); this command stays the typed one.
 // `add`, `allow`, `release` and `revoke` change what an agent may do, so a person runs them; the pre-tool hook refuses an agent's call.
 import { realpathSync } from 'node:fs';
 import { add, list, revoke, storeFile, addShape, listShapes, revokeShape } from '../secrets/approvals.mjs';

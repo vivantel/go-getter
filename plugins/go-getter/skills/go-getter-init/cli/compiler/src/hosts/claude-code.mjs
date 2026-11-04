@@ -16,7 +16,7 @@ export default {
     return { content: md(head, roster, role) };
   },
 
-  // { current, plugin, events: { preTool, postTool, sessionStart, sessionEnd, stop } } -> { file, config }.
+  // { current, plugin, events: { preTool, postTool, userPrompt, sessionStart, sessionEnd, stop } } -> { file, config }.
   // `current` is the parsed settings file; each event is go-getter's hook entry or null (remove it).
   hookSettings({ current, plugin, events }) {
     // The marketplace is pinned to the release tag of the CLI that wrote it; other plugins and marketplaces are kept.
@@ -28,6 +28,7 @@ export default {
     const list = [
       [['hooks', 'PreToolUse'], events.preTool],
       [['hooks', 'PostToolUse'], events.postTool],
+      [['hooks', 'UserPromptSubmit'], events.userPrompt ?? null],
       [['hooks', 'SessionStart'], events.sessionStart],
       [['hooks', 'SessionEnd'], events.sessionEnd],
       [['hooks', 'Stop'], events.stop],

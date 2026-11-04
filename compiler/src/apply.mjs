@@ -263,7 +263,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   for (const host of hosts) {
     const hookFile = hostOp(host, 'describe').hookFile;
     if (hookFile && wanted(hookFile, host)) {
-      const events = { preTool: enabled ? ccLike(host) : null, postTool: canRedact(host) ? ccLike(host, 'post-tool') : null, sessionStart: session ? plain(host, 'session-start') : null, sessionEnd: canEnd(host) ? plain(host, 'session-end') : null, stop: canStop(host) ? plain(host, 'stop') : null };
+      const events = { userPrompt: enabled && caps[host]?.hooks?.userPrompt ? plain(host, 'user-prompt') : null, preTool: enabled ? ccLike(host) : null, postTool: canRedact(host) ? ccLike(host, 'post-tool') : null, sessionStart: session ? plain(host, 'session-start') : null, sessionEnd: canEnd(host) ? plain(host, 'session-end') : null, stop: canStop(host) ? plain(host, 'stop') : null };
       const settings = hostOp(host, 'hookSettings', { current: read(hookFile), plugin, events });
       out[settings.file] = json(settings.config);
     }
