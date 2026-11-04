@@ -42,3 +42,4 @@ id,title,tags,status
 0042-the-framework-map,"The framework's entities, how they relate, and which part owns each artifact","coordination, outcomes, architecture",active
 0043-ask-points-and-their-dispositions,"Every point where go-getter asks a human, what it protects and its disposition","hooks, enforcement, governance, roadmap",active
 0044-repository-visibility-is-an-operator-signal,"go-getter cannot read a repository's visibility, so a public repository is assumed unless the operator says private","outcomes, security",active
+0045-operation-status-semantics,"operation status compares strictly and reads local readings only","outcomes, observability",active
