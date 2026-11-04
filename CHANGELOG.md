@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.5.0] - 2026-11-04
+
+### Added
+
+- release: a release request is bound to the version asked for, not the head (#304)
+- worktree: ship and plan start release a merged task's worktree (#302)
+- artifacts: generated indexes and draft ids that take their number at merge (#301)
+- plan: a work unit's contract in the plan format, with cross-plan references (#300)
+- operate: an operating charter format and a check that refuses an incomplete one (#299)
+- discover: split /discover from a narrowed /roadmap (#298)
+- measure: meters as files and readings as commits in a shared ref (#297)
+- outcome: refuse an outcome brief that lacks a meter, target, window or attribution (#296)
+- gate: a host that cannot ask runs state-dependent commands after a checkpoint (#294)
+- release: read a release request from what the user typed, with a small model (0188) (#292)
+- release: a release the user asks for in the chat is the approval to merge it (0187) (#291)
+- hooks: an agent starts a run on an approved plan; starting is free (0186) (#284)
+- ship: run the step Check, conform and review by default (#283)
+- ship: run the gate stack and add the sampled audit picker (0158) (#277)
+- plan: draft a plan from a one-line goal and brief fresh sessions (T9) (#276)
+- release: add release --batch, one approved release pull request for what merged (#275)
+- plugin: pin this repo's own plugin and report plugin drift (0183) (#274)
+- ship: make ship always merge and add pr for stopping at the pull request (#269)
+- guiding stop log (#265)
+- gate: add free release channels to the hitl pack (#263)
+- gate: add state checks for branch delete, hard reset, rebase and worktree removal (#257)
+- plan: warn when a branch is behind the default branch's plans (#262)
+- interview: add unattended --defaults mode and go-getter digest (#259)
+- orchestration: allow 10 concurrent agents with conflict-aware run scheduling (#258)
+- hitl: let go-getter ship run without asking in this repository (#253)
+- hooks: redirect raw push, PR create and merge to go-getter ship (#251)
+- tracker: let plan issue create, comment and close run without asking (#252)
+- ship: add go-getter ship, commit to merge in one deterministic command (#242)
+- metrics: add go-getter metrics day throughput report (#245)
+
+### Fixed
+
+- release: apply this repo's own pins when releasing (#303)
+- telemetry: record that the user-prompt hook ran and why it declined (#293)
+- hooks: an agent cannot reach the approvals through wrappers, the store location or the hook entry point (#289)
+- hooks: stop prompting for a cd into a unit's sibling worktree (#285)
+- ship: keep a gate command's own result when it exits before reading its input (#282)
+- worktree: worktree new returns the existing worktree when a task resumes (#268)
+- worktree: branch from a fresh origin, serialise creation, guard detached removal (#267)
+- worktree: clean removes squash-merged worktrees (#266)
+- plan start brief (#264)
+- gate: match refspec deletes in the native push-delete rule (#244)
+
+### Changed
+
+- worktree: derive every worktree path from one worktreeRoot (#286)
+- hosts: add the host adapter registry, conformance test and Claude Code adapter (#278)
+
 ## [0.4.1] - 2026-10-31
 
 ### Fixed
