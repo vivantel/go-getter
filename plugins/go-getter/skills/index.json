@@ -210,6 +210,8 @@
         "cli/compiler/src/interview.mjs",
         "cli/compiler/src/invocation.mjs",
         "cli/compiler/src/manifest.mjs",
+        "cli/compiler/src/mcp-functions.mjs",
+        "cli/compiler/src/mcp-registry.mjs",
         "cli/compiler/src/mcp-server.mjs",
         "cli/compiler/src/mcp.mjs",
         "cli/compiler/src/measure.mjs",
