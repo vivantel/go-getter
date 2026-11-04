@@ -2,7 +2,7 @@
 // components (fact 0002), the adopted packs covering it and the strongest tier reached on each host.
 import { readArtifacts } from './artifacts.mjs';
 import { STATEFUL } from './gate-state.mjs';
-import { hostIds } from './hosts/registry.mjs';
+import { hostIds, deferredHosts } from './hosts/registry.mjs';
 
 const HOSTS = hostIds();
 
@@ -80,6 +80,8 @@ export function formatCoverage(rows, hosts = HOSTS) {
   const widths = header.map((_, i) => Math.max(...[header, ...body].map((row) => row[i].length)));
   const table = [header, ...body].map((row) => row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd()).join('\n');
   const lines = [table];
+  const deferred = deferredHosts().filter((h) => hosts.includes(h));
+  if (deferred.length) lines.push(`Deferred hosts: ${deferred.join(', ')} (reached through wrapper adapters over today's code; shapes marked ? in fact 0009 stay unconfirmed).`);
   const masking = rows.find((r) => r.component === 7)?.outputMasking;
   if (masking?.secrets.length) {
     const parts = [`secrets on ${masking.secrets.join(', ')}`];

@@ -23,11 +23,12 @@ Class: implement · Effort: high · Needs: H2 · Check: `npm run check:generated
 Do: move OpenCode and Kilo behind adapters sharing one fork base (their agent and plugin formats differ only in paths and the plugin file location, fact 0005).
 Done-when: no golden file changes; both pass the conformance test; the Kilo-only differences (the plugin directory, the question tool, fact 0034) live in the Kilo module.
 
-### H4 Deferred hosts on the registry — [ ] ‖
+### H4 Deferred hosts on the registry — [x] ‖
 Issue: #87
 Class: implement · Needs: H2 · Check: `npm run check:generated && npm test`
 Do: register Codex, Cursor, Gemini CLI and Copilot through wrapper adapters that call today's code, mark them `deferred` in the registry, and make `go-getter coverage` say so beside their unconfirmed shapes.
 Done-when: no golden file changes; the four hosts pass the conformance test through their wrappers; `coverage` shows them deferred.
+Result: the four wrappers in `compiler/src/hosts/registry.mjs` describe themselves with `status: 'deferred'` (`deferredHosts()`); `go-getter coverage` prints a `Deferred hosts:` line beside the table. No golden file changed.
 
 ### H5 Contributor path — [ ]
 Issue: #88
