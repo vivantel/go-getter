@@ -170,3 +170,4 @@ id,title,tags,status
 0186-an-approved-plan-and-the-run-grants-answer-are-the-authority-to-start-a-run,"An approved plan and the run-grants answer are the authority to start a run; starting is free","hooks, enforcement, roadmap",active
 0187-a-release-the-user-asks-for-in-the-chat-is-the-approval-to-merge-it,"A release the user asks for in the chat is the approval to merge it; no command is typed","hooks, enforcement, security",active
 0188-a-release-request-is-read-from-what-the-user-typed-by-a-small-model-and-bounded-by-code,"A release request is read from what the user typed by a small model and bounded by code, not matched to a phrase","hooks, enforcement, security",active
+draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft

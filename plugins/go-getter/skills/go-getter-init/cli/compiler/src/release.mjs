@@ -157,11 +157,10 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
 
   // 3 The recorded human approval, before anything is written or sent (guardrail human-escalation-rule, decision 0094): typed, or the
   // user's own request in the chat that the host's hooks saved and handed to this call (decisions 0187, 0188). A typed approval for what
-  // the commits make wins; otherwise a request may raise the number (never lower it) and is spent here.
+  // the commits make wins; otherwise a request may raise the number (never lower it) and is spent here; commits merged since it was made do not void it (decision draft-release-request-survives-merges).
   let approvedBy = 'a person';
   if (!shapeApproved(project, approvalId, env)) {
-    const asked = peekRequest(project, { head, now: now().getTime(), env });
-    if (asked?.stale) throw new ShipError(`release: ${asked.stale}`, 2);
+    const asked = peekRequest(project, { now: now().getTime(), env });
     if (asked?.request) {
       const r = resolveAsk(asked.request.release, { from, bump, version, nextVersion });
       if (r.reason) throw new ShipError(`release: ${r.reason}`, 2);
