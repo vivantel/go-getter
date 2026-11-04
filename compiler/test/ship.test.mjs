@@ -35,7 +35,7 @@ function scratch({ branch = 'feat/add-thing' } = {}) {
   sh(work, 'switch', '-qc', branch);
   const state = path.join(dir, 'gh-state.json');
   const verb = (name, ...args) => {
-    const r = spawnSync(process.execPath, [cli, name, ...args], { cwd: work, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_FAKE_STATE: state, GO_GETTER_SHIP_NO_CI_GRACE_MS: '0' } });
+    const r = spawnSync(process.execPath, [cli, name, ...args], { cwd: work, encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GH_FAKE_STATE: state, GO_GETTER_SHIP_NO_CI_GRACE_MS: '0', GO_GETTER_SHIP_GATES: 'off' } });
     return { code: r.status, out: r.stdout, err: r.stderr };
   };
   const ship = (...args) => verb('ship', ...args);
