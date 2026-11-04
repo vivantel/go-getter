@@ -1,16 +1,18 @@
-// go-getter work next [--owner-kind K] [--dry-run] | approve <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] | approve <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> | asks [--mine] | answer <ask> <choice> | request <unit> --to <unit> [--text T] [--park] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind <k>] [--parent <unit>]
+// go-getter work grant <unit> --scope S --spend N --shapes S --asks P --data D [--effects E] [--to W --to-kind K] [--parent U] | spend <unit> <amount> | grant-check | next [--owner-kind K] [--dry-run] | approve <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] | approve <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> | asks [--mine] | answer <ask> <choice> | request <unit> --to <unit> [--text T] [--park] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind <k>] [--parent <unit>]
 import path from 'node:path';
-import { repoRoot } from '../plan.mjs';
+import { planFiles, repoRoot, stemOf } from '../plan.mjs';
 import { remoteOf, workerId } from '../work/ledger.mjs';
 import { KINDS } from '../work/claim.mjs';
-import { clockNow, heartbeatUnit, hostDateFor, identity, releaseUnit } from '../work/ops.mjs';
+import { clockNow, heartbeatUnit, hostDateFor, identity, ledgerView, releaseUnit } from '../work/ops.mjs';
 import { nextUnits } from '../work/next.mjs';
+import { issueGrant, recordSpend } from '../work/grant-ops.mjs';
+import { parseGrant } from '../work/grant.mjs';
 import { answerAsk, formatAsk, listAsks, parkAsk, readAskFile, resumeClaim, sweepAsks } from '../work/asks.mjs';
 import { approveUnit } from '../work/intake.mjs';
 import { checkScope, formatScope, requestChange } from '../work/scope-gate.mjs';
 import { planIssue, writeMode } from '../trackers/write.mjs';
 
-const USAGE = 'usage: go-getter work next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> [--as <worker>] | asks [--mine] [--as <worker>] [--kind human|agent|ci] | answer <ask> <choice> [--as <worker>] [--kind human] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
+const USAGE = 'usage: go-getter work grant <unit> --scope <tokens> --spend <n> --shapes <ids> --asks all|default-reversible|unrecoverable-only --data <classes> [--effects reversible,money:50/day,physical:z1+z2,legal:nda@acme] [--to <worker> --to-kind human|agent|ci] [--parent <unit>] [--as <worker>] | spend <unit> <amount> [--as <worker>] | grant-check | next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> [--as <worker>] | asks [--mine] [--as <worker>] [--kind human|agent|ci] | answer <ask> <choice> [--as <worker>] [--kind human] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
 const FLAGS = ['--as', '--kind', '--remote', '--issuer', '--issuer-kind', '--parent'];
 
 // One comment on the unit's issue for a state change, only where the project's tracker-writes answer is `allow`.
@@ -237,8 +239,95 @@ async function workApprove(args) {
 }
 
 
+// `work grant <unit> ...`: issue a grant for a unit; refused when wider than the parent's grant on any dimension, when it carries an always-human
+// shape, and for a root grant unless the caller is a listed human.
+async function workGrant(args) {
+  const [unit, ...rest] = args;
+  const flags = {};
+  const names = ['scope', 'spend', 'shapes', 'asks', 'data', 'effects', 'to', 'to-kind', 'parent', 'as', 'kind', 'remote'];
+  for (let i = 0; i < rest.length; i++) {
+    if (!rest[i].startsWith('--') || !names.includes(rest[i].slice(2)) || rest[i + 1] === undefined) flags.bad = true;
+    else flags[rest[i].slice(2)] = rest[++i];
+  }
+  if (!unit || unit.startsWith('--') || flags.bad || (flags.kind && !KINDS.includes(flags.kind)) || (flags['to-kind'] && !KINDS.includes(flags['to-kind'])) || Boolean(flags.to) !== Boolean(flags['to-kind'])) {
+    console.error(USAGE);
+    return 2;
+  }
+  const parsed = parseGrant(flags);
+  if (parsed.error) {
+    console.error(`work grant: ${parsed.error}`);
+    return 2;
+  }
+  const root = repoRoot(process.cwd());
+  try {
+    const issuer = identity(root, { as: flags.as, kind: flags.kind });
+    const remote = flags.remote ? remoteOf(root, flags.remote) : undefined;
+    if (flags.remote && !remote) {
+      console.error(`work grant: no remote ${flags.remote}`);
+      return 1;
+    }
+    const to = flags.to ? { kind: flags['to-kind'], id: workerId(flags.to) } : issuer;
+    const r = await issueGrant(root, unit, issuer, { grant: parsed.grant, to, parent: flags.parent, remote, notify: notifier(root), hostDate: await hostDateFor(root, remote ?? remoteOf(root)) });
+    if (!r.ok) {
+      console.error(`work grant: ${r.error}`);
+      return r.code === 'queued' ? 3 : 1;
+    }
+    console.log(`${r.entry.unit}: grant issued by ${issuer.kind} ${issuer.id} to ${to.kind} ${to.id}, lease to ${r.entry.expires}`);
+    return 0;
+  } catch (e) {
+    console.error(`work grant: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
+    return 1;
+  }
+}
+
+// `work spend <unit> <amount>`: record spend against the unit's grant and every ancestor's; one that passes a cap parks the unit as a spend ask.
+async function workSpend(args) {
+  const [unit, amount, ...rest] = args;
+  const flags = {};
+  for (let i = 0; i < rest.length; i++) {
+    if (['--as', '--remote'].includes(rest[i]) && rest[i + 1] !== undefined) flags[rest[i].slice(2)] = rest[++i];
+    else flags.bad = true;
+  }
+  if (!unit || unit.startsWith('--') || !/^\d+(\.\d+)?$/.test(amount ?? '') || flags.bad) {
+    console.error(USAGE);
+    return 2;
+  }
+  const root = repoRoot(process.cwd());
+  try {
+    const who = identity(root, { as: flags.as });
+    const remote = flags.remote ? remoteOf(root, flags.remote) : undefined;
+    const r = await recordSpend(root, unit, who, Number(amount), { remote });
+    if (!r.ok) {
+      console.error(`work spend: ${r.error}`);
+      return r.code === 'spend-cap' ? 3 : 1;
+    }
+    console.log(`${unit}: ${r.spent} spent`);
+    return 0;
+  } catch (e) {
+    console.error(`work spend: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
+    return 1;
+  }
+}
+
+// `work grant-check`: exit 1 when a ledger holds an entry that readers ignore for its grant (wider than its parent's, a forged issuer, a root
+// grant from anyone but a listed human). Reads the ledgers last seen; writes nothing.
+function workGrantCheck() {
+  const root = repoRoot(process.cwd());
+  const bad = [];
+  for (const stem of new Set(planFiles(root).map(stemOf))) for (const i of ledgerView(root, stem).ignored ?? []) if (i.reason.startsWith('grant:')) bad.push(`${stem}: ${i.file}: ${i.reason}`);
+  if (bad.length) {
+    console.error(`work grant-check: ${bad.length} grant${bad.length === 1 ? '' : 's'} ignored by readers:\n${bad.join('\n')}`);
+    return 1;
+  }
+  console.log("work grant-check: every grant in the ledgers is a subset of its parent's");
+  return 0;
+}
+
 export default async function workCommand({ args }) {
   if (['park', 'asks', 'answer'].includes(args[0])) return workAsk(args[0], args.slice(1));
+  if (args[0] === 'grant') return workGrant(args.slice(1));
+  if (args[0] === 'spend') return workSpend(args.slice(1));
+  if (args[0] === 'grant-check') return workGrantCheck();
   if (args[0] === 'next') return workNext(args.slice(1));
   if (args[0] === 'approve') return workApprove(args.slice(1));
   if (args[0] === 'scope-check') return workScopeCheck(args.slice(1));
