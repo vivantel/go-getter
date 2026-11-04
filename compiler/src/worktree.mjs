@@ -81,11 +81,17 @@ function defaultBranch(main) {
   return ['main', 'master'].find((b) => tryGit(main, 'rev-parse', '--verify', '--quiet', `refs/heads/${b}`)) ?? 'HEAD';
 }
 
+// The directory holding a project's worktrees under the chosen location, or null when the host agent decides.
+export function worktreeRoot(main, location) {
+  if (location === 'sibling') return path.join(path.dirname(main), `${path.basename(main)}-wt`);
+  if (location === 'in-repo') return path.join(main, '.worktrees');
+  return null;
+}
+
 // Where a task's worktree goes under the chosen location, or null when the host agent decides.
 export function worktreeDir(main, location, slug) {
-  if (location === 'sibling') return path.join(path.dirname(main), `${path.basename(main)}-wt`, slug);
-  if (location === 'in-repo') return path.join(main, '.worktrees', slug);
-  return null;
+  const root = worktreeRoot(main, location);
+  return root && path.join(root, slug);
 }
 
 export function newWorktree(cwd, slug, { branch, from } = {}) {
@@ -136,7 +142,7 @@ export function planClean(cwd) {
   const main = trees[0].path;
   fetchOrigin(main);
   const config = worktreeConfig(main);
-  const base = config.location === 'in-repo' ? path.join(main, '.worktrees') : path.join(path.dirname(main), `${path.basename(main)}-wt`);
+  const base = worktreeRoot(main, config.location) ?? worktreeRoot(main, 'sibling');
   const target = defaultBranch(main);
   const here = tryGit(cwd, 'rev-parse', '--show-toplevel');
   return trees

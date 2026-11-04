@@ -13,7 +13,7 @@ import { packageCapabilities, promptLoggingTargets, setPath, adoptedData } from 
 import { loadPolicy } from './routing/policy.mjs';
 import { cliBundle } from './build.mjs';
 import { verifyConfig } from './verify.mjs';
-import { listWorktrees } from './worktree.mjs';
+import { listWorktrees, worktreeRoot } from './worktree.mjs';
 import { gateEntries, nativeRules, withAskRules } from './gate.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
@@ -529,7 +529,8 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   // Sibling worktrees sit outside the session's directory, so a host asks before every `cd` into one: list the root as a
   // workspace directory, relative so the committed file holds no machine path.
   if (adoptedData(project, 'worktree-location') === 'sibling') {
-    const root = path.join('..', `${path.basename(mainTree(project))}-wt`);
+    const main = mainTree(project);
+    const root = path.relative(main, worktreeRoot(main, 'sibling'));
     for (const host of targetHosts) {
       const dirs = caps[host]?.permissions?.workspaceDirs;
       if (!dirs) continue;
