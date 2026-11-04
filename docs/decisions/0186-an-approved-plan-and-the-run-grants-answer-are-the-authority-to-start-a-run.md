@@ -1,7 +1,7 @@
 ---
 id: 0186-an-approved-plan-and-the-run-grants-answer-are-the-authority-to-start-a-run
 title: An approved plan and the run-grants answer are the authority to start a run; starting is free
-status: draft
+status: active
 date: 2026-11-04
 tags: [hooks, enforcement, roadmap]
 track: product
@@ -9,7 +9,7 @@ track: product
 
 ## Decision
 
-Draft, for the owner's sign-off. It amends item 1 of 0130 ("starting a run is the human act") and replaces the "a person confirms the start" parts of drafts 0137 and 0184. Effects are gated, not starting.
+Accepted by the owner 2026-11-04. It amends item 1 of 0130 ("starting a run is the human act") and replaces the "a person confirms the start" parts of drafts 0137 and 0184. Effects are gated, not starting.
 
 1. **The human act is approving the plan, once, and the approval is a record in the per-user store.** `go-getter plan approve <plan>` (0155 item 1) writes an entry in the protected per-user directory that already holds the approvals and the run record (an agent cannot write or open it): keyed by the project and the plan's project-relative path, with a hash per step of its Do, Done-when and Check text, the set of step ids, the approver and the date. It also writes the visible `**Approval**:` line (adding it to a plan that has none), as a note for readers only: the line is never the authority, since an agent can edit a tracked file. A step's marker, Progress and Result lines are not hashed, so finishing a step keeps the approval; changing a step's Do, Done-when or Check, or adding a step, makes it out of date until a person approves again, and the refusal names the changed steps. A plan approved only by an Approval line (T9 drafts) has no entry and needs approving again.
 2. **An agent may start a run on an approved plan.** The pre-tool hook allows `go-getter run start <plan> [--through N] [--hours H]` when the plan is a file in `docs/plans` with a current store entry, the call is one plain command (no chain, quote, redirection or substitution) and it carries no other flag. Everything else stays denied, with a message that says what the person does: approve the plan, or run the command themselves.
