@@ -1119,7 +1119,7 @@
                 "lease-agent": "{{answer.lease-agent}}"
               }
             },
-            "body": "## Decision\n\nThe lease of an agent's claim is {{answer.lease-agent}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+            "body": "## Decision\n\nThe lease of an agent's claim is {{answer.lease-agent}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nAn agent that stops without releasing must free its unit soon, and renewal by heartbeat keeps a live agent from losing it; an hour is long enough to ride out a slow step and short enough that a lost agent blocks others for little time.\n"
           }
         ]
       }
@@ -1141,7 +1141,7 @@
                 "lease-ci": "{{answer.lease-ci}}"
               }
             },
-            "body": "## Decision\n\nThe lease of a CI job's claim is {{answer.lease-ci}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+            "body": "## Decision\n\nThe lease of a CI job's claim is {{answer.lease-ci}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA CI job ends by itself, so its lease follows the job's time limit: it frees the unit when the job can no longer be running, with no renewal traffic.\n"
           }
         ]
       }
@@ -1163,7 +1163,7 @@
                 "lease-human": "{{answer.lease-human}}"
               }
             },
-            "body": "## Decision\n\nThe lease of a person's claim is {{answer.lease-human}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+            "body": "## Decision\n\nThe lease of a person's claim is {{answer.lease-human}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA person works in long stretches with few commands to renew from, so the lease covers a working day; a shorter one would drop a unit someone is still thinking about.\n"
           }
         ]
       }
@@ -1185,7 +1185,7 @@
                 "clock-skew": "{{answer.clock-skew}}"
               }
             },
-            "body": "## Decision\n\nA lease lapses {{answer.clock-skew}} minutes after its expiry, and a clock that far off the host cannot claim (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+            "body": "## Decision\n\nA lease lapses {{answer.clock-skew}} minutes after its expiry, and a clock that far off the host cannot claim (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWorkers compare their own clocks with a lease expiry, so a margin keeps a small clock difference from taking a live claim; a worker whose clock is off the host by more than the margin could misjudge every lease, so it may not claim.\n"
           }
         ]
       }
@@ -1207,7 +1207,7 @@
                 "parent-idle": "{{answer.parent-idle}}"
               }
             },
-            "body": "## Decision\n\nA parent unit with live children is flagged idle after {{answer.parent-idle}} days without action (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+            "body": "## Decision\n\nA parent unit with live children is flagged idle after {{answer.parent-idle}} days without action (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA parent with live children holds no lease, so nothing else would show that nobody is working on it; the idle period flags it for a person or K7 to park, and a week keeps a normal pause from raising a flag.\n"
           }
         ]
       }
@@ -1229,7 +1229,7 @@
                 "brief-max": "{{answer.brief-max}}"
               }
             },
-            "body": "## Decision\n\nA delegated unit keeps at most {{answer.brief-max}} KB of brief fields in the claims ledger (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+            "body": "## Decision\n\nA delegated unit keeps at most {{answer.brief-max}} KB of brief fields in the claims ledger (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe ledger is fetched by every claim, so each delegated brief in it must stay small; a brief over the cap is kept on the tracker issue instead, and the ledger holds a pointer to it.\n"
           }
         ]
       }

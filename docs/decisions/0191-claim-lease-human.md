@@ -18,4 +18,4 @@ The lease of a person's claim is 480 minutes (decision 0166; pack orchestration@
 
 ## Why
 
-A claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.
+A person works in long stretches with few commands to renew from, so the lease covers a working day; a shorter one would drop a unit someone is still thinking about.

@@ -18,4 +18,4 @@ The lease of a CI job's claim is 60 minutes (decision 0166; pack orchestration@0
 
 ## Why
 
-A claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.
+A CI job ends by itself, so its lease follows the job's time limit: it frees the unit when the job can no longer be running, with no renewal traffic.

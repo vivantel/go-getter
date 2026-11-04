@@ -38,6 +38,7 @@ function staticPrefix(glob) {
 
 function globRegex(glob) {
   let re = '';
+  let brace = false;
   for (let i = 0; i < glob.length; i++) {
     const c = glob[i];
     if (c === '*' && glob[i + 1] === '*') {
@@ -48,9 +49,33 @@ function globRegex(glob) {
       } else re += '.*';
     } else if (c === '*') re += '[^/]*';
     else if (c === '?') re += '[^/]';
-    else re += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+    else if (c === '{' && glob.indexOf('}', i) > i) {
+      brace = true;
+      re += '(?:';
+    } else if (c === '}' && brace) {
+      brace = false;
+      re += ')';
+    } else if (c === ',' && brace) re += '|';
+    else if (c === '[' && glob.indexOf(']', i + 1) > i + 1) {
+      const end = glob.indexOf(']', i + 1);
+      const body = glob.slice(i + 1, end);
+      re += body[0] === '!' || body[0] === '^' ? `[^${body.slice(1)}]` : `[${body}]`;
+      i = end;
+    } else re += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
   }
   return new RegExp(`^${re}$`);
+}
+
+// Whether the glob can match something inside the directory the literal names: each literal segment is matched by the glob's
+// segment at the same depth (or by a `**`), and the glob goes on to name something below it.
+function globReachesInto(glob, litSegs) {
+  const g = segments(glob);
+  for (let i = 0; i < litSegs.length; i++) {
+    if (i >= g.length) return false;
+    if (g[i] === '**') return true;
+    if (!globRegex(g[i]).test(litSegs[i])) return false;
+  }
+  return true;
 }
 
 const isPrefix = (a, b) => a.length <= b.length && a.every((s, i) => s === b[i]);
@@ -75,7 +100,7 @@ export function tokensOverlap(x, y) {
   const re = globRegex(glob);
   const litSegs = segments(lit);
   if (ancestorsOrSelf(litSegs).some((p) => re.test(p))) return true;
-  return isPrefix(litSegs, staticPrefix(glob)); // the literal is a directory that holds what the glob matches
+  return globReachesInto(glob, litSegs); // the literal is a directory that holds what the glob matches
 }
 
 // The first pair [tokenOfA, tokenOfB] that overlaps, or null. Both arguments are scope lists (raw or normalized).

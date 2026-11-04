@@ -18,4 +18,4 @@ A parent unit with live children is flagged idle after 7 days without action (de
 
 ## Why
 
-A claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.
+A parent with live children holds no lease, so nothing else would show that nobody is working on it; the idle period flags it for a person or K7 to park, and a week keeps a normal pause from raising a flag.

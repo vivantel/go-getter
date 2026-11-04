@@ -18,4 +18,4 @@ A lease lapses 5 minutes after its expiry, and a clock that far off the host can
 
 ## Why
 
-A claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.
+Workers compare their own clocks with a lease expiry, so a margin keeps a small clock difference from taking a live claim; a worker whose clock is off the host by more than the margin could misjudge every lease, so it may not claim.

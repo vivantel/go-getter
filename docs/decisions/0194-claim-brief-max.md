@@ -18,4 +18,4 @@ A delegated unit keeps at most 8 KB of brief fields in the claims ledger (decisi
 
 ## Why
 
-A claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.
+The ledger is fetched by every claim, so each delegated brief in it must stay small; a brief over the cap is kept on the tracker issue instead, and the ledger holds a pointer to it.
