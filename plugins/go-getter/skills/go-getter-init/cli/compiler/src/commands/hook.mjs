@@ -44,14 +44,18 @@ export default async function hookCommand({ root, args }) {
   try {
     payload = JSON.parse(readFileSync(0, 'utf8') || '{}');
   } catch {
+    if (event === 'user-prompt') recordQuietly(project, { event: 'user-prompt', host, outcome: 'fail', trigger: 'unreadable-payload' });
     return 0;
   }
   const dir = payload.cwd ? path.resolve(payload.cwd) : project;
   if (event === 'user-prompt') {
+    // One record per prompt, so a release request that did nothing can be told from a hook that never ran (no content, ever).
+    recordQuietly(dir, { event: 'user-prompt', host, outcome: 'allowed' });
     try {
       await evaluateUserPrompt(dir, payload, host);
     } catch {
       // never blocks and prints nothing: the typed approval remains
+      recordQuietly(dir, { event: 'user-prompt', host, outcome: 'fail', trigger: 'exception' });
     }
     return 0;
   }
