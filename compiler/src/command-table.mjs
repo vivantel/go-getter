@@ -15,6 +15,7 @@ export const COMMANDS = [
   { name: 'coverage', usage: 'coverage [--json]' },
   { name: 'plan', usage: 'plan status|next|start|done|issue|draft|approve' },
   { name: 'run', usage: 'run start|status|next|attempt|end' },
+  { name: 'work', usage: 'work claim|heartbeat|release <unit>' },
   { name: 'worktree', usage: 'worktree new|list|clean' },
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },
   { name: 'artifacts', usage: 'artifacts index | assign [--base <ref>]' },

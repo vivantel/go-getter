@@ -170,4 +170,10 @@ id,title,tags,status
 0186-an-approved-plan-and-the-run-grants-answer-are-the-authority-to-start-a-run,"An approved plan and the run-grants answer are the authority to start a run; starting is free","hooks, enforcement, roadmap",active
 0187-a-release-the-user-asks-for-in-the-chat-is-the-approval-to-merge-it,"A release the user asks for in the chat is the approval to merge it; no command is typed","hooks, enforcement, security",active
 0188-a-release-request-is-read-from-what-the-user-typed-by-a-small-model-and-bounded-by-code,"A release request is read from what the user typed by a small model and bounded by code, not matched to a phrase","hooks, enforcement, security",active
+0189-claim-lease-agent,"The lease of an agent's claim is 60 minutes","practice-packs, agent-roles, harness",draft
+0190-claim-lease-ci,"The lease of a CI job's claim is 60 minutes","practice-packs, agent-roles, harness",draft
+0191-claim-lease-human,"The lease of a person's claim is 480 minutes","practice-packs, agent-roles, harness",draft
+0192-claim-clock-skew,"A lease lapses 5 minutes after its expiry, and a clock that far off the host cannot claim","practice-packs, agent-roles, harness",draft
+0193-claim-parent-idle,"A parent unit with live children is flagged idle after 7 days without action","practice-packs, agent-roles, harness",draft
+0194-claim-brief-max,"A delegated unit keeps at most 8 KB of brief fields in the claims ledger","practice-packs, agent-roles, harness",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft

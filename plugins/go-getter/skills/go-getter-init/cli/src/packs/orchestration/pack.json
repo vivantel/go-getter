@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "orchestration",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "family": "harness",
   "components": [
     10
@@ -180,6 +180,54 @@
           "tradeoff": "Machine-checkable; rigid, and models spend tokens on the format."
         }
       ]
+    },
+    {
+      "id": "lease-agent",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "60",
+      "since": "0.1.3",
+      "prompt": "How many minutes does an agent's claim on a work unit last before it must be renewed?"
+    },
+    {
+      "id": "lease-ci",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "60",
+      "since": "0.1.3",
+      "prompt": "How many minutes does a CI job's claim on a work unit last (the job's own time limit)?"
+    },
+    {
+      "id": "lease-human",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "480",
+      "since": "0.1.3",
+      "prompt": "How many minutes does a person's claim on a work unit last before it must be renewed?"
+    },
+    {
+      "id": "clock-skew",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "5",
+      "since": "0.1.3",
+      "prompt": "How many minutes of clock difference between workers and the git host does a lease tolerate?"
+    },
+    {
+      "id": "parent-idle",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "7",
+      "since": "0.1.3",
+      "prompt": "After how many days without action by its holder or on any child is a parent work unit flagged idle?"
+    },
+    {
+      "id": "brief-max",
+      "type": "text",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "8",
+      "since": "0.1.3",
+      "prompt": "How many KB of brief fields may a delegated unit keep in the claims ledger before they spill to the tracker issue?"
     }
   ],
   "outputs": {
@@ -646,7 +694,7 @@
         "guardrails": [
           {
             "slug": "max-concurrent-agents-rule",
-            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "title": "No more than {{answer.max-concurrent}} agents run at once per worker",
             "tags": [
               "practice-packs",
               "agent-roles",
@@ -665,7 +713,7 @@
                 "check": "Instruction; worktree creation is refused beyond the limit"
               }
             ],
-            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+            "body": "## Guardrail\n\nEach worker runs at most {{answer.max-concurrent}} agents at once; the limit is per worker, not per project (decision 0169 item 2). `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
           }
         ]
       },
@@ -691,7 +739,7 @@
         "guardrails": [
           {
             "slug": "max-concurrent-agents-rule",
-            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "title": "No more than {{answer.max-concurrent}} agents run at once per worker",
             "tags": [
               "practice-packs",
               "agent-roles",
@@ -710,7 +758,7 @@
                 "check": "Instruction; worktree creation is refused beyond the limit"
               }
             ],
-            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+            "body": "## Guardrail\n\nEach worker runs at most {{answer.max-concurrent}} agents at once; the limit is per worker, not per project (decision 0169 item 2). `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
           }
         ]
       },
@@ -736,7 +784,7 @@
         "guardrails": [
           {
             "slug": "max-concurrent-agents-rule",
-            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "title": "No more than {{answer.max-concurrent}} agents run at once per worker",
             "tags": [
               "practice-packs",
               "agent-roles",
@@ -755,7 +803,7 @@
                 "check": "Instruction; worktree creation is refused beyond the limit"
               }
             ],
-            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+            "body": "## Guardrail\n\nEach worker runs at most {{answer.max-concurrent}} agents at once; the limit is per worker, not per project (decision 0169 item 2). `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
           }
         ]
       },
@@ -781,7 +829,7 @@
         "guardrails": [
           {
             "slug": "max-concurrent-agents-rule",
-            "title": "No more than {{answer.max-concurrent}} agents run at once",
+            "title": "No more than {{answer.max-concurrent}} agents run at once per worker",
             "tags": [
               "practice-packs",
               "agent-roles",
@@ -800,7 +848,7 @@
                 "check": "Instruction; worktree creation is refused beyond the limit"
               }
             ],
-            "body": "## Guardrail\n\nRun at most {{answer.max-concurrent}} agents at once. `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+            "body": "## Guardrail\n\nEach worker runs at most {{answer.max-concurrent}} agents at once; the limit is per worker, not per project (decision 0169 item 2). `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
           }
         ]
       }
@@ -1050,6 +1098,138 @@
               }
             ],
             "body": "## Guardrail\n\nReply with exactly one JSON object with status, summary, files and evidence. Advisory (tier 1).\n"
+          }
+        ]
+      }
+    },
+    "lease-agent": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "claim-lease-agent",
+            "title": "The lease of an agent's claim is {{answer.lease-agent}} minutes",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "lease-agent": "{{answer.lease-agent}}"
+              }
+            },
+            "body": "## Decision\n\nThe lease of an agent's claim is {{answer.lease-agent}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+          }
+        ]
+      }
+    },
+    "lease-ci": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "claim-lease-ci",
+            "title": "The lease of a CI job's claim is {{answer.lease-ci}} minutes",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "lease-ci": "{{answer.lease-ci}}"
+              }
+            },
+            "body": "## Decision\n\nThe lease of a CI job's claim is {{answer.lease-ci}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+          }
+        ]
+      }
+    },
+    "lease-human": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "claim-lease-human",
+            "title": "The lease of a person's claim is {{answer.lease-human}} minutes",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "lease-human": "{{answer.lease-human}}"
+              }
+            },
+            "body": "## Decision\n\nThe lease of a person's claim is {{answer.lease-human}} minutes (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+          }
+        ]
+      }
+    },
+    "clock-skew": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "claim-clock-skew",
+            "title": "A lease lapses {{answer.clock-skew}} minutes after its expiry, and a clock that far off the host cannot claim",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "clock-skew": "{{answer.clock-skew}}"
+              }
+            },
+            "body": "## Decision\n\nA lease lapses {{answer.clock-skew}} minutes after its expiry, and a clock that far off the host cannot claim (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+          }
+        ]
+      }
+    },
+    "parent-idle": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "claim-parent-idle",
+            "title": "A parent unit with live children is flagged idle after {{answer.parent-idle}} days without action",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "parent-idle": "{{answer.parent-idle}}"
+              }
+            },
+            "body": "## Decision\n\nA parent unit with live children is flagged idle after {{answer.parent-idle}} days without action (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
+          }
+        ]
+      }
+    },
+    "brief-max": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "claim-brief-max",
+            "title": "A delegated unit keeps at most {{answer.brief-max}} KB of brief fields in the claims ledger",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "brief-max": "{{answer.brief-max}}"
+              }
+            },
+            "body": "## Decision\n\nA delegated unit keeps at most {{answer.brief-max}} KB of brief fields in the claims ledger (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA claim must expire so a lost worker frees its unit, and the margins keep clock differences from taking a live claim.\n"
           }
         ]
       }

@@ -46,3 +46,14 @@ async function main() {
 }
 
 process.exitCode = await main();
+
+// Every verb renews the caller's claims that are under half their lease (decision 0166 item 2); never fails the verb, never runs
+// from go-getter's own pushes.
+if (command && command !== 'work') {
+  try {
+    const { readRecord } = await import('../src/work/ledger.mjs');
+    if (Object.keys(readRecord(process.cwd()).claims ?? {}).length) await (await import('../src/work/ops.mjs')).renewAll(process.cwd());
+  } catch {
+    // renewal is best effort
+  }
+}

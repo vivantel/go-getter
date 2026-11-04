@@ -433,7 +433,7 @@ export function formatStatus(status) {
   const c = status.counts;
   const lines = [`${status.file}: ${c.done}/${status.total} done, ${c['in progress']} in progress, ${c.blocked} blocked, ${c.moved} moved, ${c.pending} pending`];
   for (const s of status.steps) {
-    const note = [s.mismatch ? `mismatch: ${s.mismatch}` : null, s.stale ? `issue state ${s.stale === true ? 'unknown' : `as of ${s.stale}`}, stale` : null].filter(Boolean).join('; ');
+    const note = [s.claim ? `claimed by ${s.claim.kind} ${s.claim.holder}${s.claim.parked ? ', parked' : ''}${s.claim.idle ? ', idle' : ''}` : null, s.mismatch ? `mismatch: ${s.mismatch}` : null, s.stale ? `issue state ${s.stale === true ? 'unknown' : `as of ${s.stale}`}, stale` : null].filter(Boolean).join('; ');
     if (s.status !== 'done' || s.mismatch) lines.push(`[${STATE_MARKER[s.status]}] ${s.id} ${s.title}${s.issue ? ` ${s.issue}` : ''}${note ? ` (${note})` : ''}`);
   }
   return lines.join('\n');
