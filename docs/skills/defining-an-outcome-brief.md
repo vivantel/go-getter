@@ -1,7 +1,7 @@
 ---
 id: defining-an-outcome-brief
 title: Define an outcome brief that a meter can accept
-status: draft
+status: active
 date: 2026-11-03
 tags: [coordination, roadmap, procedural]
 operationalizes: [an-outcome-needs-an-attribution-method]
@@ -14,4 +14,5 @@ operationalizes: [an-outcome-needs-an-attribution-method]
 3. Set the target and the observation window. Say how long the window is in wall-clock time and what the unit does while it waits.
 4. Write the attribution method: the holdout, control or before-and-after comparison, and what would break it.
 5. Set the budget, the effect caps (0180) and the review cadence. List what is already known as evidence.
-6. Submit it as a parked ask to the approver (0168). Approved, hand it to decompose (`delegating-a-work-unit`).
+6. Save it as `docs/outcomes/<id>.md` and run `go-getter outcome check <id>`.
+7. Submit it as a parked ask to the approver (0168). Approved, hand it to decompose (`delegating-a-work-unit`).

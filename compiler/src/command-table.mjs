@@ -19,6 +19,7 @@ export const COMMANDS = [
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },
   { name: 'refs', usage: 'refs [--staged | --base <ref>] [--json]' },
   { name: 'pr', usage: 'pr [--title <t>] [--why <intent>] [--dry-run]' },
+  { name: 'outcome', usage: 'outcome check [id]' },
   { name: 'ship', usage: 'ship [--title <t>] [--why <intent>] [--dry-run]' },
   { name: 'release', usage: 'release --batch [--dry-run]' },
   { name: 'ci', usage: 'ci status [--wait]' },
