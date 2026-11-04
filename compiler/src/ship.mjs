@@ -26,7 +26,7 @@ export class ShipError extends Error {
 }
 
 export const defaultRunner = (cmd, args, { cwd, input } = {}) => {
-  const r = spawnSync(cmd, args, { cwd, input, encoding: 'utf8', env: cleanGitEnv(process.env), stdio: ['pipe', 'pipe', 'pipe'] });
+  const r = spawnSync(cmd, args, { cwd, input, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, env: cleanGitEnv(process.env), stdio: ['pipe', 'pipe', 'pipe'] });
   if (r.error) return { code: 127, out: '', err: r.error.message };
   return { code: r.status ?? 1, out: r.stdout ?? '', err: r.stderr ?? '' };
 };
@@ -56,6 +56,39 @@ export function ciOutcome(rows) {
   if (buckets.some((b) => b === 'fail' || b === 'cancel')) return 'failure';
   if (buckets.some((b) => b === 'pending')) return 'pending';
   return 'success';
+}
+
+// Polls `gh pr checks` until the pull request's CI concludes: resolves 'success' or 'none' (no checks reported within the grace
+// period); a failure, an unreadable status or a timeout throws. Shared by `pr`, `ship` and `release --batch`.
+export async function waitForCi({ gh, pr, verb, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, log = () => {} }) {
+  const started = Date.now();
+  let ci = 'success';
+  for (;;) {
+    const r = gh('pr', 'checks', String(pr.number), '--json', 'name,bucket');
+    let rows;
+    try {
+      if (!r.out.trim()) throw new SyntaxError('empty');
+      rows = JSON.parse(r.out);
+    } catch {
+      // gh printed no JSON: "no checks reported" means none yet; anything else (auth, network, rate limit) is an error, not a green light.
+      if (!/no checks reported/i.test(`${r.out}${r.err}`)) throw new ShipError(`${verb}: could not read CI status: ${(r.err || r.out).trim().split('\n')[0] || `gh exit ${r.code}`}; the pull request stays open: ${pr.url}`, 1);
+      rows = [];
+    }
+    const outcome = ciOutcome(rows);
+    if (outcome === 'failure') throw new ShipError(`${verb}: CI failed on ${rows.filter((x) => x.bucket === 'fail' || x.bucket === 'cancel').map((x) => x.name).join(', ')}; the pull request stays open: ${pr.url}`, 1);
+    if (outcome === 'success') {
+      log('ci', `${rows.length} check${rows.length === 1 ? '' : 's'} green`);
+      break;
+    }
+    if (outcome === 'none' && Date.now() - started >= noCiGraceMs) {
+      log('ci', `no checks reported after ${Math.round(noCiGraceMs / 1000)}s`);
+      ci = 'none';
+      break;
+    }
+    if (Date.now() - started >= timeoutMs) throw new ShipError(`${verb}: CI still pending after ${Math.round(timeoutMs / 60_000)} min; the pull request stays open: ${pr.url}`, 3);
+    await sleep(intervalMs);
+  }
+  return ci;
 }
 
 // `go-getter pr`: checks, checkpoint, commit, push, the pull request and the wait for CI. It never merges; `ship` is this plus the merge.
@@ -140,33 +173,7 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   log('pr', pr.url);
 
   // 7 CI: success merges, failure stops with the failing checks, no checks stops unless allowed.
-  const started = Date.now();
-  let ci = 'success';
-  for (;;) {
-    const r = gh('pr', 'checks', String(pr.number), '--json', 'name,bucket');
-    let rows;
-    try {
-      if (!r.out.trim()) throw new SyntaxError('empty');
-      rows = JSON.parse(r.out);
-    } catch {
-      // gh printed no JSON: "no checks reported" means none yet; anything else (auth, network, rate limit) is an error, not a green light.
-      if (!/no checks reported/i.test(`${r.out}${r.err}`)) throw new ShipError(`${verb}: could not read CI status: ${(r.err || r.out).trim().split('\n')[0] || `gh exit ${r.code}`}; the pull request stays open: ${pr.url}`, 1);
-      rows = [];
-    }
-    const outcome = ciOutcome(rows);
-    if (outcome === 'failure') throw new ShipError(`${verb}: CI failed on ${rows.filter((x) => x.bucket === 'fail' || x.bucket === 'cancel').map((x) => x.name).join(', ')}; the pull request stays open: ${pr.url}`, 1);
-    if (outcome === 'success') {
-      log('ci', `${rows.length} check${rows.length === 1 ? '' : 's'} green`);
-      break;
-    }
-    if (outcome === 'none' && Date.now() - started >= noCiGraceMs) {
-      log('ci', `no checks reported after ${Math.round(noCiGraceMs / 1000)}s`);
-      ci = 'none';
-      break;
-    }
-    if (Date.now() - started >= timeoutMs) throw new ShipError(`${verb}: CI still pending after ${Math.round(timeoutMs / 60_000)} min; the pull request stays open: ${pr.url}`, 3);
-    await sleep(intervalMs);
-  }
+  const ci = await waitForCi({ gh, pr, verb, intervalMs, timeoutMs, noCiGraceMs, log });
   return { branch, title, pr, ci, merged: false };
 }
 
