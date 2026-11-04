@@ -166,3 +166,4 @@ id,title,tags,status
 0181-capability-tags-filter-the-units-a-worker-is-offered-and-the-router-chooses-the-model,"Capability tags filter the units a worker is offered, and the router still chooses model and effort","coordination, model-routing, agent-roles",active
 0182-the-throughput-steps-are-built-on-the-current-layer-and-migrated-later,"The throughput steps are built on the current layer and migrated to the work layer later","coordination, roadmap",draft
 0183-this-repo-enables-its-own-plugin-pinned-to-a-release-tag,"This repo enables its own plugin in project settings, pinned to a release tag by apply","dogfooding, ci, roadmap",active
+0185-a-pack-answer-is-data-and-becomes-a-decision-only-when-it-is-a-real-choice,"A pack answer is data and becomes a decision only when it is a real choice","practice-packs, knowledge-base",draft

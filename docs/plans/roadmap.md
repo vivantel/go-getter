@@ -18,6 +18,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 | go-getter as an MCP server | `mcp-server.md` | independent | M2 first. |
 | Work-source budgets | `worksource-budgets.md` | independent, before K2 where possible | K2 and K3 read work sources through `callSource`, so W1's budgets should land first. |
 | Runs, spend and install | `runs-spend-install.md` | independent | Review R1 against K9 (lifecycle) when K9 starts. |
+| Knowledge-base hygiene (pack answers as data, review of authored decisions) | `knowledge-base-hygiene.md` | Q1 first | New (0185, draft). Q2 and Q3 change the pack renderer and golden files; independent of the other plans. |
 | Retrieval pack (two live steps) | this file, below | external | Waits for virage. |
 
 Dogfood order (decision 0182): T2, P1, T5, R1, H2, G4, G5 first; then T4, T8, T9; then T10; the K core runs alongside and K20 measures it. Independent features run in parallel from now. No cross-feature dependency is encoded beyond the "Order" column until K1 makes `plan#id` parse.
