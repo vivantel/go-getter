@@ -32,7 +32,7 @@ These carry over unchanged; branch and worktree are in each step's `Progress` li
 - **Retrieval pack** (#214 skeleton and MCP entry, #215 injection hook, #216 index governance, #218 adopt): decision 0145 holds the whole pack until a virage release conforms (V2). Plan text is in `docs/plans/archive/retrieval-pack.md`, steps 3, 4, 5, 7; move them back here when V2 is done.
 - **Foreign packs** (#184 manifest entry, digest and vendoring; #185 content rule; #186 author guide; #187 adopt): decision 0142 waits for someone who asks to write a pack. Plan text is in `docs/plans/archive/third-party-packs.md`, steps 3 to 6. Budgets (W1, W2) are not held.
 - **Helper protocol** (#189): waits for a second implementation of a kind or a third party who asks (0142). Text in `docs/plans/archive/backlog.md`, L.18.
-- **Start a run by confirmation** (#166): moved on 2026-11-04 into `docs/plans/runs-spend-install.md` step R4 (the human-only start contradicts 0155 and blocks the dogfood chain). Text in `docs/plans/archive/backlog.md`, L.16.
+- **Start a run by confirmation** (#166): moved on 2026-11-04 into `docs/plans/runs-spend-install.md` step R4, widened: remove the human-only start and take authority from the approved plan (a human-only start serializes every actor and blocks the dogfood chain). Text in `docs/plans/archive/backlog.md`, L.16.
 
 
 ---
