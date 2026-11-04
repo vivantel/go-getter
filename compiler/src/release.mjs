@@ -13,6 +13,7 @@ import { createCheckpoint } from './checkpoint.mjs';
 import { shapeApproved, listShapes } from './secrets/approvals.mjs';
 import { peekRequest, resolveAsk, spendRequest } from './release-request.mjs';
 import { ShipError, defaultRunner, buildMessage, waitForCi } from './ship.mjs';
+import { RUNNER, planApply, applyPlan } from './apply.mjs';
 
 const SEMVER = /^v?(\d+)\.(\d+)\.(\d+)$/;
 const CONVENTIONAL = /^([a-z]+)(?:\(([^)]+)\))?(!)?: (\S.*)$/;
@@ -196,6 +197,8 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     writeFileSync(changelog, prependChangelog(existsSync(changelog) ? readFileSync(changelog, 'utf8') : '', entry));
     writeVersionFiles(project, version);
     if (scripts.build) need(npm('run', '--silent', 'build'), 'npm run build');
+    // A project that applies itself pins its runner and plugin to the release tag (decision 0183), so apply moves the pin with the version.
+    if (existsSync(path.join(project, RUNNER))) applyPlan(project, planApply(project));
     log('files', `CHANGELOG.md, package.json, generated manifests at ${version}`);
 
     // 6 The three layers, on the release commit's tree, before anything leaves this machine.
