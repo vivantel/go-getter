@@ -92,7 +92,7 @@ const at = (min) => new Date(T0.getTime() + min * MIN);
 
 function runCli(cwd, args, env = {}) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [cli, ...args], { cwd, env: { ...cleanGitEnv(process.env), ...(env.GO_GETTER_CLOCK_OFFSET_MS ? { GO_GETTER_TEST_MODE: '1' } : {}), ...env } });
+    const child = spawn(process.execPath, [cli, ...args], { cwd, env: { ...cleanGitEnv(process.env), CI: '', ...(env.GO_GETTER_CLOCK_OFFSET_MS ? { GO_GETTER_TEST_MODE: '1' } : {}), ...env } });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (d) => (stdout += d));
