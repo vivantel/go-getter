@@ -1,0 +1,44 @@
+---
+id: 0187-a-release-the-user-asks-for-in-the-chat-is-the-approval-to-merge-it
+title: A release the user asks for in the chat is the approval to merge it; no command is typed
+status: draft
+date: 2026-11-04
+tags: [hooks, enforcement, security]
+track: product
+---
+
+## Decision
+
+Draft, for the owner's sign-off. It changes how the human approval of 0155 item 2 is recorded: the explicit go-ahead in the session (0130 item 4) becomes the user's own request, replacing the typed `go-getter approvals release <version> <sha>` of throughput step T5 (0157). 0094, 0155, 0159 item 2, 0171 item 4 and 0186 item 5 stand: a release stays a human act, never an approvable shape, a run grant or a delegable grant. The request approves **merging the release pull request** only; publishing still starts from a pushed version tag.
+
+**What this protects against.** A mistaken or prompt-injected agent acting through the host's tools. It does not stop an agent that runs arbitrary code or edits the CLI in its worktree; the typed approval does not either (items 7 and 8). A boundary an agent's credentials cannot reach (a required reviewer on the release workflow, or review of the release pull request from another account) remains the stronger control.
+
+1. **The host reports what the user submitted.** On a host whose user-prompt event is shown, in its fact, to fire only for the local user's typed prompts (capability `hooks.userPrompt`; first Claude Code `UserPromptSubmit`), a hook parses each prompt and, on a match, writes a *release request* to the protected per-user store, in its own directory, one file per request. The record holds the repository identity (the real path of its git common directory), the host's non-empty session key, the time, the release asked for (a bump or a version), and the default branch's local head at that moment (no fetch). Never the prompt text. The hook holds the prompt only in memory, writes and logs nothing for a non-matching prompt (not even in error output), prints nothing, never blocks and fails open (0018).
+2. **The grammar is small and anchored.** After NFKC folding, removal of zero-width characters, case-folding and removal of trailing punctuation, the whole prompt must be `release`, an optional `the` and an optional `next`, then `patch`, `minor` or `major`; or `release` and `v?X.Y.Z`. A bare `release`, a question, a longer message or a paste containing the phrase records nothing. English only until a pack answer carries the phrases.
+3. **The CLI takes the request when it checks the approval.** `go-getter release --batch` (plain, under `go-getter watch`, with `--timeout` or `--interval`; not with `--allow-no-ci` or `--project`) keeps its typed approval. Where none is recorded, the pre-tool hook finds an unconsumed request of the same session, at most 60 minutes old, and hands the CLI a single-use claim on it. The CLI consumes the claim at its approval check, after its own fetch and computation, and proceeds only if the request fits: the named bump equals the computed bump or the version equals the computed version, and the default branch's head equals the head recorded in the request. Otherwise it refuses, names what would be released and what to say to approve it (0159 item 4), and leaves the request unconsumed. Consumption is atomic (the file is removed once). A dry run consumes nothing.
+4. **One request, one release.** After the check the request is spent, whatever happens next; a retry after a red CI asks again. The CLI re-checks the default branch head before it merges and refuses if it moved. Commits merged after the request make the head differ, so an agent cannot grow a patch into a minor behind the user.
+5. **Provenance is recorded.** The release pull request body says "requested in chat (session <hash>)" instead of "recorded by a person", `approvals list` shows the source of each approval, the refusal texts name both routes, and the daily digest procedure step is updated.
+6. **Hosts.** Claude Code first. Another host gets `hooks.userPrompt` only when its fact records the event's payload, its session key, whether it fires for headless, resumed, scheduled or injected prompts and any source marker. Without it, or without a blocking pre-tool hook, the typed approval stays.
+7. **Hardening this relies on, shipped first and as its own change** (it also closes holes in 0094 and 0186): the release gate and every approval check ignore `GO_GETTER_HOME` and `XDG_STATE_HOME` unless a test flag is set; the store guard reads commands through wrappers (`env`, `nohup`, `timeout`, `sh -c`, `eval`) as `commandOf` does; an agent's call to `go-getter hook <event>` is denied under any spelling, as is its call of a host CLI that resumes or names a session (`-c`, `--continue`, `-r`, `--resume`, `--session-id`). Even with these, an agent that edits `compiler/` or `.go-getter/cli` in its worktree decides what the hook and the CLI do.
+8. **Stated limits.** A host process the agent starts (`claude -p`, `codex exec`, a terminal multiplexer typing into an interactive session) makes requests in its own session, which the hook cannot tell from a person's. The mitigation is a refusal of requests whose payload marks a non-interactive session, once a host's payload is shown to carry it; until then this is friction reduction, not a security boundary.
+9. **Telemetry** records metadata only: request, match, consume and refuse, with class, outcome and age (new outcomes in the schema).
+
+## Why
+
+The owner's request "release next minor" is already the deliberate act; asking for a command with a sha repeats it, and fact 0040 found most owner turns were such confirmations. The event comes from the host, not from the transcript or from text the agent wrote, and the CLI checks the request against its own fresh computation, so the hook needs no fetch and cannot approve a stale or larger release.
+
+## Tradeoffs considered
+
+- **Typed `approvals release` (throughput T5 as built):** the least code, but a second act after the first, and forgeable today through a store override and wrapper spellings (item 7).
+- **Reading the host transcript (0186):** needs a transcript and a forged line passes; this reads the host's own submit event and stores only the parsed request.
+- **A host prompt (0137):** asks again for what the user just said, and only where the host can ask.
+- **Approving the release pull request, or a standing grant for patch and minor:** the stronger boundary (item 8), each needs more machinery; either can be added beside this.
+- **A bare `release` or `please release`:** dropped, because an agent can ask for that word for another reason.
+- **Cost accepted:** a user who types the exact phrase to an agent they did not mean to release approves a release; a request is spent by any head change, so the user asks again after another merge; and below 1.0 a breaking change is a minor bump, so "release minor" can approve it.
+
+## Before acceptance
+
+1. Probe each host's user-prompt event and record it in its fact: payload fields, whether pre-tool and prompt events share the session id, whether subagent calls share it, and whether the event fires for headless, resumed, scheduled, looped, injected or other users' prompts and marks the source. Claude Code first.
+2. Ship the item 7 hardening.
+3. Decide whether a breaking change below 1.0 needs the user's word (the plan printed to the user before the request).
+4. On acceptance add `accepted-by`, a plan step with its issue, and the `gated-actions-need-human-approval` guardrail text for the chat route.
