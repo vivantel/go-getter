@@ -50,7 +50,7 @@ export default async function runCommand({ args }) {
       const r = nextInRun(project);
       if (rest.includes('--json')) console.log(JSON.stringify(r, null, 2));
       else if (r.step) {
-        const line = (st) => `step ${st.id} ${st.title}${st.check ? `\ncheck: ${st.check}` : ''}${st.doneWhen ? `\ndone-when: ${st.doneWhen}` : ''}`;
+        const line = (st) => `step ${st.id} ${st.title}\n${st.brief}`;
         console.log(`next: ${line(r.step)}`);
         for (const st of r.steps.slice(1)) console.log(`parallel: ${line(st)}`);
       }

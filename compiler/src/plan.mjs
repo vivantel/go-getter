@@ -22,6 +22,9 @@ const META = { Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES,
 export const ID = /^[0-9A-Za-z]+([.-][0-9A-Za-z]+)*$/;
 const HEADING = /^###\s+(\S+)\s+(.+?)\s+—\s+\[(.)\]\s*(.*)$/;
 const PARALLEL = '‖';
+// A drafted plan (`go-getter plan draft`) carries `**Approval**: pending` until a person approves it (decision 0155 item 1).
+export const APPROVAL = /^\*\*Approval\*\*:[ \t]*(.*)$/m;
+
 const MAX_OPTIONS = 4;
 
 const stripTicks = (s) => s.replace(/^`(.*)`$/, '$1');
@@ -118,6 +121,18 @@ function graphProblems(steps, file) {
   };
   for (const s of byId.values()) visit(s, []);
   return problems;
+}
+
+// 'none' for a plan without an Approval line, else 'pending' or 'approved' with the recorded text.
+export function approvalOf(text) {
+  const m = APPROVAL.exec(text);
+  if (!m) return { state: 'none' };
+  return /^approved\b/i.test(m[1]) ? { state: 'approved', text: m[1] } : { state: 'pending', text: m[1] };
+}
+
+// The refusal for working a step of an unapproved drafted plan, or null.
+export function unapprovedReason(file) {
+  return approvalOf(readFileSync(file, 'utf8')).state === 'pending' ? `the plan is not approved yet; a person runs: go-getter plan approve ${path.basename(file)}` : null;
 }
 
 export function readPlan(file) {
@@ -255,6 +270,8 @@ const writeMarker = (file, id, marker) => writeFileSync(file, setMarker(readFile
 // worktree (`go-getter worktree new`) and sets the marker in that worktree's copy of the plan, so it lands with the step's branch.
 export function startStep(cwd, file, id, { worktree, states } = {}) {
   const { plan, step } = findStep(file, id);
+  const blocked = unapprovedReason(file);
+  if (blocked) throw new Error(blocked);
   if (step.marker === 'x' || step.marker === '>' || step.marker === '!') throw new Error(`step ${id} is ${MARKERS[step.marker]}${step.marker === '!' ? ' (unblock it first)' : ''}`);
   if (step.marker === '~' && !worktree) return { changed: false, file };
   // `states` (step id -> state) comes from the work source, so a step whose issue is still open is not done.
