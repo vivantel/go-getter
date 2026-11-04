@@ -176,4 +176,7 @@ id,title,tags,status
 0192-claim-clock-skew,"A lease lapses 5 minutes after its expiry, and a clock that far off the host cannot claim","practice-packs, agent-roles, harness",draft
 0193-claim-parent-idle,"A parent unit with live children is flagged idle after 7 days without action","practice-packs, agent-roles, harness",draft
 0194-claim-brief-max,"A delegated unit keeps at most 8 KB of brief fields in the claims ledger","practice-packs, agent-roles, harness",draft
+0195-work-pick-among,"Workers pick among the first 5 ready work units","practice-packs, agent-roles, harness",draft
+0196-work-wip-per-worker,"A worker holds at most max-concurrent work units at once","practice-packs, agent-roles, harness",draft
+0197-work-wip-per-feature,"At most none work units of one feature are claimed at once","practice-packs, agent-roles, harness",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft

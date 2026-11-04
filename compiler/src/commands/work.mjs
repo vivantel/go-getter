@@ -1,5 +1,4 @@
-// go-getter work next [--owner-kind K] [--dry-run] | scope-check [--base <ref>] | park <unit> --ask <file> | asks [--mine] | answer <ask> <choice> | request <unit> --to <unit> [--text T] [--park] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind <k>] [--parent <unit>]
-// A unit is claimed with a lease in the feature's claims ledger (decision 0166); the library is compiler/src/work/.
+// go-getter work next [--owner-kind K] [--dry-run] | approve <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] | approve <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> | asks [--mine] | answer <ask> <choice> | request <unit> --to <unit> [--text T] [--park] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind <k>] [--parent <unit>]
 import path from 'node:path';
 import { repoRoot } from '../plan.mjs';
 import { remoteOf, workerId } from '../work/ledger.mjs';
@@ -7,6 +6,7 @@ import { KINDS } from '../work/claim.mjs';
 import { clockNow, heartbeatUnit, hostDateFor, identity, releaseUnit } from '../work/ops.mjs';
 import { nextUnits } from '../work/next.mjs';
 import { answerAsk, formatAsk, listAsks, parkAsk, readAskFile, resumeClaim, sweepAsks } from '../work/asks.mjs';
+import { approveUnit } from '../work/intake.mjs';
 import { checkScope, formatScope, requestChange } from '../work/scope-gate.mjs';
 import { planIssue, writeMode } from '../trackers/write.mjs';
 
@@ -51,7 +51,7 @@ async function workNext(args) {
   }
   try {
     const now = clockNow();
-    const found = nextUnits(root, { ownerKind: who.kind, now, remote });
+    const found = nextUnits(root, { ownerKind: who.kind, worker: who, now, remote });
     for (const q of found.queued) console.log(`${q.unit}: queued behind ${q.behind}${q.holder ? ` (${q.holder.kind} ${q.holder.id})` : ''}${q.tokens ? `, ${q.tokens.join(' and ')}` : ''}`);
     if (!found.ready.length) {
       console.log('work next: no unit is ready');
@@ -194,13 +194,53 @@ async function workAsk(sub, args) {
     return 0;
   } catch (e) {
     console.error(`work ${sub}: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
-    return 1;
+    return 1
   }
 }
+
+// `work approve <unit>`: approve a draft unit as the holder of its parent's claim, the parent's Owner-id or the rule that generated it.
+// A unit that needs the Owner-id is printed as an ask (exit 3); nothing is written then.
+async function workApprove(args) {
+  const [unit, ...rest] = args;
+  const flags = {};
+  for (let i = 0; i < rest.length; i++) {
+    if (['--as', '--kind', '--remote'].includes(rest[i]) && rest[i + 1] !== undefined) flags[rest[i].slice(2)] = rest[++i];
+    else flags.bad = true;
+  }
+  if (!unit || unit.startsWith('--') || flags.bad || (flags.kind && !KINDS.includes(flags.kind))) {
+    console.error(USAGE);
+    return 2;
+  }
+  const root = repoRoot(process.cwd());
+  try {
+    const who = identity(root, { as: flags.as, kind: flags.kind });
+    const remote = flags.remote ? remoteOf(root, flags.remote) : undefined;
+    if (flags.remote && !remote) {
+      console.error(`work: no remote ${flags.remote}`);
+      return 1;
+    }
+    const r = await approveUnit(root, unit, who, { remote });
+    if (r.code === 'ask') {
+      console.log(`work approve: ${r.error}; nothing was written. Send this ask to ${r.ask.to ?? 'the owner'}`);
+      return 3;
+    }
+    if (!r.ok) {
+      console.error(`work approve: ${r.error}`);
+      return 1;
+    }
+    console.log(`${r.unit}: approved by ${r.by}${r.record ? '' : ' (no record needed)'}`);
+    return 0;
+  } catch (e) {
+    console.error(`work approve: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
+    return 1
+  }
+}
+
 
 export default async function workCommand({ args }) {
   if (['park', 'asks', 'answer'].includes(args[0])) return workAsk(args[0], args.slice(1));
   if (args[0] === 'next') return workNext(args.slice(1));
+  if (args[0] === 'approve') return workApprove(args.slice(1));
   if (args[0] === 'scope-check') return workScopeCheck(args.slice(1));
   if (args[0] === 'request') return workRequest(args.slice(1));
   const [sub, unit, ...rest] = args;
