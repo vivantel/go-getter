@@ -114,3 +114,66 @@ test('an added decision brings the decision it supersedes; the CLI prints JSON f
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+const PLAN_NAMING = '# Plan\n\n### 1.1 Do the thing — [ ]\nContext: decision 0003 and guardrail `other-rule`, fact 0002, decision 9999, `nothing-here`.\nDo: follow docs/decisions/0004-code.md.\n';
+
+test('a completed step brings the decisions, guardrails and facts its text names', () => {
+  const dir = fixture();
+  try {
+    writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN_NAMING);
+    git(dir, 'add', '-A');
+    git(dir, '-c', 'user.name=t', '-c', 'user.email=[email-1]', 'commit', '-q', '-m', 'plan');
+    writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN_NAMING.replace('[ ]', '[x]'));
+    git(dir, 'add', '-A');
+    const refs = suggestRefs(dir, { staged: true, today });
+    assert.deepEqual([...rows(refs).must].sort(), [
+      'docs/decisions/0003-other.md — named by step 1.1',
+      'docs/decisions/0004-code.md — named by step 1.1',
+      'docs/facts/0002-later.md — named by step 1.1',
+      'docs/guardrails/other-rule.md — named by step 1.1',
+      'docs/plans/p.md — completes step 1.1',
+    ]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a step not moved to done names nothing, and a superseded decision is listed only when alone', () => {
+  const dir = fixture();
+  try {
+    writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN_NAMING);
+    git(dir, 'add', '-A');
+    assert.deepEqual(rows(suggestRefs(dir, { staged: true, today })).must, []);
+    writeFileSync(path.join(dir, 'docs/decisions/0005-old.md'), FILES['docs/decisions/0005-old.md'].replace('status: active', 'status: superseded'));
+    const alone = '# Plan\n\n### 1.1 Do the thing — [ ]\nContext: decisions 0005 and 0003.\n';
+    const only = '# Plan\n\n### 1.1 Do the thing — [ ]\nContext: decision 0005.\n';
+    for (const [plan, want] of [[alone, ['docs/decisions/0003-other.md']], [only, ['docs/decisions/0005-old.md']]]) {
+      writeFileSync(path.join(dir, 'docs/plans/p.md'), plan);
+      git(dir, 'add', '-A');
+      git(dir, '-c', 'user.name=t', '-c', 'user.email=[email-1]', 'commit', '-q', '-m', 'p');
+      writeFileSync(path.join(dir, 'docs/plans/p.md'), plan.replace('[ ]', '[x]'));
+      git(dir, 'add', '-A');
+      const named = suggestRefs(dir, { staged: true, today }).must.filter((r) => r.reason.startsWith('named by')).map((r) => r.path);
+      assert.deepEqual(named, want);
+      git(dir, '-c', 'user.name=t', '-c', 'user.email=[email-1]', 'commit', '-q', '-m', 'done');
+      writeFileSync(path.join(dir, 'docs/plans/p.md'), plan);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the CLI prints the named artifacts in --json', () => {
+  const dir = fixture();
+  try {
+    writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN_NAMING);
+    git(dir, 'add', '-A');
+    git(dir, '-c', 'user.name=t', '-c', 'user.email=[email-1]', 'commit', '-q', '-m', 'plan');
+    writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN_NAMING.replace('[ ]', '[x]'));
+    git(dir, 'add', '-A');
+    const out = JSON.parse(spawnSync(process.execPath, [cli, 'refs', '--staged', '--json'], { cwd: dir, env, encoding: 'utf8' }).stdout);
+    assert.ok(out.must.some((r) => r.path === 'docs/decisions/0003-other.md' && r.reason === 'named by step 1.1'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
