@@ -111,6 +111,17 @@ export function noteStop(project, stop, { env = process.env, now = () => new Dat
   write(data, env);
 }
 
+// Records that the active run used the approval for command shape `id` (a run grant or a remembered one); ids only, once each.
+export function noteUse(project, id, { env = process.env, now = () => new Date() } = {}) {
+  const { data, key, entry } = load(project, env, now());
+  if (!entry.active) return;
+  const used = (entry.active.used ??= []);
+  if (used.includes(id)) return;
+  used.push(id);
+  data.projects[key] = entry;
+  write(data, env);
+}
+
 // Records one gate result of `ship` on the active run: { gate, status: 'pass'|'fail'|'skipped', at }. Names and statuses only.
 export function noteGate(project, gate, status, { env = process.env, now = () => new Date() } = {}) {
   const t = now();

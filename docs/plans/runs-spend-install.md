@@ -6,11 +6,12 @@ Split out of the former single `roadmap.md` on 2026-11-03 (decision 0165, plan `
 
 ## Phase 5 — Runs, spend and install
 
-### R1 Run polish: report gaps and plan-step stops — [ ] ‖
+### R1 Run polish: report gaps and plan-step stops — [x] ‖
 Issue: #167
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/run-report.test.mjs compiler/test/run-stops.test.mjs`
 Do: the frictions the first dogfood run found (`docs/plans/archive/autonomous-run.md`, step 6 result): build a report for a run that timed out (today `run end` finds no active run); list merged pull requests from the default branch whatever branch `run end` runs on; print the end reason once and list only the approvals the run used, not every remembered shape; and decide whether a `Class: plan` step stops a run by default, since a design drafted for the owner's sign-off is not stopped unless it carries `Human:`. Also: a run whose plan was moved to `docs/plans/archive/` fails to build its report (`run end` reads the old path).
 Done-when: tests show the timed-out report, the merged list from another branch, the corrected report lines, and the chosen plan-step rule.
+Result 2026-11-05 · `run end` reports a timed-out run and reads a plan moved to `docs/plans/archive/`; merged pull requests come from the default branch (origin/HEAD, else main or master); the report prints the end reason once ("timed out" for a timeout) and `Approvals used` lists only shapes the run used (`used` on the run record, set by `shapeAllowance`). Rule chosen: a `Class: plan` step stops a run with `human-needed` by default, with or without `Human:`, and is never offered as a parallel step. Tests in `compiler/test/run-report.test.mjs` and `run-stops.test.mjs`.
 
 ### R2 Spend readers driven by capability data — [x] ‖
 Issue: #220

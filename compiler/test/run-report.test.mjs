@@ -1,12 +1,12 @@
 // The end-of-run report (decision 0130 item 9, step 5 of the autonomous-run plan).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync, symlinkSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { startRun, noteEvent, noteStop, endRun } from '../src/runs/record.mjs';
+import { startRun, noteEvent, noteStop, noteUse, endRun } from '../src/runs/record.mjs';
 import { buildReport } from '../src/runs/report.mjs';
 import { addShape } from '../src/secrets/approvals.mjs';
 import { cleanGitEnv } from '../src/git-env.mjs';
@@ -56,13 +56,18 @@ test('a finished run reports its steps, merged pull requests, spend and approval
     s.commit('docs: not a pull request');
     s.setPlan(['x', 'x', 'x']);
     addShape(s.dir, 'pr-create', { host: 'claude' });
+    addShape(s.dir, 'pr-merge', { host: 'claude' });
+    noteUse(s.dir, 'pr-merge');
     const { text } = buildReport(s.dir, endRun(s.dir, { reason: 'ended' }));
     assert.match(text, /Steps done \(3\/3\)/);
     assert.match(text, /- 1 Step 1 \(\[#101\]\(https:\/\/github.com\/acme\/app\/issues\/101\)\)/);
     assert.match(text, /\[#158\]\(https:\/\/github.com\/acme\/app\/pull\/158\)/);
     assert.match(text, /\*\*Not done\*\*\n- none/);
     assert.match(text, /Spend:\*\* \$0.00 \(no cap\)/);
-    assert.match(text, /run grants: pr-merge; remembered shapes: pr-create/);
+    assert.match(text, /\*\*Approvals used:\*\* pr-merge\n/);
+    assert.doesNotMatch(text, /pr-create|remembered/);
+    assert.match(text, /ended \d{4}-[^\n]*\.\n/);
+    assert.doesNotMatch(text, /\(ended\)/);
   } finally { s.cleanup(); }
 });
 
@@ -135,4 +140,42 @@ test('without tracker writes or an issue the report is printed', () => {
     const r = none.cli('run', 'end');
     assert.match(r.stdout, /the plan has no issue to post it on/);
   } finally { none.cleanup(); }
+});
+
+test('a run that timed out still gets a report from run end', () => {
+  const s = setup();
+  try {
+    s.start({ hours: 0.0000001 });
+    const r = s.cli('run', 'end');
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /run timed out:/);
+    assert.match(r.stdout, /report posted: commented on acme\/app#103/);
+    assert.match(s.gh.inputs().find((i) => i.args.includes('comment')).stdin, /timed out/);
+  } finally { s.cleanup(); }
+});
+
+test('merged pull requests are listed from the default branch whatever branch run end runs on', () => {
+  const s = setup();
+  try {
+    s.commit('chore: base');
+    s.start();
+    s.commit('feat: one (#158)');
+    git(s.dir, 'checkout', '-q', '-b', 'feat/other');
+    s.commit('feat: unmerged (#999)');
+    const { text } = buildReport(s.dir, endRun(s.dir, { reason: 'ended' }));
+    assert.match(text, /#158/);
+    assert.doesNotMatch(text, /#999/);
+  } finally { s.cleanup(); }
+});
+
+test('a run whose plan moved to the archive still builds its report', () => {
+  const s = setup();
+  try {
+    s.start();
+    mkdirSync(path.join(s.dir, 'docs/plans/archive'));
+    renameSync(path.join(s.dir, 'docs/plans/p.md'), path.join(s.dir, 'docs/plans/archive/p.md'));
+    const { text } = buildReport(s.dir, endRun(s.dir, { reason: 'ended' }));
+    assert.match(text, /Not done/);
+    assert.match(text, /- 1 Step 1/);
+  } finally { s.cleanup(); }
 });
