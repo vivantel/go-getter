@@ -83,7 +83,7 @@ test('no step starts before the plan approval is recorded', async () => {
   try {
     const { file } = await draftPlan(s.dir, 'Add a widget', { planner });
     assert.match(readFileSync(file, 'utf8'), /\*\*Approval\*\*: pending/);
-    assert.throws(() => startStep(s.dir, file, '1'), /not approved/);
+    assert.throws(() => startStep(s.dir, file, "1"), /no approval recorded/);
     approvePlan(file, { by: 'Sam', now: new Date('2026-11-04T00:00:00Z') });
     assert.match(readFileSync(file, 'utf8'), /\*\*Approval\*\*: approved 2026-11-04 by Sam/);
     assert.equal(startStep(s.dir, file, '1').changed, true);

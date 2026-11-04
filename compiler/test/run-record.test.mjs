@@ -153,7 +153,7 @@ test('the pre-tool hook denies an agent that starts or ends a run, however go-ge
     for (const command of ['go-getter run start docs/plans/p.md', 'go-getter run end', `node ${cli} run start docs/plans/p.md`, 'npx go-getter run start docs/plans/p.md', 'cd . && go-getter run end']) {
       const d = s.ask(command);
       assert.equal(d.deny, true, command);
-      assert.match(d.reason, /a person (runs it|must approve it once)/);
+      assert.match(d.reason, /a person (runs it|runs: ! go-getter plan approve)/);
     }
     assert.ok(!s.ask('go-getter run status').deny, 'status is read only');
     const store = path.dirname(runsFile(s.env));

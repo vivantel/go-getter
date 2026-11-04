@@ -19,7 +19,8 @@ import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
 import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved } from './secrets/approvals.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
-import { readPlan, approvalOf } from './plan.mjs';
+import { readPlan } from './plan.mjs';
+import { approvalRefusal } from './plan-approval.mjs';
 import { mcpDenial, mcpCall, isReadTool, mcpShapeId, secretKinds } from './mcp.mjs';
 import { MCP_SHAPE } from './gate.mjs';
 import { fileSet } from './secrets/fileset.mjs';
@@ -294,8 +295,10 @@ function agentStartRefusal(project, command, args) {
   const plans = path.join(project, 'docs', 'plans');
   const file = path.resolve(project, positional[0]);
   if (path.dirname(file) !== plans || !file.endsWith('.md') || !existsSync(file)) return `blocked: an agent starts a run only on a plan file in docs/plans; ${ask}`;
-  const state = approvalOf(readFileSync(file, 'utf8')).state;
-  if (state !== 'approved') return `blocked: the plan ${positional[0]} is not approved (${state === 'none' ? 'it has no Approval line' : 'its approval is pending'}), so a person must approve it once: ! go-getter plan approve ${path.basename(file)}; then an agent may start the run`;
+  // The store entry approves, never the Approval line in the file (an agent can edit that): decision 0186.
+  let why;
+  try { why = approvalRefusal(file); } catch { why = 'the plan cannot be read'; }
+  if (why) return `blocked: ${why}`;
   return null;
 }
 
