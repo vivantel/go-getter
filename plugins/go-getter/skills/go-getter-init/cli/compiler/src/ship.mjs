@@ -9,6 +9,7 @@ import path from 'node:path';
 import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { suggestRefs } from './refs.mjs';
 import { runTier3 } from './enforce.mjs';
+import { checkScope, formatScope } from './work/scope-gate.mjs';
 import { restrictedPatterns } from './hook.mjs';
 import { matchesAny } from './glob.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
@@ -138,6 +139,11 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   const restricted = dirty.filter((f) => matchesAny(f, restrictedPatterns(project)));
   if (restricted.length) throw new ShipError(`${verb}: restricted paths changed, not staging: ${restricted.join(', ')} (guardrail restricted-paths-denied)`);
   log('scope', `${dirty.length} uncommitted file${dirty.length === 1 ? '' : 's'}, ${ahead} commit${ahead === 1 ? '' : 's'} ahead`);
+
+  // The scope gate (decision 0167 item 2): a change inside the scope of the unit claimed from this worktree; no claimed unit passes.
+  const scoped = checkScope(project, { base: `origin/${base.name}` });
+  if (scoped.status === 'out-of-scope') throw new ShipError(`${verb}: ${formatScope(scoped)} (guardrail a-change-stays-inside-its-units-scope)`);
+  log('scope gate', scoped.status === 'ok' ? `inside the scope of ${scoped.units.join(', ')}` : 'no unit claimed');
 
   // 3 Checks: the adopted tier-3 guardrail checks, the same set as the pre-push hook.
   const results = await runTier3(project, { stage: 'pre-push' });

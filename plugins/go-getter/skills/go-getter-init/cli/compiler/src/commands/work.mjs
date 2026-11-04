@@ -1,4 +1,4 @@
-// go-getter work next [--owner-kind K] [--dry-run] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind <k>] [--parent <unit>]
+// go-getter work next [--owner-kind K] [--dry-run] | scope-check [--base <ref>] | request <unit> --to <unit> [--text T] [--park] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind <k>] [--parent <unit>]
 // A unit is claimed with a lease in the feature's claims ledger (decision 0166); the library is compiler/src/work/.
 import path from 'node:path';
 import { repoRoot } from '../plan.mjs';
@@ -6,9 +6,10 @@ import { remoteOf, workerId } from '../work/ledger.mjs';
 import { KINDS } from '../work/claim.mjs';
 import { claimUnit, clockNow, heartbeatUnit, hostDateFor, identity, releaseUnit } from '../work/ops.mjs';
 import { nextUnits } from '../work/next.mjs';
+import { checkScope, formatScope, requestChange } from '../work/scope-gate.mjs';
 import { planIssue, writeMode } from '../trackers/write.mjs';
 
-const USAGE = 'usage: go-getter work next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
+const USAGE = 'usage: go-getter work next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
 const FLAGS = ['--as', '--kind', '--remote', '--issuer', '--issuer-kind', '--parent'];
 
 // One comment on the unit's issue for a state change, only where the project's tracker-writes answer is `allow`.
@@ -79,8 +80,61 @@ async function workNext(args) {
   }
 }
 
+// `work scope-check`: exit 1 when a changed path lies outside the scope of the unit claimed from this worktree.
+function workScopeCheck(args) {
+  const i = args.indexOf('--base');
+  const base = i >= 0 ? args[i + 1] : undefined;
+  if (args.some((a, n) => a !== '--base' && args[n - 1] !== '--base') || (i >= 0 && (!base || base.startsWith('--')))) {
+    console.error(USAGE);
+    return 2;
+  }
+  try {
+    const r = checkScope(repoRoot(process.cwd()), { base });
+    console.log(formatScope(r));
+    return r.status === 'out-of-scope' ? 1 : 0;
+  } catch (e) {
+    console.error(`work scope-check: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
+    return 1;
+  }
+}
+
+// `work request <unit> --to <unit>`: a change request to the unit that owns what this one needs; --park also parks this unit.
+async function workRequest(args) {
+  const [unit, ...rest] = args;
+  const flags = {};
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i] === '--park') flags.park = true;
+    else if (['--to', '--text', '--as', '--kind', '--remote'].includes(rest[i]) && rest[i + 1] !== undefined) flags[rest[i].slice(2)] = rest[++i];
+    else flags.bad = true;
+  }
+  if (!unit || unit.startsWith('--') || !flags.to || flags.bad || (flags.kind && !KINDS.includes(flags.kind))) {
+    console.error(USAGE);
+    return 2;
+  }
+  const root = repoRoot(process.cwd());
+  try {
+    const who = identity(root, { as: flags.as, kind: flags.kind });
+    const remote = flags.remote ? remoteOf(root, flags.remote) : undefined;
+    const tracker = writeMode(root) === 'allow' ? async (text, { file, step }) => planIssue(root, path.join(root, file), file, 'comment', step.id, { text }) : undefined;
+    const r = await requestChange(root, unit, flags.to, who, { text: flags.text, park: flags.park, comment: tracker, remote });
+    if (!r.ok) {
+      console.error(`work request: ${r.error}`);
+      return 1;
+    }
+    console.log(`${r.from}: change request to ${r.to} ${r.how === 'comment' ? 'posted as a comment on its issue' : 'recorded; post this on the owner\'s issue or unit:'}${r.parked ? '; parked, scope released' : ''}`);
+    if (r.how !== 'comment') console.log(r.text);
+    if (r.warning) console.error(`work request: ${r.warning}`);
+    return 0;
+  } catch (e) {
+    console.error(`work request: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
+    return 1;
+  }
+}
+
 export default async function workCommand({ args }) {
   if (args[0] === 'next') return workNext(args.slice(1));
+  if (args[0] === 'scope-check') return workScopeCheck(args.slice(1));
+  if (args[0] === 'request') return workRequest(args.slice(1));
   const [sub, unit, ...rest] = args;
   const flags = {};
   for (let i = 0; i < rest.length; i++) {

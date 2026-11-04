@@ -359,6 +359,39 @@ export async function releaseUnit(root, ref, who, { now = clockNow(), remote, no
   return fail('contended', `${unit}: the ledger kept changing; try again`);
 }
 
+// Parks a claim that waits for the answer to a change request (decision 0167 item 2): the claim stays, never lapses, and holds no scope,
+// so an overlapping unit can be claimed meanwhile. The worker stops renewing it (the worktree's record drops it).
+export async function parkUnit(root, ref, who, { to, now = clockNow(), remote, acceptRemoteLedger = false } = {}) {
+  const found = findUnit(root, ref);
+  if (found.error) return fail('unknown-unit', found.error);
+  const { unit, stem } = found;
+  const rem = remote === undefined ? readRecord(root).claims?.[unit]?.remote ?? remoteOf(root) : remote;
+  const name = entryFile(unit);
+  const settings = claimSettings(root);
+  for (let attempt = 0; attempt < RETRIES; attempt++) {
+    const ledger = fetchLedger(root, stem, rem, { accept: acceptRemoteLedger && attempt === 0 });
+    if (!ledger.online) return fail('offline', 'the remote could not be reached; the claim stays held and keeps its scope');
+    if (ledger.diverged) return fail('diverged', diverged(ledger));
+    const ctx = { nowMs: now.getTime(), skewMs: settings.skewMs };
+    const { entries } = readEntries(root, ledger.tip, validity(settings, now, beatTimes(root, ledger.local ? null : rem, ctx)));
+    const entry = entries.find((e) => e.unit === unit);
+    if (!entry || entry.state === 'released') return fail('not-held', `${unit} has no live claim`);
+    if (entry.holder.id !== who.id) return fail('not-holder', `${unit} is held by ${entry.holder.kind} ${entry.holder.id}, not ${who.id}`);
+    const next = { ...entry, state: 'parked', scope: [], ask: { kind: 'change-request', to }, updated: now.toISOString() };
+    const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: who.id, message: `park ${unit} for a change request to ${to}`, now });
+    const pushed = pushRef(root, rem, ledgerRef(stem), commit, ledger.tip);
+    if (pushed.offline) return fail('offline', `the remote refused or could not be reached: ${pushed.error}`);
+    if (pushed.rejected) {
+      await sleep(backoff(attempt));
+      continue;
+    }
+    if (rem) noteLedger(root, stem, commit);
+    updateRecord(root, (r) => delete r.claims[unit]);
+    return { ok: true, entry: next, commit };
+  }
+  return fail('contended', `${unit}: the ledger kept changing; try again`);
+}
+
 // `plan status` computed from the claims ledger and not from a marker alone: a step with a live claim is in progress, and a live
 // claim on a step marked done is reported as a mismatch. With `opts.remote` it fetches the ledger first (an unreachable remote
 // leaves the last one seen); unchanged when no ledger exists.

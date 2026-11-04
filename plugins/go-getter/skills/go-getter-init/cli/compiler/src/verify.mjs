@@ -83,6 +83,14 @@ export async function verify(project, taskClass, { host } = {}) {
     results.push({ name: check.name, ok, output });
     recordQuietly(project, { event: `verify:${check.name}`, ...(host ? { host } : {}), taskClass, outcome: ok ? 'pass' : 'fail' });
   }
+  if (CODE_CLASSES.has(taskClass)) {
+    const { checkScope, formatScope } = await import('./work/scope-gate.mjs'); // loaded here: plan.mjs imports CLASSES from this module
+    const scoped = checkScope(project);
+    if (scoped.status !== 'no-unit') {
+      results.push({ name: 'scope', ok: scoped.status === 'ok', output: scoped.status === 'ok' ? '' : formatScope(scoped) });
+      recordQuietly(project, { event: 'verify:scope', ...(host ? { host } : {}), taskClass, outcome: scoped.status === 'ok' ? 'pass' : 'fail' });
+    }
+  }
   return { ok: results.every((r) => r.ok), results };
 }
 
