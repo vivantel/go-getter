@@ -2,19 +2,19 @@
 
 ## 1. Capturing a fresh decision as knowledge
 
-**Prompt:** "Interview me and save this as knowledge: we're moving from REST to gRPC for internal services."
+**Prompt:** "Decompose `docs/outcomes/lower-internal-latency.md` and save what it surfaces as knowledge: the brief calls for moving internal services from REST to gRPC."
 
-**What happens:** With an approved brief as input, the same interview mechanics as `clarify` run first, on how to split it. Once resolved, every explicit and implicit intent is classified (descriptive/axiomatic/normative/procedural), duplicates are checked against existing artifacts, and — after one explicit go-ahead listing every file to be created — a decision record, any grounding facts, derived guardrails, and a self-sufficient `docs/plans/<slug>.md` implementation plan are written.
+**What happens:** The brief is approved and passes `go-getter outcome check`, so the same interview mechanics as `clarify` run first, on how to split it. Once resolved, every explicit and implicit intent is classified (descriptive/axiomatic/normative/procedural), duplicates are checked against existing artifacts, and — after one explicit go-ahead listing every file to be created — a decision record, any grounding facts, derived guardrails, and a self-sufficient `docs/plans/<slug>.md` implementation plan are written.
 
 ## 2. A likely update, not a new artifact
 
-**Prompt:** "Capture this as an ADR: we're extending the retry policy to cover webhook deliveries too."
+**Prompt:** "Decompose `docs/outcomes/reliable-webhooks.md`; capture as an ADR that we're extending the retry policy to cover webhook deliveries too."
 
 **What happens:** Before writing anything, existing artifacts are searched by title/topic/frontmatter. Finding a prior retry-policy decision, it's proposed back ("this looks like an update to `docs/decisions/00XX-retry-policy.md` — extend it, or is this a new decision?") rather than silently creating a duplicate or blindly overwriting the original.
 
 ## 3. A minor intent that doesn't warrant a full ADR
 
-**Prompt:** "Turn this into a roadmap: we agreed to rename the `worker` service to `job-runner`."
+**Prompt:** "Turn `docs/outcomes/one-service-vocabulary.md` into a roadmap; we agreed to rename the `worker` service to `job-runner`."
 
 **What happens:** The rename is captured, but since it's easily reversible, unsurprising, and not the result of a real tradeoff, it's saved as a lighter decision fact rather than a full decision record — still written to disk, just not inflated into an ADR it doesn't need.
 
