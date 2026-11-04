@@ -3,11 +3,11 @@ name: autonomous-run
 description: Works through an autonomous run a person started on a plan range, following `go-getter run next` until it finishes or stops and hands over. Use when a run is active, e.g. "continue the run", "work through the plan range", "go-getter run status shows an active run".
 ---
 
-A run is a plan range a person started (`go-getter run start`). You cannot start or end one. Inside it the granted outward commands and the run's step comments and closes need no asking; the always-human set (force-push, history rewrites, settings, tags, releases, publishing) stays with a person.
+A run is a plan range under a plan the owner approved once (`go-getter plan approve`, decision 0186). You may start one with `go-getter run start <plan> [--through N] [--hours H]` when the plan is approved: no other flag, no chained command; the grants are the project's `run-grants` answer. If the plan is not approved, or has no Approval line, tell the person to approve it (`! go-getter plan approve <plan>`) and stop; never edit an Approval line yourself. You cannot end a run or pass `--grant`. Inside it the granted outward commands and the run's step comments and closes need no asking; the always-human set (force-push, history rewrites, settings, tags, releases, publishing) stays with a person.
 
 ## Loop
 
-1. `go-getter run status`. No active run: stop, nothing is granted.
+1. `go-getter run status`. No active run: start one on the approved plan as above, or stop, nothing is granted.
 2. `go-getter run next`. It prints the next step, or `stop (<code>)` with a reason and exits 1.
 3. On a step: follow `docs/skills/working-a-change.md` for it (start, change, checks, pull request, merge when its checks are green, close the step's issue). Then go to 2.
 4. On a stop: do not work around it. Write what you did and why you stopped for the person, and finish the turn.

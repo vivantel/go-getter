@@ -113,9 +113,10 @@ Not built yet: native deny rules for servers off the list (backlog L.20).
 
 ## Autonomous runs
 
-A person can start an autonomous run on a plan range so the agent works through it without asking for each push, pull request or merge ([decision 0130](docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md)). Only a person starts or ends one; the hook refuses an agent's `go-getter run start` or `run end`, and the run record lives in your user directory, outside git.
+The owner approves a plan once (`go-getter plan approve docs/plans/<plan>.md`, which also adds the Approval line to a plan written by hand); after that agents start and work a run on it without asking for each push, pull request or merge without asking for each push, pull request or merge ([decision 0130](docs/decisions/0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops.md)). Starting is free for an agent on an approved plan (`run start <plan> [--through N] [--hours H]`, nothing else; [decision 0186](docs/decisions/0186-an-approved-plan-and-the-run-grants-answer-are-the-authority-to-start-a-run.md)); the hook refuses an agent's start on an unapproved plan or with `--grant`, and its `run end`, `plan approve` and `approvals *`. A person may always start a run themselves. The run record lives in your user directory, outside git.
 
 ```
+go-getter plan approve docs/plans/<plan>.md   # once, a person
 go-getter run start docs/plans/<plan>.md --through <step> [--hours H] [--grant <shape>]...
 go-getter run status
 go-getter run end

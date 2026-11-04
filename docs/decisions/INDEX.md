@@ -167,3 +167,4 @@ id,title,tags,status
 0182-the-throughput-steps-are-built-on-the-current-layer-and-migrated-later,"The throughput steps are built on the current layer and migrated to the work layer later","coordination, roadmap",draft
 0183-this-repo-enables-its-own-plugin-pinned-to-a-release-tag,"This repo enables its own plugin in project settings, pinned to a release tag by apply","dogfooding, ci, roadmap",active
 0185-a-pack-answer-is-data-and-becomes-a-decision-only-when-it-is-a-real-choice,"A pack answer is data and becomes a decision only when it is a real choice","practice-packs, knowledge-base",draft
+0186-an-approved-plan-and-the-run-grants-answer-are-the-authority-to-start-a-run,"An approved plan and the run-grants answer are the authority to start a run; starting is free","hooks, enforcement, roadmap",draft

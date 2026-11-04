@@ -19,7 +19,7 @@ import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
 import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved } from './secrets/approvals.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
-import { readPlan } from './plan.mjs';
+import { readPlan, approvalOf } from './plan.mjs';
 import { mcpDenial, mcpCall, isReadTool, mcpShapeId, secretKinds } from './mcp.mjs';
 import { MCP_SHAPE } from './gate.mjs';
 import { fileSet } from './secrets/fileset.mjs';
@@ -276,6 +276,29 @@ function identityGate(project, entry, payload, host) {
 
 // A `use` path may be named only by a call that is exactly `go-getter secret run`, and a `sink` path only by one that is
 // exactly `go-getter secret put` (decisions 0072 and 0107); every other call that names one is denied like a `deny` path.
+// Starting is not the gated act (decision 0186, amending 0130 item 1): the authority is the person's one approval of the plan plus the
+// project's `run-grants` answer, which the CLI reads. An agent's `run start` passes only as one plain command naming a plan under
+// docs/plans whose Approval line says approved, with no flag but --through and --hours. Returns the refusal, or null to allow.
+function agentStartRefusal(project, command, args) {
+  const ask = 'ask the user to run it themselves (a person may start any run) or to approve the plan once: ! go-getter plan approve <plan>';
+  if (commandWords(command)?.length !== 1 || !/^[A-Za-z0-9_@%+=:,./~ \t-]+$/.test(command)) return `blocked: go-getter run start is allowed for an agent only as one plain command (no chain, quote, redirection or substitution); ${ask}`;
+  const positional = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--through' || args[i] === '--hours') {
+      const v = args[++i];
+      if (v === undefined || v.startsWith('-') || (args[i - 1] === '--hours' && !(Number(v) > 0))) return `blocked: go-getter run start ${args[i - 1]} needs a value; ${ask}`;
+    } else if (args[i].startsWith('-')) return `blocked: go-getter run start ${args[i]} widens or changes what the run may do (the grants come from the project's run-grants answer), so a person runs it; ${ask}`;
+    else positional.push(args[i]);
+  }
+  if (positional.length !== 1) return `blocked: go-getter run start takes one plan; ${ask}`;
+  const plans = path.join(project, 'docs', 'plans');
+  const file = path.resolve(project, positional[0]);
+  if (path.dirname(file) !== plans || !file.endsWith('.md') || !existsSync(file)) return `blocked: an agent starts a run only on a plan file in docs/plans; ${ask}`;
+  const state = approvalOf(readFileSync(file, 'utf8')).state;
+  if (state !== 'approved') return `blocked: the plan ${positional[0]} is not approved (${state === 'none' ? 'it has no Approval line' : 'its approval is pending'}), so a person must approve it once: ! go-getter plan approve ${path.basename(file)}; then an agent may start the run`;
+  return null;
+}
+
 // Why a call may not change or open the user's approvals or run record, or null: only a person adds or revokes an approval or starts or ends a run (a forged approval would let
 // any command use a secret), and the store is not for tools to open.
 function approvalsStoreRefusal(project, payload) {
@@ -283,16 +306,21 @@ function approvalsStoreRefusal(project, payload) {
   if (typeof command === 'string') {
     for (const words of commandWords(command) ?? []) {
       let call = goGetterCall(words, { cwd: project });
+      let wrapped = false;
       // `go-getter watch [--until done] -- <command>` runs the command after `--`: look at that one too.
       for (let guard = 0; call?.args[0] === 'watch' && guard < 3; guard++) {
         const dash = call.args.indexOf('--');
         call = dash < 0 ? null : goGetterCall(call.args.slice(dash + 1), { cwd: project });
+        wrapped = true;
       }
       if (call?.args[0] === 'approvals' && ['add', 'allow', 'release', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
       // The one plan approval is a person's (decision 0155 item 1): an agent that approved its own plan would start every step.
       if (call?.args[0] === 'plan' && call.args[1] === 'approve') return 'blocked: a person approves a drafted plan (decision 0155); ask the user to run: ! go-getter plan approve <plan>';
       // A run changes what an agent may do without asking (decision 0130): a person starts and ends it.
-      if (call?.args[0] === 'run' && ['start', 'end'].includes(call.args[1])) return `blocked: go-getter run ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
+      if (call?.args[0] === 'run' && call.args[1] === 'start') {
+        const why = wrapped ? 'blocked: go-getter run start is allowed for an agent only as a plain command, not under go-getter watch; ask the user to run it themselves or to approve the plan once: ! go-getter plan approve <plan>' : agentStartRefusal(project, command, call.args.slice(2));
+        if (why) return why;
+      } else if (call?.args[0] === 'run' && call.args[1] === 'end') return 'blocked: go-getter run end changes what an agent may do without asking, so a person runs it; ask the user to run it themselves';
     }
   }
   const store = storeDir();

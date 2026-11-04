@@ -117,9 +117,16 @@ export async function draftPlan(project, goal, { planner = defaultPlanner, revie
 export function approvePlan(file, { by, now = new Date() }) {
   const text = readFileSync(file, 'utf8');
   const a = approvalOf(text);
-  if (a.state === 'none') throw new Error('the plan has no Approval line; only a drafted plan needs approval');
   if (a.state === 'approved') return { changed: false, text: a.text };
   const line = `approved ${now.toISOString().slice(0, 10)} by ${oneLine(by) || 'unknown'}`;
+  if (a.state === 'none') {
+    // An existing plan (written by hand, before drafting existed): the person's approval adds the line after the status legend, or the title.
+    const lines = text.split('\n');
+    const at = Math.max(lines.findIndex((l) => l.startsWith('**Status legend**')), lines.findIndex((l) => l.startsWith('# ')), 0);
+    lines.splice(at + 1, 0, `**Approval**: ${line}`);
+    writeFileSync(file, lines.join('\n'));
+    return { changed: true, text: line };
+  }
   writeFileSync(file, text.replace(APPROVAL, `**Approval**: ${line}`));
   return { changed: true, text: line };
 }

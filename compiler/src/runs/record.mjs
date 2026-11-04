@@ -1,6 +1,6 @@
 // The run record (decision 0130): "a person started an autonomous run on this plan range", kept per user outside git, per
 // project, beside the approvals store (same location, 0700 directory, 0600 file, atomic replace). The hook reads it; an
-// agent cannot write it (the hook refuses `go-getter run start|end` and any call that opens the store directory).
+// agent cannot write it (the hook refuses `go-getter run end`, a start on an unapproved plan or with --grant, and any call that opens the store directory).
 // It holds ids and numbers only: no command output, prompt or file content.
 //
 // Shape of a project's entry: { active: record | null, last: record | null } where a record is
@@ -59,14 +59,14 @@ export const activeRun = (project, { env = process.env, now = () => new Date() }
 export const lastRun = (project, { env = process.env, now = () => new Date() } = {}) => load(project, env, now()).entry.last;
 
 // Starts a run. `steps` are the plan step ids the run covers, in order. Refuses while one is active for the project.
-export function startRun(project, { plan, steps, through, hours = DEFAULT_HOURS, spendCapUsd = null, grants = [], spendMetered = null }, { env = process.env, now = () => new Date() } = {}) {
+export function startRun(project, { plan, steps, through, hours = DEFAULT_HOURS, spendCapUsd = null, grants = [], spendMetered = null, approval = null }, { env = process.env, now = () => new Date() } = {}) {
   if (typeof plan !== 'string' || !plan) throw new Error('a run needs a plan');
   if (!Array.isArray(steps) || !steps.length || steps.some((s) => typeof s !== 'string')) throw new Error('a run needs at least one step');
   if (!(Number.isFinite(hours) && hours > 0 && hours <= MAX_HOURS)) throw new Error(`the timeout must be above 0 and at most ${MAX_HOURS} hours`);
   const t = now();
   const { data, key, entry } = load(project, env, t);
   if (entry.active) throw new Error(`a run is already active for this project (plan ${entry.active.plan}, until ${entry.active.timeoutAt}); end it first with: go-getter run end`);
-  const record = { plan, steps, through: through ?? steps.at(-1), startedAt: t.toISOString(), timeoutAt: new Date(t.getTime() + hours * 3600_000).toISOString(), spendCapUsd, grants: [...new Set(grants)], ...(spendMetered === false ? { spendMetered: false } : {}) };
+  const record = { plan, steps, through: through ?? steps.at(-1), startedAt: t.toISOString(), timeoutAt: new Date(t.getTime() + hours * 3600_000).toISOString(), spendCapUsd, grants: [...new Set(grants)], ...(approval ? { approval } : {}), ...(spendMetered === false ? { spendMetered: false } : {}) };
   data.projects[key] = { active: record, last: entry.last };
   write(data, env);
   return record;
