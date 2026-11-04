@@ -30,7 +30,10 @@ export class ShipError extends Error {
 
 export const defaultRunner = (cmd, args, { cwd, input } = {}) => {
   const r = spawnSync(cmd, args, { cwd, input, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, env: cleanGitEnv(process.env), stdio: ['pipe', 'pipe', 'pipe'] });
-  if (r.error) return { code: 127, out: '', err: r.error.message };
+  // Only a missing command is 127. Any other spawn error (EPIPE when the child exits without reading its stdin) leaves the
+  // child's own status and output intact, and those are what the caller must see.
+  if (r.error?.code === 'ENOENT') return { code: 127, out: '', err: r.error.message };
+  if (r.error && r.status === null) return { code: 1, out: r.stdout ?? '', err: r.error.message };
   return { code: r.status ?? 1, out: r.stdout ?? '', err: r.stderr ?? '' };
 };
 
