@@ -12,5 +12,5 @@ delegating-a-work-unit,"Delegate a work unit to a human or an agent","coordinati
 answering-a-parked-ask,"Answer a parked ask from the routed queue","coordination, hooks, procedural",draft
 handling-a-failed-or-stalled-unit,"Recover a unit whose lease lapsed, that keeps failing or whose brief changed","coordination, roadmap, procedural",draft
 accepting-a-unit,"Accept a plan or feature on the integrated result","coordination, verification, procedural",draft
-defining-an-outcome-brief,"Define an outcome brief that a meter can accept","coordination, roadmap, procedural",draft
+defining-an-outcome-brief,"Define an outcome brief that a meter can accept","coordination, roadmap, procedural",active
 defining-a-meter,"Define a meter and its refresh schedule","coordination, observability, procedural",draft

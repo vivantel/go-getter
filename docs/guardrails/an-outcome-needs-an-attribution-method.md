@@ -1,7 +1,7 @@
 ---
 id: an-outcome-needs-an-attribution-method
 title: An outcome brief is not approved without a meter, a target, a window and an attribution method
-status: draft
+status: active
 date: 2026-11-03
 tags: [coordination, verification, guardrail]
 governed-by: 0178-an-outcome-is-accepted-when-its-meter-meets-its-target-over-a-window-with-attribution
@@ -11,8 +11,14 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction; do not approve an outcome brief that lacks any of the four
+    - tier: 2
+      check: go-getter outcome check refuses a brief missing its meter, target, window or attribution, or naming a meter with no docs/meters file
+      run: node compiler/bin/go-getter.mjs outcome check
+    - tier: 3
+      check: go-getter outcome check passes for every brief in docs/outcomes
+      run: node compiler/bin/go-getter.mjs outcome check
 ---
 
 ## Guardrail
 
-An outcome brief names its meter, target, observation window and how the effect is isolated from other causes. One missing is refused at approval. Advisory (tier 1) until discovery-and-outcomes D2 adds the check.
+An outcome brief names its meter, target, observation window and how the effect is isolated from other causes. One missing is refused at approval. `go-getter outcome check [id]` refuses it by field name.
