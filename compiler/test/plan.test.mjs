@@ -88,7 +88,7 @@ test('a lone parallel option is not marked parallel', () => {
 test('rejects unknown field values, unknown Needs ids, cycles and malformed headings', () => {
   const bad = [
     '### 1 One — [ ]',
-    'Class: build · Tier: huge · Effort: max · Data: secret · Owner: me',
+    'Class: build · Tier: huge · Effort: max · Data: secret · Reviewer: me',
     '### 2 Two — [ ]',
     'Needs: 3, 9',
     '### 3 Three — [ ]',
@@ -103,7 +103,7 @@ test('rejects unknown field values, unknown Needs ids, cycles and malformed head
     /unknown Tier "huge"/,
     /unknown Effort "max"/,
     /unknown Data "secret"/,
-    /unknown field "Owner: me"/,
+    /unknown field "Reviewer: me"/,
     /step 2 needs unknown step 9/,
     /dependency cycle 2 -> 3 -> 2/,
     /step 4 has unknown marker \[\?\]/,

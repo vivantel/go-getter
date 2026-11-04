@@ -1,4 +1,5 @@
 # Discovery and outcomes — plan
+Owner-id: sergemso
 
 **Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in the step's own PR; once `work-coordination.md` step K2 lands, live state follows decision 0166. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
 
@@ -8,7 +9,7 @@ Written 2026-11-03 from an interview with the repo owner (`sergemso`), after `wo
 
 **Rules the design fixes (do not re-decide):** five parts, each owning one artifact and one kind of decision: discover (outcome brief), decompose (unit tree), deliver (unit state), measure (meters and readings), operate (operating charter); operate is defined but only its charter format is built here (0177). An outcome is accepted when its meter meets the target over a window and the attribution method held, and a brief without that method is not approved (0178). A reading is a unit any capable worker claims; no daemon (0179). Real-world effects are classed and delegable only inside a human-written cap; unknown class fails closed (0180). Capability tags are hard filters and the router still chooses model and effort (0181). The name, repository, CLI and plugin stay (0176).
 
-**Dependencies on `work-coordination.md`:** `Needs` parses within one plan only until its step K1 lands; the cross-plan dependencies below are written in each step's Context. Steps D4, D5 and D6 extend K10, K8 and K1/K3 respectively and start only when those are `[x]`; D2, D3, D7 and D8 do not depend on them.
+**Dependencies on `work-coordination.md`:** `Needs` takes `<plan>#<id>` since `work-coordination.md` step K1; the cross-plan dependencies below are in each step's `Needs`. Steps D4, D5 and D6 extend K10, K8 and K1/K3 respectively and start only when those are `[x]`; D2, D3, D7 and D8 do not depend on them.
 
 **Activation rule:** as in `work-coordination.md`, a guardrail or procedure stays `draft` until the step that builds its verb or check has landed: `an-outcome-needs-an-attribution-method` and `defining-an-outcome-brief` (D2), `defining-a-meter` (D3), `a-real-world-effect-stays-inside-its-cap` (D5). Set it `active` in that step's pull request and run `go-getter apply`.
 
@@ -42,23 +43,20 @@ Do: define meters as `docs/meters/<id>.md` (what it reads, source, capability ta
 Done-when: tests show a meter defined from a file, a reading recorded and read back as a series, `due` listing exactly the overdue meters, a stored reading holding no private content, and the unused-meter lint finding.
 Progress 2026-11-04 · `feat/meter-registry` · done: `compiler/src/measure.mjs`, `go-getter measure define|read|series|due|expire`, `go-getter check meters` (unused meter, cost above budget), `compiler/test/measure.test.mjs` · next: `expire` as the owner's gated action and meter-unit creation need K1/K8; repo visibility is read from `GO_GETTER_REPO_VISIBILITY` (public unless `private`; fact 0044).
 
-### D4 Outcome acceptance by meter — [!]
-Blocked 2026-11-03 until `work-coordination.md` K9, K10 and K14 are `[x]` (its Done-when reads `metrics flow`); K1 then restores `Needs: D2, D3, work-coordination#K9, work-coordination#K10, work-coordination#K14`.
-Class: implement · Effort: high · Needs: D2, D3 · Check: `node --test compiler/test/outcome-accept.test.mjs`
+### D4 Outcome acceptance by meter — [ ]
+Class: implement · Effort: high · Needs: D2, D3, work-coordination#K9, work-coordination#K10, work-coordination#K14 · Check: `node --test compiler/test/outcome-accept.test.mjs`
 Context: decisions 0178 items 3-5 and 0172 (outcome tier). Also needs `work-coordination.md` K10 (`go-getter work accept`, `compiler/src/work/accept.mjs`) and K9 (unit states, parking); start only when both are `[x]`. The validator is never the author (`a-unit-is-accepted-by-someone-other-than-its-author`).
 Do: extend `work accept` for a unit whose `Accept` is a meter: accepted only when readings over the window meet the target and the attribution check passes (the holdout stayed separate, the baseline was stable, as the brief states); a window not yet complete parks the unit with reason `awaiting-window` and a wake date and does not count as `blocked-by-human`; a missed target or broken attribution re-opens the outcome for discover and leaves delivery units' own acceptance standing; the check refuses the unit's author.
 Done-when: tests show acceptance on a met target with attribution holding, parking before the window ends, a met target with broken attribution not accepted, a missed target re-opening the outcome without failing delivery units, the author refused, and the parked state excluded from the blocked-by-human share of `metrics flow`.
 
-### D5 Effect classes and caps in grants — [!] ‖
-Blocked 2026-11-03 until `work-coordination.md` K8 is `[x]`; K1 then restores `Needs: D0, work-coordination#K8`.
-Class: implement · Effort: high · Needs: D0 · Check: `node --test compiler/test/grant-effects.test.mjs`
+### D5 Effect classes and caps in grants — [ ] ‖
+Class: implement · Effort: high · Needs: D0, work-coordination#K8 · Check: `node --test compiler/test/grant-effects.test.mjs`
 Context: decision 0180; guardrail `a-real-world-effect-stays-inside-its-cap`. Extends `work-coordination.md` K8 (`compiler/src/work/grant.mjs`), which must be `[x]`. The always-human list is in decision 0130 item 4 and 0159 item 2.
 Do: add the effects dimension to the grant (reversible, money, physical, legal) with a cap per class (amount and period; zone or object set; contract type and counterparty set) that must be a subset of the parent's. Add a domain file `docs/effects.md` mapping concrete actions (a payment method, an actuator, a signing tool) to a class; an unmapped action has an unknown class and is refused. Log each effect as metadata (class, amount or zone, unit, holder) and count it against the unit's and its ancestors' caps; a cap reached parks the unit as an ask. Raise the guardrail to tier 2. Add `compiler/src/act.mjs` and `go-getter act <action> …` as the one path to a real-world effect (decision 0180 item 5): it looks the action up in `docs/effects.md`, checks the cap for its class against the grant, logs the effect and then calls the configured tool. Add a pre-tool hook rule that denies raw effect tools on hosts with a blocking hook and names the verb, and have `go-getter coverage` print, per host and per worker kind, whether the verb is the sole path.
 Done-when: tests show a capped money effect allowed inside the cap and parked above it, a child cap wider than its parent's refused, an unmapped action refused, physical and legal caps checked the same way, a log record with class and amount and no content, and `go-getter verify` passing with the guardrail at tier 2, `act` refusing an unmapped action and a capped class above its cap, a raw effect tool denied by the hook naming the verb, and `coverage` stating which hosts and worker kinds have the verb as the sole path.
 
-### D6 Capability tags and the router filter — [!] ‖
-Blocked 2026-11-03 until `work-coordination.md` K1 and K3 are `[x]`; K1 then restores `Needs: D0, work-coordination#K3`.
-Class: implement · Effort: medium · Needs: D0 · Check: `node --test compiler/test/capability-tags.test.mjs`
+### D6 Capability tags and the router filter — [ ] ‖
+Class: implement · Effort: medium · Needs: D0, work-coordination#K3 · Check: `node --test compiler/test/capability-tags.test.mjs`
 Context: decision 0181. Extends `work-coordination.md` K1 (plan parser, `compiler/src/plan.mjs`) and K3 (`compiler/src/work/next.mjs`), both `[x]` first. The router is under `compiler/src/routing/`; guardrails `routing-governance-before-cost` and `routing-uses-total-step-cost` fix the order. The tags vocabulary style is `docs/skills/tags.md`.
 Do: add the step field `Needs-capability:` to the parser; a vocabulary file `docs/skills/capabilities.md` (an unknown tag is refused at approval); `go-getter work next --has tag,tag` offering only units whose tags the worker holds; and in the router, tags that are model or host properties (`vision`, `long-context`, `tool-use`) restrict the eligible set before cost is compared. A unit never names a model.
 Done-when: tests show a unit with an unmet tag never offered, an unknown tag refused, a model-property tag restricting the router's candidates before cost, and no plan or unit containing a model name.

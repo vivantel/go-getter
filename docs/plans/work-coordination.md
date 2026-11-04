@@ -1,4 +1,5 @@
 # Work-unit coordination — plan
+Owner-id: sergemso
 
 **Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in the step's own PR; once K2 lands, live state (claim, lease, progress) follows decision 0166 and no `Progress` line is written in git. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
 
@@ -13,6 +14,7 @@ Written 2026-11-03 from an interview with the repo owner (`sergemso`). Goal: ref
 ---
 
 ## Phase A — The contract and the exclusion
+Id: A
 
 ### K0 Accept the drafts — [x]
 Class: plan · Needs: none · Human: the owner accepts, amends or rejects decisions 0165-0175 (each `draft`) and the guardrails and procedures that follow from them; an `active` decision also gets `accepted-by` · Check: `npm run check:guardrails`
@@ -21,11 +23,12 @@ Do: read decisions 0165-0175; for each, set `status: active` with `accepted-by: 
 Done-when: no decision from 0165 to 0175 is `draft`; each guardrail and procedure they ground is `active` or `draft` with a step in the activation rule that activates it; `npm run check:guardrails` passes. Result line names what changed.
 Result 2026-11-03: the owner (`sergemso`) accepted decisions 0165-0175 as written, with the 2026-11-03 amendments to 0165, 0171 and 0172 (scope as resources, effects in grants, an outcome tier); the seven guardrails and four procedures of this plan were accepted and then returned to `draft` the same day, to become `active` with the step that builds each (see the activation rule). `npm run check:guardrails` passes.
 
-### K1 The unit contract in the plan format — [ ]
+### K1 The unit contract in the plan format — [x]
 Class: implement · Effort: high · Needs: K0 · Check: `node --test compiler/test/plan-unit.test.mjs`
 Context: decision 0165. The step format and parser are in `compiler/src/plan.mjs`; decision 0069 defines `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `npm run check:plans` (`compiler/src/checks/`) parses every plan in `docs/plans/` and rejects an unknown id or a cycle. Today `Needs` lists ids in the same plan only; splitting the roadmap on 2026-11-03 forced two steps (T4, T8 in `docs/plans/throughput.md`) to carry their cross-plan dependencies as prose in `Context`. The existing plans must parse unchanged.
 Do: define unit ids as `<file-stem>#<local-id>` and give a plan (a `##` phase) and a feature (a file's part before its first phase) a header block of `Key: value` lines directly under the heading, with the same fields as a step plus `Id:` (decision 0165 item 4); a plan without a header stays unclaimable and its steps stay claimable. Extend the parser and `go-getter plan status|next` with optional fields `Scope:` (path globs, interfaces, shared artifacts), `Owner:` (`human`, `agent`, `either`), `Owner-id:` (a person or role, inherited from the parent), `Accept:` (a command, a meter or a named human review), `Parent:` (a unit reference), `Priority:` (integer), `Flag:` and `Budget:`; accept `plan#id` in `Needs` and `Parent`; resolve cross-plan references and detect cross-plan cycles in `check plans`; default every new field so a plan without them behaves as before. A unit with no `Scope:` falls back to the paths named in its `Do` text (the rule in `compiler/src/runs/next.mjs`). Move the prose dependencies back into `Needs` and set the steps marked `[!]` for cross-plan reasons back to `[ ]`: T4 (`host-adapters#H2` and `work-coordination#K11`), T8, T9 and G5 (each `work-coordination#K11`), D4 (`work-coordination#K9`, `work-coordination#K10`, `work-coordination#K14`), D5 (`work-coordination#K8`), D6 (`work-coordination#K3`). Give this plan's own phases and `discovery-and-outcomes.md`'s their header blocks.
 Done-when: tests show every field parsed and defaulted, a plan header and a feature header parsed with their ids, an unheaded plan unclaimable and its steps claimable, a cross-plan `Needs` resolved, a cross-plan cycle and an unknown cross-plan id rejected, `go-getter plan next` unchanged for the current plans, `npm run check:plans` passing, and each `[!]` step listed above back to `[ ]` with its `plan#id` `Needs`.
+Result 2026-11-04 · `feat/k1-unit-contract` · done: `compiler/src/plan.mjs` parses `Scope`, `Owner`, `Owner-id`, `Accept`, `Parent`, `Priority`, `Flag`, `Budget` and plan and feature header blocks with `Id:`; `plan#id` in `Needs` and `Parent` resolves across plans (`openNeeds`, `unitStates`, `crossPlanProblems`), and `check plans` refuses an unknown cross-plan id and a cross-plan cycle; `filesOf` moved to `plan.mjs` as the undeclared-scope fallback (`effectiveScope`). Restored `Needs` on T4, D4, D5 and D6; T8, T9 and G5 were already unblocked by decision 0182. `compiler/test/plan-unit.test.mjs`.
 
 ### K2 Claim, lease, heartbeat, release — [ ]
 Class: implement · Effort: high · Needs: K1 · Check: `node --test compiler/test/work-claim.test.mjs`
@@ -40,6 +43,7 @@ Do: add `compiler/src/work/next.mjs` (using K2's `compiler/src/work/scope.mjs`) 
 Done-when: tests show a unit with unmet `Needs` skipped, an overlapping unit queued and reported, an overlap through a shared decision tag queued, `Owner` filtering, `--dry-run` claiming nothing, `run next` returning the same disjoint sets as before for the T6 fixtures, and `node --test compiler/test/run-next.test.mjs` still passing.
 
 ## Phase B — Collisions, integration, asks, authority
+Id: B
 
 ### K4 Scope gate and change requests — [ ] ‖
 Class: implement · Effort: medium · Needs: K2, K3 · Check: `node --test compiler/test/work-scope-gate.test.mjs`
@@ -84,6 +88,7 @@ Do: add `compiler/src/work/accept.mjs` and `go-getter work accept <unit>`: refus
 Done-when: tests show the author refused, including after releasing the unit, a passing acceptance recording the result, a failing one re-opening the unit, the reviewer given no transcript, `done` refused without a pass, and an escape raising the lower level's sampling rate.
 
 ## Phase C — Order, visibility, measurement
+Id: C
 
 ### K11 Rebase the dependent steps onto the new layer — [ ]
 Class: review · Needs: K3, K6, K7, K10, K17 · Check: `npm run check:plans && npm run check:guardrails`
@@ -110,6 +115,7 @@ Do: add `compiler/src/metrics/flow.mjs` and `go-getter metrics flow [--since D]`
 Done-when: tests feed fixtures and get the exact figures, show `metrics day` output unchanged, and show no ask text or command text in the output.
 
 ## Phase D — Integration safety, trust, decomposition
+Id: D
 
 ### K15 Flags and flaky-check quarantine — [ ] ‖
 Class: implement · Effort: medium · Needs: K6, K10 · Check: `node --test compiler/test/work-flags-quarantine.test.mjs`
@@ -130,6 +136,7 @@ Do: add `compiler/src/work/decompose.mjs` and `go-getter work decompose <unit>`:
 Done-when: tests show a clean decomposition passing and each of the four failures reported by child, and `work approve` refusing a parent that fails.
 
 ## Phase E — Proof and adoption
+Id: E
 
 ### K18 Synthetic soak test — [ ]
 Class: implement · Effort: high · Needs: K6, K7, K9, K12 · Check: `node --test compiler/test/work-soak.test.mjs`
