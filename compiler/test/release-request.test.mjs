@@ -183,17 +183,30 @@ test('"ship 1.0" releases v1.0.0 from the same commits; "go patch" cannot hide a
   });
 });
 
-test('a commit merged after the request makes the request stale, so the user cannot be surprised by it', async () => {
+test('a commit merged after the request does not void it while the commits still make the version asked for', async () => {
   const s = scratch();
   s.merge('feat: add the verb (#12)');
+  s.setGh({ checks: [{ name: 'ci', bucket: 'pass' }] });
   await withHome(s.home, async () => {
-    await prompt(s.work, 'release');
     await prompt(s.work, 'release next minor');
+    s.merge('fix: a late fix (#14)');
+    releaseCall(s.work);
+    const r = s.batch();
+    assert.equal(r.code, 0, r.err);
+    assert.match(r.out, /v0\.5\.0/);
+  });
+});
+
+test('a commit merged after the request that makes the release bigger than asked still refuses', async () => {
+  const s = scratch();
+  s.merge('fix: repair the thing (#11)');
+  await withHome(s.home, async () => {
+    await prompt(s.work, 'release next patch');
     s.merge('feat: a late feature (#14)');
     releaseCall(s.work);
     const r = s.batch();
     assert.equal(r.code, 2);
-    assert.match(r.err, /the default branch moved after you asked/);
+    assert.match(r.err, /you asked for a patch release but the commits make a minor release/);
   });
 });
 
@@ -206,7 +219,7 @@ test('a request expires, is spent once, and the typed approval still works besid
   assert.equal(claimRequest(s.work, { session: 'a', now: t0 + REQUEST_TTL_MS + 1, env }), null, 'expired');
   recordRequest(s.work, { session: 'a', release: { bump: 'minor' }, head, now: t0, env });
   assert.ok(claimRequest(s.work, { session: 'a', now: t0 + 1000, env }));
-  const peeked = peekRequest(s.work, { head, now: t0 + 2000, env });
+  const peeked = peekRequest(s.work, { now: t0 + 2000, env });
   assert.deepEqual(peeked.request.release, { bump: 'minor' });
   assert.equal(spendRequest(peeked), true);
   assert.equal(spendRequest(peeked), false, 'spent once');

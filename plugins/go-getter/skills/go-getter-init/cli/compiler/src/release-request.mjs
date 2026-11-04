@@ -134,9 +134,9 @@ export function resolveAsk(asked, { from, bump, version, nextVersion }) {
   return { version, bump };
 }
 
-// The newest claimed, unexpired request of this repository, if its head is still the default branch's head: `{ request, file, claim }`;
-// `{ stale }` (what to tell the person) when the newest moved on; null when nothing is claimed.
-export function peekRequest(project, { head, now = Date.now(), env = process.env }) {
+// The newest claimed, unexpired request of this repository: `{ request, file, claim }`; null when nothing is claimed. The head it was made at
+// does not bind it: what the user asked for is a version, and `resolveAsk` refuses when the commits now need more than was asked.
+export function peekRequest(project, { now = Date.now(), env = process.env }) {
   const repo = repoKey(project);
   const requests = readAll(dirs(env).requests, REQUEST_TTL_MS, now);
   const claimed = readAll(dirs(env).claims, CLAIM_TTL_MS, now)
@@ -145,10 +145,8 @@ export function peekRequest(project, { head, now = Date.now(), env = process.env
     .filter((c) => c.request)
     .sort((a, b) => Date.parse(b.request.data.at) - Date.parse(a.request.data.at) || (a.request.id < b.request.id ? 1 : -1));
   if (!claimed.length) return null;
-  const fresh = claimed.find((c) => c.request.data.head === head);
-  if (fresh) return { request: fresh.request.data, file: fresh.request.file, claim: fresh.claim.file };
-  const old = claimed[0].request.data.head;
-  return { stale: `the default branch moved after you asked (it was ${old.slice(0, 7)}, it is ${head.slice(0, 7)}), so what would ship is not what you saw; ask again` };
+  const [newest] = claimed;
+  return { request: newest.request.data, file: newest.request.file, claim: newest.claim.file };
 }
 
 // Spends a peeked request: removed once, so of two takers only one succeeds.
