@@ -1,0 +1,5 @@
+interface:
+  display_name: "Discover"
+  short_description: "Interview to an outcome brief with a meter, target, window and attribution"
+policy:
+  allow_implicit_invocation: false

@@ -63,11 +63,12 @@ Context: decision 0181. Extends `work-coordination.md` K1 (plan parser, `compile
 Do: add the step field `Needs-capability:` to the parser; a vocabulary file `docs/skills/capabilities.md` (an unknown tag is refused at approval); `go-getter work next --has tag,tag` offering only units whose tags the worker holds; and in the router, tags that are model or host properties (`vision`, `long-context`, `tool-use`) restrict the eligible set before cost is compared. A unit never names a model.
 Done-when: tests show a unit with an unmet tag never offered, an unknown tag refused, a model-property tag restricting the router's candidates before cost, and no plan or unit containing a model name.
 
-### D7 The `/discover` skill and a narrowed `/roadmap` — [ ]
+### D7 The `/discover` skill and a narrowed `/roadmap` — [x]
 Class: implement · Effort: medium · Needs: D2, D3 · Check: `npm run check:generated && npm run check:neutral`
 Context: decision 0177. Skill sources are the neutral files under `src/skills/<name>/` (`skills/` is a symlink to the generated copies under `plugins/go-getter/skills/`, and the host files are generated too; do not hand-edit them, `generated-host-files-not-hand-edited`); `src/skills/roadmap/SKILL.md` today interviews, writes artifacts and a plan; `src/skills/clarify/SKILL.md` holds the shared interview mechanics. The neutral source names no host agent (`neutral-source-has-no-host-specific-language`).
 Do: add `src/skills/discover/SKILL.md`: interview to an outcome brief following `docs/skills/defining-an-outcome-brief.md`, define missing meters per `defining-a-meter`, stop at the brief's approval (a parked ask), write nothing else. Narrow `src/skills/roadmap/SKILL.md` to decompose: its input is an approved outcome brief (if none is given it says so and offers `/discover` first), its output the knowledge artifacts and the unit tree with scope, `Accept`, owner kind, capability tags and grants. Keep the name `roadmap`. Regenerate with `go-getter apply` and the build.
 Done-when: `/discover` and `/roadmap` descriptions state the split of 0177 without overlap, the roadmap skill refuses to invent an outcome, and `npm run check:generated`, `check:neutral` and `npm test` pass.
+Progress 2026-11-04 · `feat/discover-skill` · `../go-getter-wt/discover-skill` · done: `src/skills/discover/` (SKILL.md, examples, agent metadata), `src/skills/roadmap/SKILL.md` narrowed to decompose with an approved brief as input and a refusal to invent an outcome, generated copies rebuilt · next: D8.
 
 ### D7a Operating charter format — [ ] ‖
 Class: implement · Effort: medium · Needs: D0, D3 · Check: `node --test compiler/test/operating-charter.test.mjs`

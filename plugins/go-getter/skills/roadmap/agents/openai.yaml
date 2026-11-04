@@ -1,5 +1,5 @@
 interface:
   display_name: "Roadmap"
-  short_description: "Turn a decision into durable knowledge artifacts and a plan"
+  short_description: "Decompose an approved outcome brief into artifacts and a unit tree"
 policy:
   allow_implicit_invocation: false

@@ -1,9 +1,21 @@
 ---
 name: roadmap
-description: Interview the user about a plan or decision, then capture the outcome as durable knowledge-management artifacts (facts, intents/decisions, guardrails, procedures) plus a self-sufficient standalone roadmap. Use when the user wants a decision captured as project knowledge — not just discussed — e.g. "interview me and save this as knowledge", "capture this as an ADR", "turn this into a roadmap".
+description: Decompose an approved outcome brief into durable knowledge artifacts (facts, decisions, guardrails, procedures) plus a unit tree with scope, Accept, owner kind, capability tags and grants. Use for how to split an approved outcome, not for deciding what to achieve or how success is read (that is `discover`), e.g. "decompose this outcome", "turn this brief into a roadmap", "capture this as an ADR".
 ---
 
-Interview the user relentlessly about every aspect of the plan or decision until you reach a shared understanding, then convert that understanding into durable knowledge artifacts on disk. This skill shares its interview mechanics with the `clarify` skill but does not stop at shared understanding — its job is to generate and save new knowledge as artifacts, following whatever structure the project already uses.
+Decompose an approved outcome brief into units. This skill owns the unit tree (plans, scope, `Accept`, grants) and the knowledge artifacts the decomposition surfaces (decision 0177). It shares its interview mechanics with the `clarify` skill but does not stop at shared understanding: it generates and saves artifacts, following whatever structure the project already uses.
+
+## Input: an approved outcome brief
+
+The input is an approved outcome brief, `docs/outcomes/<id>.md`. Read it and run `go-getter outcome check <id>` first.
+
+- None given, or it does not exist, is not approved, or fails the check: say so and offer `/discover` first. Stop.
+- Never invent an outcome. Do not write a hypothesis, meter, target, window or attribution method yourself, and do not start from a bare idea: what to achieve and how success is read belong to `discover`. The interview here covers only how to split the approved outcome.
+
+## Output
+
+- The knowledge artifacts the decomposition needs (facts, decisions, guardrails, procedures).
+- The unit tree, one plan file, where each unit carries its scope, `Accept` (a runnable acceptance), owner kind, capability tags and grants.
 
 ## Interview mechanics
 
@@ -69,7 +81,7 @@ Before writing any artifact, search existing artifacts (by title, topic, frontma
 
 ## The changeset implementation plan
 
-Alongside the four knowledge artifacts, produce one more file: a changeset implementation plan for the change the interview was about. This file must be self-sufficient for a **completely fresh session with zero prior context** — not just a resumed one. Every step spells out the full context a cold agent would need: exact file paths, what to do, why it matters, and what "done" looks like — never a reference like "as discussed above." Each step carries a status marker updated in place as work progresses, so re-reading the file alone tells any session — the same one, a resumed one, or a brand new one — exactly what remains.
+Alongside the knowledge artifacts, produce one more file: the unit tree, as a changeset implementation plan for the approved outcome. This file must be self-sufficient for a **completely fresh session with zero prior context** — not just a resumed one. Every step spells out the full context a cold agent would need: exact file paths, what to do, why it matters, and what "done" looks like — never a reference like "as discussed above." Each step carries a status marker updated in place as work progresses, so re-reading the file alone tells any session — the same one, a resumed one, or a brand new one — exactly what remains.
 
 Write each step in the format `go-getter plan` reads:
 
@@ -84,6 +96,7 @@ Done-when: …
 - Ids are dotted alphanumerics (`1.2`, `A.3`, `2.1a`). Markers: `[ ]` pending, `[~]` in progress, `[x]` done, `[!]` blocked, `[>]` moved to another plan. Put `‖` after the marker on steps that can run in parallel.
 - `Class` is explore, plan, implement, review or debug (default implement). Add `Effort:` (low, medium, high) or `Tier:` (small, medium, large) only when a step is harder or easier than its class, and `Data:` (confidential or restricted) when it handles data above internal. Never name a model: the router picks one per step.
 - `Needs` lists only ids in the same plan, with no cycles.
+- Each unit also states its scope (the paths or resources it may touch), `Accept` (the runnable acceptance, usually the `Check`), owner kind (person, agent or either), capability tags (hard filters; never a model name) and the grants it may hand to sub-units.
 
 A plan is not a 5th artifact type: it carries no `track`, no `status` from the enum above, and no `expires` — only its own per-step done/pending/blocked legend. The test for which bucket content belongs in: a procedure doesn't name the specific objects it acts on — those are supplied at invocation. A plan does — it names concrete files, decisions, and steps for one occasion. If a candidate procedure hardcodes the files/decisions it acts on, it's actually a plan.
 
@@ -103,6 +116,6 @@ List every file this session intends to create or update — path and artifact t
 
 ## Hard limits
 
-Never execute or implement the changeset plan yourself. Writing the four knowledge artifacts and the plan file is the deliverable — running the plan is a separate, later action, in a separate session.
+Never execute or implement the changeset plan yourself. Writing the knowledge artifacts and the plan file is the deliverable — running the plan is a separate, later action, in a separate session.
 
 Do not externally communicate any part of the plan until the user has confirmed shared understanding, and do not write any artifact file until the final go-ahead in "Before writing anything" above.
