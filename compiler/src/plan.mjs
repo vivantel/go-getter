@@ -10,7 +10,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { CLASSES } from './verify.mjs';
 import { TIERS, EFFORTS } from './routing/policy.mjs';
 import { DATA_CLASSES } from './routing/eligibility.mjs';
-import { newWorktree } from './worktree.mjs';
+import { newWorktree, cleanWorktrees, WORKTREE_LIMIT } from './worktree.mjs';
 import { parseRef, refId } from './trackers/refs.mjs';
 import { recordQuietly } from './telemetry/record.mjs';
 import { checkpointBeforeStep } from './checkpoint-trigger.mjs';
@@ -519,7 +519,16 @@ export function startStep(cwd, file, id, { worktree, states } = {}) {
   let target = file;
   let made;
   if (worktree) {
-    made = newWorktree(cwd, worktree);
+    try {
+      made = newWorktree(cwd, worktree);
+    } catch (err) {
+      if (err.code !== WORKTREE_LIMIT) throw err;
+      // At the limit: release merged worktrees once (the safe criteria of `worktree clean`), then retry once.
+      try {
+        cleanWorktrees(cwd, { keepBranch: true });
+      } catch { /* a failed clean must not replace the limit refusal; the retry reports it */ }
+      made = newWorktree(cwd, worktree);
+    }
     const copy = path.join(made.path, path.relative(repoRoot(path.dirname(file)), file));
     if (existsSync(copy)) target = copy;
   }
