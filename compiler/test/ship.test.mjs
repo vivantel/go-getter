@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, symlink
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { titleFromBranch, buildMessage, ciOutcome } from '../src/ship.mjs';
+import { titleFromBranch, buildMessage, ciOutcome, defaultRunner } from '../src/ship.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const cli = path.join(here, '../bin/go-getter.mjs');
@@ -177,6 +177,14 @@ test('usage errors exit 2', () => {
   const s = scratch();
   assert.equal(s.ship('--bogus').code, 2);
   assert.equal(s.ship('--title').code, 2);
+});
+
+test('defaultRunner keeps the command own result when it exits without reading its input, and reports only a missing command as 127', () => {
+  const big = 'x'.repeat(4 * 1024 * 1024); // far past the pipe buffer, so writing it to a child that never reads fails with EPIPE
+  const r = defaultRunner(process.execPath, ['-e', 'console.log("done"); process.exit(3)'], { cwd: tmpdir(), input: big });
+  assert.equal(r.code, 3);
+  assert.match(r.out, /done/);
+  assert.equal(defaultRunner('gg-no-such-command', [], { cwd: tmpdir() }).code, 127);
 });
 
 // A stand-in for the claude CLI that answers with the verdict in CLAUDE_FAKE_VERDICT.
