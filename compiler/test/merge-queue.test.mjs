@@ -33,6 +33,8 @@ function scratch() {
   sh(work, 'branch', '-M', 'main');
   sh(work, 'push', '-q', '-u', 'origin', 'main');
   sh(work, 'remote', 'set-head', 'origin', '-a');
+  sh(work, 'config', 'user.name', 't');
+  sh(work, 'config', 'user.email', 't@example.invalid');
 
   const gh = { prs: new Map(), next: 100, calls: [], reruns: new Set(), native: false, merges: [] };
   const onRemote = (ref, file) => {
