@@ -4,7 +4,7 @@
 
 **Prompt:** "Interview me and save this as knowledge: we're moving from REST to gRPC for internal services."
 
-**What happens:** The same interview mechanics as `clarify` run first. Once resolved, every explicit and implicit intent is classified (descriptive/axiomatic/normative/procedural), duplicates are checked against existing artifacts, and — after one explicit go-ahead listing every file to be created — a decision record, any grounding facts, derived guardrails, and a self-sufficient `docs/plans/<slug>.md` implementation plan are written.
+**What happens:** With an approved brief as input, the same interview mechanics as `clarify` run first, on how to split it. Once resolved, every explicit and implicit intent is classified (descriptive/axiomatic/normative/procedural), duplicates are checked against existing artifacts, and — after one explicit go-ahead listing every file to be created — a decision record, any grounding facts, derived guardrails, and a self-sufficient `docs/plans/<slug>.md` implementation plan are written.
 
 ## 2. A likely update, not a new artifact
 
@@ -17,3 +17,9 @@
 **Prompt:** "Turn this into a roadmap: we agreed to rename the `worker` service to `job-runner`."
 
 **What happens:** The rename is captured, but since it's easily reversible, unsurprising, and not the result of a real tradeoff, it's saved as a lighter decision fact rather than a full decision record — still written to disk, just not inflated into an ADR it doesn't need.
+
+## 4. No approved brief
+
+**Prompt:** "Turn this idea into a roadmap: we should grow signups."
+
+**What happens:** No approved outcome brief is named, so the skill says so, does not invent a hypothesis, meter or target, and offers `/discover` first.
