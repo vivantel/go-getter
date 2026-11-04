@@ -99,7 +99,7 @@ export async function hostDateFor(root, remote, { fetchImpl = fetch } = {}) {
   const url = git(root, ['remote', 'get-url', remote], { allowFail: true });
   if (!url) return undefined;
   if (/^https?:\/\//i.test(url)) return headDate(url.replace(/^(https?:\/\/)[^@/]*@/i, '$1'), fetchImpl);
-  if (url.startsWith('/') || /^file:\/\//i.test(url) || !/[.:@/]/.test(url)) return new Date(); // a path, file:// or a bare directory name is this machine
+  if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../') || /^file:\/\//i.test(url) || !/[.:@/]/.test(url)) return new Date(); // a path, file:// or a bare directory name is this machine
   const host = remoteHost(url);
   return host ? headDate(`https://${host}/`, fetchImpl) : null;
 }
@@ -161,8 +161,9 @@ export function ledgerView(root, stem, { now = clockNow(), settings = claimSetti
   const tip = fetched?.online && fetched.tip ? fetched.tip : cachedLedger(root, stem);
   const ctx = { now: now.getTime(), skewMs: settings.skewMs, parentIdleMs: settings.parentIdleMs };
   if (!tip) return { tip: null, entries: [], annotated: annotate([], ctx) };
-  const { beats } = readBeats(root, fetched?.online ? remote : null, { nowMs: ctx.now, skewMs: ctx.skewMs });
-  const { entries, ignored } = readEntries(root, tip, validity(settings, now, beatTimes(root, fetched?.online ? remote : null, { nowMs: ctx.now, skewMs: ctx.skewMs })));
+  // an unreachable remote leaves the heartbeats last fetched (the cache refs), not the empty local namespace
+  const { beats } = readBeats(root, remote, { nowMs: ctx.now, skewMs: ctx.skewMs, fetch: Boolean(fetched?.online) });
+  const { entries, ignored } = readEntries(root, tip, validity(settings, now, beatTimes(root, remote, { nowMs: ctx.now, skewMs: ctx.skewMs })));
   return { tip, entries, ignored, annotated: annotate(entries, { ...ctx, beats }) };
 }
 
@@ -314,6 +315,7 @@ export async function renewAll(cwd, env = process.env) {
         out.push(unit);
         break; // one heartbeat renews every claim of the worker held from this worktree
       }
+      if (r.reason === 'offline') break; // the remote is unreachable: do not wait out the same timeouts for each due claim
     } catch {
       // renewal is best effort
     }

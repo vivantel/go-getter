@@ -136,6 +136,7 @@ export function pushRef(root, remote, ref, commit, expected) {
     return { ok: true };
   } catch (e) {
     const text = `${e.stdout ?? ''}${e.stderr ?? ''}`;
+    if (/\[remote rejected\]/i.test(text) && !/cannot lock|failed to update ref|already exists/i.test(text)) return { offline: true, error: text.split('\n').find((l) => /rejected/i.test(l))?.trim() ?? text.split('\n')[0] };
     if (/rejected|non-fast-forward|fetch first|stale info|\[remote rejected\]/i.test(text)) return { rejected: true };
     return { offline: true, error: text.split('\n')[0] };
   }
@@ -147,10 +148,10 @@ export function pushRef(root, remote, ref, commit, expected) {
 // (one worker's beat from one worktree never keeps its claim from another alive). A beat counts only when its commit was authored by
 // that worker and is dated no later than `nowMs + skewMs`: a later one is ignored, not capped. A failed fetch is `online: false`:
 // the caller must not judge liveness from a stale cache.
-export function readBeats(root, remote, { nowMs = Date.now(), skewMs = 0 } = {}) {
+export function readBeats(root, remote, { nowMs = Date.now(), skewMs = 0, fetch = true } = {}) {
   const beats = new Map();
   let online = true;
-  if (remote) online = git(root, ['fetch', '--no-tags', '--quiet', remote, `+${HEARTBEAT_REF}/*:${CACHE}/heartbeat/*`], NET) !== null;
+  if (remote && fetch) online = git(root, ['fetch', '--no-tags', '--quiet', remote, `+${HEARTBEAT_REF}/*:${CACHE}/heartbeat/*`], NET) !== null;
   const prefix = beatPrefix(remote);
   const out = git(root, ['for-each-ref', '--format=%(refname)', prefix], { allowFail: true }) ?? '';
   for (const ref of out.split('\n').filter(Boolean)) {
