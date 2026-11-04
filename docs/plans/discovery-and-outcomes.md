@@ -70,11 +70,12 @@ Do: add `src/skills/discover/SKILL.md`: interview to an outcome brief following 
 Done-when: `/discover` and `/roadmap` descriptions state the split of 0177 without overlap, the roadmap skill refuses to invent an outcome, and `npm run check:generated`, `check:neutral` and `npm test` pass.
 Progress 2026-11-04 · `feat/discover-skill` · `../go-getter-wt/discover-skill` · done: `src/skills/discover/` (SKILL.md, examples, agent metadata), `src/skills/roadmap/SKILL.md` narrowed to decompose with an approved brief as input and a refusal to invent an outcome, generated copies rebuilt · next: D8.
 
-### D7a Operating charter format — [ ] ‖
+### D7a Operating charter format — [x] ‖
 Class: implement · Effort: medium · Needs: D0, D3 · Check: `node --test compiler/test/operating-charter.test.mjs`
 Context: decision 0177 item 3. Operate owns what is live after delivery; nothing else of it is built yet. Meters are D3 (`docs/meters/<id>.md`); incident and recurring units use the unit contract (`work-coordination.md` K1) and are created by hand until a later step automates them from crossed thresholds.
 Do: define an operating charter as `docs/operations/<id>.md` with frontmatter (id, title, status, the outcome it serves, owner, health meters each with a threshold and a direction, escalation route as an owner chain, retirement condition) and a short body; add `compiler/src/operation.mjs` and `go-getter operation check [id]` that refuses a charter with no owner, no health meter, a meter that does not exist, or no retirement condition, and `go-getter operation status` that reads each health meter's latest reading and prints which thresholds are crossed. Create no unit automatically.
 Done-when: tests show a complete charter passing, each missing field refused by name, an unknown meter refused, and `operation status` listing exactly the crossed thresholds from fixture readings and creating no unit.
+Progress 2026-11-04 · `feat/operating-charter` · `../go-getter-wt/operating-charter` · done: `compiler/src/operation.mjs`, `go-getter operation check|status [id]`, hand-kept `docs/operations/INDEX.md`, `compiler/test/operating-charter.test.mjs` · facts: 0045 records the strict comparison, local-only reads and the unchecked outcome link · next: crossed thresholds create no unit; incident and recurring units stay by hand until operate is built from D9 or real use; fold the INDEX row into the generated indexes at work-coordination K5.
 
 ### D8 Say the scope — [ ]
 Class: implement · Needs: D0, D7 · Check: `npm run check:plans && npm run check:guardrails`
