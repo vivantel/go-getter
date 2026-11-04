@@ -48,6 +48,7 @@ packaging — concerns plugin manifests and install/distribution
 positioning — concerns what the product is for and who it serves
 practice-packs — concerns declarative practice-pack data and schema (umbrella)
 procedural — a procedure artifact
+research — concerns the scientific article about go-getter and its evidence
 roadmap — concerns the roadmap/plan artifacts
 security — concerns secrets and attack surface
 tooling — concerns build, test and developer tooling

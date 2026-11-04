@@ -43,4 +43,5 @@ id,title,tags,status
 0043-ask-points-and-their-dispositions,"Every point where go-getter asks a human, what it protects and its disposition","hooks, enforcement, governance, roadmap",active
 0044-repository-visibility-is-an-operator-signal,"go-getter cannot read a repository's visibility, so a public repository is assumed unless the operator says private","outcomes, security",active
 0045-operation-status-semantics,"operation status compares strictly and reads local readings only","outcomes, observability",active
+0046-article-scaffold-provides-the-private-article-repo-and-release-flow,"article-scaffold provides the private article repo, the Zenodo release flow and a theses map","research, knowledge-management",active
 draft-k8-the-workers-file,"docs/workers.md lists every worker and is changed by a human only","coordination, security",active

@@ -180,4 +180,6 @@ id,title,tags,status
 0196-work-wip-per-worker,"A worker holds at most max-concurrent work units at once","practice-packs, agent-roles, harness",draft
 0197-work-wip-per-feature,"At most none work units of one feature are claimed at once","practice-packs, agent-roles, harness",draft
 0198-merge-queue,"The merge queue is off: ship merges through it only when it is on","practice-packs, agent-roles, harness",draft
+0199-we-publish-a-position-and-system-paper-and-may-change-go-getter-to-support-it,"We publish a position-and-system paper on go-getter as a deterministic edge, and may change go-getter to support it","research, positioning, roadmap",active
+0200-the-paper-commits-to-five-claims-and-labels-the-scaling-claim-as-extrapolation,"The paper commits to five claims and labels the scaling claim as extrapolation","research, positioning, harness, enforcement",active
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft

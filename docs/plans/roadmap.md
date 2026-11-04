@@ -19,6 +19,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 | Work-source budgets | `worksource-budgets.md` | independent, before K2 where possible | K2 and K3 read work sources through `callSource`, so W1's budgets should land first. |
 | Runs, spend and install | `runs-spend-install.md` | independent | Review R1 against K9 (lifecycle) when K9 starts. |
 | Knowledge-base hygiene (pack answers as data, review of authored decisions) | `knowledge-base-hygiene.md` | Q1 first | New (0185, draft). Q2 and Q3 change the pack renderer and golden files; independent of the other plans. |
+| Deterministic-edge article (position-and-system paper, Zenodo then arXiv; decisions 0199, 0200) | plan lives in the paper repo: `strebulaev-articles/articles.deterministic-edge`, `docs/plans/deterministic-edge-article.md` | A1, A2, A4 independent; A3 after A1; interventions (A7) after A3 | Moved there 2026-11-04. go-getter changes it motivates (A7) are done here and cite 0199 and 0200. |
 | Retrieval pack (two live steps) | this file, below | external | Waits for virage. |
 
 Independent features run in parallel from now.
