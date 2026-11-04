@@ -84,7 +84,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // Walks one entry's history, oldest first: [{ entry, author, commit }]. A version counts only when its commit was authored by
 // the entry's holder or issuer and, while the previous version is still the holder's, its unit, holder, issuer, grant and scope
 // are unchanged (scope may be released to empty); a different claimant may replace a lapsed or released entry. Returns the last
-// valid entry (null when none) and the versions it ignored. Decision 0166 item 5.
+// valid entry (null when none), the versions it ignored and `grantAuthor`, who wrote the commit that issued its grant. Decision 0166 item 5.
 // `skewMs` is the clock margin; `blocked(entry, previous)` may veto a replacement (a parent with live children). A parked entry is
 // never replaced by another claimant, and a lapsed one only after its expiry plus the margin.
 // More guards, each optional: `beatsOf(id, unit)` gives the times of a worker's heartbeats for a unit, so a takeover must also wait out the holder's last
@@ -94,6 +94,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // answered, escalated, defaulted or blocked by someone other than its holder, only as `ask-rules.mjs` allows.
 export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsOf, maxLeaseMs, nowMs, allowParked = false } = {}) {
   let good = null;
+  let grantAuthor = null; // who wrote the commit that issued the current grant (decision 0171 item 6)
   const ignored = [];
   for (const v of versions) {
     const e = v.entry;
@@ -103,9 +104,9 @@ export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsO
       bad(shape);
       continue;
     }
-    const parkedOk = e.scope.length === 0 && (e.ask?.kind === 'change-request' || (e.ask?.kind === ASK_KIND && !askProblem(e.ask)));
+    const parkedOk = e.scope.length === 0 && (['change-request', 'spend'].includes(e.ask?.kind) || (e.ask?.kind === ASK_KIND && !askProblem(e.ask)));
     if (e.state === 'parked' && !allowParked && !parkedOk) {
-      bad('state parked has no validated source (only a change request or a parked ask that released the scope parks a claim), so it is ignored and the lease applies');
+      bad('state parked has no validated source (only a change request, a spend cap or a parked ask that released the scope parks a claim), so it is ignored and the lease applies');
       continue;
     }
     if (maxLeaseMs && e.leaseMs > maxLeaseMs[e.holder.kind]) {
@@ -134,9 +135,10 @@ export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsO
         continue;
       }
     }
+    if (!good || good.state === 'released' || !same(good.grant, e.grant) || !same(good.issuer, e.issuer) || !same(good.holder, e.holder)) grantAuthor = v.author;
     good = e;
   }
-  return { entry: good, ignored };
+  return { entry: good, ignored, grantAuthor };
 }
 
 // The last heartbeat of `entry` that counts. `times` is the holder's heartbeat times for the unit (ms, ascending; a number is one

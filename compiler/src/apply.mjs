@@ -13,6 +13,7 @@ import { packageCapabilities, promptLoggingTargets, setPath, adoptedData } from 
 import { loadPolicy } from './routing/policy.mjs';
 import { cliBundle } from './build.mjs';
 import { verifyConfig } from './verify.mjs';
+import { codeowners } from './work/grant.mjs';
 import { listWorktrees, worktreeRoot } from './worktree.mjs';
 import { gateEntries, nativeRules, withAskRules } from './gate.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
@@ -578,6 +579,9 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
       : null;
     outputs['.github/workflows/go-getter-checks.yml'] = { content: ciWorkflow({ guardrails: tier3, checks: ciChecks, node, branch: workflowBranch(project, detected), options: adoptedData(project, 'ci-workflow') ?? {} }) };
   }
+  // The workers file names who may write a root grant (decision 0171 item 6): a change to it needs a review by a human listed in it.
+  const owners = onGitHub(detected) ? codeowners(project) : null;
+  if (owners) outputs['.github/CODEOWNERS'] = { content: owners };
   const withSkills = skills ?? (targetHosts.includes('kilo') || targetHosts.includes('opencode'));
   if (withSkills) Object.assign(outputs, projectSkillOutputs(packageRoot, targetHosts));
   Object.assign(outputs, agentOutputs(project, targetHosts));

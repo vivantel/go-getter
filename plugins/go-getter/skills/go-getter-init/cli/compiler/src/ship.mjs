@@ -10,6 +10,8 @@ import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { suggestRefs } from './refs.mjs';
 import { runTier3 } from './enforce.mjs';
 import { checkScope, formatScope } from './work/scope-gate.mjs';
+import { WORKERS_FILE } from './work/grant.mjs';
+import { identity } from './work/ops.mjs';
 import { restrictedPatterns } from './hook.mjs';
 import { matchesAny } from './glob.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
@@ -138,6 +140,8 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   if (!dirty.length && !ahead) throw new ShipError(`${verb}: nothing to ship; ${branch} has no changes against origin/${base.name}`);
   const restricted = dirty.filter((f) => matchesAny(f, restrictedPatterns(project)));
   if (restricted.length) throw new ShipError(`${verb}: restricted paths changed, not staging: ${restricted.join(', ')} (guardrail restricted-paths-denied)`);
+  // The workers file is human-owned (decision 0171 item 6): only a worker of kind human stages a change to it.
+  if (dirty.includes(WORKERS_FILE) && identity(project).kind !== 'human') throw new ShipError(`${verb}: ${WORKERS_FILE} is changed by a human only; run as a worker of kind human (GO_GETTER_WORKER_KIND=human) and have a listed human review it (guardrail a-delegated-grant-never-exceeds-its-parent)`);
   log('scope', `${dirty.length} uncommitted file${dirty.length === 1 ? '' : 's'}, ${ahead} commit${ahead === 1 ? '' : 's'} ahead`);
 
   // The scope gate (decision 0167 item 2): a change inside the scope of the unit claimed from this worktree; no claimed unit passes.

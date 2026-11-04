@@ -8,6 +8,7 @@ import path from 'node:path';
 import { readArtifacts } from '../artifacts.mjs';
 import { parsePlan, planFiles, splitRef, stemOf, unitRef } from '../plan.mjs';
 import { KINDS, annotate, briefOf, claimConfig, conflict, lastValidBeat, leaseEnd, makeEntry, sensitiveKinds, validEntry } from './claim.mjs';
+import { applyGrants, humanIds } from './grant.mjs';
 import { badWorkerId, beatTimes, cachedLedger, git, toplevel, updateRecord, worktreeGitDir, noteLedger, commitEntries, fetchLedger, pushHeartbeat, pushRef, readBeats, readHistory, readRecord, remoteOf, workerId, ledgerRef } from './ledger.mjs';
 
 const RETRIES = 8;
@@ -132,6 +133,9 @@ export function findUnit(root, ref) {
 
 // Entries of a feature's ledger at `tip`, validated: { entries, ignored }. A claim by another worker replaces a lapsed one only after
 // its expiry plus `skewMs`, never a parked one, and never a unit that had a live child.
+// A grant is judged here too (decision 0171 item 6): an entry whose grant is wider than its parent's, was not written by its issuer, or is a
+// root grant from anyone but a listed human is ignored, so every reader of the ledger sees the same entries. `opts.humans` overrides the
+// workers file; `opts.parentOf(unit)` supplies a parent held in another feature's ledger.
 export function readEntries(root, tip, opts = {}) {
   const { skewMs = 0 } = opts;
   const history = readHistory(root, tip);
@@ -140,12 +144,27 @@ export function readEntries(root, tip, opts = {}) {
   const blocked = (e, prev) => kids.some((k) => k.parent === prev.unit && k.state !== 'released' && Date.parse(k.created) <= Date.parse(e.created) && (k.state === 'parked' || Date.parse(e.created) < Date.parse(k.expires)));
   const entries = [];
   const ignored = [];
+  const authors = new Map();
   for (const { file, versions } of history) {
     const v = validEntry(versions, { ...opts, blocked });
-    if (v.entry) entries.push(v.entry);
+    if (v.entry) {
+      entries.push(v.entry);
+      authors.set(v.entry.unit, v.grantAuthor);
+    }
     for (const i of v.ignored) ignored.push({ file, ...i });
   }
-  return { entries, ignored };
+  if (!entries.some((e) => e.grant)) return { entries, ignored };
+  const parentOf = opts.parentOf ?? ((unit) => otherLedgerEntry(root, unit, opts));
+  const judged = applyGrants(entries, { authors, humans: opts.humans ?? humanIds(root), parentOf });
+  for (const i of judged.ignored) ignored.push({ file: entryFile(i.unit), reason: i.reason });
+  return { entries: judged.entries, ignored };
+}
+
+// The entry for `unit` in the last ledger seen of its own feature, when that is not the one being read (a unit delegated across plan files).
+export function otherLedgerEntry(root, unit, opts) {
+  const r = splitRef(unit);
+  const tip = r?.stem && (opts.depth ?? 0) < 3 ? cachedLedger(root, r.stem) : null;
+  return tip ? readEntries(root, tip, { ...opts, depth: (opts.depth ?? 0) + 1, parentOf: undefined }).entries.find((e) => e.unit === unit) ?? null : null;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -174,7 +193,7 @@ export function ledgerView(root, stem, { now = clockNow(), settings = claimSetti
 // could not be learned, so no claim is made unless `unverifiedClock` is set, and a lapsed claim is never taken over). `hooks`
 // (`beforePush`, `afterPush`) lets a test interleave another writer at a chosen step. Returns { ok: true, entry, commit, local, tookOver? } |
 // { ok: false, code, error, behind? }.
-export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, remote, issuer = who, parent, notify, acceptRemoteLedger = false, unverifiedClock = false, hooks } = {}) {
+export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, remote, issuer = who, parent, notify, acceptRemoteLedger = false, unverifiedClock = false, hooks, grant = null, author, delegator } = {}) {
   const found = findUnit(root, ref);
   if (found.error) return fail('unknown-unit', found.error);
   const { unit, stem, step } = found;
@@ -185,7 +204,7 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
   const rem = remote === undefined ? remoteOf(root) : remote;
   const brief = briefOf(step);
   const parentUnit = parent ? fullRef(parent, stem) : step.parent ? fullRef(step.parent, stem) : null;
-  const entry = makeEntry({ unit, holder: who, issuer, scope: brief.Scope, now, leaseMs: settings.leaseMs[who.kind], brief, parent: parentUnit, delegated: Boolean(parent), briefMax: settings.briefMax });
+  const entry = makeEntry({ unit, holder: who, issuer, scope: brief.Scope, now, leaseMs: settings.leaseMs[who.kind], brief, parent: parentUnit, grant, delegated: Boolean(parent), briefMax: settings.briefMax });
   const kinds = sensitiveKinds([entry, brief]);
   if (kinds.length) return fail('sensitive', `refused: the claim would write ${kinds.join(', ')} to the ledger; remove it from the unit's brief first`);
   const name = entryFile(unit);
@@ -200,7 +219,7 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
     const { entries } = readEntries(root, ledger.tip, validity(settings, now, beatTimes(root, ledger.local ? null : rem, { nowMs: ctx.now, skewMs: ctx.skewMs })));
     const view = annotate(entries, { ...ctx, beats });
     if (parent) {
-      const problem = parentProblem(root, parent, { stem, step, entries, view, who, ctx });
+      const problem = parentProblem(root, parent, { stem, step, entries, view, who: delegator ?? who, ctx });
       if (problem) return fail('bad-parent', problem);
     }
     const clash = conflict(view, { unit, scope: brief.Scope, parent: parentUnit });
@@ -217,7 +236,8 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
       return fail('clock-unverified', `${unit}: the host's time could not be learned from this remote (no Date header from the remote or from https://<host>/), so this clock cannot be shown to be within the ${Math.round(settings.skewMs / 60000)} minute margin and no claim was made (decision 0166). To go on: use a remote whose host answers over https, or the owner passes --unverified-clock to claim a unit nobody holds, accepting that a wrong clock can break the lease`);
     }
     const next = takeover ? { ...entry, counters: { failures: previous.counters?.failures ?? 0, claimants: (previous.counters?.claimants ?? 0) + 1 } } : entry;
-    const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: who.id, message: `claim ${unit} by ${who.kind} ${who.id}`, now });
+    if (previous?.spent) next.spent = previous.spent; // what a unit spent stays on its entry whoever holds it next
+    const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: author ?? who.id, message: `claim ${unit} by ${who.kind} ${who.id}`, now });
     await hooks?.beforePush?.({ attempt, tip: ledger.tip, commit });
     const pushed = pushRef(root, rem, ledgerRef(stem), commit, ledger.tip);
     if (pushed.offline) return fail('offline', `the remote refused or could not be reached: ${pushed.error}`);

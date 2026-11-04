@@ -278,6 +278,8 @@
         "cli/compiler/src/work/ask-rules.mjs",
         "cli/compiler/src/work/asks.mjs",
         "cli/compiler/src/work/claim.mjs",
+        "cli/compiler/src/work/grant-ops.mjs",
+        "cli/compiler/src/work/grant.mjs",
         "cli/compiler/src/work/intake.mjs",
         "cli/compiler/src/work/ledger.mjs",
         "cli/compiler/src/work/next.mjs",
