@@ -10,7 +10,7 @@ accepted-by: sergemso
 
 ## Decision
 
-Accepted by the owner 2026-11-04. It changes how the human approval of 0155 item 2 is recorded: the explicit go-ahead in the session (0130 item 4) becomes the user's own request, replacing the typed `go-getter approvals release <version> <sha>` of throughput step T5 (0157). 0094, 0155, 0159 item 2, 0171 item 4 and 0186 item 5 stand: a release stays a human act, never an approvable shape, a run grant or a delegable grant. The request approves **merging the release pull request** only; publishing still starts from a pushed version tag.
+Accepted by the owner 2026-11-04. Item 2 (the fixed phrase) and the matching rule of item 3 are superseded by decision 0188, which reads the request with a small model; the other items stand. It changes how the human approval of 0155 item 2 is recorded: the explicit go-ahead in the session (0130 item 4) becomes the user's own request, replacing the typed `go-getter approvals release <version> <sha>` of throughput step T5 (0157). 0094, 0155, 0159 item 2, 0171 item 4 and 0186 item 5 stand: a release stays a human act, never an approvable shape, a run grant or a delegable grant. The request approves **merging the release pull request** only; publishing still starts from a pushed version tag.
 
 **What this protects against.** A mistaken or prompt-injected agent acting through the host's tools. It does not stop an agent that runs arbitrary code or edits the CLI in its worktree; the typed approval does not either (items 7 and 8). A boundary an agent's credentials cannot reach (a required reviewer on the release workflow, or review of the release pull request from another account) remains the stronger control.
 

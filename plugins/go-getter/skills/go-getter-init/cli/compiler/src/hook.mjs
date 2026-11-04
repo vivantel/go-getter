@@ -14,7 +14,7 @@ import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { stateCheck } from './gate-state.mjs';
 import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
-import { parseRelease, promptTexts, recordRequest, claimRequest } from './release-request.mjs';
+import { parseRelease, looksLikeReleaseTalk, promptTexts, recordRequest, claimRequest } from './release-request.mjs';
 import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords, unwrapWords } from './shell.mjs';
@@ -523,12 +523,21 @@ function remoteHead(project) {
   }
 }
 
-export function evaluateUserPrompt(project, payload, host, env = process.env) {
-  const release = parseRelease(payload?.prompt);
-  if (!release) return { recorded: false };
+export async function evaluateUserPrompt(project, payload, host, env = process.env, { run } = {}) {
+  const message = payload?.prompt;
+  // The model call below runs `claude` in this project: its own hooks must not read the prompt it was given as the user's.
+  if (env.GO_GETTER_CLASSIFIER || !looksLikeReleaseTalk(message)) return { recorded: false };
   const note = (outcome, trigger) => logStop(project, host, { taskClass: 'release-request', outcome, trigger });
   // Turns the host starts itself (a scheduled task, a headless run) reach this hook too; only a session a person sits at counts.
   if (env.CLAUDE_CODE_SESSION_ATTENDED !== '1') return note('blocked', 'unattended'), { recorded: false };
+  // An exact phrase needs no model; anything else is read by one, with the agent's last words for what "ship" or "go" answers.
+  let release = parseRelease(message);
+  if (!release) {
+    const { interpretRelease, lastAgentText } = await import('./release-intent.mjs'); // loaded only when a message needs reading
+    const read = interpretRelease({ project, message, context: lastAgentText(payload.transcript_path), run });
+    if (!read.release) return note('blocked', read.why), { recorded: false };
+    release = read.release;
+  }
   const head = remoteHead(project);
   const id = typeof payload.session_id === 'string' && payload.session_id && head ? recordRequest(project, { session: payload.session_id, release, head, env }) : null;
   note(id ? 'allowed' : 'blocked', id ? 'recorded' : 'not-recorded');
@@ -538,8 +547,9 @@ export function evaluateUserPrompt(project, payload, host, env = process.env) {
 // An agent's tool call carrying text that the host would later submit as the user's prompt (a scheduled task, a wake-up, a message to the
 // main conversation) is denied when that text is a release request: only the user's own typing is one.
 function submittedPhraseRefusal(payload) {
+  if (!/cron|schedule|wakeup|sendmessage|loop/i.test(String(toolName(payload) ?? ''))) return null;
   const input = toolInput(payload);
-  if (!promptTexts(input).some((v) => parseRelease(v))) return null;
+  if (!promptTexts(input).some(looksLikeReleaseTalk)) return null;
   return 'blocked: this call carries the text of a release request, which is the user\'s to type; an agent may not schedule or send it';
 }
 
