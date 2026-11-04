@@ -164,3 +164,17 @@ test('the pre-tool hook denies an agent that starts or ends a run, however go-ge
     s.cleanup();
   }
 });
+
+test('the pre-tool hook denies an agent that approves a drafted plan, however go-getter is spelled, and allows plan start and next', () => {
+  const s = setup();
+  try {
+    for (const command of ['go-getter plan approve docs/plans/p.md', `node ${cli} plan approve`, 'npx go-getter plan approve p.md', 'cd . && go-getter plan approve', 'true; go-getter plan approve', 'go-getter watch -- go-getter plan approve docs/plans/p.md']) {
+      const d = s.ask(command);
+      assert.equal(d.deny, true, command);
+      assert.match(d.reason, /! go-getter plan approve <plan>/);
+    }
+    for (const command of ['go-getter plan start 1', 'go-getter plan next', 'go-getter plan status']) assert.ok(!s.ask(command).deny, command);
+  } finally {
+    s.cleanup();
+  }
+});

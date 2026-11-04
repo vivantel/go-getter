@@ -281,8 +281,15 @@ function approvalsStoreRefusal(project, payload) {
   const command = shellCommand(payload);
   if (typeof command === 'string') {
     for (const words of commandWords(command) ?? []) {
-      const call = goGetterCall(words, { cwd: project });
+      let call = goGetterCall(words, { cwd: project });
+      // `go-getter watch [--until done] -- <command>` runs the command after `--`: look at that one too.
+      for (let guard = 0; call?.args[0] === 'watch' && guard < 3; guard++) {
+        const dash = call.args.indexOf('--');
+        call = dash < 0 ? null : goGetterCall(call.args.slice(dash + 1), { cwd: project });
+      }
       if (call?.args[0] === 'approvals' && ['add', 'allow', 'release', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
+      // The one plan approval is a person's (decision 0155 item 1): an agent that approved its own plan would start every step.
+      if (call?.args[0] === 'plan' && call.args[1] === 'approve') return 'blocked: a person approves a drafted plan (decision 0155); ask the user to run: ! go-getter plan approve <plan>';
       // A run changes what an agent may do without asking (decision 0130): a person starts and ends it.
       if (call?.args[0] === 'run' && ['start', 'end'].includes(call.args[1])) return `blocked: go-getter run ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
     }
