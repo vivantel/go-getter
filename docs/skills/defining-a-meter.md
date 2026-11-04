@@ -1,7 +1,7 @@
 ---
 id: defining-a-meter
 title: Define a meter and its refresh schedule
-status: draft
+status: active
 date: 2026-11-03
 tags: [coordination, observability, procedural]
 operationalizes: [a-real-world-effect-stays-inside-its-cap]

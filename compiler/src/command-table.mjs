@@ -30,6 +30,7 @@ export const COMMANDS = [
   { name: 'sandbox', usage: 'sandbox [--host <h>]' },
   { name: 'route', usage: 'route --class <task-class>' },
   { name: 'routing', usage: 'routing calibrate' },
+  { name: 'measure', usage: 'measure define|read <meter>|series <meter>|due|expire' },
   { name: 'metrics', usage: 'metrics day' },
   { name: 'digest', usage: 'digest [--since <iso>] [--mark]' },
   { name: 'audit', usage: 'audit pick | audit fail <pr> --as check|guardrail|instruction' },
