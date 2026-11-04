@@ -38,6 +38,7 @@ export function nextUnits(root, { ownerKind = 'agent', now = clockNow(), remote 
       else if (!ownerFits(step.owner, ownerKind)) skip(`owner is ${step.owner}`);
       else if (openNeeds(plan, step, external).length) skip(`needs ${openNeeds(plan, step, external).join(', ')}`);
       else if (view.annotated.states.get(step.unit)?.live) skip('claimed');
+      else if (view.annotated.states.get(step.unit)?.entry.blockedByHuman) skip('blocked-by-human');
       else {
         const scope = effectiveScope(step);
         const parent = step.fields.Parent ? unitRef(step.fields.Parent, stem) : null;

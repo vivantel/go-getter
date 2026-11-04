@@ -4,13 +4,14 @@ import { createHash } from 'node:crypto';
 import { effectiveScope } from '../plan.mjs';
 import { findings } from '../secrets/patterns.mjs';
 import { piiFindings } from '../secrets/pii.mjs';
+import { ASK_KIND, askProblem, askStep } from './ask-rules.mjs';
 import { overlap, scopeTokens } from './scope.mjs';
 
 export const KINDS = ['human', 'agent', 'ci'];
 export const STATES = ['claimed', 'parked', 'released'];
 const MIN = 60_000;
 
-export const DEFAULTS = { 'lease-agent': 60, 'lease-ci': 60, 'lease-human': 480, 'clock-skew': 5, 'parent-idle': 7, 'brief-max': 8 };
+export const DEFAULTS = { 'lease-agent': 60, 'lease-ci': 60, 'lease-human': 480, 'clock-skew': 5, 'parent-idle': 7, 'brief-max': 8, 'ask-timeout': 24 };
 
 // Lease, skew, idle and brief-size settings from the merged `go-getter` data of the adopted orchestration decisions (pack
 // answers); anything missing or not a positive number takes its default.
@@ -21,6 +22,7 @@ export function claimConfig(data = {}) {
     skewMs: num('clock-skew') * MIN,
     parentIdleMs: num('parent-idle') * 24 * 60 * MIN,
     briefMax: num('brief-max') * 1024,
+    askTimeoutMs: num('ask-timeout') * 60 * MIN,
   };
 }
 
@@ -87,8 +89,9 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // never replaced by another claimant, and a lapsed one only after its expiry plus the margin.
 // More guards, each optional: `beatsOf(id, unit)` gives the times of a worker's heartbeats for a unit, so a takeover must also wait out the holder's last
 // beat before it; `maxLeaseMs` ({ human, agent, ci }) caps `leaseMs` and so `expires`; `nowMs` rejects a `created` in the future;
-// `allowParked` (off until K7 supplies a validated parking path) accepts any `parked` state; without it only a parked entry that released
-// its scope for a change request (`ask.kind` `change-request`, K4) counts, and any other is ignored.
+// `allowParked` accepts any `parked` state; without it only a parked entry that released its scope counts, for a change request
+// (`ask.kind` `change-request`, K4) or a well-formed parked ask (`ask.kind` `parked-ask`, K7); any other is ignored. A parked ask may be
+// answered, escalated, defaulted or blocked by someone other than its holder, only as `ask-rules.mjs` allows.
 export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsOf, maxLeaseMs, nowMs, allowParked = false } = {}) {
   let good = null;
   const ignored = [];
@@ -100,8 +103,9 @@ export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsO
       bad(shape);
       continue;
     }
-    if (e.state === 'parked' && !allowParked && !(e.scope.length === 0 && e.ask?.kind === 'change-request')) {
-      bad('state parked has no validated source (only a change request that released the scope parks a claim until K7), so it is ignored and the lease applies');
+    const parkedOk = e.scope.length === 0 && (e.ask?.kind === 'change-request' || (e.ask?.kind === ASK_KIND && !askProblem(e.ask)));
+    if (e.state === 'parked' && !allowParked && !parkedOk) {
+      bad('state parked has no validated source (only a change request or a parked ask that released the scope parks a claim), so it is ignored and the lease applies');
       continue;
     }
     if (maxLeaseMs && e.leaseMs > maxLeaseMs[e.holder.kind]) {
@@ -116,7 +120,7 @@ export function validEntry(versions, { skewMs = 0, blocked = () => false, beatsO
       bad('created is in the future');
       continue;
     }
-    if (v.author !== e.holder.id && v.author !== e.issuer.id) {
+    if (v.author !== e.holder.id && v.author !== e.issuer.id && !askStep(good, e, v.author)) {
       bad(`authored by ${v.author}, who is neither holder ${e.holder.id} nor issuer ${e.issuer.id}`);
       continue;
     }

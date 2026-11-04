@@ -209,6 +209,7 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
       return fail('queued', `queued: ${why}, lease to ${new Date(leaseEnd(e, lastValidBeat(e, beats.get(`${e.holder.id} ${e.unit}`), settings.skewMs))).toISOString()}`, { behind: { unit: e.unit, holder: e.holder, kind: clash.kind } });
     }
     const previous = entries.find((e) => e.unit === unit);
+    if (previous?.blockedByHuman) return fail('blocked-by-human', `${unit} is blocked by a human: an ask went unanswered past its last owner; answer it (go-getter work answer) before claiming`);
     const takeover = previous && previous.state !== 'released';
     if (takeover && rem && hostDate === null) return fail('clock-unverified', `${unit} is held by ${previous.holder.id} under a lapsed lease, but the host's time could not be learned from this remote (no Date header from the remote or from https://<host>/), so this clock cannot be shown to be right and the lease is not taken over. To go on: the holder releases it (go-getter work release ${unit}), or the owner runs that as the holder (--as ${previous.holder.id}), or use an https remote`);
     if (!takeover && rem && hostDate === null && !unverifiedClock) {
@@ -238,7 +239,8 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
       r.claims[unit] = { stem, remote: rem, worker: who, leaseMs: next.leaseMs, expires: next.expires, scope: next.scope, worktree: root };
     });
     if (notify) await notify(`claimed by ${who.kind} ${who.id}`, { unit, file: found.file, step });
-    return { ok: true, entry: next, commit, local: !rem, note, tookOver: takeover && previous.holder.id !== who.id ? previous.holder : null };
+    const resume = previous?.state === 'released' && previous.ask?.kind === 'parked-ask' && previous.answer ? { branch: previous.ask.branch, base: previous.ask.base } : null;
+    return { ok: true, entry: next, commit, local: !rem, note, resume, tookOver: takeover && previous.holder.id !== who.id ? previous.holder : null };
   }
   return fail('contended', `${unit}: the ledger kept changing; try again`);
 }
@@ -359,9 +361,9 @@ export async function releaseUnit(root, ref, who, { now = clockNow(), remote, no
   return fail('contended', `${unit}: the ledger kept changing; try again`);
 }
 
-// Parks a claim that waits for the answer to a change request (decision 0167 item 2): the claim stays, never lapses, and holds no scope,
+// Parks a claim that waits for the answer to a change request (decision 0167 item 2) or, with `ask`, to a parked ask (K7, `asks.mjs`): the claim stays, never lapses, and holds no scope,
 // so an overlapping unit can be claimed meanwhile. The worker stops renewing it (the worktree's record drops it).
-export async function parkUnit(root, ref, who, { to, now = clockNow(), remote, acceptRemoteLedger = false } = {}) {
+export async function parkUnit(root, ref, who, { to, ask, now = clockNow(), remote, acceptRemoteLedger = false } = {}) {
   const found = findUnit(root, ref);
   if (found.error) return fail('unknown-unit', found.error);
   const { unit, stem } = found;
@@ -377,8 +379,8 @@ export async function parkUnit(root, ref, who, { to, now = clockNow(), remote, a
     const entry = entries.find((e) => e.unit === unit);
     if (!entry || entry.state === 'released') return fail('not-held', `${unit} has no live claim`);
     if (entry.holder.id !== who.id) return fail('not-holder', `${unit} is held by ${entry.holder.kind} ${entry.holder.id}, not ${who.id}`);
-    const next = { ...entry, state: 'parked', scope: [], ask: { kind: 'change-request', to }, updated: now.toISOString() };
-    const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: who.id, message: `park ${unit} for a change request to ${to}`, now });
+    const next = { ...entry, state: 'parked', scope: [], ask: ask ?? { kind: 'change-request', to }, updated: now.toISOString() };
+    const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: who.id, message: ask ? `park ${unit} for an ask` : `park ${unit} for a change request to ${to}`, now });
     const pushed = pushRef(root, rem, ledgerRef(stem), commit, ledger.tip);
     if (pushed.offline) return fail('offline', `the remote refused or could not be reached: ${pushed.error}`);
     if (pushed.rejected) {
