@@ -8,7 +8,7 @@ Split out of the former single `roadmap.md` on 2026-11-03 (decision 0165, plan `
 
 Decision `docs/decisions/0140-foreign-packs-and-helpers-are-vendored-pinned-and-held-to-the-cores-budgets.md` fixes the design; read it first (with 0118 and 0119). Budgets go in the one function every work source passes through, so in-tree sources prove them first. Code: `compiler/src/trackers/worksource.mjs` (`callSource`), `compiler/src/trackers/overlay.mjs` (cache), `compiler/test/support/worksource-contract.mjs`.
 
-### W1 Answer budgets in callSource — [ ]
+### W1 Answer budgets in callSource — [x]
 Issue: #182
 Class: implement · Effort: high · Needs: none · Check: `node --test compiler/test/worksource-budgets.test.mjs`
 Do: in `callSource`, cap text fields, the bytes of an answer and the items of `list`. A capped field is cut and counted; a `list` over its cap is `unavailable`, and `plan status` and `plan next` refuse to report on it. `list` returns the step summary `plan next` and `plan status` read (id, title, state, parallel, class, needs, issue, `doneWhen` capped), never bodies; detail comes from `get`; loosen `isStep` only as far as that summary needs. Every typed text field passes the secret and personal-data patterns and loses control characters (as `cleanTitle` does for titles). Cache a network source's reads for a time limit and clear them on a write through the core; a local source is not cached. Choose the initial limits from the measured size of the file, GitHub and Jira sources and record them in the contract comment.

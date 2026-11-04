@@ -96,6 +96,7 @@ export function githubSource(file, { project, name = file, now = () => new Date(
   const adapter = githubAdapter(project);
   return {
     id: 'github',
+    network: true, // its reads are cached by callSource (decision 0140)
     ops: base.ops,
     async handle(op, args) {
       const answer = await base.handle(op, args);

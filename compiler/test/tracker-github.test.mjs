@@ -40,7 +40,8 @@ function project(steps, data = { repo: 'acme/app', issues: [] }) {
   };
 }
 
-const list = async (p) => (await callSource(p.source, 'list')).result.steps;
+// Each call stands for a separate run, so the in-process read cache is off (cacheMs 0).
+const list = async (p) => (await callSource(p.source, 'list', {}, { cacheMs: 0 })).result.steps;
 
 // The shared contract, on a plan with no issues: the overlay must not change a thing or call gh.
 runWorkSourceContract('github source (no issues)', (seed) => {

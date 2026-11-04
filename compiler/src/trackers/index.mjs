@@ -16,6 +16,7 @@ export function trackerSource(file, { project, name = file, now = () => new Date
   };
   return {
     id: 'tracker',
+    network: true, // its reads are cached by callSource (decision 0140)
     ops: base.ops,
     async handle(op, args) {
       const answer = await base.handle(op, args);
