@@ -28,6 +28,7 @@
     "config": ".claude/settings.json",
     "blockPreTool": true,
     "askPreTool": true,
+    "userPrompt": true,
     "rewriteToolInput": true,
     "rewriteOutput": true,
     "blockStop": true,

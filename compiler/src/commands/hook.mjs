@@ -4,10 +4,11 @@
 // and wraps a host watcher command in `go-getter watch` (context pack, decision 0070).
 // go-getter hook stop --host <id>: verification gate; blocks "done" while the adopted checks fail (bounded, then a human).
 // go-getter hook post-tool --host <id>: redacts secrets and masks PII in the tool result where the host can replace it.
+// go-getter hook user-prompt --host <id>: saves a release the user asked for in the chat (decision 0187); prints and blocks nothing.
 // go-getter hook session-end --host <id>: deletes the session's pseudonym map (best effort; a 24-hour sweep backs it up).
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
-import { evaluatePreTool, respond, sessionNudges, hookRecord, evaluatePostTool, respondPostTool, evaluateSessionEnd } from '../hook.mjs';
+import { evaluatePreTool, evaluateUserPrompt, respond, sessionNudges, hookRecord, evaluatePostTool, respondPostTool, evaluateSessionEnd } from '../hook.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
@@ -35,8 +36,8 @@ export default async function hookCommand({ root, args }) {
     if (text) process.stdout.write(`${text}\n`);
     return 0;
   }
-  if (!['pre-tool', 'post-tool', 'stop', 'session-end'].includes(event) || !host) {
-    console.error('usage: go-getter hook <pre-tool|post-tool|stop|session-start|session-end> --host <id>');
+  if (!['pre-tool', 'post-tool', 'stop', 'session-end', 'user-prompt'].includes(event) || !host) {
+    console.error('usage: go-getter hook <pre-tool|post-tool|stop|session-start|session-end|user-prompt> --host <id>');
     return 0; // never block on a misconfigured hook
   }
   let payload = {};
@@ -46,6 +47,14 @@ export default async function hookCommand({ root, args }) {
     return 0;
   }
   const dir = payload.cwd ? path.resolve(payload.cwd) : project;
+  if (event === 'user-prompt') {
+    try {
+      evaluateUserPrompt(dir, payload, host);
+    } catch {
+      // never blocks and prints nothing: the typed approval remains
+    }
+    return 0;
+  }
   if (event === 'session-end') {
     recordHostSpend(dir, host, payload);
     try {

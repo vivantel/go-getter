@@ -62,8 +62,9 @@ test('hook commands of every host find the runner and name the project when run 
     const commands = hookCommands(dir);
     assert.ok(commands.length >= 5, `found hook commands for the JSON-configured hosts, got ${commands.length}`);
     assert.deepEqual(commands.filter((c) => c.event === 'post-tool').map((c) => c.host).sort(), ['claude-code', 'codex', 'copilot', 'gemini-cli'], 'post-tool only where hooks.rewriteOutput');
+    assert.deepEqual(commands.filter((c) => c.event === 'user-prompt').map((c) => c.host), ['claude-code'], 'user-prompt only where hooks.userPrompt');
     for (const { command, event, host } of commands) {
-      assert.ok(['pre-tool', 'post-tool'].includes(event), `${host}: ${event}`);
+      assert.ok(['pre-tool', 'post-tool', 'user-prompt'].includes(event), `${host}: ${event}`);
       rmSync(out, { force: true });
       const run = spawnSync('sh', ['-c', command], { cwd: sub, env: { ...process.env, STUB_OUT: out }, input: '{}', encoding: 'utf8' });
       assert.equal(run.status, 0, `${host}: ${run.stderr}`);

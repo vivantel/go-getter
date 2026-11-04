@@ -14,6 +14,8 @@ import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { stateCheck } from './gate-state.mjs';
 import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
+import { parseRelease, promptTexts, recordRequest, claimRequest } from './release-request.mjs';
+import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords, unwrapWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
@@ -508,10 +510,74 @@ export function evaluatePreTool(project, payload, host) {
   return result;
 }
 
+// A release the user asks for in the chat (decision 0187). Called by the host's user-prompt hook with the submitted prompt: when the whole
+// prompt is a release request and the session is one a person sits at, saves the parsed request (never the text). Prints and blocks nothing.
+function remoteHead(project) {
+  const base = defaultBranch(project);
+  if (!base.known) return null;
+  try {
+    const out = execFileSync('git', ['ls-remote', 'origin', `refs/heads/${base.name}`], { cwd: project, encoding: 'utf8', timeout: 5000, env: { ...cleanGitEnv(process.env), GIT_TERMINAL_PROMPT: '0' }, stdio: ['ignore', 'pipe', 'ignore'] });
+    return /^([0-9a-f]{40})\s/.exec(out)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function evaluateUserPrompt(project, payload, host, env = process.env) {
+  const release = parseRelease(payload?.prompt);
+  if (!release) return { recorded: false };
+  const note = (outcome, trigger) => logStop(project, host, { taskClass: 'release-request', outcome, trigger });
+  // Turns the host starts itself (a scheduled task, a headless run) reach this hook too; only a session a person sits at counts.
+  if (env.CLAUDE_CODE_SESSION_ATTENDED !== '1') return note('blocked', 'unattended'), { recorded: false };
+  const head = remoteHead(project);
+  const id = typeof payload.session_id === 'string' && payload.session_id && head ? recordRequest(project, { session: payload.session_id, release, head, env }) : null;
+  note(id ? 'allowed' : 'blocked', id ? 'recorded' : 'not-recorded');
+  return { recorded: Boolean(id) };
+}
+
+// An agent's tool call carrying text that the host would later submit as the user's prompt (a scheduled task, a wake-up, a message to the
+// main conversation) is denied when that text is a release request: only the user's own typing is one.
+function submittedPhraseRefusal(payload) {
+  const input = toolInput(payload);
+  if (!promptTexts(input).some((v) => parseRelease(v))) return null;
+  return 'blocked: this call carries the text of a release request, which is the user\'s to type; an agent may not schedule or send it';
+}
+
+// `go-getter release --batch`, plain or under `go-getter watch`, with no flag but --interval and --timeout: hands it a claim on this
+// session's request, if the user made one. The CLI takes the request at its approval check (decision 0187).
+function claimForRelease(project, payload, host) {
+  const command = shellCommand(payload);
+  if (typeof command !== 'string' || !/release/.test(command)) return;
+  const session = payload.session_id;
+  for (const words of effectiveCommands(command) ?? []) {
+    let call = goGetterCall(words, { cwd: project });
+    for (let guard = 0; call?.args[0] === 'watch' && guard < 3; guard++) {
+      const dash = call.args.indexOf('--');
+      call = dash < 0 ? null : goGetterCall(unwrapWords(call.args.slice(dash + 1)), { cwd: project });
+    }
+    if (call?.args[0] !== 'release') continue;
+    const rest = call.args.slice(1);
+    let plain = rest.includes('--batch');
+    for (let i = 0; i < rest.length && plain; i++) {
+      if (rest[i] === '--interval' || rest[i] === '--timeout') i++;
+      else if (rest[i] !== '--batch') plain = false;
+    }
+    if (!plain) continue;
+    const id = claimRequest(project, { session });
+    logStop(project, host, { taskClass: 'release-request', outcome: id ? 'allowed' : 'blocked', trigger: id ? 'claimed' : 'no-request' });
+    return;
+  }
+}
+
 function decidePreTool(project, payload, host) {
   let exempt;
-  const forged = approvalsStoreRefusal(project, payload);
+  const forged = approvalsStoreRefusal(project, payload) ?? submittedPhraseRefusal(payload);
   if (forged) return { deny: true, reason: forged };
+  try {
+    claimForRelease(project, payload, host);
+  } catch {
+    // a failed claim leaves the typed approval as the only route
+  }
   const enforcement = collectEnforcement(project);
   checkpointBeforeCommand(project, enforcement, shellCommand(payload), host); // best effort, before the decision, never changes it
   // A covered raw command is redirected before any gate asks about it: the person is better served by the verb than by a prompt.
