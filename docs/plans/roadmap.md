@@ -21,7 +21,7 @@ Working rules: `docs/skills/working-a-change.md`; before every PR run `go-getter
 | Knowledge-base hygiene (pack answers as data, review of authored decisions) | `knowledge-base-hygiene.md` | Q1 first | New (0185, draft). Q2 and Q3 change the pack renderer and golden files; independent of the other plans. |
 | Retrieval pack (two live steps) | this file, below | external | Waits for virage. |
 
-Dogfood order (decision 0182): T2, P1, T5, R1, H2, G4, G5 first; then T4, T8, T9; then T10; the K core runs alongside and K20 measures it. Independent features run in parallel from now. No cross-feature dependency is encoded beyond the "Order" column until K1 makes `plan#id` parse.
+Dogfood order (decision 0182; R4 first, because a run cannot start from the agent until it lands): T2, P1, T5, R1, H2, G4, G5 first; then T4, T8, T9; then T10; the K core runs alongside and K20 measures it. Independent features run in parallel from now. No cross-feature dependency is encoded beyond the "Order" column until K1 makes `plan#id` parse.
 
 ## In flight at the split (2026-11-03, from the former status board)
 
@@ -32,7 +32,7 @@ These carry over unchanged; branch and worktree are in each step's `Progress` li
 - **Retrieval pack** (#214 skeleton and MCP entry, #215 injection hook, #216 index governance, #218 adopt): decision 0145 holds the whole pack until a virage release conforms (V2). Plan text is in `docs/plans/archive/retrieval-pack.md`, steps 3, 4, 5, 7; move them back here when V2 is done.
 - **Foreign packs** (#184 manifest entry, digest and vendoring; #185 content rule; #186 author guide; #187 adopt): decision 0142 waits for someone who asks to write a pack. Plan text is in `docs/plans/archive/third-party-packs.md`, steps 3 to 6. Budgets (W1, W2) are not held.
 - **Helper protocol** (#189): waits for a second implementation of a kind or a third party who asks (0142). Text in `docs/plans/archive/backlog.md`, L.18.
-- **Start a run by confirmation** (#166): needs draft decision 0137 accepted and softens the human-only start of a run; postponed 2026-10-12. Text in `docs/plans/archive/backlog.md`, L.16.
+- **Start a run by confirmation** (#166): moved on 2026-11-04 into `docs/plans/runs-spend-install.md` step R4 (the human-only start contradicts 0155 and blocks the dogfood chain). Text in `docs/plans/archive/backlog.md`, L.16.
 
 
 ---
