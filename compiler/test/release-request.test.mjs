@@ -1,7 +1,7 @@
 // Decision 0187: a release the user asks for in the chat is the approval to merge it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync, chmodSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { parseRelease, recordRequest, claimRequest, takeRequest, REQUEST_TTL_MS } from '../src/release-request.mjs';
 import { evaluateUserPrompt, evaluatePreTool } from '../src/hook.mjs';
@@ -154,4 +154,29 @@ test('apply registers the user-prompt hook for a host that reports it and for no
     const out = hostHookOutputs(s.work, [host], true);
     assert.ok(!Object.values(out).some((o) => o.content?.includes('user-prompt')), host);
   }
+});
+
+test('a commit that lands while checks run stops the merge, whichever way the release was approved', () => {
+  const s = scratch();
+  s.merge('feat: add the verb (#12)');
+  assert.equal(s.approve('v0.5.0').code, 0);
+  s.setGh({ checks: [{ name: 'ci', bucket: 'pass' }] });
+  // A commit lands on the default branch as the release branch is pushed.
+  const hook = path.join(s.work, '.git', 'hooks', 'pre-push');
+  writeFileSync(hook, `#!/bin/sh\nunset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE\ncd '${path.join(s.dir, 'other')}' && echo late > late.txt && git add -A && git commit -qm 'fix: lands during checks (#99)' && git push -q origin HEAD:main\n`);
+  chmodSync(hook, 0o755);
+  const r = s.batch();
+  assert.equal(r.code, 2, r.err);
+  assert.match(r.err, /moved from [0-9a-f]{40} to [0-9a-f]{40} while checks ran/);
+  assert.ok(!s.gh().calls.some((c) => c[0] === 'pr' && c[1] === 'merge'), 'not merged');
+});
+
+test('approvals list shows a pending request and where it came from', () => {
+  const s = scratch();
+  withHome(s.home, () => {
+    prompt(s.work, 'release v0.5.0', 'session-abcdef123');
+    const r = s.run(['approvals', 'list']);
+    assert.equal(r.code, 0, r.err);
+    assert.match(r.out, /release request \(asked in the chat\)\s+v0\.5\.0\s+session session-/);
+  });
 });

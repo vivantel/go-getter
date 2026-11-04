@@ -10,6 +10,7 @@ import { restrictedPatterns } from '../hook.mjs';
 import { matchesAny } from '../glob.mjs';
 import { repoRoot } from '../plan.mjs';
 import { releaseApprovalId, releaseHead } from '../release.mjs';
+import { pendingRequests } from '../release-request.mjs';
 
 const USAGE = 'usage: go-getter approvals list [--json] | add <secret-path> -- <command> [args...] | allow <shape> | revoke (<id> | <shape> | --all)';
 
@@ -25,6 +26,7 @@ export default function approvalsCommand({ args }) {
       if (rest.includes('--json')) console.log(JSON.stringify(entries, null, 2)); // secret approvals only: the format other tools read
       else {
         const lines = [...entries.map(describe), ...shapes.map((e) => `${e.id}  ${e.id.startsWith('mcp:') ? 'MCP write tool' : e.id.startsWith('stop:') ? 'stopped case (same command, same state)' : e.id.startsWith('release:') ? 'release approved for `release --batch` (one version)' : 'outward command shape'}, may run without asking while its preconditions hold  (approved ${e.approvedAt.slice(0, 10)})`)];
+        lines.push(...pendingRequests(project).map((r) => `release request (asked in the chat)  ${r.release.bump ? `next ${r.release.bump}` : `v${r.release.version}`}  session ${r.session.slice(0, 8)}  head ${r.head.slice(0, 7)}  (asked ${r.at.slice(0, 16).replace('T', ' ')}, spent when a release takes it or after an hour)`));
         console.log(lines.length ? lines.join('\n') : `no approvals for ${realpathSync(project)} (store: ${storeFile()})`);
       }
       return 0;

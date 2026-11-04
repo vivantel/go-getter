@@ -95,6 +95,9 @@ export function claimRequest(project, { session, now = Date.now(), env = process
   return mine.id;
 }
 
+// The fresh requests saved for this repository, for `approvals list`.
+export const pendingRequests = (project, { now = Date.now(), env = process.env } = {}) => readAll(dirs(env).requests, REQUEST_TTL_MS, now).map((r) => r.data).filter((r) => r.repo === repoKey(project));
+
 // The CLI's approval check: `{ ok: true }` and the request is spent, `{ ok: false, reason }` and it stays, or `{ ok: false }` when nothing was claimed.
 export function takeRequest(project, { bump, version, head, now = Date.now(), env = process.env }) {
   const repo = repoKey(project);

@@ -6,6 +6,7 @@
 // No model is involved. Each step is a small function over the injectable runner, as in ship.mjs.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { defaultBranch } from './git-env.mjs';
 import { suggestRefs } from './refs.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
@@ -159,7 +160,7 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
   if (!shapeApproved(project, approvalId, env)) {
     const asked = takeRequest(project, { bump, version, head, now: now().getTime(), env });
     if (asked.ok) {
-      approvedBy = 'the user in the chat';
+      approvedBy = `the user in the chat (session ${createHash('sha256').update(String(asked.request.session)).digest('hex').slice(0, 8)})`;
       log('approval', `v${version} was asked for in the chat`);
     } else if (asked.reason) throw new ShipError(`release: ${asked.reason}`, 2);
   }
@@ -211,7 +212,7 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     const body = [
       '## Intent', '', why, '',
       '## Changes', '', ...commits.map((c) => `- ${c.subject}`), '',
-      '## Checks', '', ...layers.map((l) => `- ${l}`), `- approval: release:v${version} ${approvedBy === 'a person' ? 'recorded by a person' : 'requested by the user in the chat'}`, '',
+      '## Checks', '', ...layers.map((l) => `- ${l}`), `- approval: release:v${version} ${approvedBy === 'a person' ? 'recorded by a person' : `requested by ${approvedBy}`}`, '',
       'Opened by `go-getter release --batch`. Merging it does not tag or publish; a person tags v' + version + ' to publish.',
     ].join('\n');
     need(gh('pr', 'create', '--base', base.name, '--head', branch, '--title', title, '--body', body), 'gh pr create');
@@ -221,6 +222,10 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     // 8 CI green, then the squash merge.
     const ci = await waitForCi({ gh, pr, verb: 'release', intervalMs, timeoutMs, noCiGraceMs, log });
     if (ci === 'none' && !allowNoCi) throw new ShipError(`release: no CI checks reported; merge by hand or pass --allow-no-ci: ${pr.url}`, 3);
+    // Nothing may have merged since the head the approval was given for: what ships must be what the person saw (decision 0187 item 4).
+    need(git('fetch', 'origin', base.name), 'git fetch');
+    const current = need(git('rev-parse', `origin/${base.name}`), 'git rev-parse');
+    if (current !== head) throw new ShipError(`release: ${base.name} moved from ${head} to ${current} while checks ran, so what would ship is not what was approved; the release pull request stays open (${pr.url}); approve again to release the new head`, 2);
     gh('pr', 'merge', String(pr.number), '--squash', '--delete-branch');
     const state = JSON.parse(need(gh('pr', 'view', String(pr.number), '--json', 'state'), 'gh pr view')).state;
     if (state !== 'MERGED') throw new ShipError(`release: the pull request is ${state}, not merged: ${pr.url}`);
