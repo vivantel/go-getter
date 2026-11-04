@@ -27,7 +27,8 @@ import { approvalRefusal } from './plan-approval.mjs';
 import { mcpDenial, mcpCall, isReadTool, mcpShapeId, secretKinds } from './mcp.mjs';
 import { MCP_SHAPE } from './gate.mjs';
 import { fileSet } from './secrets/fileset.mjs';
-import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
+import { checkpointBeforeCommand, checkpointConfig } from './checkpoint-trigger.mjs';
+import { createCheckpoint } from './checkpoint.mjs';
 import { hostOp } from './hosts/registry.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
 import { piiConfig, sessionKeyOf, maskPii } from './secrets/mask.mjs';
@@ -193,6 +194,9 @@ function exemption(project, payload) {
 // Hosts with a native ask rule prompt the human themselves (decision 0094), so the hook gates only the others (and, on every host, the `/regex/` extras, which have no native rule).
 let capabilities;
 const hasNativeAsk = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.permissions?.ask);
+// Decision 0159 item 3: on a host whose capability says `gateFloor`, a state-dependent command runs after a checkpoint instead of stopping
+// (the git hooks and the checkpoint are the floor); the other gated commands keep their stop.
+const hasGateFloor = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.hooks?.gateFloor);
 // Whether the host's pre-tool hook can ask the person to approve a call (facts 0003 to 0008): only where the capability says so.
 const canPrompt = (host) => Boolean((capabilities ??= packageCapabilities())[host]?.hooks?.askPreTool);
 
@@ -611,6 +615,17 @@ function decidePreTool(project, payload, host) {
           // not remembered: the person is asked again next time, which is safe
         }
         return { deny: false, ask: true, stopClass: gated.id, reason: stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: true }) };
+      }
+      if (gated?.stateful && hasGateFloor(host)) {
+        if (!checkpointConfig(enforcement)?.triggers.has('gated-action')) {
+          try {
+            createCheckpoint(project, { label: gated.id }); // no adopted trigger took one above, and the floor needs it
+          } catch {
+            // best effort, like every checkpoint
+          }
+        }
+        logStop(project, host, { taskClass: gated.id, outcome: 'allowed', trigger: 'floor' });
+        continue;
       }
       if (gated?.stateful) return { deny: true, stopClass: gated.id, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: false })}` };
       if (gated) return { deny: true, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false })}` };

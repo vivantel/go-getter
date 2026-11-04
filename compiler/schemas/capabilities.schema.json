@@ -52,6 +52,7 @@
         "config": { "type": "string" },
         "blockPreTool": { "type": "boolean" },
         "askPreTool": { "type": "boolean" },
+        "gateFloor": { "type": "boolean" },
         "userPrompt": { "type": "boolean" },
         "rewriteToolInput": { "type": "boolean" },
         "rewriteOutput": { "type": "boolean" },

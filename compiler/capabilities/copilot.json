@@ -28,6 +28,7 @@
   "hooks": {
     "config": ".github/hooks/go-getter.json",
     "blockPreTool": true,
+    "gateFloor": true,
     "rewriteToolInput": false,
     "rewriteOutput": true,
     "blockStop": false,

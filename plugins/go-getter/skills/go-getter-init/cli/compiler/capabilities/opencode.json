@@ -29,6 +29,7 @@
   "hooks": {
     "config": ".opencode/plugins/go-getter.js",
     "blockPreTool": true,
+    "gateFloor": true,
     "rewriteToolInput": false,
     "rewriteOutput": false,
     "blockStop": false,
