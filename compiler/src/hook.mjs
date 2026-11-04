@@ -24,6 +24,7 @@ import { mcpDenial, mcpCall, isReadTool, mcpShapeId, secretKinds } from './mcp.m
 import { MCP_SHAPE } from './gate.mjs';
 import { fileSet } from './secrets/fileset.mjs';
 import { checkpointBeforeCommand } from './checkpoint-trigger.mjs';
+import { hostOp } from './hosts/registry.mjs';
 import { redactionRegexes } from './secrets/patterns.mjs';
 import { piiConfig, sessionKeyOf, maskPii } from './secrets/mask.mjs';
 import { createPseudonymizer, cleanupSession, sweepPseudonyms } from './secrets/pseudonyms.mjs';
@@ -621,10 +622,8 @@ export function respondPostTool(host, result) {
   const text = (v) => (typeof v === 'string' ? v : JSON.stringify(v));
   const answer = (value) => ({ code: 0, stdout: JSON.stringify(value), stderr: '' });
   const out = result.output;
-  if (host === 'claude-code') {
-    const key = result.mcp ? 'updatedMCPToolOutput' : 'updatedToolOutput';
-    return answer({ hookSpecificOutput: { hookEventName: 'PostToolUse', [key]: out } });
-  }
+  const viaAdapter = hostOp(host, 'respondPostTool', { result: { mcp: result.mcp, output: out } });
+  if (!viaAdapter.missing) return viaAdapter.answer;
   if (host === 'copilot') return answer({ modifiedResult: { resultType: 'success', textResultForLlm: text(out?.textResultForLlm ?? out) } });
   if (host === 'codex') return answer({ decision: 'block', reason: text(out) });
   if (host === 'gemini-cli') return answer({ decision: 'deny', reason: text(out?.llmContent ?? out) });
@@ -636,9 +635,8 @@ export function respondPostTool(host, result) {
 
 // Host-specific answer: exit 2 + stderr where that blocks; Copilot reads a JSON decision.
 export function respond(host, decision) {
-  if (decision.ask && host === 'claude-code') {
-    return { code: 0, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'ask', permissionDecisionReason: decision.reason } }), stderr: '' };
-  }
+  const viaAdapter = hostOp(host, 'respond', { decision: { ask: decision.ask, deny: decision.deny, reason: decision.reason } });
+  if (!viaAdapter.missing) return viaAdapter.answer;
   if (!decision.deny) return { code: 0, stdout: '', stderr: '' };
   if (host === 'copilot') return { code: 0, stdout: JSON.stringify({ permissionDecision: 'deny', permissionDecisionReason: decision.reason }), stderr: '' };
   return { code: 2, stdout: '', stderr: decision.reason };

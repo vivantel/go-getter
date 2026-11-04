@@ -10,11 +10,12 @@ Decision `docs/decisions/0118-extension-architecture-core-and-edges.md` (host-ad
 
 **Rules the design fixes (do not re-decide):** generated output is byte-identical before and after (golden and drift checks must not change); the enforcement path stays in-process; the registry is internal, not a public contract (0118); a host's unconfirmed shapes stay marked in its fact. A step is done only when `npm run check:generated` and `npm test` pass without updating any golden file.
 
-### H2 Registry, conformance test and the Claude Code adapter — [ ]
+### H2 Registry, conformance test and the Claude Code adapter — [x]
 Issue: #85
 Class: implement · Effort: high · Needs: none · Check: `npm run check:generated && npm test`
 Do: add the adapter registry and a conformance test that runs every registered adapter through the interface (outputs are deterministic, owned files are marked, a missing capability is reported and never guessed). Move Claude Code's code behind an adapter module; `apply`, `agents`, `hook` and `coverage` reach it through the registry. Leave every other host on its present code through a wrapper adapter. The registry obeys decision 0119: an adapter takes and returns plain data, with no callbacks and no shared state, and the conformance test checks a JSON round trip.
 Done-when: no golden file changes; the conformance test passes for the Claude Code adapter and the wrapper and shows inputs and outputs unchanged by a JSON round trip; `go-getter apply --check` is clean in this repository.
+Result: `compiler/src/hosts/` holds the registry, the Claude Code adapter and a wrapper for the other six hosts (operations `describe`, `agent`, `hookSettings`, `projectFiles`, `respond`, `respondPostTool`; an unsupported one answers `{ missing }` and the core keeps its own code). `apply`, `agents`, `hook` and `coverage` reach Claude Code through it; `compiler/test/hosts/conformance.test.mjs` checks every host. No golden file changed.
 
 ### H3 OpenCode and Kilo adapters — [ ] ‖
 Issue: #86

@@ -1,7 +1,9 @@
 // Harness coverage report (plan 4.6, fitness function of decision 0008): for each of the 12 harness
 // components (fact 0002), the adopted packs covering it and the strongest tier reached on each host.
 import { readArtifacts } from './artifacts.mjs';
-import { HOSTS } from './capabilities.mjs';
+import { hostIds } from './hosts/registry.mjs';
+
+const HOSTS = hostIds();
 
 export const COMPONENTS = {
   1: 'Orchestration loop',
