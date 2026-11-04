@@ -6,7 +6,8 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { collectEnforcement } from './enforce.mjs';
 import { detect } from './detect.mjs';
-import { HOSTS } from './capabilities.mjs';
+import { isRegistered, hostOp } from './hosts/registry.mjs';
+import { RUNNER, upsert, setEvent } from './hosts/hook-events.mjs';
 import { agentOutputs, staleAgentFiles } from './agents.mjs';
 import { packageCapabilities, promptLoggingTargets, setPath, adoptedData } from './governance.mjs';
 import { loadPolicy } from './routing/policy.mjs';
@@ -17,11 +18,9 @@ import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
 import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting, isLink, MARK_START, MARK_END } from './reconcile.mjs';
 
-export const RUNNER = '.go-getter/bin/go-getter';
+export { RUNNER, upsert };
 // The CLI copy apply vendors into the project (decision 0096): the runner runs it before falling back to npx.
 export const VENDORED_CLI = '.go-getter/cli';
-// Recognises go-getter's hook entries in both command shapes (the old relative `sh <runner> hook` and the walk-up one that quotes the path).
-const HOOK_TAG = new RegExp(`${RUNNER.replaceAll('.', '\\.')}(\\\\")? hook`);
 const NODE_FLOOR = 22;
 
 // The npx source of the CLI: pinned to the release tag of the package that wrote the runner (decision 0023), unpinned
@@ -218,25 +217,6 @@ function readJson(project, rel) {
 
 const SHARED_HOOK_FILES = ['.claude/settings.json', '.codex/hooks.json', '.gemini/settings.json', '.cursor/hooks.json'];
 
-const isOurs = (h) => HOOK_TAG.test(JSON.stringify(h));
-
-// Replace go-getter's entry in an event list (or remove it when entry is null), keeping everything else.
-export function upsert(list, entry) {
-  const kept = (list ?? []).filter((x) => !isOurs(x));
-  return entry ? [...kept, entry] : kept;
-}
-
-function setEvent(obj, keys, entry) {
-  const out = structuredClone(obj);
-  let node = out;
-  for (const k of keys.slice(0, -1)) node = node[k] ??= {};
-  const last = keys[keys.length - 1];
-  const next = upsert(node[last], entry);
-  if (next.length) node[last] = next;
-  else delete node[last];
-  return out;
-}
-
 const json = (value) => ({ content: `${JSON.stringify(value, null, 2)}\n` });
 
 // Host hook configs (tier 2). Each calls the shared runtime: `.go-getter/bin/go-getter hook <event> --host <id>`.
@@ -265,27 +245,17 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   // A host that can replace only MCP results (capability hooks.rewriteMcpOutput, Cursor) gets the post-tool hook when MCP governance is adopted (decision 0138 item 4).
   const canMaskMcp = (host) => mcp && caps[host]?.hooks?.rewriteMcpOutput === true && caps[host]?.hooks?.rewriteOutput !== true;
   // Touch a host's hook file only to install our hooks, or to remove them from a file that already exists.
-  const wanted = (rel, host) => enabled || session || stop || (plugin && host === 'claude-code') || (pii && canRedact(host)) || canMaskMcp(host) || existsSync(path.join(project, rel));
+  const wanted = (rel, host) => enabled || session || stop || (plugin && hostOp(host, 'describe').selfPlugin) || (pii && canRedact(host)) || canMaskMcp(host) || existsSync(path.join(project, rel));
   const ccLike = (host, event) => ({ matcher: '*', hooks: [{ type: 'command', command: cmd(host, event) }] });
   const plain = (host, event) => ({ hooks: [{ type: 'command', command: cmd(host, event) }] });
   // Sets or removes each of go-getter's events: [keys, entry-or-null].
   const events = (obj, list) => list.reduce((acc, [keys, entry]) => setEvent(acc, keys, entry), obj);
   for (const host of hosts) {
-    if (host === 'claude-code' && wanted('.claude/settings.json', host)) {
-      const current = read('.claude/settings.json');
-      // The marketplace is pinned to the release tag of the CLI that wrote it; other plugins and marketplaces are kept.
-      const withPlugin = !plugin ? current : {
-        ...current,
-        extraKnownMarketplaces: { ...current.extraKnownMarketplaces, [plugin.marketplace]: { source: { source: 'github', repo: plugin.repo, ref: `v${plugin.version}` } } },
-        enabledPlugins: { ...current.enabledPlugins, [`go-getter@${plugin.marketplace}`]: true },
-      };
-      out['.claude/settings.json'] = json(events(withPlugin, [
-        [['hooks', 'PreToolUse'], enabled ? ccLike(host) : null],
-        [['hooks', 'PostToolUse'], canRedact(host) ? ccLike(host, 'post-tool') : null],
-        [['hooks', 'SessionStart'], session ? plain(host, 'session-start') : null],
-        [['hooks', 'SessionEnd'], canEnd(host) ? plain(host, 'session-end') : null],
-        [['hooks', 'Stop'], canStop(host) ? plain(host, 'stop') : null],
-      ]));
+    const hookFile = hostOp(host, 'describe').hookFile;
+    if (hookFile && wanted(hookFile, host)) {
+      const events = { preTool: enabled ? ccLike(host) : null, postTool: canRedact(host) ? ccLike(host, 'post-tool') : null, sessionStart: session ? plain(host, 'session-start') : null, sessionEnd: canEnd(host) ? plain(host, 'session-end') : null, stop: canStop(host) ? plain(host, 'stop') : null };
+      const settings = hostOp(host, 'hookSettings', { current: read(hookFile), plugin, events });
+      out[settings.file] = json(settings.config);
     }
     if (host === 'codex' && wanted('.codex/hooks.json', host)) {
       out['.codex/hooks.json'] = json(events(read('.codex/hooks.json'), [
@@ -446,7 +416,7 @@ export function packageVersion(packageRoot) {
 export function planApply(project, { hosts, skills, force = false, bootstrap = false, packageRoot = PACKAGE_ROOT } = {}) {
   const detected = detect(project);
   const targetHosts = hosts?.length ? hosts : detected.hostAgents;
-  for (const h of targetHosts) if (!HOSTS.includes(h)) throw new Error(`unknown host "${h}"`);
+  for (const h of targetHosts) if (!isRegistered(h)) throw new Error(`unknown host "${h}"`);
   const entries = collectEnforcement(project);
   const tier2 = entries.some((e) => e.tier === 2);
   const isGate = (e) => e.parsed?.kind === 'builtin' && e.parsed.id === 'verify-gate';
@@ -492,10 +462,11 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
     outputs['AGENTS.md'] = { content: agentsMd };
     modified.push({ path: 'AGENTS.md', what: 'block', reason: 'the go-getter block was edited since go-getter wrote it' });
   }
-  if (targetHosts.includes('claude-code')) {
-    const claude = path.join(project, 'CLAUDE.md');
-    const isRegularFile = existsSync(claude) && !lstatSync(claude).isSymbolicLink();
-    if (!isRegularFile) outputs['CLAUDE.md'] = { symlink: 'AGENTS.md' };
+  for (const host of targetHosts) {
+    // A host's own instruction file (Claude Code: CLAUDE.md) points at AGENTS.md unless the project keeps a regular file there.
+    const file = hostOp(host, 'describe').instructionFile;
+    const own = file ? path.join(project, file) : null;
+    Object.assign(outputs, hostOp(host, 'projectFiles', { instructionFileKept: Boolean(own) && existsSync(own) && !lstatSync(own).isSymbolicLink() }).outputs);
   }
   if (targetHosts.includes('gemini-cli')) {
     remember('.gemini/settings.json');
