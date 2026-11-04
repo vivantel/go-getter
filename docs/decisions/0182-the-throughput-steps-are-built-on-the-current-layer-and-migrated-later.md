@@ -12,7 +12,7 @@ track: process
 1. **T4, T8, T9 and G5 no longer wait for K11.** They are built on today's `ship`, `run` and plan format; K11 becomes the step that migrates them onto the work layer.
 2. **The work-coordination plan is sliced.** The core is K1-K7 and K9. K20 (dogfood and measure) needs only the core; K8, K10, K12-K19, K22 and K23 follow.
 3. **T10 runs as soon as T4, T5, T8 and T9 land**, not after the K plan.
-4. **Dogfood order:** T2, P1, T5, R1, H2, G4, G5, then T4, T8, T9, then T10, with the K core alongside.
+4. **Dogfood order:** the sequence in `docs/plans/roadmap.md`, section "Dogfood order": reliable loop, then no merge conflicts at the source, then go-getter drives the rest, then measure.
 
 ## Why
 
