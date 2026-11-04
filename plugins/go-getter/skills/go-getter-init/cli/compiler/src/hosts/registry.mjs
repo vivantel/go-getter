@@ -2,6 +2,8 @@
 // of operations that take and return plain JSON data (decision 0119): no callbacks, no shared state. An operation an adapter
 // cannot perform answers `{ missing: <capability> }`; the caller reports it and never guesses.
 import claudeCode from './claude-code.mjs';
+import kilo from './kilo.mjs';
+import opencode from './opencode.mjs';
 import { wrapperAdapter } from './wrapper.mjs';
 
 export const OPERATIONS = ['describe', 'agent', 'hookSettings', 'projectFiles', 'respond', 'respondPostTool'];
@@ -9,8 +11,8 @@ export const OPERATIONS = ['describe', 'agent', 'hookSettings', 'projectFiles', 
 const ADAPTERS = {
   'claude-code': claudeCode,
   codex: wrapperAdapter('codex', 'deferred'),
-  kilo: wrapperAdapter('kilo'),
-  opencode: wrapperAdapter('opencode'),
+  kilo,
+  opencode,
   cursor: wrapperAdapter('cursor', 'deferred'),
   'gemini-cli': wrapperAdapter('gemini-cli', 'deferred'),
   copilot: wrapperAdapter('copilot', 'deferred'),

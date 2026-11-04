@@ -17,11 +17,12 @@ Do: add the adapter registry and a conformance test that runs every registered a
 Done-when: no golden file changes; the conformance test passes for the Claude Code adapter and the wrapper and shows inputs and outputs unchanged by a JSON round trip; `go-getter apply --check` is clean in this repository.
 Result: `compiler/src/hosts/` holds the registry, the Claude Code adapter and a wrapper for the other six hosts (operations `describe`, `agent`, `hookSettings`, `projectFiles`, `respond`, `respondPostTool`; an unsupported one answers `{ missing }` and the core keeps its own code). `apply`, `agents`, `hook` and `coverage` reach Claude Code through it; `compiler/test/hosts/conformance.test.mjs` checks every host. No golden file changed.
 
-### H3 OpenCode and Kilo adapters — [ ] ‖
+### H3 OpenCode and Kilo adapters — [x] ‖
 Issue: #86
 Class: implement · Effort: high · Needs: H2 · Check: `npm run check:generated && npm test`
 Do: move OpenCode and Kilo behind adapters sharing one fork base (their agent and plugin formats differ only in paths and the plugin file location, fact 0005).
 Done-when: no golden file changes; both pass the conformance test; the Kilo-only differences (the plugin directory, the question tool, fact 0034) live in the Kilo module.
+Result: `compiler/src/hosts/fork-base.mjs` holds the shared agent renderer and operations; `opencode.mjs` and `kilo.mjs` register on it. Kilo's plugin directory, its post-tool answer (fact 0031) and the question-tool gate (fact 0034) are in `kilo.mjs`. The plugin file text stays in `apply` (no operation covers it yet). No golden file changed.
 
 ### H4 Deferred hosts on the registry — [x] ‖
 Issue: #87
