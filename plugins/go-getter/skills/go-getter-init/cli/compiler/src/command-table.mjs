@@ -17,6 +17,7 @@ export const COMMANDS = [
   { name: 'run', usage: 'run start|status|next|attempt|end' },
   { name: 'worktree', usage: 'worktree new|list|clean' },
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },
+  { name: 'artifacts', usage: 'artifacts index | assign [--base <ref>]' },
   { name: 'refs', usage: 'refs [--staged | --base <ref>] [--json]' },
   { name: 'pr', usage: 'pr [--title <t>] [--why <intent>] [--dry-run]' },
   { name: 'outcome', usage: 'outcome check [id]' },

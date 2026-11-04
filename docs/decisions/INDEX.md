@@ -121,7 +121,7 @@ id,title,tags,status
 0135-gated-run-grants,"Outward commands a run or a remembered approval may allow are listed","practice-packs, hooks",active
 0136-host-adapter-interface,"A host adapter answers nine questions as plain data and shares the rest","architecture, compiler, host-agents",draft
 0137-a-run-may-be-started-by-confirmation-at-the-host-prompt,"A run may be started by the agent when a person confirms it at the host prompt","hooks, enforcement, roadmap",draft
-0138-mcp-servers-are-allowlisted-and-their-calls-classed-masked-and-scanned,"MCP servers are allowlisted by name; their tool calls are classed, approved once, scanned and masked","hooks, enforcement, roadmap, practice-packs",active
+0138-mcp-servers-are-allowlisted-and-their-calls-classed-masked-and-scanned,"MCP servers are allowlisted by name; their tool calls are classed read or write, approved once, scanned on the way out and masked on the way back","hooks, enforcement, roadmap, practice-packs",active
 0139-go-getter-serves-adopted-pack-verbs-as-read-only-mcp-tools-over-stdio,"go-getter serves the verbs of the packs a project adopted as read-only MCP tools over stdio, opt-in","architecture, roadmap, hooks, compiler",active
 0140-foreign-packs-and-helpers-are-vendored-pinned-and-held-to-the-cores-budgets,"Foreign packs and helpers are vendored by digest, trusted through the pull request, and held to budgets the core enforces","architecture, roadmap, practice-packs, cost",active
 0141-mcp-no-project-policy,"No project list of MCP servers","practice-packs, hooks",draft
@@ -142,7 +142,7 @@ id,title,tags,status
 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree,"Up to 10 agents run at once, each in its own worktree on its own branch","practice-packs, agent-roles, harness",active
 0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",superseded
 0158-merge-requires-a-gate-stack-and-a-sampled-human-audit,"An agent merges only after a gate stack passes, and the owner audits a sample of merged PRs","verification, ci, agent-roles",active
-0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository state","positioning, hooks, enforcement, guardrail, roadmap",active
+0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository's state","positioning, hooks, enforcement, guardrail, roadmap",active
 0160-tracker-writes,"go-getter may write to the tracker without asking","practice-packs, roadmap",active
 0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
 0162-gated-free-channels,"Release and publish channels that run without asking are listed","practice-packs, hooks",draft

@@ -14,13 +14,13 @@ A guardrail is only valid while its sources are current — a source change inva
 
 ## File formats
 
-Facts and decisions are filed as `docs/{facts,decisions}/NNNN-slug.md` (4-digit, 1-based, per directory); guardrails and procedures as `docs/{guardrails,skills}/slug.md`, no numeric prefix.
+Facts and decisions are filed as `docs/{facts,decisions}/NNNN-slug.md` (4-digit, 1-based, per directory). Where parallel units file artifacts, a new one may be filed as `docs/{facts,decisions}/draft-<unit>-<slug>.md` (id `draft-<unit>-<slug>`, no number): `go-getter artifacts assign` renames it to the next free `NNNN` (the highest on the default branch plus one) and rewrites references to it, and existing `NNNN` artifacts are read unchanged; guardrails and procedures as `docs/{guardrails,skills}/slug.md`, no numeric prefix.
 
 All four carry the base frontmatter `id, title, status, date, tags` — `status` is one of `draft | active | superseded | deprecated` — plus an optional `expires: <date or condition>` (when this stops being current), and these type-specific fields:
 
 For `tags`: if `docs/skills/tags.md` exists, every tag assigned to any of the four types MUST come from it — check each intended tag against the list's stated meanings before writing it. If none fit, propose a new tag (name, one-line meaning, why nothing existing covers it) and get confirmation before using it and adding it to the list.
 
-After writing any of the four types directly to disk, also add or update its row in that type's `INDEX.md`, if one exists: CSV — a header line naming the fields (`id, title, tags, status`), then one comma-separated row per artifact. A field containing a comma (e.g. `tags`) is wrapped in double quotes, with its items comma-separated inside the quotes — e.g. `"naming, branding, packaging"`. If a value ever needs multiple parts that can't just be comma-separated inside quotes, quote the cell and separate with `;` instead — no field has needed this yet.
+`INDEX.md` files are generated, not hand-edited: after writing any of the four types directly to disk, run `go-getter artifacts index` if the type has an `INDEX.md` (`go-getter check indexes` fails when one differs from its generation). Format: CSV — a header line naming the fields (`id, title, tags, status`), then one row per artifact, sorted by id, `title` and `tags` always double-quoted with `tags` comma-separated inside the quotes — e.g. `"naming, branding, packaging"`. Without the go-getter CLI, write the row by hand in the same shape.
 
 Fact — add `kind: environmental | decision | derived | mixed` (mixed = file has both; label each section inline) and `governed-by: <decision-id>` (`TBD` = debt).
 
