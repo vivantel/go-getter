@@ -90,6 +90,15 @@
             "file": { "type": "string" },
             "format": { "enum": ["claude-permissions"] }
           }
+        },
+        "workspaceDirs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "key"],
+          "properties": {
+            "file": { "type": "string" },
+            "key": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          }
         }
       }
     },

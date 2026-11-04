@@ -13,6 +13,7 @@ import { packageCapabilities, promptLoggingTargets, setPath, adoptedData } from 
 import { loadPolicy } from './routing/policy.mjs';
 import { cliBundle } from './build.mjs';
 import { verifyConfig } from './verify.mjs';
+import { listWorktrees } from './worktree.mjs';
 import { gateEntries, nativeRules, withAskRules } from './gate.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
@@ -164,6 +165,15 @@ export function ciWorkflow({ guardrails = true, checks = {}, node = null, branch
 // The branch whose pushes the workflow runs on. A remote that names its default branch decides; without one (a CI
 // checkout of a pull request is detached) the branch the committed workflow already names stays, so the workflow does
 // not change with where apply runs. Failing both, the checked-out branch if it is main or master, else main.
+// The main working tree: worktrees are placed next to it, whichever worktree apply runs in.
+function mainTree(project) {
+  try {
+    return listWorktrees(project)[0].path;
+  } catch {
+    return project; // not a git repository
+  }
+}
+
 function workflowBranch(project, detected) {
   if (detected.git?.defaultBranchKnown) return detected.git.defaultBranch;
   try {
@@ -515,6 +525,19 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
       if (value) for (const key of target[kind]) base = setPath(base, [key], value);
     }
     outputs[target.file] = json(base);
+  }
+  // Sibling worktrees sit outside the session's directory, so a host asks before every `cd` into one: list the root as a
+  // workspace directory, relative so the committed file holds no machine path.
+  if (adoptedData(project, 'worktree-location') === 'sibling') {
+    const root = path.join('..', `${path.basename(mainTree(project))}-wt`);
+    for (const host of targetHosts) {
+      const dirs = caps[host]?.permissions?.workspaceDirs;
+      if (!dirs) continue;
+      remember(dirs.file);
+      const base = outputs[dirs.file] ? JSON.parse(outputs[dirs.file].content) : read(dirs.file);
+      const have = [].concat(at(base, dirs.key) ?? []);
+      outputs[dirs.file] = json(have.includes(root) ? base : setPath(base, dirs.key, [...have, root]));
+    }
   }
   // Gated commands: the host's native ask rules where it has them (decision 0094); the pre-tool hook covers the rest.
   const gated = gateEntries(entries, { project });

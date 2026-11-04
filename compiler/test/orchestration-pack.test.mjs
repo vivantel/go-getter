@@ -126,6 +126,18 @@ test('reconfiguring the roster prunes the agent files of roles that are gone', (
   rmSync(dir, { recursive: true, force: true });
 });
 
+test('apply lists the sibling worktree root as a workspace directory, so a cd into a worktree is not prompted', () => {
+  const dir = project();
+  const settings = () => JSON.parse(read(dir, '.claude/settings.json'));
+  writeApply(dir, planApply(dir, { hosts: ['claude-code'], skills: false }));
+  assert.deepEqual(settings().permissions.additionalDirectories, [`../${path.basename(dir)}-wt`]);
+  rmSync(dir, { recursive: true, force: true });
+  const inRepo = project({ ...recommended, 'worktree-location': 'in-repo-dir' });
+  writeApply(inRepo, planApply(inRepo, { hosts: ['claude-code'], skills: false }));
+  assert.equal(JSON.parse(read(inRepo, '.claude/settings.json')).permissions?.additionalDirectories, undefined);
+  rmSync(inRepo, { recursive: true, force: true });
+});
+
 test('the in-repo worktree location is guarded by a gitignore check', async () => {
   const dir = project({ ...recommended, 'worktree-location': 'in-repo-dir' });
   const check = async () => (await runTier3(dir, { onlyGuardrail: 'worktree-dir-is-gitignored' }))[0];

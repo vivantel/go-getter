@@ -181,6 +181,16 @@
         "kind": "items",
         "path": [
           "permissions",
+          "additionalDirectories"
+        ],
+        "items": [
+          "../go-getter-wt"
+        ]
+      },
+      {
+        "kind": "items",
+        "path": [
+          "permissions",
           "ask"
         ],
         "items": [
