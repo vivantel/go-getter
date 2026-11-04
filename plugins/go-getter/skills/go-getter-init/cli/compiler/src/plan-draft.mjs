@@ -7,6 +7,7 @@ import path from 'node:path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { parsePlan, PLAN_DIR, approvalOf, APPROVAL } from './plan.mjs';
+import { recordApproval } from './plan-approval.mjs';
 import { CLASSES } from './verify.mjs';
 import { EFFORTS } from './routing/policy.mjs';
 import { triggersFor, writeDraft, logStop } from './defaults.mjs';
@@ -114,12 +115,19 @@ export async function draftPlan(project, goal, { planner = defaultPlanner, revie
 
 // --- the one plan approval -------------------------------------------------------------------------------------------
 
-export function approvePlan(file, { by, now = new Date() }) {
+export function approvePlan(file, { by, now = new Date(), env = process.env }) {
   const text = readFileSync(file, 'utf8');
   const a = approvalOf(text);
-  if (a.state === 'none') throw new Error('the plan has no Approval line; only a drafted plan needs approval');
-  if (a.state === 'approved') return { changed: false, text: a.text };
-  const line = `approved ${now.toISOString().slice(0, 10)} by ${oneLine(by) || 'unknown'}`;
-  writeFileSync(file, text.replace(APPROVAL, `**Approval**: ${line}`));
-  return { changed: true, text: line };
+  const r = recordApproval(file, { by: oneLine(by) || 'unknown', now, env });
+  if (!r.changed && a.state === 'approved') return { changed: false, text: a.text, id: r.id };
+  const line = `approved ${now.toISOString().slice(0, 10)} by ${oneLine(by) || 'unknown'} (${r.id})`;
+  // The visible line is a note for readers; the store entry above is the approval.
+  if (a.state === 'none') {
+    // An existing plan (written by hand, before drafting existed): the line goes after the status legend, or the title.
+    const lines = text.split('\n');
+    const at = Math.max(lines.findIndex((l) => l.startsWith('**Status legend**')), lines.findIndex((l) => l.startsWith('# ')), 0);
+    lines.splice(at + 1, 0, `**Approval**: ${line}`);
+    writeFileSync(file, lines.join('\n'));
+  } else writeFileSync(file, text.replace(APPROVAL, `**Approval**: ${line}`));
+  return { changed: true, text: line, id: r.id };
 }

@@ -1,10 +1,11 @@
 // go-getter run start <plan> [--through N] [--hours H] [--grant <id>]... | status [--json] | next [--json] | attempt <step> | end
-// An autonomous run (decision 0130): a person starts it on a plan range; the record is read by the pre-tool hook. `start` and
-// `end` change what an agent may do, so a person runs them; the hook refuses an agent's call to either.
+// An autonomous run (decisions 0130, 0186): started on an approved plan or by a person; the record is read by the pre-tool hook. `end` and
+// `--grant` change what an agent may do, so a person runs them; the hook refuses an agent's call to either.
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { activeRun, lastRun, startRun, endRun, noteEvent, DEFAULT_HOURS } from '../runs/record.mjs';
-import { readPlan, repoRoot } from '../plan.mjs';
+import { readPlan, repoRoot, unapprovedReason } from '../plan.mjs';
+import { approvalStatus } from '../plan-approval.mjs';
 import { nextInRun } from '../runs/next.mjs';
 import { buildReport, reportStep } from '../runs/report.mjs';
 import { planIssue, relPlan } from '../trackers/write.mjs';
@@ -90,6 +91,10 @@ export default async function runCommand({ args }) {
       }
       const file = path.resolve(project, o.plan);
       if (!existsSync(file)) throw new Error(`no plan at ${o.plan}`);
+      // A plan that needs approval (it has an Approval line or a store record) starts only on a current store entry; a person may start any other.
+      const blocked = unapprovedReason(file);
+      if (blocked) throw new Error(blocked);
+      const approval = approvalStatus(file);
       const plan = readPlan(file);
       const ids = plan.steps.map((s) => s.id);
       if (o.through !== undefined && !ids.includes(o.through)) throw new Error(`the plan has no step ${o.through}`);
@@ -106,7 +111,7 @@ export default async function runCommand({ args }) {
       if (spendCapUsd && telemetryConfig(project).recording !== 'metadata-log') throw new Error(`the project sets a spend cap of $${spendCapUsd}, which is read from the telemetry metadata log, and telemetry recording is off; turn on telemetry-recording (metadata-log) or remove the cap`);
       // A host with no spend reader cannot bind the cap (decision 0144): say so plainly and start anyway.
       const coverage = spendCoverage(detect(project).hostAgents, packageCapabilities(), spendCapUsd);
-      const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd, grants, spendMetered: spendCapUsd ? coverage.metered : null });
+      const record = startRun(project, { plan: path.relative(project, file).split(path.sep).join('/'), steps, through: steps.at(-1), hours: o.hours ?? DEFAULT_HOURS, spendCapUsd, grants, approval: approval.state === 'approved' ? approval.id : null, spendMetered: spendCapUsd ? coverage.metered : null });
       if (coverage.notice) console.error(`run: ${coverage.notice}`);
       console.log(`run started: ${describe(record)}`);
       return 0;

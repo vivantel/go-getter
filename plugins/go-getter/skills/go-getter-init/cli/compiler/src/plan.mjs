@@ -13,6 +13,7 @@ import { parseRef, refId } from './trackers/refs.mjs';
 import { recordQuietly } from './telemetry/record.mjs';
 import { checkpointBeforeStep } from './checkpoint-trigger.mjs';
 import { cleanGitEnv } from './git-env.mjs';
+import { approvalStatus, approvalRefusal } from './plan-approval.mjs';
 
 export const MARKERS = { ' ': 'pending', '~': 'in progress', x: 'done', '!': 'blocked', '>': 'moved' };
 export const STATE_MARKER = Object.fromEntries(Object.entries(MARKERS).map(([marker, state]) => [state, marker]));
@@ -130,9 +131,12 @@ export function approvalOf(text) {
   return /^approved\b/i.test(m[1]) ? { state: 'approved', text: m[1] } : { state: 'pending', text: m[1] };
 }
 
-// The refusal for working a step of an unapproved drafted plan, or null.
+// The refusal for working a step of a plan that needs a person's approval, or null. A plan needs it when it carries an Approval
+// line (a drafted plan) or has a record in the store; the store entry, never the line, is what approves it (decision 0186).
 export function unapprovedReason(file) {
-  return approvalOf(readFileSync(file, 'utf8')).state === 'pending' ? `the plan is not approved yet; a person runs: go-getter plan approve ${path.basename(file)}` : null;
+  const text = readFileSync(file, 'utf8');
+  if (approvalOf(text).state === 'none' && approvalStatus(file).state === 'none') return null;
+  return approvalRefusal(file);
 }
 
 export function readPlan(file) {

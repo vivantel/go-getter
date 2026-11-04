@@ -9,7 +9,7 @@ track: product
 
 ## Decision
 
-Draft, for the owner's sign-off. When accepted it amends item 1 of 0130 ("starting a run is the human act"): the human act is the confirmation, not typing the command.
+Draft, superseded in part by draft 0186: the confirmation prompt (items 2 and 3) is replaced by the approved plan as the authority to start; items 4 to 7 carry over into 0186. Originally: when accepted it amends item 1 of 0130 ("starting a run is the human act"): the human act is the confirmation, not typing the command.
 
 1. **The agent may propose a run.** A request such as "execute it as a batch" triggers the `autonomous-run` skill, which resolves the plan and range, states them, and calls `go-getter run start <plan> [--through N] [--hours H]`.
 2. **Where the host's hook can ask, the hook asks instead of denying** (`hooks.askPreTool`, as for the first use of an outward shape in 0126 and 0135). The prompt shows what the command resolves to, not only its text: plan, step range, granted shapes, timeout and spend cap. Confirming starts the run; declining refuses it.
