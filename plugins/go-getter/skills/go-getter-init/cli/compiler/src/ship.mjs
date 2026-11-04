@@ -20,6 +20,7 @@ import { noteGate } from './runs/record.mjs';
 import { releaseWorktree } from './worktree.mjs';
 import { flagPr } from './audit.mjs';
 import { stepForBranch } from './gate-defaults.mjs';
+import { enqueueBranch, queueOn, waitForMerge, formatResult } from './work/queue.mjs';
 
 export const TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'];
 const SUBJECT = new RegExp(`^(?:${TYPES.join('|')})(?:\\([^)]+\\))?!?: \\S`);
@@ -114,7 +115,7 @@ export async function waitForCi({ gh, pr, verb, intervalMs = 20_000, timeoutMs =
 // `go-getter pr`: checks, checkpoint, commit, push, the pull request and the wait for CI. It never merges; `ship` is this plus the merge.
 // Resolves with `ci` 'success' or 'none' (no checks reported in the grace period); a failure or a timeout throws.
 export async function openPr(project, opts = {}, run = defaultRunner, log = () => {}) {
-  const { verb = 'pr', title: titleArg, why: whyArg, dryRun = false, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, review, conform, check: stepCheck } = opts;
+  const { verb = 'pr', title: titleArg, why: whyArg, dryRun = false, intervalMs = 20_000, timeoutMs = 30 * 60_000, noCiGraceMs = 60_000, review, conform, check: stepCheck, waitCi = true } = opts;
   const git = (...a) => run('git', a, { cwd: project });
   const gh = (...a) => run('gh', a, { cwd: project });
   const need = (r, what) => {
@@ -205,15 +206,16 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   log('pr', pr.url);
   if (stack.flagged) flagPr(project, pr.number);
 
-  // 7 CI: success merges, failure stops with the failing checks, no checks stops unless allowed.
-  const ci = await waitForCi({ gh, pr, verb, intervalMs, timeoutMs, noCiGraceMs, log, project });
-  return { branch, title, pr, ci, merged: false, gates: [...stack.gates, { gate: 'ci', status: ci === 'success' ? 'pass' : 'none' }] };
+  // 7 CI: success merges, failure stops with the failing checks, no checks stops unless allowed. With the merge queue on, the queue
+  // reruns the Check and CI on the batch, so the change is queued instead.
+  const ci = waitCi ? await waitForCi({ gh, pr, verb, intervalMs, timeoutMs, noCiGraceMs, log, project }) : 'queued';
+  return { branch, title, pr, ci, check: typeof check === 'string' ? check : null, merged: false, gates: [...stack.gates, { gate: 'ci', status: ci === 'success' ? 'pass' : ci === 'queued' ? 'skipped' : 'none' }] };
 }
 
 // `go-getter ship`: `pr` and then the squash merge on green. No CI at all stops it unless the project allows merging without.
 export async function ship(project, opts = {}, run = defaultRunner, log = () => {}) {
-  const { allowNoCi = false, release: releaseFn = releaseWorktree, ...rest } = opts; // `release` is injectable for tests
-  const opened = await openPr(project, { ...rest, verb: 'ship' }, run, log);
+  const { allowNoCi = false, release: releaseFn = releaseWorktree, queue = queueOn(project), who, drive, ...rest } = opts; // `release` and `drive` are injectable for tests
+  const opened = await openPr(project, { ...rest, verb: 'ship', waitCi: !queue }, run, log);
   if (opened.dryRun) return opened;
   const { pr } = opened;
   const git = (...a) => run('git', a, { cwd: project });
@@ -222,6 +224,24 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
     if (r.code !== 0) throw new ShipError(`${what}: ${(r.err || r.out).trim().split('\n').slice(-3).join(' | ')}`);
     return r.out.trim();
   };
+  if (queue) {
+    // The merge queue integrates it (decision 0167 item 3): ship queues the change and waits for the result.
+    const queued = await enqueueBranch(project, who ?? identity(project), { run, pr: pr.number, title: opened.title, check: opened.check });
+    if (!queued.ok) throw new ShipError(`ship: could not queue #${pr.number}: ${queued.error}`);
+    log('queue', `#${pr.number} queued`);
+    const result = await waitForMerge(project, queued.entry, { intervalMs: rest.intervalMs, timeoutMs: rest.timeoutMs, drive, log, url: pr.url });
+    if (result.outcome !== 'merged') throw new ShipError(`ship: the queue returned the change: ${formatResult(result)}${result.check ? ` (failing check: ${result.check})` : ''}; the pull request stays open: ${pr.url}`, 1);
+    log('merge', formatResult(result));
+    git('fetch', 'origin', defaultBranch(project).name);
+    let released = null;
+    try {
+      released = releaseFn(project);
+    } catch (err) {
+      log('worktree', `not released: ${err.message.trim().split('\n')[0]}`);
+    }
+    if (released) log('worktree', released.released ? `removed ${released.path}; continue in the main checkout ${released.main}` : `kept ${released.path} (${released.reason})`);
+    return { ...opened, merged: true, queued: result, release: released };
+  }
   if (opened.ci === 'none') {
     if (!allowNoCi) throw new ShipError(`ship: no CI checks reported; merge by hand or pass --allow-no-ci: ${pr.url}`, 3);
     log('ci', 'no checks reported; continuing (--allow-no-ci)');

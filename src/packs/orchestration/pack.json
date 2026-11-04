@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "orchestration",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "family": "harness",
   "components": [
     10
@@ -252,6 +252,14 @@
       "default": "none",
       "since": "0.1.4",
       "prompt": "How many work units of one feature may be claimed at once across all workers (a number, or `none` for no limit)?"
+    },
+    {
+      "id": "merge-queue",
+      "type": "text",
+      "pattern": "^(on|off)$",
+      "default": "off",
+      "since": "0.1.5",
+      "prompt": "Does ship hand a green change to the merge queue (on) instead of merging it itself (off)? The queue batches changes whose scopes are disjoint, reruns the step Check and CI on the batch and merges on green."
     }
   ],
   "outputs": {
@@ -1232,6 +1240,28 @@
               }
             },
             "body": "## Decision\n\nA parent unit with live children is flagged idle after {{answer.parent-idle}} days without action (decision 0166; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA parent with live children holds no lease, so nothing else would show that nobody is working on it; the idle period flags it for a person or K7 to park, and a week keeps a normal pause from raising a flag.\n"
+          }
+        ]
+      }
+    },
+    "merge-queue": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "merge-queue",
+            "title": "The merge queue is {{answer.merge-queue}}: ship merges through it only when it is on",
+            "tags": [
+              "practice-packs",
+              "agent-roles",
+              "harness"
+            ],
+            "frontmatter": {
+              "track": "process",
+              "go-getter": {
+                "merge-queue": "{{answer.merge-queue}}"
+              }
+            },
+            "body": "## Decision\n\nThe merge queue is {{answer.merge-queue}}; with it on, `go-getter ship` queues a green change and waits for the merge result instead of merging it (decision 0167 item 3; pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWith many parallel units a serial merge turns every overlap nobody declared into a broken default branch; the queue turns it into a rebase. One person working alone needs no queue.\n"
           }
         ]
       }
