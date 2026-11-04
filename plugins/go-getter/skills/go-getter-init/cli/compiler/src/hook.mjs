@@ -15,7 +15,7 @@ import { stateCheck } from './gate-state.mjs';
 import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
-import { shellOperands, commandWords } from './shell.mjs';
+import { shellOperands, commandWords, unwrapWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
 import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved } from './secrets/approvals.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
@@ -317,20 +317,53 @@ function agentStartRefusal(project, command, args) {
   return null;
 }
 
+// The location of the approvals store and the flags that resume or name a host session: a command that sets the first points
+// go-getter at a store the agent wrote, and one that uses the second submits a prompt into this very session.
+const STORE_LOCATION = /\b(?:GO_GETTER_HOME|XDG_STATE_HOME)\+?=/;
+const SESSION_REUSE = /^(?:-c|-r|--continue|--resume(?:=.*)?|--session-id(?:=.*)?|--fork-session)$/;
+const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh']);
+
+// The simple commands of `command` with wrappers stripped, and those inside `sh -c '...'` and `eval ...` bodies (to a depth), or
+// null when a body that names go-getter cannot be read.
+function effectiveCommands(command, depth = 0) {
+  const lists = commandWords(command);
+  if (!lists) return /go-getter/.test(command) && (depth || /\b(?:approvals|approve|hook|run\s+(?:start|end))\b/.test(command)) ? null : [];
+  const out = [];
+  for (const words of lists) {
+    const eff = unwrapWords(words);
+    if (!eff.length) continue;
+    out.push(eff);
+    const name = path.basename(eff[0]);
+    const flag = SHELLS.has(name) ? eff.findIndex((x, i) => i > 0 && /^-[A-Za-z]*c$/.test(x)) : -1;
+    const body = flag > 0 ? eff[flag + 1] : name === 'eval' ? eff.slice(1).join(' ') : undefined;
+    if (typeof body === 'string' && depth < 4) {
+      const inner = effectiveCommands(body, depth + 1);
+      if (inner === null) return null;
+      out.push(...inner);
+    }
+  }
+  return out;
+}
+
 // Why a call may not change or open the user's approvals or run record, or null: only a person adds or revokes an approval or starts or ends a run (a forged approval would let
 // any command use a secret), and the store is not for tools to open.
 function approvalsStoreRefusal(project, payload) {
   const command = shellCommand(payload);
   if (typeof command === 'string') {
-    for (const words of commandWords(command) ?? []) {
+    if (STORE_LOCATION.test(command)) return 'blocked: GO_GETTER_HOME and XDG_STATE_HOME decide where the approvals live, so a person sets them; ask the user to run the command themselves';
+    const commands = effectiveCommands(command);
+    if (commands === null) return 'blocked: this command runs go-getter through a script that cannot be read, so it cannot be told from a forged approval; run go-getter directly or ask the user to run it';
+    for (const words of commands) {
+      if (path.basename(words[0]) === 'claude' && words.slice(1).some((a) => SESSION_REUSE.test(a))) return 'blocked: resuming or naming a host session from a tool call would submit a prompt as the user in this session; ask the user to run it themselves';
       let call = goGetterCall(words, { cwd: project });
       let wrapped = false;
       // `go-getter watch [--until done] -- <command>` runs the command after `--`: look at that one too.
       for (let guard = 0; call?.args[0] === 'watch' && guard < 3; guard++) {
         const dash = call.args.indexOf('--');
-        call = dash < 0 ? null : goGetterCall(call.args.slice(dash + 1), { cwd: project });
+        call = dash < 0 ? null : goGetterCall(unwrapWords(call.args.slice(dash + 1)), { cwd: project });
         wrapped = true;
       }
+      if (call?.args[0] === 'hook') return 'blocked: go-getter hook <event> is run by the host with the host\'s own payload; an agent running it could forge what the host reports';
       if (call?.args[0] === 'approvals' && ['add', 'allow', 'release', 'revoke'].includes(call.args[1])) return `blocked: go-getter approvals ${call.args[1]} changes what an agent may do without asking, so a person runs it; ask the user to run it themselves`;
       // The one plan approval is a person's (decision 0155 item 1): an agent that approved its own plan would start every step.
       if (call?.args[0] === 'plan' && call.args[1] === 'approve') return 'blocked: a person approves a drafted plan (decision 0155); ask the user to run: ! go-getter plan approve <plan>';

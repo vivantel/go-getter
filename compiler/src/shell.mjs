@@ -204,8 +204,8 @@ function lex(text, start = 0, stop = null, depth = 0) {
 
 const base = (word) => word.split('/').pop();
 
-// The command name of `words` after wrappers (`env A=b`, `sudo`, `xargs`, ...) and leading assignments, and the words after it.
-export function commandOf(words) {
+// `words` after leading assignments and wrappers (`env A=b`, `nohup`, `timeout 9`, ...): the program and its arguments.
+export function unwrapWords(words) {
   let k = 0;
   while (k < words.length) {
     if (ASSIGNMENT.test(words[k])) k++;
@@ -214,7 +214,13 @@ export function commandOf(words) {
       while (k < words.length && (/^-/.test(words[k]) || ASSIGNMENT.test(words[k]) || /^[0-9]+(\.[0-9]+)?[smhd]?$/.test(words[k]))) k++;
     } else break;
   }
-  return { name: k < words.length ? base(words[k]) : null, args: words.slice(k + 1) };
+  return words.slice(k);
+}
+
+// The command name of `words` after wrappers and leading assignments, and the words after it.
+export function commandOf(words) {
+  const rest = unwrapWords(words);
+  return { name: rest.length ? base(rest[0]) : null, args: rest.slice(1) };
 }
 
 // The string literals of a program's source (single, double and backtick quoted), unescaped enough to be compared with a path.
