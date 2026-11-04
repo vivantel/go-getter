@@ -14,6 +14,7 @@ import { matchesAny } from './glob.mjs';
 import { createCheckpoint } from './checkpoint.mjs';
 import { runGateStack } from './gate-stack.mjs';
 import { noteGate } from './runs/record.mjs';
+import { releaseWorktree } from './worktree.mjs';
 import { flagPr } from './audit.mjs';
 import { stepForBranch } from './gate-defaults.mjs';
 
@@ -201,7 +202,7 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
 
 // `go-getter ship`: `pr` and then the squash merge on green. No CI at all stops it unless the project allows merging without.
 export async function ship(project, opts = {}, run = defaultRunner, log = () => {}) {
-  const { allowNoCi = false, ...rest } = opts;
+  const { allowNoCi = false, release: releaseFn = releaseWorktree, ...rest } = opts; // `release` is injectable for tests
   const opened = await openPr(project, { ...rest, verb: 'ship' }, run, log);
   if (opened.dryRun) return opened;
   const { pr } = opened;
@@ -222,7 +223,15 @@ export async function ship(project, opts = {}, run = defaultRunner, log = () => 
   if (state !== 'MERGED') throw new ShipError(`ship: the pull request is ${state}, not merged: ${pr.url}`);
   log('merge', `squashed ${pr.url}`);
   git('fetch', 'origin', defaultBranch(project).name);
-  return { ...opened, merged: true };
+  // The task is over: free its worktree (from the main checkout, never from inside it); the local branch is kept.
+  let release = null;
+  try {
+    release = releaseFn(project);
+  } catch (err) {
+    log('worktree', `not released: ${err.message.trim().split('\n')[0]}`);
+  }
+  if (release) log('worktree', release.released ? `removed ${release.path}; continue in the main checkout ${release.main}` : `kept ${release.path} (${release.reason})`);
+  return { ...opened, merged: true, release };
 }
 
 

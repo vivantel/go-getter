@@ -17,3 +17,4 @@ go-getter:
 2. Commit with a Conventional Commit subject (`type: summary`) and a body that says why.
 3. Push the branch and open one pull request for it.
 4. When CI is green, squash merge the pull request and delete the branch.
+5. After `go-getter ship` confirms the merge, it removes the task's worktree from the main checkout when the remote branch is gone or the branch or its pull request is merged, and nothing is uncommitted (the rule of `go-getter worktree clean`); it keeps the local branch and prints the main checkout path, where you continue. Gitignored files in a removed worktree are deleted with it. `go-getter plan start --worktree` at the concurrency limit runs the same clean once and retries once before refusing; that clean can remove a worktree whose remote branch is gone even if another session still uses it, so finish or push work before its branch is merged or closed.

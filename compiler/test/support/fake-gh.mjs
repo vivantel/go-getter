@@ -2,6 +2,7 @@
 // A stateful stand-in for the `gh` CLI, enough for `go-getter ship`: state lives in the JSON file named by GH_FAKE_STATE.
 // Tests set `checks` (a list of {name, bucket} or a list of such lists, one per poll) and `mergeFails` before running.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 const file = process.env.GH_FAKE_STATE;
 const state = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
@@ -29,6 +30,13 @@ if (args[0] === 'pr' && args[1] === 'view') {
   }
   out({ number: state.pr.number, url: state.pr.url, state: state.pr.state });
 }
+if (args[0] === 'pr' && args[1] === 'list') {
+  // `pr list --head <branch> --state merged --json headRefOid --jq ...`: the tip of a branch whose pull request this fake merged.
+  const head = flag('--head');
+  if (state.pr?.state !== 'MERGED' || state.pr.head !== head) out('');
+  const tip = spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${head}`], { encoding: 'utf8' }).stdout.trim();
+  out(tip);
+}
 if (args[0] === 'pr' && args[1] === 'checks') {
   const seq = state.checks ?? [];
   const polls = Array.isArray(seq[0]) ? seq : [seq];
@@ -45,6 +53,8 @@ if (args[0] === 'pr' && args[1] === 'merge') {
     process.exit(1);
   }
   state.pr.state = 'MERGED';
+  // With state.deleteRemote, like the real --delete-branch: the head branch disappears from origin.
+  if (state.deleteRemote && args.includes('--delete-branch') && state.pr.head) spawnSync('git', ['push', '-q', 'origin', '--delete', state.pr.head], { stdio: 'ignore' });
   state.merged = { squash: args.includes('--squash'), deleteBranch: args.includes('--delete-branch') };
   out('merged');
 }
