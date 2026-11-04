@@ -7,6 +7,7 @@ const num = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 
 export const OUTCOMES = ['allowed', 'denied', 'pass', 'fail', 'blocked', 'escalated'];
 export const TOKEN_FIELDS = ['input', 'cacheRead', 'cacheWrite', 'output'];
+export const COVERAGES = ['lower-bound', 'shared-directory'];
 export const MASK_KINDS = ['secret', 'email', 'card', 'iban', 'phone', 'national-id'];
 
 export const FIELDS = {
@@ -19,6 +20,8 @@ export const FIELDS = {
   trigger: ident,
   tokens: (v) => v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).every((k) => TOKEN_FIELDS.includes(k) && count(v[k])),
   cost: num,
+  // How far a spend figure can be trusted: a lower bound (part of the usage is not read) or shared with other sessions in the directory.
+  coverage: (v) => COVERAGES.includes(v),
   outcome: (v) => OUTCOMES.includes(v),
   escalations: count,
   redactions: count,

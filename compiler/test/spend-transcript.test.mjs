@@ -5,9 +5,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, appendFileSync, readFileSync, re
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { recordTranscriptSpend } from '../src/spend/transcript.mjs';
-import { recordHostSpend } from '../src/spend/index.mjs';
+import { recordHostSpend, settleSpend } from '../src/spend/index.mjs';
 import { readLog } from '../src/telemetry/record.mjs';
 import { startRun } from '../src/runs/record.mjs';
+import { buildReport } from '../src/runs/report.mjs';
 import { nextInRun } from '../src/runs/next.mjs';
 
 const decision = (name, body) => `---\nid: ${name}\ntitle: ${name}\nstatus: active\ndate: 2026-10-05\ntags: [x]\ngo-getter:\n${body}---\n\nx\n`;
@@ -94,5 +95,37 @@ test('run next stops on spend-cap from the recorded spend', () => {
     appendFileSync(s.transcript, line('b', 'm-one', { output_tokens: 1000000 }));
     recordHostSpend(s.dir, 'claude-code', { transcript_path: s.transcript });
     assert.equal(nextInRun(s.dir, { record: false }).stop.code, 'spend-cap');
+  } finally { s.cleanup(); }
+});
+
+test('a host added by a capability row alone is read through the kind registry, and the records carry the coverage', () => {
+  const s = setup();
+  try {
+    const caps = { newhost: { telemetry: { spendSource: { kind: 'transcript', format: 'claude-code-jsonl' } } } };
+    appendFileSync(s.transcript, line('a', 'm-one', { output_tokens: 1000000 }));
+    assert.equal(recordHostSpend(s.dir, 'newhost', { transcript_path: s.transcript }, caps).records, 1);
+    assert.equal(readLog(s.dir)[0].coverage, 'lower-bound');
+    assert.equal(recordHostSpend(s.dir, 'newhost', { transcript_path: s.transcript }, { newhost: { telemetry: { spendSource: { kind: 'transcript', format: 'unknown-format' } } } }).records, 0);
+  } finally { s.cleanup(); }
+});
+
+test('nextInRun writes nothing: only settleSpend records, and the report line carries the coverage note', () => {
+  const s = setup();
+  try {
+    mkdirSync(path.join(s.dir, '.opencode'));
+    mkdirSync(path.join(s.dir, 'docs/plans'), { recursive: true });
+    writeFileSync(path.join(s.dir, 'docs/plans/p.md'), '# P — plan\n\n**Status legend**: x\n\n### 1 One — [ ]\nIssue: #1\nClass: implement · Effort: low · Needs: none · Check: `true`\nDo: x.\nDone-when: x.\n');
+    const run = startRun(s.dir, { plan: 'docs/plans/p.md', steps: ['1'], spendCapUsd: 5, grants: [] });
+    const T = Date.now();
+    const exec = (cmd, args) => (args[0] === 'session'
+      ? JSON.stringify([{ id: 's1', updated: T + 5000, directory: s.dir }])
+      : JSON.stringify({ messages: [{ info: { role: 'assistant', modelID: 'm-one', cost: 1.5, tokens: { input: 1, output: 1 }, time: { created: T, completed: T + 1 } } }] }));
+    const caps = { opencode: { telemetry: { spendSource: { kind: 'sessions', format: 'opencode-export', command: 'opencode' } } } };
+    nextInRun(s.dir, { record: false });
+    assert.deepEqual(readLog(s.dir), []);
+    settleSpend(s.dir, run, caps, exec);
+    assert.equal(readLog(s.dir).length, 1);
+    const { text } = buildReport(s.dir, { ...run, endedAt: new Date().toISOString(), endReason: 'ended', stop: null, grants: [] }, { spendExec: exec });
+    assert.match(text, /\*\*Spend:\*\* \$1\.50 of a \$5 cap \(includes other sessions in this directory\)/);
   } finally { s.cleanup(); }
 });

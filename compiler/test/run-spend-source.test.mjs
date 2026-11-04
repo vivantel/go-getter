@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { READERS } from '../src/spend/index.mjs';
 import { spendCoverage } from '../src/runs/spend.mjs';
 import { startRun, activeRun, endRun } from '../src/runs/record.mjs';
 import { buildReport } from '../src/runs/report.mjs';
@@ -15,10 +16,10 @@ import { installGh } from './support/gh-stub.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'compiler/bin/go-getter.mjs');
-const caps = { a: { telemetry: { spendSource: 'transcript' } }, b: { telemetry: { spendSource: 'none' } }, c: { telemetry: { spendSource: 'sessions' } } };
+const caps = { a: { telemetry: { spendSource: { kind: 'transcript', format: 'claude-code-jsonl' } } }, b: { telemetry: { spendSource: { kind: 'none' } } }, c: { telemetry: { spendSource: { kind: 'sessions', format: 'opencode-export', command: 'x' } } } };
 
 test('every capability row names a spend source', () => {
-  for (const [host, c] of Object.entries(packageCapabilities())) assert.ok(['none', 'transcript', 'sessions'].includes(c.telemetry.spendSource), host);
+  for (const [host, c] of Object.entries(packageCapabilities())) assert.ok(Object.hasOwn(READERS, c.telemetry.spendSource?.kind) || c.telemetry.spendSource?.kind === 'none', host);
 });
 
 test('a host with a source meters the cap and says nothing', () => {

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { activeRun, lastRun, startRun, endRun, noteEvent, DEFAULT_HOURS } from '../runs/record.mjs';
 import { readPlan, repoRoot, unapprovedReason } from '../plan.mjs';
 import { approvalStatus } from '../plan-approval.mjs';
+import { settleSpend } from '../spend/index.mjs';
 import { nextInRun } from '../runs/next.mjs';
 import { buildReport, reportStep } from '../runs/report.mjs';
 import { planIssue, relPlan } from '../trackers/write.mjs';
@@ -48,6 +49,8 @@ export default async function runCommand({ args }) {
     }
     // The next step of the range, or why the run stops and hands over (exit 1). Metadata only.
     if (sub === 'next' && rest.every((a) => a === '--json')) {
+      const active = activeRun(project);
+      if (active?.spendCapUsd) settleSpend(project, active);
       const r = nextInRun(project);
       if (rest.includes('--json')) console.log(JSON.stringify(r, null, 2));
       else if (r.step) {

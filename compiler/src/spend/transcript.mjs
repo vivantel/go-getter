@@ -5,6 +5,7 @@
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { closeSync, existsSync, openSync, readSync, statSync } from 'node:fs';
+import { packageCapabilities } from '../governance.mjs';
 import { telemetryConfig } from '../telemetry/record.mjs';
 import { priceRows } from './price.mjs';
 import { addUsage, emitTotals, newTotals, readSpendState, writeSpendState } from './emit.mjs';
@@ -12,9 +13,10 @@ import { addUsage, emitTotals, newTotals, readSpendState, writeSpendState } from
 const KEEP_IDS = 64;
 const count = (v) => (Number.isInteger(v) && v >= 0 ? v : 0);
 
-// Per-host line parsers: a transcript line (parsed JSON) to { id, model, usage } or null when it carries no usage.
+// Line parsers by transcript format (the `format` of a host's `spendSource`): a transcript line (parsed JSON) to
+// { id, model, usage } or null when it carries no usage.
 export const PARSERS = {
-  'claude-code': (o) => {
+  'claude-code-jsonl': (o) => {
     const m = o?.type === 'assistant' ? o.message : null;
     const u = m?.usage;
     if (!u || typeof m.id !== 'string') return null;
@@ -27,8 +29,9 @@ export const PARSERS = {
 };
 
 // Sums the new usage lines of one transcript and writes one telemetry record per model. Returns { records, skipped }.
-export function recordTranscriptSpend(project, host, transcriptPath, { now = new Date() } = {}) {
-  const parse = PARSERS[host];
+// `source` is the host's `spendSource` row; `coverage` is stamped on each record.
+export function recordTranscriptSpend(project, host, transcriptPath, { now = new Date(), source = packageCapabilities()[host]?.telemetry?.spendSource, coverage } = {}) {
+  const parse = PARSERS[source?.format];
   if (!parse || typeof transcriptPath !== 'string' || !path.isAbsolute(transcriptPath)) return { records: 0, skipped: 0 };
   if (telemetryConfig(project).recording !== 'metadata-log' || !existsSync(transcriptPath)) return { records: 0, skipped: 0 };
   const key = createHash('sha256').update(transcriptPath).digest('hex').slice(0, 16);
@@ -63,7 +66,7 @@ export function recordTranscriptSpend(project, host, transcriptPath, { now = new
     seen.add(entry.id);
     addUsage(totals, rows, entry.model, entry.usage);
   }
-  const records = emitTotals(project, host, totals, { now });
+  const records = emitTotals(project, host, totals, { now, coverage });
   state[key] = { offset: from + Buffer.byteLength(text.slice(0, end)), ids: [...seen].slice(-KEEP_IDS) };
   writeSpendState(project, state);
   return { records, skipped };

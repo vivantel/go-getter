@@ -4,19 +4,20 @@
 // twice. Fails open: a missing command or unexpected output records nothing.
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { packageCapabilities } from '../governance.mjs';
 import { telemetryConfig } from '../telemetry/record.mjs';
 import { priceRows } from './price.mjs';
 import { addUsage, emitTotals, newTotals, readSpendState, writeSpendState } from './emit.mjs';
 
-const COMMANDS = { opencode: 'opencode', kilo: 'kilo' };
 const count = (v) => (Number.isFinite(v) && v > 0 ? Math.trunc(v) : 0);
 
 const defaultExec = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', timeout: 30_000, maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
 const json = (text) => JSON.parse(text.slice(text.search(/[[{]/)));
 
 // Sums the assistant messages completed since `since` (ISO time) in sessions of this project and records them.
-export function recordSessionSpend(project, host, since, { exec = defaultExec, now = new Date() } = {}) {
-  const cmd = COMMANDS[host];
+// The host's `spendSource` row gives the command to run; only the `opencode-export` format is read.
+export function recordSessionSpend(project, host, since, { exec = defaultExec, now = new Date(), source = packageCapabilities()[host]?.telemetry?.spendSource, coverage } = {}) {
+  const cmd = source?.format === 'opencode-export' ? source.command : null;
   if (!cmd || telemetryConfig(project).recording !== 'metadata-log') return { records: 0, sessions: 0 };
   const from = Date.parse(since);
   const root = path.resolve(project);
@@ -50,7 +51,7 @@ export function recordSessionSpend(project, host, since, { exec = defaultExec, n
     }
     sessions++;
   }
-  const records = emitTotals(project, host, totals, { now });
+  const records = emitTotals(project, host, totals, { now, coverage });
   if (sessions) writeSpendState(project, state);
   return { records, sessions };
 }
