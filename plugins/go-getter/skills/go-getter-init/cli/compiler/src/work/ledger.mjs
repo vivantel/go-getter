@@ -10,6 +10,7 @@ import { cleanGitEnv } from '../git-env.mjs';
 export const LEDGER_REF = 'refs/go-getter/claims';
 export const HEARTBEAT_REF = 'refs/go-getter/heartbeat';
 export const CACHE = 'refs/go-getter/cache';
+export const ACCEPT_SUFFIX = '.accept.json'; // acceptance results share the ledger tree too (decision 0172)
 export const APPROVAL_SUFFIX = '.approval.json'; // intake approvals share the ledger tree but are not claims (decision 0174 item 3)
 const ZERO = '0'.repeat(40);
 
@@ -83,7 +84,7 @@ export const noteLedger = (root, stem, commit) => git(root, ['update-ref', `${CA
 // Every version of every entry at `tip`: [{ file, versions: [{ entry|null, author, commit }] }], oldest version first.
 export function readHistory(root, tip) {
   if (!tip) return [];
-  const files = git(root, ['ls-tree', '--name-only', tip]).split('\n').filter((f) => f.endsWith('.json') && !f.endsWith(APPROVAL_SUFFIX));
+  const files = git(root, ['ls-tree', '--name-only', tip]).split('\n').filter((f) => f.endsWith('.json') && !f.endsWith(APPROVAL_SUFFIX) && !f.endsWith(ACCEPT_SUFFIX));
   return files.map((file) => {
     const log = git(root, ['log', '--reverse', '--format=%H%x1f%an', tip, '--', file]).split('\n').filter(Boolean);
     const versions = log.map((line) => {

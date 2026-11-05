@@ -11,8 +11,10 @@ import { answerAsk, formatAsk, listAsks, parkAsk, readAskFile, resumeClaim, swee
 import { approveUnit } from '../work/intake.mjs';
 import { checkScope, formatScope, requestChange } from '../work/scope-gate.mjs';
 import { planIssue, writeMode } from '../trackers/write.mjs';
+import { acceptUnit, unaccepted } from '../work/accept.mjs';
+import { LEVELS, recordEscape } from '../work/escapes.mjs';
 
-const USAGE = 'usage: go-getter work grant <unit> --scope <tokens> --spend <n> --shapes <ids> --asks all|default-reversible|unrecoverable-only --data <classes> [--effects reversible,money:50/day,physical:z1+z2,legal:nda@acme] [--to <worker> --to-kind human|agent|ci] [--parent <unit>] [--as <worker>] | spend <unit> <amount> [--as <worker>] | grant-check | next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> [--as <worker>] | asks [--mine] [--as <worker>] [--kind human|agent|ci] | answer <ask> <choice> [--as <worker>] [--kind human] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
+const USAGE = 'usage: go-getter work accept <unit> [--reviewer <cmd>] [--as <worker>] [--kind human|agent|ci] | accept-check | escape <unit> --merged-at step|plan|feature|product --found-at step|plan|feature|product | grant <unit> --scope <tokens> --spend <n> --shapes <ids> --asks all|default-reversible|unrecoverable-only --data <classes> [--effects reversible,money:50/day,physical:z1+z2,legal:nda@acme] [--to <worker> --to-kind human|agent|ci] [--parent <unit>] [--as <worker>] | spend <unit> <amount> [--as <worker>] | grant-check | next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> [--as <worker>] | asks [--mine] [--as <worker>] [--kind human|agent|ci] | answer <ask> <choice> [--as <worker>] [--kind human] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
 const FLAGS = ['--as', '--kind', '--remote', '--issuer', '--issuer-kind', '--parent'];
 
 // One comment on the unit's issue for a state change, only where the project's tracker-writes answer is `allow`.
@@ -323,6 +325,70 @@ function workGrantCheck() {
   return 0;
 }
 
+// `work accept <unit>`: run the unit's Accept on this checkout as a worker who never held it (decision 0172).
+async function workAccept(args) {
+  const [unit, ...rest] = args;
+  const flags = {};
+  for (let i = 0; i < rest.length; i++) {
+    if (!['--reviewer', '--as', '--kind', '--remote'].includes(rest[i]) || rest[i + 1] === undefined) {
+      console.error(USAGE);
+      return 2;
+    }
+    flags[rest[i].slice(2)] = rest[++i];
+  }
+  if (!unit || unit.startsWith('--') || (flags.kind && !KINDS.includes(flags.kind))) {
+    console.error(USAGE);
+    return 2;
+  }
+  const root = repoRoot(process.cwd());
+  let who;
+  try {
+    who = identity(root, { as: flags.as, kind: flags.kind });
+  } catch (e) {
+    console.error(`work: ${e.message}`);
+    return 2;
+  }
+  const r = await acceptUnit(root, unit, who, { reviewer: flags.reviewer, remote: flags.remote ? remoteOf(root, flags.remote) : undefined });
+  if (!r.ok) {
+    console.error(`work accept: ${r.error}`);
+    return r.code === 'author' ? 4 : 1;
+  }
+  if (r.passed) {
+    console.log(`${unit}: accepted by ${who.kind} ${who.id}`);
+    return 0;
+  }
+  console.error(`${unit}: acceptance failed; the unit is not done and returns to its owner\n${r.rec.evidence}`);
+  return 1;
+}
+
+// `work accept-check`: units marked done whose Accept has no passing acceptance; exit 1 names them (the guardrail's tier-2 check).
+function workAcceptCheck() {
+  const missing = unaccepted(repoRoot(process.cwd()));
+  for (const m of missing) console.error(`${m.unit}: marked done but ${m.why}`);
+  if (!missing.length) console.log('work accept-check: every done unit with an Accept has passed it');
+  return missing.length ? 1 : 0;
+}
+
+// `work escape <unit>`: a defect found at a higher level than the one that merged it raises the audit sampling rate below the finder (0172 item 4).
+function workEscape(args) {
+  const [unit, ...rest] = args;
+  const flags = {};
+  for (let i = 0; i < rest.length; i++) {
+    if (!['--merged-at', '--found-at'].includes(rest[i]) || rest[i + 1] === undefined) {
+      console.error(USAGE);
+      return 2;
+    }
+    flags[rest[i].slice(2)] = rest[++i];
+  }
+  if (!unit || !LEVELS.includes(flags['merged-at']) || !LEVELS.includes(flags['found-at'])) {
+    console.error(USAGE);
+    return 2;
+  }
+  const r = recordEscape(repoRoot(process.cwd()), { unit, mergedAt: flags['merged-at'], foundAt: flags['found-at'] });
+  console.log(r.escape ? `${unit}: an escape; the audit sampling rate at the ${r.raises} level rises. Turn it into a check, guardrail or reviewer instruction (decision 0158 item 3)` : `${unit}: found at or below the level that merged it; not an escape`);
+  return 0;
+}
+
 export default async function workCommand({ args }) {
   if (['park', 'asks', 'answer'].includes(args[0])) return workAsk(args[0], args.slice(1));
   if (args[0] === 'grant') return workGrant(args.slice(1));
@@ -332,6 +398,9 @@ export default async function workCommand({ args }) {
   if (args[0] === 'approve') return workApprove(args.slice(1));
   if (args[0] === 'scope-check') return workScopeCheck(args.slice(1));
   if (args[0] === 'request') return workRequest(args.slice(1));
+  if (args[0] === 'accept') return workAccept(args.slice(1));
+  if (args[0] === 'accept-check') return workAcceptCheck();
+  if (args[0] === 'escape') return workEscape(args.slice(1));
   const [sub, unit, ...rest] = args;
   const flags = {};
   for (let i = 0; i < rest.length; i++) {

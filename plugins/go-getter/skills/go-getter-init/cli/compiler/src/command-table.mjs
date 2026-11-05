@@ -16,7 +16,7 @@ export const COMMANDS = [
   { name: 'plan', usage: 'plan status|next|start|done|issue|draft|approve' },
   { name: 'run', usage: 'run start|status|next|attempt|end' },
   { name: 'queue', usage: 'queue enqueue|run|status' },
-  { name: 'work', usage: 'work next|approve|scope-check|request|park|asks|answer|grant|spend|grant-check|claim|heartbeat|release' },
+  { name: 'work', usage: 'work accept|accept-check|escape|next|approve|scope-check|request|park|asks|answer|grant|spend|grant-check|claim|heartbeat|release' },
   { name: 'worktree', usage: 'worktree new|list|clean' },
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },
   { name: 'artifacts', usage: 'artifacts index | assign [--base <ref>]' },

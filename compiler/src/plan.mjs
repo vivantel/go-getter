@@ -502,6 +502,8 @@ function findStep(file, id) {
   return { plan, step };
 }
 
+// Sets a step's marker without running its Check: for `work accept`, whose own check is the step's `Accept`.
+export const setStepMarker = (file, id, marker) => writeMarker(file, id, marker);
 const writeMarker = (file, id, marker) => writeFileSync(file, setMarker(readFileSync(file, 'utf8'), findStep(file, id).step, marker));
 
 // Sets a pending or blocked step to `[~]` once its Needs are done. With `worktree` (a slug) it first creates the task's
