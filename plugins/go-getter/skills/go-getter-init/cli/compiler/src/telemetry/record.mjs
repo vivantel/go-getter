@@ -2,7 +2,8 @@
 import path from 'node:path';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { adoptedData } from '../governance.mjs';
-import { validateRecord } from './schema.mjs';
+import { FIELDS, validateRecord } from './schema.mjs';
+import { approvalClass, isKnownAction } from './approval-class.mjs';
 
 // Built from parts so tool-call scanning by the restricted-paths hook does not flag this source file.
 export const STATE_DIR = path.join('.go-getter', 'state');
@@ -66,6 +67,27 @@ export function recordQuietly(project, rec) {
   }
 }
 
+// One metadata line for a point where work waited for a person: the action's shape, its class from the fixed table, the outcome.
+// A shape outside the table is recorded as `unclassified-stop`. Never throws.
+export function recordApproval(project, { action, outcome, host }) {
+  const shape = isKnownAction(action) ? action : 'unclassified-stop';
+  const rec = { event: 'approval', action: shape, class: approvalClass(shape), outcome, ...(typeof host === 'string' && FIELDS.host(host) ? { host } : {}) };
+  return recordQuietly(project, rec);
+}
+
+// Approvals per class (with their outcomes) and per day (UTC date) with the class split.
+export function summarizeApprovals(records) {
+  const out = { total: 0, byClass: {}, byDay: {} };
+  for (const r of records) {
+    if (r.event !== 'approval' || typeof r.class !== 'string') continue;
+    const day = String(r.ts).slice(0, 10);
+    out.total += 1;
+    out.byClass[r.class] = { ...out.byClass[r.class], [r.outcome]: (out.byClass[r.class]?.[r.outcome] ?? 0) + 1 };
+    out.byDay[day] = { ...out.byDay[day], [r.class]: (out.byDay[day]?.[r.class] ?? 0) + 1 };
+  }
+  return out;
+}
+
 export function summarize(records) {
   const by = (key) => records.reduce((acc, r) => (r[key] === undefined ? acc : { ...acc, [r[key]]: (acc[r[key]] ?? 0) + 1 }), {});
   const tokens = { input: 0, cacheRead: 0, cacheWrite: 0, output: 0 };
@@ -93,6 +115,7 @@ export function summarize(records) {
     tokens,
     cost: Number(records.reduce((s, r) => s + (r.cost ?? 0), 0).toFixed(6)),
     costByTaskClass,
+    approvals: summarizeApprovals(records),
     escalations: records.reduce((s, r) => s + (r.escalations ?? 0), 0),
   };
 }

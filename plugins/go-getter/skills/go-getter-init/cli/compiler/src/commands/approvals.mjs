@@ -9,6 +9,7 @@ import { APPROVABLE, isApprovable } from '../gate.mjs';
 import { restrictedPatterns } from '../hook.mjs';
 import { matchesAny } from '../glob.mjs';
 import { repoRoot } from '../plan.mjs';
+import { recordApproval } from '../telemetry/record.mjs';
 import { releaseApprovalId, releaseHead } from '../release.mjs';
 import { pendingRequests } from '../release-request.mjs';
 
@@ -64,6 +65,7 @@ export default function approvalsCommand({ args }) {
         return rest[1] && !sha ? 1 : 2;
       }
       const entry = addShape(project, id, { host: process.env.GO_GETTER_HOST });
+      recordApproval(project, { action: 'release', outcome: 'approved', host: process.env.GO_GETTER_HOST });
       console.log(`approved ${entry.id}: \`go-getter release --batch\` may merge the release pull request for that version while the default branch is at that commit`);
       return 0;
     }
