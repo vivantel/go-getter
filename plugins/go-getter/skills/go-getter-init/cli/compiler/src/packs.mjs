@@ -2,6 +2,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { validate } from './schema.mjs';
+import { checkDeclaration } from './mcp-functions.mjs';
 
 // Outputs of a text/list question sit under this key and apply whatever the answer is.
 export const ANY_ANSWER = '*';
@@ -83,6 +84,12 @@ export function validatePack(schema, pack, { dirName, knownPacks } = {}) {
     if (pack.replaces.pack === pack.id) errors.push('$.replaces.pack: a pack cannot replace itself');
     for (const q of pack.replaces.questions) if (!own.has(q)) errors.push(`$.replaces.questions: "${q}" is not a question of this pack`);
   }
+  const toolNames = new Set();
+  (pack.mcp ?? []).forEach((t, i) => {
+    if (toolNames.has(t.name)) errors.push(`$.mcp[${i}].name: duplicate tool "${t.name}"`);
+    toolNames.add(t.name);
+    errors.push(...checkDeclaration(t, `$.mcp[${i}]`));
+  });
   for (const r of pack.requires ?? []) if (knownPacks && !knownPacks.has(r)) errors.push(`$.requires: unknown pack "${r}"`);
 
   const questions = new Map();

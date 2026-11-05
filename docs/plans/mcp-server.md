@@ -10,7 +10,7 @@ Decision `docs/decisions/0139-go-getter-serves-adopted-pack-verbs-as-read-only-m
 
 **Rules the design fixes (do not re-decide):** version 1 ships read tools only, enforced by a fixed read-only function list at run time; `run start|end`, `approvals add|allow|revoke` and `secret` are never exposed; stdio only; off by default; a tool prints what its CLI verb prints after the secret and personal-data check; the tools listed are those of adopted packs only.
 
-### M2 Pack tool declarations and the never-list — [ ]
+### M2 Pack tool declarations and the never-list — [x]
 Issue: #177
 Class: implement · Effort: medium · Needs: none · Check: `node --test compiler/test/mcp-declarations.test.mjs`
 Do: add an optional `mcp` section to the pack format (name, description, input schema of ids and enumerated values only, a named read-only function, class `read|write`) with schema validation; the registry lists the tools of the adopted packs only and refuses at load any declaration whose function is not on the fixed in-code list of read-only functions (so a vendored pack cannot widen it); a test guards the list against `run start|end`, `approvals`, `secret` and every writing verb, and fails if a shipped tool is not `read`.
