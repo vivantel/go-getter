@@ -85,6 +85,16 @@ export function createCheckpoint(project, { label, keep = DEFAULT_KEEP, now = ne
   return { ref, commit, pruned: pruneCheckpoints(project, keep) };
 }
 
+// A commit of the working tree on top of `parents`, with no ref written: the per-unit checkpoint that a heartbeat pushes (decision 0173
+// item 2). Null outside a git repository. `tree` is the snapshot's tree, for a caller that wants to look at what it holds.
+export function snapshotCommit(project, { message, parents = [] } = {}) {
+  const root = toplevel(project);
+  if (!root) return null;
+  const tree = snapshotTree(root);
+  const commit = git(root, [...IDENTITY, 'commit-tree', tree, ...parents.flatMap((p) => ['-p', p]), '-m', message]);
+  return { commit, tree };
+}
+
 // How the working tree now differs from `ref`: M modified since, D deleted since (restore brings it back), A created
 // since (restore leaves it in place). Null outside a git repository.
 export function restorePlan(project, ref) {
