@@ -2,6 +2,8 @@
 // String values are short identifiers so prompt or file content cannot ride along in an allowed field.
 const IDENT = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,63}$/;
 const ident = (v) => typeof v === 'string' && IDENT.test(v);
+// A guardrail id is a lowercase kebab-case slug, the shape of a file name under docs/guardrails/; spaces, quotes and paths fail.
+const GUARDRAIL_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const count = (v) => Number.isInteger(v) && v >= 0;
 const num = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 
@@ -18,6 +20,8 @@ export const FIELDS = {
   effort: ident,
   taskClass: ident,
   trigger: ident,
+  // The guardrail that caused a denied pre-tool call or a gate stop; optional, so older records stay valid.
+  guardrail: (v) => typeof v === 'string' && GUARDRAIL_ID.test(v),
   tokens: (v) => v !== null && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).every((k) => TOKEN_FIELDS.includes(k) && count(v[k])),
   cost: num,
   // How far a spend figure can be trusted: a lower bound (part of the usage is not read) or shared with other sessions in the directory.

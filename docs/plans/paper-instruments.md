@@ -17,7 +17,7 @@ Context: the recorder prunes lines older than `telemetry-retention-days` on ever
 Do: write a new decision that supersedes 0052 with a longer retention and says why (a paper baseline plus treatment window must outlive 30 days; the log is local, gitignored and metadata-only). Proposed value 365 days; the owner may change it. Keep the recording mode unchanged. **Drafted 2026-11-05 as decision 0201 on the branch `docs/telemetry-retention-365`, with the test; it takes effect when the owner accepts it.**
 Done-when: the new decision is active and 0052 is superseded; the test sets the value, writes a record dated 31 days ago and shows it survives a write; `go-getter check` passes.
 
-### P2 Guardrail id on denials and stops — [ ] ‖
+### P2 Guardrail id on denials and stops — [x] ‖
 Issue: #315
 Class: implement · Needs: none · Check: `node --test compiler/test/telemetry-guardrail-id.test.mjs`
 Context: on the main checkout 20 `pre-tool` denials and 131 `gate:stop` records carry no guardrail id (`taskClass` is empty on the denials), so a denial cannot be tied to the guardrail that caused it. Records are written by `compiler/src/telemetry/record.mjs` and validated by `compiler/src/telemetry/schema.mjs`; the stop record is built in `compiler/src/gate-stop.mjs`. Thesis served: C1, C3.
