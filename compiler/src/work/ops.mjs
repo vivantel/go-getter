@@ -7,14 +7,16 @@ import os from 'node:os';
 import path from 'node:path';
 import { readArtifacts } from '../artifacts.mjs';
 import { parsePlan, planFiles, splitRef, stemOf, unitRef } from '../plan.mjs';
-import { KINDS, annotate, briefOf, claimConfig, conflict, lastValidBeat, leaseEnd, makeEntry, sensitiveKinds, validEntry } from './claim.mjs';
+import { KINDS, annotate, briefOf, briefVersion, claimConfig, conflict, lastValidBeat, leaseEnd, makeEntry, sensitiveKinds, validEntry } from './claim.mjs';
 import { applyGrants, humanIds } from './grant.mjs';
+import { briefNote, pushUnitCheckpoint, resumePoint } from './recovery.mjs';
 import { badWorkerId, beatTimes, cachedLedger, git, toplevel, updateRecord, worktreeGitDir, noteLedger, commitEntries, fetchLedger, pushHeartbeat, pushRef, readBeats, readHistory, readRecord, remoteOf, workerId, ledgerRef } from './ledger.mjs';
 
 const RETRIES = 8;
+export const MAX_CLAIMANTS = 3; // decision 0173 item 3
 // A reference as a full unit id: `<stem>#<id>`, or the bare stem for the feature itself.
 const fullRef = (ref, stem) => (ref.includes('#') || ref === stem ? ref : `${stem}#${ref}`);
-const entryFile = (unit) => `${unit.includes('#') ? unit.split('#')[1] : unit}.json`;
+export const entryFile = (unit) => `${unit.includes('#') ? unit.split('#')[1] : unit}.json`;
 const fail = (code, error, extra = {}) => ({ ok: false, code, error, ...extra });
 
 // Pack answers of the orchestration decisions that apply to claims.
@@ -169,10 +171,10 @@ export function otherLedgerEntry(root, unit, opts) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const backoff = (n) => Math.min(1000, 25 * 2 ** n) * (0.5 + Math.random());
-const diverged = (ledger) => `the ledger on the remote does not continue the last version this clone saw (it was rewritten or deleted), so it is not trusted and nothing was written; ${ledger.recovery}`;
+export const diverged = (ledger) => `the ledger on the remote does not continue the last version this clone saw (it was rewritten or deleted), so it is not trusted and nothing was written; ${ledger.recovery}`;
 
 // What a reader needs to judge entries: the clock margin, the longest lease per kind, now, and each holder's heartbeat history.
-const validity = (settings, now, beatsOf) => ({ skewMs: settings.skewMs, maxLeaseMs: settings.leaseMs, nowMs: now.getTime(), beatsOf });
+export const validity = (settings, now, beatsOf) => ({ skewMs: settings.skewMs, maxLeaseMs: settings.leaseMs, nowMs: now.getTime(), beatsOf });
 
 // Entries of one feature, annotated with their liveness. Reads the last ledger seen (else the local ref) unless `remote` names a
 // remote to fetch from first (an unreachable remote leaves the last one seen). For `plan status`.
@@ -230,12 +232,16 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
     }
     const previous = entries.find((e) => e.unit === unit);
     if (previous?.blockedByHuman) return fail('blocked-by-human', `${unit} is blocked by a human: an ask went unanswered past its last owner; answer it (go-getter work answer) before claiming`);
+    if (previous?.exit) return fail(previous.exit, `${unit} is ${previous.exit}${previous.successor ? `; its successor is ${previous.successor}` : ''}`, previous.successor ? { successor: previous.successor } : {});
+    // a unit that has had its three claimants (lapsed ones count) is not worked again: this claim is recorded, then parked into the quarantine ask
+    const exhausted = Boolean(previous && !previous.answer && (previous.counters?.claimants ?? 0) >= MAX_CLAIMANTS);
     const takeover = previous && previous.state !== 'released';
     if (takeover && rem && hostDate === null) return fail('clock-unverified', `${unit} is held by ${previous.holder.id} under a lapsed lease, but the host's time could not be learned from this remote (no Date header from the remote or from https://<host>/), so this clock cannot be shown to be right and the lease is not taken over. To go on: the holder releases it (go-getter work release ${unit}), or the owner runs that as the holder (--as ${previous.holder.id}), or use an https remote`);
     if (!takeover && rem && hostDate === null && !unverifiedClock) {
       return fail('clock-unverified', `${unit}: the host's time could not be learned from this remote (no Date header from the remote or from https://<host>/), so this clock cannot be shown to be within the ${Math.round(settings.skewMs / 60000)} minute margin and no claim was made (decision 0166). To go on: use a remote whose host answers over https, or the owner passes --unverified-clock to claim a unit nobody holds, accepting that a wrong clock can break the lease`);
     }
-    const next = takeover ? { ...entry, counters: { failures: previous.counters?.failures ?? 0, claimants: (previous.counters?.claimants ?? 0) + 1 } } : entry;
+    // failures count under one claim; claimants accumulate across claims until an owner answers (which starts the count again)
+    const next = previous && !previous.answer ? { ...entry, counters: { failures: 0, claimants: (previous.counters?.claimants ?? 0) + 1 } } : entry;
     if (previous?.spent) next.spent = previous.spent; // what a unit spent stays on its entry whoever holds it next
     const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: author ?? who.id, message: `claim ${unit} by ${who.kind} ${who.id}`, now });
     await hooks?.beforePush?.({ attempt, tip: ledger.tip, commit });
@@ -257,11 +263,17 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
     if (!rem) note = 'no remote: this claim is local to this repository and excludes only workers who share it';
     else if (hostDate === null) note = "WARNING: --unverified-clock: the host's time could not be learned, so this clock was not checked; a wrong clock can break leases";
     updateRecord(root, (r) => {
-      r.claims[unit] = { stem, remote: rem, worker: who, leaseMs: next.leaseMs, expires: next.expires, scope: next.scope, worktree: root };
+      r.claims[unit] = { stem, remote: rem, worker: who, leaseMs: next.leaseMs, expires: next.expires, scope: next.scope, worktree: root, brief: next.brief };
     });
     if (notify) await notify(`claimed by ${who.kind} ${who.id}`, { unit, file: found.file, step });
     const resume = previous?.state === 'released' && previous.ask?.kind === 'parked-ask' && previous.answer ? { branch: previous.ask.branch, base: previous.ask.base } : null;
-    return { ok: true, entry: next, commit, local: !rem, note, resume, tookOver: takeover && previous.holder.id !== who.id ? previous.holder : null };
+    if (exhausted) {
+      const { quarantineUnit } = await import('./lifecycle.mjs');
+      const q = await quarantineUnit(root, unit, who, { reason: `${next.counters.claimants} claimants, the earlier ones lapsed or failed`, now, remote: rem });
+      return fail('quarantined', `${unit} has had ${MAX_CLAIMANTS} claimants and is quarantined: the parent's owner splits it, fixes its brief or raises its budget (go-getter work answer on the ask); it is not retried unchanged${q.ok ? '' : ` (the ask could not be raised: ${q.error})`}`, q.ok ? { ask: q.ask } : {});
+    }
+    const recovered = previous && previous.state !== 'parked' ? resumePoint(root, rem, unit) : null; // where the previous holder left off, if it pushed anything
+    return { ok: true, entry: next, commit, local: !rem, note, resume, recovered, tookOver: takeover && previous.holder.id !== who.id ? previous.holder : null };
   }
   return fail('contended', `${unit}: the ledger kept changing; try again`);
 }
@@ -288,7 +300,17 @@ function parentProblem(root, parent, { stem, step, entries, view, who, ctx }) {
 
 // Renews the caller's claim on `ref` when less than half of the lease remains: one heartbeat commit on the worker's own ref, naming
 // the units it renews (those held from this worktree). Nothing else is written. { ok, renewed, reason }.
-export async function heartbeatUnit(root, ref, who, { now = clockNow(), remote, hostDate, acceptRemoteLedger = false } = {}) {
+export async function heartbeatUnit(root, ref, who, opts = {}) {
+  const r = await beat(root, ref, who, opts);
+  if (!r.ok) return r;
+  // every heartbeat tells a worker whose pinned brief is out of date (decision 0173 item 6)
+  const pinned = readRecord(root).claims?.[ref]?.brief;
+  const current = pinned ? findUnit(root, ref) : null;
+  const note = current?.step ? briefNote(pinned, briefVersion(briefOf(current.step))) : null;
+  return note ? { ...r, briefChanged: note } : r;
+}
+
+async function beat(root, ref, who, { now = clockNow(), remote, hostDate, acceptRemoteLedger = false } = {}) {
   const unit = ref;
   const record = readRecord(root);
   const mine = record.claims?.[unit];
@@ -319,6 +341,11 @@ export async function heartbeatUnit(root, ref, who, { now = clockNow(), remote, 
   updateRecord(root, (r) => {
     for (const u of units) if (r.claims[u]) r.claims[u].expires = new Date(now.getTime() + r.claims[u].leaseMs).toISOString();
   });
+  try {
+    pushUnitCheckpoint(root, rem, unit); // what a successor resumes from if this worker is gone before the next one (best effort)
+  } catch {
+    // a checkpoint is never worth failing a heartbeat for
+  }
   return { ok: true, renewed: true, pushed: push.pushed, until: new Date(now.getTime() + mine.leaseMs + settings.skewMs).toISOString() };
 }
 
@@ -367,6 +394,13 @@ export async function releaseUnit(root, ref, who, { now = clockNow(), remote, no
     if (!entry || entry.state === 'released') return fail('not-held', `${unit} has no live claim`);
     if (entry.holder.id !== who.id) return fail('not-holder', `${unit} is held by ${entry.holder.kind} ${entry.holder.id}, not ${who.id}`);
     const next = { ...entry, state: 'released', scope: [], updated: now.toISOString() };
+    if (attempt === 0) {
+      try {
+        pushUnitCheckpoint(root, rem, unit); // the next claimant starts from this, not from nothing
+      } catch {
+        // best effort
+      }
+    }
     const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: who.id, message: `release ${unit} by ${who.kind} ${who.id}`, now });
     const pushed = pushRef(root, rem, ledgerRef(stem), commit, ledger.tip);
     if (pushed.offline) return fail('offline', `the remote refused or could not be reached: ${pushed.error}`);

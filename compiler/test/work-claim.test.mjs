@@ -186,7 +186,7 @@ test('a delegated child is claimed beside its parent, which then holds no scope'
   assert.equal(p.children, 2);
 });
 
-test('a renewal writes only the heartbeat and checkpoint refs, only under half the lease', async () => {
+test('a renewal writes only the heartbeat and the unit checkpoint refs, only under half the lease', async () => {
   const w = world();
   const a = w.clone('a');
   await claimUnit(a, 'feat#S3', who('alice'), { now: T0 });
@@ -203,8 +203,8 @@ test('a renewal writes only the heartbeat and checkpoint refs, only under half t
   assert.equal(sh(w.bare, 'rev-parse', ledgerRef('feat')), ledgerTip, 'the ledger did not move');
   assert.equal(updates(w.bare, ledgerRef('feat')).length, ledgerLog);
   assert.ok(sh(w.bare, 'rev-parse', heartbeatRef('alice')));
-  assert.equal(sh(w.bare, 'for-each-ref', 'refs/go-getter/checkpoints'), '', 'no checkpoint is pushed');
-  assert.deepEqual(sh(w.bare, 'for-each-ref', '--format=%(refname)', 'refs/go-getter').split('\n').sort(), [heartbeatRef('alice'), ledgerRef('feat')].sort(), 'only the heartbeat ref was added');
+  assert.deepEqual(sh(w.bare, 'for-each-ref', '--format=%(refname)', 'refs/go-getter/checkpoints').split('\n'), ['refs/go-getter/checkpoints/feat#S3'], 'only the unit checkpoint is pushed (decision 0173 item 2)');
+  assert.deepEqual(sh(w.bare, 'for-each-ref', '--format=%(refname)', 'refs/go-getter').split('\n').sort(), [heartbeatRef('alice'), ledgerRef('feat'), 'refs/go-getter/checkpoints/feat#S3'].sort(), 'only the heartbeat and checkpoint refs were added');
   assert.equal(sh(a, 'status', '--porcelain'), status, 'the working tree did not change');
   assert.equal(sh(a, 'rev-parse', 'HEAD'), head);
   // a second renewal is a fast-forward of the first

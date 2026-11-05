@@ -63,6 +63,8 @@ export function nextUnits(root, { ownerKind = 'agent', worker = null, now = cloc
       else if (openNeeds(parsed, step, external).length) skip(`needs ${openNeeds(parsed, step, external).join(', ')}`);
       else if (view.annotated.states.get(step.unit)?.live) skip('claimed');
       else if (view.annotated.states.get(step.unit)?.entry.blockedByHuman) skip('blocked-by-human');
+      else if (view.annotated.states.get(step.unit)?.entry.exit) skip(view.annotated.states.get(step.unit).entry.exit);
+      else if (view.annotated.states.get(step.unit)?.entry.counters?.claimants >= 3 && !view.annotated.states.get(step.unit).entry.answer) skip('quarantined: three claimants'); // decision 0173 item 3
       else if (!intake.ready) skip(intake.reason);
       else if (workerFull) skip(`worker limit: ${worker.id} holds ${heldBy} of ${flow.wipPerWorker}`);
       else if (featureFull) skip(`feature limit: ${stem} has ${flow.wipPerFeature} live claims`);

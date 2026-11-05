@@ -9,7 +9,7 @@ import { cleanGitEnv } from '../git-env.mjs';
 
 export const LEDGER_REF = 'refs/go-getter/claims';
 export const HEARTBEAT_REF = 'refs/go-getter/heartbeat';
-const CACHE = 'refs/go-getter/cache';
+export const CACHE = 'refs/go-getter/cache';
 export const APPROVAL_SUFFIX = '.approval.json'; // intake approvals share the ledger tree but are not claims (decision 0174 item 3)
 const ZERO = '0'.repeat(40);
 
@@ -43,7 +43,7 @@ const NET = { allowFail: true, env: PUSH_ENV, timeout: 20_000 }; // a network re
 
 // Fetches `ref` of the remote into the cache ref. { tip, online }: tip null when the remote has no such ref; online false when
 // the remote could not be reached.
-function fetchRef(root, remote, ref, cache) {
+export function fetchRef(root, remote, ref, cache) {
   const ls = git(root, ['ls-remote', remote, ref], NET);
   if (ls === null) return { tip: null, online: false };
   const tip = ls.split('\n').map((l) => l.split('\t')).find(([, r]) => r === ref)?.[0] ?? null;

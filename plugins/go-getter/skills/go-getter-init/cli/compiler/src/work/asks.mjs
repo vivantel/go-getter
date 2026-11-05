@@ -82,13 +82,13 @@ export function readAskFile(file) {
 
 // Parks the unit `ref` held by `who` on `ask` ({ what, default, evidence, class, impact? }): the worker is released, the claim moves to
 // the non-expiring `parked` state without its scope tokens, and the ask is recorded in the entry. { ok, entry, ask } | { ok: false }.
-export async function parkAsk(root, ref, who, ask, { now = clockNow(), remote, acceptRemoteLedger = false } = {}) {
+export async function parkAsk(root, ref, who, ask, { now = clockNow(), remote, acceptRemoteLedger = false, route: given } = {}) {
   const found = findUnit(root, ref);
   if (found.error) return fail('unknown-unit', found.error);
   const kinds = sensitiveKinds([ask]);
   if (kinds.length) return fail('sensitive', `refused: the ask would write ${kinds.join(', ')} to the ledger; remove it first`);
   const settings = claimSettings(root);
-  const route = routeOf(root, found);
+  const route = given ?? routeOf(root, found);
   const { branch, base } = branchesOf(root);
   const full = {
     kind: ASK_KIND,
