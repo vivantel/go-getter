@@ -45,7 +45,7 @@ Context: decision 0179 makes a meter a first-class instrument and a reading a un
 Do: define a meter file for the daily readings of (a) enforcement entries with `origin: derived` over all enforcement entries, (b) guardrails that are advisory-only (every tier 1) over all guardrails, with the denominator rule written in the meter: the live top-level `docs/guardrails/*.md` of the ref it is read on, excluding `archive/` and `INDEX.md`. Readings are made by a command, not by a person estimating.
 Done-when: the test reads the meter on a fixture repo and gets exact figures; `measure series` prints them; the denominator rule appears in the meter file verbatim.
 
-### P6 Bypass script as a keyless eval — [ ] ‖
+### P6 Bypass script as a keyless eval — [x] ‖
 Issue: #319
 Class: implement · Effort: high · Needs: none · Check: `node compiler/bin/go-getter.mjs eval`
 Context: the keyless evals (decision 0065) run with `promptfoo` and passed 14 of 14 on 2026-11-04 from the worktree entry point. They show passes, not bypasses. The paper's AT1 claim needs the edge attacked by a scripted adversary whose attempts and predicted outcomes were committed with dates before the checks change. The adversary is the author's, and the paper says so. Thesis served: C1. Open question for the implementer: whether bypass attempts can be written as scripted tool calls against the compiled hooks without a model call.

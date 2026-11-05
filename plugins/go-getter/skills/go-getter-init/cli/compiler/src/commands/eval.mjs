@@ -1,10 +1,14 @@
 // go-getter eval [promptfoo args]: run the behavior evals (evals/promptfooconfig.yaml) with the pinned dev dependency.
 // The cases are deterministic (scripted answers, no model, no API key); promptfoo is a devDependency only.
+// go-getter eval bypass [--only ids] [--json] [--strict]: the bypass script (evals/bypass.mjs), which needs no promptfoo.
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 export default function evalCommand({ root, args }) {
+  if (args[0] === 'bypass') {
+    return spawnSync(process.execPath, [path.join(root, 'evals/bypass.mjs'), ...args.slice(1)], { cwd: root, stdio: 'inherit' }).status ?? 1;
+  }
   const bin = path.join(root, 'node_modules/.bin/promptfoo');
   if (!existsSync(bin)) {
     console.error('eval: promptfoo is not installed; run "npm install" first');
