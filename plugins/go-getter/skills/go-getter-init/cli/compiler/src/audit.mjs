@@ -4,6 +4,7 @@
 //
 // audit.json shape (read by digest.mjs): { prs: [int], flagged: [int] }. `prs` is everything the owner reads (the sample and
 // the flagged ones, ascending); `flagged` is the subset the reviewer flagged.
+import { samplingRate } from './work/escapes.mjs';
 import path from 'node:path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { AUDIT_FILE, mergedSince, lastDigest } from './digest.mjs';
@@ -66,15 +67,16 @@ export function pickAudit(merged, flagged, { rate = DEFAULT_RATE, seed = Date.no
 }
 
 // Picks from the PRs merged since the last digest (or `since`), writes audit.json, and consumes the flagged PRs it included.
-export function auditPick(project, { since, rate = DEFAULT_RATE, seed, now = new Date(), exec } = {}) {
+export function auditPick(project, { since, rate, seed, now = new Date(), exec } = {}) {
   const from = since ?? lastDigest(project, now);
   const merged = mergedSince(project, from, { exec });
   if (merged === null) throw new Error('audit pick needs the gh CLI to list merged pull requests');
-  const picked = pickAudit(merged.map((p) => p.number), flaggedPrs(project), { rate, ...(seed !== undefined ? { seed } : {}) });
+  const used = rate ?? samplingRate(project, 'step', { base: DEFAULT_RATE, now }); // raised by escapes found a level up (decision 0172 item 4)
+  const picked = pickAudit(merged.map((p) => p.number), flaggedPrs(project), { rate: used, ...(seed !== undefined ? { seed } : {}) });
   writeJson(project, AUDIT_FILE, picked);
   const rest = flaggedPrs(project).filter((n) => !picked.flagged.includes(n));
   writeJson(project, FLAGGED_FILE, { prs: rest });
-  return { ...picked, merged: merged.length, since: from.toISOString() };
+  return { ...picked, merged: merged.length, rate: used, since: from.toISOString() };
 }
 
 const csv = (s) => `"${String(s).replace(/"/g, '""')}"`;

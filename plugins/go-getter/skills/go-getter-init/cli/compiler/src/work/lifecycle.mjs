@@ -160,7 +160,7 @@ export async function recordDenial(root, ref, who, guardrail, { now = clockNow()
 // ---- cancel and supersede
 
 // The units under `unit`: those the plan names as its children (transitively) and those whose ledger entries say so.
-function descendants(found, entries) {
+export function descendants(found, entries) {
   const { parsed, unit, stem } = found;
   const all = [...parsed.steps, ...parsed.plans, ...(parsed.feature ? [parsed.feature] : [])];
   const parentOf = new Map(all.filter((u) => u.parent).map((u) => [u.unit, unitRef(u.parent, stem)]));

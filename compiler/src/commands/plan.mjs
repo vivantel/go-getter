@@ -195,6 +195,12 @@ export default async function planCommand({ args, shared, io }) {
       return 0;
     }
     if (sub === 'done') {
+      const { doneGate } = await import('../work/accept.mjs'); // loaded here: accept.mjs imports plan.mjs
+      const gate = doneGate(repoRoot(cwd), file, opts.id);
+      if (!gate.ok) {
+        console.error(`${opts.id}: ${gate.reason}; marker unchanged`);
+        return 1;
+      }
       const r = doneStep(cwd, file, opts.id);
       if (r.ok) {
         console.log(r.changed ? `${opts.id}: check passed; [x] in ${rel}` : `${opts.id}: already done`);
