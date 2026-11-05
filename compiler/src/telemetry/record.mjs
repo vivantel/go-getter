@@ -88,6 +88,8 @@ export function summarize(records) {
     taskClasses: by('taskClass'),
     // Why a gate stopped or a hook declined, as `class:trigger` (metadata only).
     triggers: records.reduce((acc, r) => (r.trigger === undefined ? acc : { ...acc, [`${r.taskClass ?? r.event}:${r.trigger}`]: (acc[`${r.taskClass ?? r.event}:${r.trigger}`] ?? 0) + 1 }), {}),
+    // Denied pre-tool calls and gate stops by the guardrail that caused them (records without the field are not counted).
+    byGuardrail: records.reduce((acc, r) => (r.guardrail === undefined ? acc : { ...acc, [r.guardrail]: { ...acc[r.guardrail], [r.event]: (acc[r.guardrail]?.[r.event] ?? 0) + 1 } }), {}),
     tokens,
     cost: Number(records.reduce((s, r) => s + (r.cost ?? 0), 0).toFixed(6)),
     costByTaskClass,

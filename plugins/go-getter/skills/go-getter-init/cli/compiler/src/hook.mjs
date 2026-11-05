@@ -277,9 +277,9 @@ function identityGate(project, entry, payload, host) {
   const command = shellCommand(payload);
   if (!subs.length || typeof command !== 'string') return null;
   const decide = (text, sub) => {
-    if (canPrompt(host)) return { deny: false, ask: true, reason: `go-getter ${sub} writes outside this machine: approve "${text}"?` };
+    if (canPrompt(host)) return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter ${sub} writes outside this machine: approve "${text}"?` };
     if (hasNativeAsk(host)) return null;
-    return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is an outward command and needs a human; ask the user to run it themselves` };
+    return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is an outward command and needs a human; ask the user to run it themselves` };
   };
   const parsed = commandWords(command);
   if (!parsed) {
@@ -393,7 +393,7 @@ function approvalsStoreRefusal(project, payload) {
 function firstUse(project, call, host, guardrail) {
   const text = call.words.join(' ');
   if (!canPrompt(host)) {
-    return { deny: true, reason: `blocked by guardrail ${guardrail}: "${text}" is not approved to use ${call.path}; ask the user to approve it by running: go-getter approvals add ${call.path} -- ${text}` };
+    return { deny: true, guardrail, reason: `blocked by guardrail ${guardrail}: "${text}" is not approved to use ${call.path}; ask the user to approve it by running: go-getter approvals add ${call.path} -- ${text}` };
   }
   let files = [];
   try {
@@ -403,7 +403,7 @@ function firstUse(project, call, host, guardrail) {
     // a pending record that cannot be written means the run will be refused, which is safe
   }
   const shown = files.slice(0, 6).join(', ') + (files.length > 6 ? `, and ${files.length - 6} more` : '');
-  return { deny: false, ask: true, reason: `go-getter would run "${text}" with ${call.path} in its environment (values are scrubbed from its output and never shown to the agent).${files.length ? ` It runs ${files.length} file${files.length === 1 ? '' : 's'}: ${shown}.` : ''} Approving also remembers it until those files change.` };
+  return { deny: false, ask: true, guardrail, reason: `go-getter would run "${text}" with ${call.path} in its environment (values are scrubbed from its output and never shown to the agent).${files.length ? ` It runs ${files.length} file${files.length === 1 ? '' : 's'}: ${shown}.` : ''} Approving also remembers it until those files change.` };
 }
 
 // Outward shapes a remembered approval or an active run may allow (decision 0130). Null when this call is not governed that way
@@ -427,7 +427,7 @@ function shapeGate(project, entry, payload, host) {
   if (!canPrompt(host)) return null;
   const text = command.length > 200 ? `${command.slice(0, 200)}…` : command;
   const failed = verdicts.find((v) => v.reason);
-  if (failed) return { deny: false, ask: true, reason: `go-getter: "${text}" is allowed without asking, but ${failed.reason}. Approve this one?` };
+  if (failed) return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter: "${text}" is allowed without asking, but ${failed.reason}. Approve this one?` };
   // First use: remember the shape if the person says yes (the post-tool hook promotes it once the call ran).
   for (const v of verdicts.filter((x) => x.firstUse)) {
     try {
@@ -437,7 +437,7 @@ function shapeGate(project, entry, payload, host) {
     }
   }
   const ids = verdicts.filter((v) => v.firstUse).map((v) => v.id).join(', ');
-  return { deny: false, ask: true, reason: `go-getter: approve "${text}"? Approving remembers ${ids} for this project until revoked (go-getter approvals revoke), and its preconditions (green checks, default branch, a step of the run) are checked at each use.` };
+  return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter: approve "${text}"? Approving remembers ${ids} for this project until revoked (go-getter approvals revoke), and its preconditions (green checks, default branch, a step of the run) are checked at each use.` };
 }
 
 // MCP tool classes (decision 0138 item 2). A tool the project marked read is free; any other tool is a write, decided like an outward
@@ -449,7 +449,7 @@ function mcpClassGate(project, entry, name, host) {
   if (!call?.server || isReadTool(call, entry.parsed.args)) return null;
   const id = mcpShapeId(call);
   const text = `${call.server} ${call.tool}`;
-  if (!MCP_SHAPE.test(id)) return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" has a name go-getter cannot approve once; mark it read or ask the user to use it another way` };
+  if (!MCP_SHAPE.test(id)) return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" has a name go-getter cannot approve once; mark it read or ask the user to use it another way` };
   const verdict = shapeAllowance(project, id, name);
   if (verdict.allowed) return null;
   if (host && canPrompt(host)) {
@@ -458,9 +458,9 @@ function mcpClassGate(project, entry, name, host) {
     } catch {
       // not remembered: the person is asked again next time, which is safe
     }
-    return { deny: false, ask: true, reason: `go-getter: MCP tool "${text}" is not marked read. Approving remembers ${id} for this project until revoked (go-getter approvals revoke ${id}); the server must stay on the allowlist.` };
+    return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter: MCP tool "${text}" is not marked read. Approving remembers ${id} for this project until revoked (go-getter approvals revoke ${id}); the server must stay on the allowlist.` };
   }
-  return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" is not marked read and needs a human; ask the user to mark it read in the project's answer or to run: go-getter approvals allow ${id}` };
+  return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" is not marked read and needs a human; ask the user to mark it read in the project's answer or to run: go-getter approvals allow ${id}` };
 }
 
 // After a call the hook asked about has run, the person said yes: remember its shape.
@@ -501,15 +501,18 @@ function redirectedCommand(entry, payload, stopped = new Set()) {
   const hit = hits.find((h) => verbs.has(h.id) && !stopped.has(verbs.get(h.id).replace(/^go-getter /, '')));
   if (!hit) return null;
   const text = command.length > 120 ? `${command.slice(0, 120)}…` : command;
-  return { deny: true, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI${verbs.get(hit.id) === 'go-getter ship' ? ' and merges on green' : ''}). A person may still run the raw command themselves with "! <command>".` };
+  return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI${verbs.get(hit.id) === 'go-getter ship' ? ' and merges on green' : ''}). A person may still run the raw command themselves with "! <command>".` };
 }
+
+// The guardrail a decision names: set by the code that decided it, else the id in a `blocked by guardrail <id>` reason.
+const decidedBy = (result) => result.guardrail ?? /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1];
 
 export function evaluatePreTool(project, payload, host) {
   const result = decidePreTool(project, payload, host);
   if (result.deny) recordDenial(project, result);
   if (result.deny || result.ask) {
-    const guardrail = /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1];
-    logStop(project, host, { taskClass: result.stopClass ?? guardrail ?? 'hook', outcome: result.deny ? 'blocked' : 'escalated', trigger: result.deny ? 'deny' : 'ask' });
+    const guardrail = decidedBy(result);
+    logStop(project, host, { taskClass: result.stopClass ?? guardrail ?? 'hook', outcome: result.deny ? 'blocked' : 'escalated', trigger: result.deny ? 'deny' : 'ask', guardrail });
   }
   return result;
 }
@@ -614,7 +617,7 @@ function decidePreTool(project, payload, host) {
         } catch {
           // not remembered: the person is asked again next time, which is safe
         }
-        return { deny: false, ask: true, stopClass: gated.id, reason: stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: true }) };
+        return { deny: false, ask: true, guardrail: e.guardrail, stopClass: gated.id, reason: stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: true }) };
       }
       if (gated?.stateful && hasGateFloor(host)) {
         if (!checkpointConfig(enforcement)?.triggers.has('gated-action')) {
@@ -624,11 +627,11 @@ function decidePreTool(project, payload, host) {
             // best effort, like every checkpoint
           }
         }
-        logStop(project, host, { taskClass: gated.id, outcome: 'allowed', trigger: 'floor' });
+        logStop(project, host, { taskClass: gated.id, outcome: 'allowed', trigger: 'floor', guardrail: e.guardrail });
         continue;
       }
-      if (gated?.stateful) return { deny: true, stopClass: gated.id, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: false })}` };
-      if (gated) return { deny: true, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false })}` };
+      if (gated?.stateful) return { deny: true, guardrail: e.guardrail, stopClass: gated.id, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: false })}` };
+      if (gated) return { deny: true, guardrail: e.guardrail, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false })}` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
       continue;
@@ -636,12 +639,12 @@ function decidePreTool(project, payload, host) {
     if (e.parsed.id === 'mcp-scan') {
       if (!mcpCall(toolName(payload))) continue;
       const kinds = secretKinds(toolInput(payload));
-      if (kinds.length) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: the arguments of this MCP call contain a secret (${kinds.join(', ')}); remove it and pass it another way` };
+      if (kinds.length) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: the arguments of this MCP call contain a secret (${kinds.join(', ')}); remove it and pass it another way` };
       continue;
     }
     if (e.parsed.id === 'mcp-allow') {
       const why = mcpDenial(toolName(payload), e.parsed.args);
-      if (why) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${why}` };
+      if (why) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: ${why}` };
       const classed = mcpClassGate(project, e, toolName(payload), host);
       if (classed) return classed;
       continue;
@@ -658,7 +661,7 @@ function decidePreTool(project, payload, host) {
       };
       const hit = hits.find((p) => !allowed(p));
       if (hit && exempt?.call && hit === exempt.call.path && modeOf(hit, patterns, exempt.modes) !== 'sink' && hits.every((h) => h === hit || allowed(h))) return firstUse(project, exempt.call, host, e.guardrail);
-      if (hit) return { deny: true, reason: `blocked by guardrail ${e.guardrail}: ${toolName(payload) ?? 'tool call'} names "${hit}", a denied path` };
+      if (hit) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: ${toolName(payload) ?? 'tool call'} names "${hit}", a denied path` };
     }
   }
   return { deny: false };
@@ -864,6 +867,7 @@ export function hookRecord(event, host, payload, decision, redactions, masked) {
   if (FIELDS.effort(payload.effort)) rec.effort = payload.effort;
   Object.assign(rec, payloadUsage(payload));
   if (decision) rec.outcome = decision.deny ? 'denied' : 'allowed';
+  if (decision?.deny && FIELDS.guardrail(decidedBy(decision))) rec.guardrail = decidedBy(decision);
   if (FIELDS.redactions(redactions)) rec.redactions = redactions;
   if (FIELDS.masked(masked)) rec.masked = masked;
   return rec;
