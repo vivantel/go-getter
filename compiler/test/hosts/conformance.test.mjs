@@ -2,7 +2,7 @@
 // marked, a missing capability reported and never guessed, and plain data in and out (a JSON round trip changes nothing).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { hostIds, getAdapter, hostOp, OPERATIONS } from '../../src/hosts/registry.mjs';
+import { hostIds, deferredHosts, getAdapter, hostOp, OPERATIONS } from '../../src/hosts/registry.mjs';
 import { HOSTS, loadCapabilities } from '../../src/capabilities.mjs';
 import { AGENT_MARKER } from '../../src/hosts/agent-format.mjs';
 import { upsert } from '../../src/apply.mjs';
@@ -84,4 +84,11 @@ test('claude-code: settings keep foreign entries and replace its own; CLAUDE.md 
 test('a wrapper leaves hook settings and answers to the core and says so', () => {
   assert.deepEqual(hostOp('codex', 'hookSettings', {}), { missing: 'hookSettings' });
   assert.deepEqual(hostOp('codex', 'respond', { decision: { deny: true, reason: 'x' } }), { missing: 'respond' });
+});
+
+test('codex, cursor, gemini-cli and copilot are registered as deferred wrappers; the others are not', () => {
+  const deferred = ['codex', 'cursor', 'gemini-cli', 'copilot'];
+  assert.deepEqual(deferredHosts().sort(), [...deferred].sort());
+  for (const h of deferred) assert.deepEqual([getAdapter(h).describe().kind, getAdapter(h).describe().status], ['wrapper', 'deferred']);
+  assert.equal(getAdapter('claude-code').describe().status, undefined);
 });

@@ -135,3 +135,7 @@ test('without a governance pack there is no masking line', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('coverage names the deferred hosts beside the table', () => {
+  assert.match(formatCoverage(coverage(mkdtempSync(path.join(tmpdir(), 'gg-cov-')), {}, loadCapabilities(root))), /Deferred hosts: codex, cursor, gemini-cli, copilot/);
+});

@@ -8,16 +8,17 @@ export const OPERATIONS = ['describe', 'agent', 'hookSettings', 'projectFiles', 
 
 const ADAPTERS = {
   'claude-code': claudeCode,
-  codex: wrapperAdapter('codex'),
+  codex: wrapperAdapter('codex', 'deferred'),
   kilo: wrapperAdapter('kilo'),
   opencode: wrapperAdapter('opencode'),
-  cursor: wrapperAdapter('cursor'),
-  'gemini-cli': wrapperAdapter('gemini-cli'),
-  copilot: wrapperAdapter('copilot'),
+  cursor: wrapperAdapter('cursor', 'deferred'),
+  'gemini-cli': wrapperAdapter('gemini-cli', 'deferred'),
+  copilot: wrapperAdapter('copilot', 'deferred'),
 };
 
 export const hostIds = () => Object.keys(ADAPTERS);
 export const isRegistered = (host) => Object.hasOwn(ADAPTERS, host);
+export const deferredHosts = () => hostIds().filter((h) => ADAPTERS[h].describe().status === 'deferred');
 export const getAdapter = (host) => (isRegistered(host) ? ADAPTERS[host] : null);
 
 // Runs one operation of a host's adapter. An unregistered host or an unsupported operation answers `{ missing }`.
