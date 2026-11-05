@@ -218,6 +218,7 @@
         "cli/compiler/src/mcp-server.mjs",
         "cli/compiler/src/mcp.mjs",
         "cli/compiler/src/measure.mjs",
+        "cli/compiler/src/meters/generated-share.mjs",
         "cli/compiler/src/metrics/day.mjs",
         "cli/compiler/src/operation.mjs",
         "cli/compiler/src/outcome.mjs",

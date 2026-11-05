@@ -10,7 +10,7 @@ Added 2026-11-04 from the paper repo (`strebulaev-articles/articles.deterministi
 
 ## Phase 1 — Instruments for the paper
 
-### P1 Keep the telemetry baseline — [ ] ‖
+### P1 Keep the telemetry baseline — [x] ‖
 Issue: #314
 Class: implement · Needs: none · Check: `node --test compiler/test/telemetry-retention.test.mjs`
 Context: the recorder prunes lines older than `telemetry-retention-days` on every write (`compiler/src/telemetry/record.mjs`). The value comes from the active decision's `go-getter.telemetry-retention-days` (today `"30"` in `0052-telemetry-retention`). The main checkout's log starts 2026-10-31, so its first records are pruned from 2026-11-30. Thesis served: C1, C3, C4 (baseline records). Paper-motivated.
@@ -38,12 +38,12 @@ Context: `generated-by` marks that a pack emitted a guardrail file; it says noth
 Do: add an optional `origin` field to each `go-getter.enforcement` entry with the values `derived` (the check is produced from this guardrail's own text or parameters) and `authored` (hand-written). Teach `check:guardrails` to accept it and to default a missing value to `authored`. Do not backfill existing guardrails in this step; the paper's conversion rule decides which are labelled and when.
 Done-when: the test shows a guardrail with `origin: derived` and one without both load; an unknown value is refused; `go-getter check guardrails` passes on this repo with no existing file changed.
 
-### P5 Generated-share meter — [ ] ‖
+### P5 Generated-share meter — [x] ‖
 Issue: #318
 Class: implement · Needs: P4 · Check: `node --test compiler/test/measure-generated-share.test.mjs`
 Context: decision 0179 makes a meter a first-class instrument and a reading a unit any worker can claim; `go-getter measure define <file>` and `measure read` exist, and `measure due` reported no meter. The meter must be defined before any reading is looked at. Thesis served: C4.
-Do: define a meter file for the daily readings of (a) enforcement entries with `origin: derived` over all enforcement entries, (b) guardrails that are advisory-only (every tier 1) over all guardrails, with the denominator rule written in the meter: the live top-level `docs/guardrails/*.md` of the ref it is read on, excluding `archive/` and `INDEX.md`. Readings are made by a command, not by a person estimating.
-Done-when: the test reads the meter on a fixture repo and gets exact figures; `measure series` prints them; the denominator rule appears in the meter file verbatim.
+Do: define two meters (`generated-share-derived`, `generated-share-advisory`), each a fraction between 0 and 1 read by a command, for the daily readings of (a) enforcement entries with `origin: derived` over all enforcement entries, (b) guardrails that are advisory-only (every tier 1) over all guardrails, with the denominator rule written in the meter: the live top-level `docs/guardrails/*.md` of the ref it is read on, excluding `archive/` and `INDEX.md`. Readings are made by a command, not by a person estimating.
+Done-when: the test reads both meters on a fixture repo and gets exact figures; `measure series` prints them with numeric aggregates; the denominator rule appears in each meter file verbatim.
 
 ### P6 Bypass script as a keyless eval — [x] ‖
 Issue: #319

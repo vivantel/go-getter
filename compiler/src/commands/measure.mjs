@@ -1,7 +1,7 @@
-// go-getter measure define <file> | read <meter> --value <v> [--reader <name>] | series <meter> [--json] | due [--now <iso>] | expire [--now <iso>]
-import { defineMeter, recordReading, series, due, expire } from '../measure.mjs';
+// go-getter measure define <file> | read <meter> [--value <v>] [--reader <name>] | series <meter> [--json] | due [--now <iso>] | expire [--now <iso>]
+import { defineMeter, recordReading, runMeterCommand, series, due, expire } from '../measure.mjs';
 
-const USAGE = 'usage: go-getter measure define <file> | read <meter> --value <v> [--reader <name>] | series <meter> [--json] | due [--now <iso>] | expire [--now <iso>]';
+const USAGE = 'usage: go-getter measure define <file> | read <meter> [--value <v>] [--reader <name>] | series <meter> [--json] | due [--now <iso>] | expire [--now <iso>]';
 
 export default async function measureCommand({ args }) {
   const [sub, ...rest] = args;
@@ -26,8 +26,16 @@ export default async function measureCommand({ args }) {
     }
     case 'read': {
       const raw = flag('--value');
-      if (!positional || raw === undefined) break;
-      const value = raw === 'true' ? true : raw === 'false' ? false : raw.trim() !== '' && Number.isFinite(Number(raw)) ? Number(raw) : raw;
+      if (!positional) break;
+      let value;
+      if (raw === undefined) {
+        const run = runMeterCommand(root, positional);
+        if (!run.ok) {
+          console.error(`measure read: ${run.problem}`);
+          return 1;
+        }
+        value = run.value;
+      } else value = raw === 'true' ? true : raw === 'false' ? false : raw.trim() !== '' && Number.isFinite(Number(raw)) ? Number(raw) : raw;
       const r = recordReading(root, positional, { value, reader: flag('--reader'), now });
       if (!r.ok) {
         console.error(`measure read: ${r.problem}`);
