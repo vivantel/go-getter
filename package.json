@@ -30,6 +30,7 @@
     "check:plans": "node compiler/bin/go-getter.mjs check plans",
     "check:indexes": "node compiler/bin/go-getter.mjs check indexes",
     "eval": "node compiler/bin/go-getter.mjs eval",
+    "eval:bypass": "node compiler/bin/go-getter.mjs eval bypass",
     "e2e:lifecycle": "node scripts/e2e/lifecycle.mjs"
   },
   "devDependencies": {
