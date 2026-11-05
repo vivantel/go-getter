@@ -31,7 +31,7 @@ Context: today the only dated record of the owner approving anything is `accepte
 Do: record each point at which work waits for a person (a stop that needs a person, a human gate under decision 0155, a merge or release approval) as an event with `class` (`irreversible` or `routine`) and `outcome` (`approved`, `rejected`, `timed-out`), metadata only. Class comes from the action's shape, decided by a fixed table in code, not from the model.
 Done-when: the test drives one irreversible and one routine approval and reads both back with the right class; the class table is a reviewable file; `telemetry summary` prints approvals per class and per day.
 
-### P4 Mark derived against hand-written enforcement — [ ] ‖
+### P4 Mark derived against hand-written enforcement — [x] ‖
 Issue: #317
 Class: implement · Needs: none · Check: `node --test compiler/test/enforcement-origin.test.mjs`
 Context: `generated-by` marks that a pack emitted a guardrail file; it says nothing about whether the check logic comes from the guardrail text. It has been 26 since 2026-10-12 while the number of guardrails grew (45 to 55 on `master`). Enforcement entries carry `tier`, `check` and `run` (`builtin:...` or `npm run ...`); `compiler` reads them from frontmatter (decision 0066). Thesis served: C4. Schema change: needs a decision where the field is introduced.
