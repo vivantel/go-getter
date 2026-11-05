@@ -2,6 +2,9 @@
 // tier 2/3 entries name a `run`; tier-1-only guardrails say "advisory" in their body.
 import { readArtifacts } from '../artifacts.mjs';
 
+// Whether an entry's check is produced from the guardrail's own text or parameters (`derived`) or hand-written (`authored`, the default; decision 0204).
+export const ENFORCEMENT_ORIGINS = ['derived', 'authored'];
+
 export function guardrailProblems(guardrails) {
   const problems = [];
   for (const g of guardrails) {
@@ -14,6 +17,7 @@ export function guardrailProblems(guardrails) {
       if (![1, 2, 3].includes(e?.tier)) problems.push(`${g.file}: enforcement[${i}].tier must be 1, 2 or 3`);
       if (typeof e?.check !== 'string' || !e.check.trim()) problems.push(`${g.file}: enforcement[${i}].check is required`);
       if ([2, 3].includes(e?.tier) && (typeof e.run !== 'string' || !e.run.trim())) problems.push(`${g.file}: enforcement[${i}] tier ${e.tier} needs run`);
+      if (e?.origin !== undefined && !ENFORCEMENT_ORIGINS.includes(e.origin)) problems.push(`${g.file}: enforcement[${i}].origin must be derived or authored`);
       if (e?.stages !== undefined) {
         const ok = Array.isArray(e.stages) && e.stages.length > 0 && e.stages.every((x) => ['pre-commit', 'pre-push'].includes(x));
         if (e.tier !== 3 || !ok) problems.push(`${g.file}: enforcement[${i}].stages is for tier 3 and lists pre-commit and/or pre-push`);

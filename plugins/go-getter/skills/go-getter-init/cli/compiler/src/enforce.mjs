@@ -23,6 +23,7 @@ export function collectEnforcement(project) {
         tier: e.tier,
         check: e.check,
         run: e.run,
+        origin: e.origin ?? 'authored',
         stages: Array.isArray(e.stages) ? e.stages.map(String) : undefined,
         parsed: e.run ? parseRun(e.run) : null,
       })),
