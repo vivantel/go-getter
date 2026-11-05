@@ -24,7 +24,7 @@ Context: on the main checkout 20 `pre-tool` denials and 131 `gate:stop` records 
 Do: add an optional `guardrail` field (the guardrail id) to denied `pre-tool` records and to `gate:stop` records, set by the code that decides the denial or stop. Extend the schema validation to accept only a known id string, and keep records without it valid. `telemetry summary` gains a count of denials and stops per guardrail.
 Done-when: the test produces a denial and a stop and shows both records carry the id; a record with a content-like value in the field is refused by the validator; old records still load; the summary prints the per-guardrail counts.
 
-### P3 Approval and stop events with a class — [ ] ‖
+### P3 Approval and stop events with a class — [x] ‖
 Issue: #316
 Class: implement · Needs: P2 · Check: `node --test compiler/test/telemetry-approval-class.test.mjs`
 Context: today the only dated record of the owner approving anything is `accepted-by` on decisions; 217 merged PRs carry no reviews; `go-getter approvals list` is empty and holds secret-path approvals only. `gate:stop` records have the outcomes `blocked`, `escalated` and `allowed` (107, 15 and 9 in five days). Same schema as P2. Open question for the implementer: whether the 15 `escalated` stops, once they carry a guardrail id (P2), already answer this; if so, this step reduces to adding the class. Thesis served: C3.

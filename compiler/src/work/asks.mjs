@@ -6,7 +6,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { activePlanFiles, effectiveScope, parsePlan, stemOf } from '../plan.mjs';
-import { STATE_DIR } from '../telemetry/record.mjs';
+import { STATE_DIR, recordApproval } from '../telemetry/record.mjs';
 import { sensitiveKinds } from './claim.mjs';
 import { ASK_KIND, CLASSES, IMPACTS, askProblem, effectiveClass, isAsk } from './ask-rules.mjs';
 import { beatTimes, commitEntries, fetchLedger, git, ledgerRef, noteLedger, pushRef, remoteOf } from './ledger.mjs';
@@ -199,6 +199,7 @@ export async function answerAsk(root, ref, choice, who, { now = clockNow(), remo
     return { ...rest, state: 'released', scope: [], updated: now.toISOString(), answer: { by: who.id, kind: who.kind, choice: text, at: now.toISOString() } };
   }, { now, remote, message: 'answer', acceptRemoteLedger });
   if (!r.ok) return r;
+  recordApproval(root, { action: `ask-${a.class}`, outcome: text === 'refuse' ? 'rejected' : 'approved' });
   logAsk(root, { event: 'answered', unit: a.unit, class: a.class, level: r.previous.ask.level, waitMs: now.getTime() - Date.parse(r.previous.ask.parked), outcome: text === 'default' ? 'default' : text === 'refuse' ? 'refused' : 'chosen' });
   return { ok: true, unit: a.unit, id: a.id, entry: r.entry, commit: r.commit };
 }
@@ -265,6 +266,7 @@ export async function sweepAsks(root, who, { now = clockNow(), remote, draft = t
     }, { now, remote, message: 'time out ask of' });
     if (!r.ok) continue;
     const waitMs = now.getTime() - Date.parse(a.parked);
+    recordApproval(root, { action: `ask-${a.class}`, outcome: 'timed-out' });
     logAsk(root, { event: 'timeout', unit: a.unit, class: a.class, level: a.level, waitMs, outcome });
     out.push({ unit: a.unit, outcome, ...(outcome === 'default' && draft ? { draft: writeDraft(root, r.entry, now) } : {}) });
   }

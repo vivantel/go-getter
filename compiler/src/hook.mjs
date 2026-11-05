@@ -14,6 +14,8 @@ import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
 import { stateCheck } from './gate-state.mjs';
 import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
+import { settlePending, addPendingApproval, approvePending } from './telemetry/approval-pending.mjs';
+import { recordApproval } from './telemetry/record.mjs';
 import { parseRelease, looksLikeReleaseTalk, promptTexts, recordRequest, claimRequest } from './release-request.mjs';
 import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
@@ -277,7 +279,7 @@ function identityGate(project, entry, payload, host) {
   const command = shellCommand(payload);
   if (!subs.length || typeof command !== 'string') return null;
   const decide = (text, sub) => {
-    if (canPrompt(host)) return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter ${sub} writes outside this machine: approve "${text}"?` };
+    if (canPrompt(host)) return { deny: false, ask: true, guardrail: entry.guardrail, approvalAction: 'outward-identity', reason: `go-getter ${sub} writes outside this machine: approve "${text}"?` };
     if (hasNativeAsk(host)) return null;
     return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is an outward command and needs a human; ask the user to run it themselves` };
   };
@@ -403,7 +405,7 @@ function firstUse(project, call, host, guardrail) {
     // a pending record that cannot be written means the run will be refused, which is safe
   }
   const shown = files.slice(0, 6).join(', ') + (files.length > 6 ? `, and ${files.length - 6} more` : '');
-  return { deny: false, ask: true, guardrail, reason: `go-getter would run "${text}" with ${call.path} in its environment (values are scrubbed from its output and never shown to the agent).${files.length ? ` It runs ${files.length} file${files.length === 1 ? '' : 's'}: ${shown}.` : ''} Approving also remembers it until those files change.` };
+  return { deny: false, ask: true, guardrail, approvalAction: 'secret-path-first-use', reason: `go-getter would run "${text}" with ${call.path} in its environment (values are scrubbed from its output and never shown to the agent).${files.length ? ` It runs ${files.length} file${files.length === 1 ? '' : 's'}: ${shown}.` : ''} Approving also remembers it until those files change.` };
 }
 
 // Outward shapes a remembered approval or an active run may allow (decision 0130). Null when this call is not governed that way
@@ -427,7 +429,7 @@ function shapeGate(project, entry, payload, host) {
   if (!canPrompt(host)) return null;
   const text = command.length > 200 ? `${command.slice(0, 200)}…` : command;
   const failed = verdicts.find((v) => v.reason);
-  if (failed) return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter: "${text}" is allowed without asking, but ${failed.reason}. Approve this one?` };
+  if (failed) return { deny: false, ask: true, guardrail: entry.guardrail, approvalAction: failed.id, reason: `go-getter: "${text}" is allowed without asking, but ${failed.reason}. Approve this one?` };
   // First use: remember the shape if the person says yes (the post-tool hook promotes it once the call ran).
   for (const v of verdicts.filter((x) => x.firstUse)) {
     try {
@@ -437,7 +439,7 @@ function shapeGate(project, entry, payload, host) {
     }
   }
   const ids = verdicts.filter((v) => v.firstUse).map((v) => v.id).join(', ');
-  return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter: approve "${text}"? Approving remembers ${ids} for this project until revoked (go-getter approvals revoke), and its preconditions (green checks, default branch, a step of the run) are checked at each use.` };
+  return { deny: false, ask: true, guardrail: entry.guardrail, approvalAction: verdicts[0].id, reason: `go-getter: approve "${text}"? Approving remembers ${ids} for this project until revoked (go-getter approvals revoke), and its preconditions (green checks, default branch, a step of the run) are checked at each use.` };
 }
 
 // MCP tool classes (decision 0138 item 2). A tool the project marked read is free; any other tool is a write, decided like an outward
@@ -458,7 +460,7 @@ function mcpClassGate(project, entry, name, host) {
     } catch {
       // not remembered: the person is asked again next time, which is safe
     }
-    return { deny: false, ask: true, guardrail: entry.guardrail, reason: `go-getter: MCP tool "${text}" is not marked read. Approving remembers ${id} for this project until revoked (go-getter approvals revoke ${id}); the server must stay on the allowlist.` };
+    return { deny: false, ask: true, guardrail: entry.guardrail, approvalAction: 'mcp-write', reason: `go-getter: MCP tool "${text}" is not marked read. Approving remembers ${id} for this project until revoked (go-getter approvals revoke ${id}); the server must stay on the allowlist.` };
   }
   return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: MCP tool "${text}" is not marked read and needs a human; ask the user to mark it read in the project's answer or to run: go-getter approvals allow ${id}` };
 }
@@ -508,11 +510,16 @@ function redirectedCommand(entry, payload, stopped = new Set()) {
 const decidedBy = (result) => result.guardrail ?? /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1];
 
 export function evaluatePreTool(project, payload, host) {
+  const session = payload?.session_id;
+  const command = shellCommand(payload) ?? toolName(payload);
+  settlePending(project, { session, command, host }); // what an earlier ask in this session left open is now answered or expired
   const result = decidePreTool(project, payload, host);
   if (result.deny) recordDenial(project, result);
   if (result.deny || result.ask) {
     const guardrail = decidedBy(result);
     logStop(project, host, { taskClass: result.stopClass ?? guardrail ?? 'hook', outcome: result.deny ? 'blocked' : 'escalated', trigger: result.deny ? 'deny' : 'ask', guardrail });
+    // An ask waits for a person: its answer is recorded as an approval once it is known (telemetry/approval-pending.mjs).
+    if (result.ask) addPendingApproval(project, { session, command, action: result.approvalAction ?? result.stopClass, host });
   }
   return result;
 }
@@ -581,6 +588,7 @@ function claimForRelease(project, payload, host) {
     }
     if (!plain) continue;
     const id = claimRequest(project, { session });
+    if (id) recordApproval(project, { action: 'release', outcome: 'approved', host });
     logStop(project, host, { taskClass: 'release-request', outcome: id ? 'allowed' : 'blocked', trigger: id ? 'claimed' : 'no-request' });
     return;
   }
@@ -742,6 +750,7 @@ export function redactText(text, values) {
 export function evaluatePostTool(project, payload) {
   try {
     promoteShapes(project, payload);
+    approvePending(project, { session: payload?.session_id, command: shellCommand(payload) ?? toolName(payload) });
   } catch {
     // remembering is best effort
   }
