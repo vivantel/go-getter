@@ -92,3 +92,13 @@ test('codex, cursor, gemini-cli and copilot are registered as deferred wrappers;
   for (const h of deferred) assert.deepEqual([getAdapter(h).describe().kind, getAdapter(h).describe().status], ['wrapper', 'deferred']);
   assert.equal(getAdapter('claude-code').describe().status, undefined);
 });
+
+test('opencode and kilo share one fork base; the Kilo-only differences live in the Kilo module', () => {
+  const input = { roster, role: roles[0], route, capabilities: { agents: true } };
+  assert.equal(hostOp('kilo', 'agent', input).content, hostOp('opencode', 'agent', input).content);
+  assert.equal(hostOp('kilo', 'describe').kind, 'adapter');
+  assert.ok(hostOp('kilo', 'describe').owned.includes('.kilo/plugin/go-getter.js'));
+  assert.ok(hostOp('opencode', 'describe').owned.includes('.opencode/plugins/go-getter.js'));
+  assert.deepEqual(hostOp('kilo', 'respondPostTool', { result: { mcp: false, output: 'x' } }), { answer: { code: 0, stdout: '{"output":"x"}', stderr: '' } });
+  assert.deepEqual(hostOp('opencode', 'respondPostTool', { result: { mcp: false, output: 'x' } }), { missing: 'respondPostTool' });
+});

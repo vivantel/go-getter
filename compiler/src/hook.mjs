@@ -797,7 +797,6 @@ export function respondPostTool(host, result) {
   if (host === 'copilot') return answer({ modifiedResult: { resultType: 'success', textResultForLlm: text(out?.textResultForLlm ?? out) } });
   if (host === 'codex') return answer({ decision: 'block', reason: text(out) });
   if (host === 'gemini-cli') return answer({ decision: 'deny', reason: text(out?.llmContent ?? out) });
-  if (host === 'kilo') return answer({ output: text(out) });
   // Cursor replaces MCP results only (fact 0031); the shape of its post-tool input is unconfirmed.
   if (host === 'cursor') return result.mcp ? answer({ updated_mcp_tool_output: out }) : none;
   return none;
