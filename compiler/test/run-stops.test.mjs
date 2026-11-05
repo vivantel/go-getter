@@ -159,3 +159,18 @@ test('run start without --grant takes the shapes of the adopted run-grants answe
     assert.deepEqual(activeRun(s.dir).grants, ['git-push', 'pr-create', 'pr-merge', 'pr-close']);
   } finally { s.cleanup(); }
 });
+
+test('a plan-class step stops the run by default, and a later plan-class step is not offered in parallel', () => {
+  const s = setup(PLAN([step(1).replace('Class: implement', 'Class: plan'), step(2)]));
+  try {
+    s.start({ steps: ['1', '2'] });
+    const r = nextInRun(s.dir);
+    assert.equal(r.stop.code, 'human-needed');
+    assert.match(r.stop.reason, /plan-class step.*sign-off/);
+  } finally { s.cleanup(); }
+  const t = setup(PLAN([step(1), step(2).replace('Class: implement', 'Class: plan')]));
+  try {
+    t.start({ steps: ['1', '2'] });
+    assert.deepEqual(nextInRun(t.dir).steps.map((x) => x.id), ['1']);
+  } finally { t.cleanup(); }
+});

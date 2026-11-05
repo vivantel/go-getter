@@ -8,7 +8,7 @@ import { readPlan, repoRoot, unapprovedReason } from '../plan.mjs';
 import { approvalStatus } from '../plan-approval.mjs';
 import { settleSpend } from '../spend/index.mjs';
 import { nextInRun } from '../runs/next.mjs';
-import { buildReport, reportStep } from '../runs/report.mjs';
+import { buildReport, reportStep, runPlanPath } from '../runs/report.mjs';
 import { planIssue, relPlan } from '../trackers/write.mjs';
 import { APPROVABLE, isApprovable, normaliseFree } from '../gate.mjs';
 import { loadPolicy } from '../routing/policy.mjs';
@@ -70,17 +70,18 @@ export default async function runCommand({ args }) {
       return 0;
     }
     if (sub === 'end' && !rest.length) {
-      const done = endRun(project, { reason: 'ended' });
+      // A run that timed out is no longer active but still owes its report.
+      const done = endRun(project, { reason: 'ended' }) ?? (lastRun(project)?.endReason === 'timeout' ? lastRun(project) : null);
       if (!done) {
         console.log('no run is active');
         return 1;
       }
-      console.log(`run ended: ${describe(done)}`);
+      console.log(`run ${done.endReason === 'timeout' ? 'timed out' : 'ended'}: ${describe(done)}`);
       // The report goes to the issue of the range's last step after the tracker's secret and personal-data check; without an issue, or
       // when the post is refused, it is printed.
       const { text, steps } = buildReport(project, done);
       const id = reportStep(steps);
-      const file = path.resolve(project, done.plan);
+      const file = path.resolve(project, runPlanPath(project, done));
       const posted = id ? await planIssue(project, file, relPlan(project, file), 'comment', id, { text }) : null;
       if (posted?.ok) console.log(`report posted: ${posted.message}`);
       else console.log(`${posted ? `report not posted (${posted.error})` : 'report (the plan has no issue to post it on)'}:\n\n${text}`);

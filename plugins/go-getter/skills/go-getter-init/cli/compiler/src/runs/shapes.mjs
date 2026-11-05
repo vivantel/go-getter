@@ -4,7 +4,7 @@ import path from 'node:path';
 import { shapeApproved } from '../secrets/approvals.mjs';
 import { isApprovable } from '../gate.mjs';
 import { resolvePlan } from '../plan.mjs';
-import { activeRun } from './record.mjs';
+import { activeRun, noteUse } from './record.mjs';
 import { checkShape } from './preconditions.mjs';
 
 // { allowed: true, by: 'run' | 'remembered' }, or { allowed: false, firstUse: true } when nothing grants the shape yet, or
@@ -16,6 +16,7 @@ export function shapeAllowance(project, id, command, { gh, env = process.env } =
   if (!isApprovable(id)) return { allowed: false, never: true };
   if (!inRun && !shapeApproved(project, id, env)) return { allowed: false, firstUse: true };
   const check = checkShape({ project, id, command, run: inRun ? run : null, ...(gh ? { gh } : {}) });
+  if (check.ok && run) noteUse(project, id, { env });
   return check.ok ? { allowed: true, by: inRun ? 'run' : 'remembered' } : { allowed: false, reason: check.reason };
 }
 

@@ -78,6 +78,8 @@ export function nextInRun(project, { env = process.env, record = true } = {}) {
     const step = byId.get(id);
     if (!step || ['done', 'moved'].includes(step.state)) continue;
     if (unapproved) return stop('plan-unapproved', unapproved, id);
+    // A plan-class step drafts a design for the owner's sign-off, so a run stops on it by default (the same as `Human:`).
+    if (step.class === 'plan' && !step.human) return stop('human-needed', `step ${id} is a plan-class step: its design needs the owner's sign-off`, id);
     if (step.human) return stop('human-needed', `step ${id} needs a person: ${step.human}`, id);
     if (step.state === 'blocked') return stop('human-needed', `step ${id} is blocked`, id);
     const attempts = run.counters?.attempts?.[id] ?? 0;
@@ -94,7 +96,7 @@ export function nextInRun(project, { env = process.env, record = true } = {}) {
     for (const later of run.steps.slice(run.steps.indexOf(id) + 1)) {
       if (steps.length >= limit) break;
       const cand = byId.get(later);
-      if (!cand || cand.state !== 'pending' || cand.human) continue;
+      if (!cand || cand.state !== 'pending' || cand.human || cand.class === 'plan') continue;
       if (openNeeds(plan, cand, external).length) continue;
       const n = run.counters?.attempts?.[later] ?? 0;
       if (n >= MAX_ATTEMPTS || Object.values(run.counters?.denials?.[later] ?? {}).some((d) => d >= MAX_DENIALS)) continue;
