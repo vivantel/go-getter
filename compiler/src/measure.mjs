@@ -52,6 +52,7 @@ export function validateMeter(data) {
   if (data['data-class'] != null && !DATA_CLASSES.includes(data['data-class'])) problems.push(`data-class "${data['data-class']}" is not one of ${DATA_CLASSES.join(', ')}`);
   if (data.refresh != null && parseDuration(data.refresh) == null) problems.push(`refresh "${data.refresh}" must look like 12h, 7d, 2w or 3mo`);
   if (data.retention != null && parseDuration(data.retention) == null) problems.push(`retention "${data.retention}" must look like 12h, 7d, 2w or 3mo`);
+  if (data.command != null && !(typeof data.command === 'string' && data.command.trim())) problems.push('command must be a non-empty string (program and arguments, run without a shell)');
   if (data.cost != null && !(typeof data.cost === 'number' && data.cost >= 0)) problems.push('cost must be a non-negative number (per reading)');
   return problems;
 }
@@ -143,6 +144,21 @@ export function defineMeter(root, file) {
 }
 
 // ---------- readings ----------
+
+// Run a meter's optional `command` (split on spaces, no shell) in the project root; its stdout is the value.
+export function runMeterCommand(root, meterId) {
+  const meter = loadMeters(root).find((m) => m.id === meterId);
+  if (!meter) return { ok: false, problem: `no meter "${meterId}" under docs/meters/` };
+  if (meter.problems.length) return { ok: false, problem: `meter "${meterId}" is invalid: ${meter.problems.join('; ')}` };
+  if (!meter.data.command) return { ok: false, problem: `meter "${meterId}" has no command; pass --value` };
+  const [prog, ...argv] = String(meter.data.command).trim().split(/\s+/);
+  try {
+    const out = execFileSync(prog, argv, { cwd: root, encoding: 'utf8', env: cleanGitEnv(process.env), stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    return { ok: true, value: out === 'true' ? true : out === 'false' ? false : out !== '' && Number.isFinite(Number(out)) ? Number(out) : out };
+  } catch (err) {
+    return { ok: false, problem: `command "${meter.data.command}" failed: ${String(err.stderr ?? err.message).trim().split('\n').slice(-2).join(' | ')}` };
+  }
+}
 
 const remoteOf = (root) => {
   const names = (tryGit(root, ['remote']) ?? '').split('\n').filter(Boolean);
