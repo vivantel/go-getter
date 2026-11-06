@@ -142,3 +142,25 @@ test('every provider command has examples that match and do not match, and an un
   assert.throws(() => matchGated('gh pr merge 5', { provider: 'gitlab' }), /unknown gate provider "gitlab"/);
   assert.throws(() => gateEntries([{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'outward', provider: 'gitlab' } } }]), /guardrail g: gate-command provider must be one of github, not gitlab/);
 });
+
+test('gh global flags before the verb do not hide it', () => {
+  for (const c of ['gh -R o/r pr merge 5', 'gh --repo o/r pr merge 5', 'gh --repo=o/r pr merge 5', 'gh -Ro/r pr merge 5', 'gh -R o/r --repo p/q pr merge 5']) assert.deepEqual(ids(c), ['pr-merge'], c);
+  assert.deepEqual(ids('gh -R o/r pr create --fill'), ['pr-create']);
+  assert.deepEqual(ids('gh -R o/r pr close 5'), ['pr-close']);
+  assert.deepEqual(ids('gh -R o/r release create v1'), ['release-create']);
+  assert.deepEqual(ids('gh -R o/r issue comment 3 -b x'), ['comment-post']);
+  assert.deepEqual(ids('gh -R o/r pr view 5'), []);
+  assert.deepEqual(ids('echo "gh -R o/r pr merge 5"'), []);
+});
+
+test('pr edit, pr reopen, issue close and delete, release delete and upload are gated, with and without global flags', () => {
+  const want = { 'gh pr edit 5 --base main': 'pr-edit', 'gh pr reopen 5': 'pr-reopen', 'gh issue close 3': 'issue-close', 'gh issue delete 3 --yes': 'issue-delete', 'gh release delete v1': 'release-delete', 'gh release upload v1 f.zip': 'release-upload' };
+  for (const [c, id] of Object.entries(want)) {
+    assert.deepEqual(ids(c), [id], c);
+    assert.deepEqual(ids(c.replace('gh ', 'gh -R o/r ')), [id], c);
+    assert.deepEqual(ids(c.replace('gh ', 'gh --repo o/r ')), [id], c);
+  }
+  assert.equal(CATALOG.find((e) => e.id === 'issue-delete').class, 'irreversible');
+  assert.equal(CATALOG.find((e) => e.id === 'release-delete').class, 'irreversible');
+  assert.deepEqual(ids('gh pr view 5 && gh issue view 3 && gh release view v1'), []);
+});

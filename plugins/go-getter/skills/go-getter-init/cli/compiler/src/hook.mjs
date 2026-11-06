@@ -508,7 +508,7 @@ function redirectedCommand(entry, payload, stopped = new Set()) {
 
 // Raw tracker writes (guardrail tracker-writes-follow-the-answer): `gh issue create|comment|close` outside `go-getter plan issue`.
 // `go-getter plan issue` runs `gh` from its own process, so the verb never reaches the host hook. Reads (`gh issue view|list`) pass.
-const RAW_TRACKER_WRITE = '/^gh\\s+issue\\s+(?:create|comment|close)(?:\\s|$)/';
+const RAW_TRACKER_WRITE = '/^gh(?:\\s+(?:-R\\s*\\S+|--repo(?:=|\\s+)\\S+))*\\s+issue\\s+(?:create|comment|close)(?:\\s|$)/';
 export const rawTrackerWrite = (command) => (matchGated(command, { classes: [], extra: [RAW_TRACKER_WRITE] }).length ? command : null);
 
 // The guardrail a decision names: set by the code that decided it, else the id in a `blocked by guardrail <id>` reason.
