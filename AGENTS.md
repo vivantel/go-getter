@@ -45,10 +45,12 @@ Checked by git hooks and CI:
 
 - An outcome brief is not approved without a meter, a target, a window and an attribution method (`an-outcome-needs-an-attribution-method`)
 - Branch names must match the project pattern (`branch-names-follow-the-pattern`)
+- A change lands as one squashed pull request with green CI (`changes-land-as-one-squashed-pull-request`)
 - Commit subjects must follow Conventional Commits (`commit-subjects-are-conventional`)
 - Generated host-agent files must never be hand-edited (`generated-host-files-not-hand-edited`)
 - Every guardrail must declare how it is enforced (`guardrails-declare-enforcement`)
 - The instruction file must stay within 150 lines (`instruction-file-within-cap`)
+- No more than 10 agents run at once per worker (`max-concurrent-agents-rule`)
 - Neutral source must not name a host agent or its tools (`neutral-source-has-no-host-specific-language`)
 - Work must not happen on the default branch (`no-commits-on-the-default-branch`)
 - go-getter must have no runtime dependencies (`no-runtime-dependencies`)
@@ -60,7 +62,9 @@ Checked by git hooks and CI:
 - A practice pack must not ship before this repo has adopted it (`practice-ships-only-after-self-adoption`)
 - Host prompt logging must stay disabled (`prompt-logging-disabled`)
 - A release requires all three verification layers to pass (`release-requires-passing-gate`)
+- Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
 - Agents must not touch restricted paths and none may be committed (`restricted-paths-denied`)
+- The reviewer must not modify files (`reviewer-read-only`)
 - Routing escalation must be bounded and end at a human (`routing-escalation-bounded`)
 - Routing must restrict candidates to governance-eligible models before comparing cost (`routing-governance-before-cost`)
 - Routing must compare expected total step cost, never per-token list price (`routing-uses-total-step-cost`)
@@ -75,17 +79,16 @@ Blocked by host hooks where the host supports it:
 - MCP calls carry no secret (`mcp-arguments-hold-no-secret`)
 - Personal data is masked in tool output (`pii-masked-in-tool-output`)
 - When a go-getter verb covers an action, the raw git or gh form is denied with a pointer to the verb (`raw-commands-redirect-to-verbs`)
+- Writes to the plan tracker follow the project's answer (`tracker-writes-follow-the-answer`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
 - Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
 
 Advisory:
 
 - No mid-task model, effort or instruction-file change; switches are confirmed (`cache-hygiene-rule`)
-- A change lands as one squashed pull request with green CI (`changes-land-as-one-squashed-pull-request`)
 - Context is compacted at task boundaries (`compaction-timing-rule`)
 - Handoffs must carry a brief, a result and evidence (`handoff-has-brief-result-evidence`)
 - Agents must hand over to a human when blocked, before irreversible actions and on a guardrail denial (`human-escalation-rule`)
-- No more than 10 agents run at once per worker (`max-concurrent-agents-rule`)
 - A guardrail scoped to one skill's own procedure belongs in that skill (`no-redundant-guardrails`)
 - A guardrail describing a shipped skill's behavior must also be stated in that skill (`no-unenforced-guardrail`)
 - Noisy work is delegated only when the cost model says the handoff is cheaper (`noisy-work-rule`)
@@ -93,9 +96,6 @@ Advisory:
 - Every figure in the paper cites a command that reproduces it and the side of an intervention it comes from (`paper-numbers-are-reproducible`)
 - Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
-- Restricted data is handled only on hosts with a blocking pre-tool hook (`restricted-data-hosts-rule`)
-- The reviewer must not modify files (`reviewer-read-only`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
-- Writes to the plan tracker follow the project's answer (`tracker-writes-follow-the-answer`)
 
 <!-- go-getter:end -->

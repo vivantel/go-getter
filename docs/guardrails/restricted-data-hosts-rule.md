@@ -11,6 +11,10 @@ go-getter:
   enforcement:
     - tier: 1
       check: Instruction; the coverage report shows the tier per host
+    - tier: 3
+      check: Every host agent configured in the project declares a blocking pre-tool hook in its capability file
+      run: builtin:hosts-block-pre-tool
+      origin: derived
   generated-by: restricted-data@0.6.0
   pack-answer: restricted-hosts
   pack-option: hook-hosts
@@ -18,4 +22,4 @@ go-getter:
 
 ## Guardrail
 
-Handle restricted data only in host agents with a blocking pre-tool hook. Advisory (tier 1): `go-getter coverage` shows where DLP is only advisory.
+Handle restricted data only in host agents with a blocking pre-tool hook. Git hooks and CI fail when a host configured in the project declares no blocking pre-tool hook (tier 3). Advisory (tier 1) for the choice of host a person works in: `go-getter coverage` shows where DLP is only advisory.

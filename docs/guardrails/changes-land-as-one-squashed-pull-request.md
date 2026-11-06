@@ -11,6 +11,10 @@ go-getter:
   enforcement:
     - tier: 1
       check: Merge a pull request only when its CI checks pass, and squash it into one commit on the default branch
+    - tier: 3
+      check: The head of the default branch is a single-parent commit (a squash), checked on a push to it in CI
+      run: builtin:squash-merged-head
+      origin: derived
   generated-by: git-workflow@0.1.1
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
@@ -18,4 +22,4 @@ go-getter:
 
 ## Guardrail
 
-Open one pull request per branch. Merge it by squash, and only once its CI checks pass. Advisory (tier 1): nothing enforces it; hosting-platform settings (required checks, merge queue) are the project's to configure and go-getter cannot write them.
+Open one pull request per branch. Merge it by squash, and only once its CI checks pass. CI fails when the head of the default branch is a merge commit (tier 3, squash only). Advisory (tier 1) for the rest: whether CI passed before the merge, and one pull request per branch, are hosting-platform settings (required checks, merge queue) that are the project's to configure and go-getter cannot write.
