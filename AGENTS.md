@@ -73,6 +73,7 @@ Checked by git hooks and CI:
 
 Blocked by host hooks where the host supports it:
 
+- A money, physical or legal effect stays inside the cap its grant carries, and an unclassed action is not delegated (`a-real-world-effect-stays-inside-its-cap`)
 - A gated action is preceded by a checkpoint (`checkpoint-before-gated-action`)
 - Delegations to a role are routed by expected total step cost (`delegations-are-routed`)
 - Irreversible and outward-facing commands need a human (`gated-actions-need-human-approval`)
