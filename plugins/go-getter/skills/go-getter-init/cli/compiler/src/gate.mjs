@@ -13,6 +13,10 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 
 const GIT = String.raw`git(?:\s+(?:-[Cc]\s+\S+|--[\w-]+(?:=\S+)?|-[pP]))*\s+`;
+// `gh` global flags that may come before the verb: `-R o/r`, `-Ro/r`, `--repo o/r`, `--repo=o/r` (gh accepts them on every verb).
+const GH = String.raw`gh(?:\s+(?:-R\s*\S+|--repo(?:=|\s+)\S+))*\s+`;
+// Native ask globs of a `gh` verb: plain, and after `-R` or `--repo` (`-R*` also covers `-R o/r`, `--repo*` also `--repo=o/r`).
+const ghGlobs = (verb) => [`gh ${verb} *`, `gh -R* ${verb} *`, `gh --repo* ${verb} *`];
 const ARGS = String.raw`(?:\s+\S+)*`;
 const END = String.raw`(?=\s|$)`;
 const flag = (letters) => String.raw`-[a-zA-Z]*[${letters}][a-zA-Z]*`;
@@ -65,6 +69,12 @@ const ENTRIES = [
   { id: 'pr-create', class: 'outward', description: 'opens a pull request', provided: true },
   { id: 'pr-merge', class: 'outward', description: 'merges a pull request', provided: true },
   { id: 'pr-close', class: 'outward', description: 'closes a pull request', provided: true },
+  { id: 'pr-reopen', class: 'outward', description: 'reopens a pull request', provided: true },
+  { id: 'pr-edit', class: 'outward', description: 'edits a pull request (base branch, title, reviewers, labels)', provided: true },
+  { id: 'issue-close', class: 'outward', description: 'closes an issue', provided: true },
+  { id: 'issue-delete', class: 'irreversible', description: 'deletes an issue', provided: true },
+  { id: 'release-delete', class: 'irreversible', description: 'deletes a release', provided: true },
+  { id: 'release-upload', class: 'outward', description: 'uploads assets to a release', provided: true },
   { id: 'release-create', class: 'outward', description: 'publishes a release', provided: true },
   { id: 'git-tag-create', class: 'outward', description: 'creates a tag',
     pattern: new RegExp(`^${GIT}tag(?!${ARGS}\\s+(?:${LIST_FLAGS})(?=\\s|=|$))(?=(?:\\s+-\\S+)*\\s+[^\\s-])`),
@@ -85,16 +95,28 @@ const PROVIDERS = {
       pattern: new RegExp(`^gh\\s+(?:repo\\s+(?:edit|delete|archive|unarchive|rename|transfer)|(?:secret|variable)\\s+(?:set|delete|remove)|ruleset\\s+(?:create|edit|delete)|api(?=${ARGS}\\s+(?:-X|--method)(?:\\s+|=)(?:POST|PUT|PATCH|DELETE)${END})(?=${ARGS}\\s+\\S*(?:/protection|/rulesets|/collaborators|/hooks|/keys|/actions|/environments|/pages|/autolinks|/transfer|orgs/)\\S*)${END})`),
         native: ['gh repo edit *', 'gh repo delete *', 'gh repo archive *', 'gh repo unarchive *', 'gh repo rename *', 'gh repo transfer *', 'gh secret set *', 'gh secret delete *', 'gh secret remove *', 'gh variable set *', 'gh variable delete *', 'gh ruleset create *', 'gh ruleset edit *', 'gh ruleset delete *', 'gh api -X *', 'gh api --method *', 'gh api * -X *', 'gh api * --method *'],
       examples: { match: ['gh repo edit --default-branch dev', 'gh repo delete x --yes', 'gh secret set TOKEN', 'gh api -X PUT repos/o/r/branches/main/protection', 'gh api repos/o/r/rulesets -X POST', 'gh api --method DELETE repos/o/r/hooks/1'], noMatch: ['gh repo view', 'gh repo clone o/r', 'gh secret list', 'gh api repos/o/r/pulls', 'gh api -X GET repos/o/r/branches/main/protection', 'gh api -X POST repos/o/r/issues/1/comments'] } },
-    'pr-create': { pattern: /^gh\s+pr\s+create(?=\s|$)/, native: ['gh pr create *'],
+    'pr-create': { pattern: new RegExp(`^${GH}pr\\s+create${END}`), native: ghGlobs('pr create'),
       examples: { match: ['gh pr create --fill', 'gh pr create'], noMatch: ['gh pr view 5', 'gh pr list', 'gh pr merge 5'] } },
-    'pr-merge': { pattern: /^gh\s+pr\s+merge(?=\s|$)/, native: ['gh pr merge *'],
-      examples: { match: ['gh pr merge 5', 'gh pr merge --squash --delete-branch 5'], noMatch: ['gh pr checks 5', 'gh pr create --fill'] } },
-    'pr-close': { pattern: /^gh\s+pr\s+close(?=\s|$)/, native: ['gh pr close *'],
-      examples: { match: ['gh pr close 5'], noMatch: ['gh pr view 5', 'gh pr merge 5'] } },
-    'release-create': { pattern: /^gh\s+release\s+create(?=\s|$)/, native: ['gh release create *'],
-      examples: { match: ['gh release create v1'], noMatch: ['gh release list', 'gh release view v1'] } },
-    'comment-post': { pattern: /^gh\s+(?:issue|pr)\s+comment(?=\s|$)/, native: ['gh issue comment *', 'gh pr comment *'],
-      examples: { match: ['gh issue comment 3 -b hi', 'gh pr comment 5 -b hi'], noMatch: ['gh issue view 3', 'gh pr checks'] } },
+    'pr-merge': { pattern: new RegExp(`^${GH}pr\\s+merge${END}`), native: ghGlobs('pr merge'),
+      examples: { match: ['gh pr merge 5', 'gh pr merge --squash --delete-branch 5', 'gh -R o/r pr merge 5', 'gh --repo o/r pr merge 5', 'gh --repo=o/r pr merge 5', 'gh -Ro/r pr merge 5'], noMatch: ['gh pr checks 5', 'gh pr create --fill'] } },
+    'pr-close': { pattern: new RegExp(`^${GH}pr\\s+close${END}`), native: ghGlobs('pr close'),
+      examples: { match: ['gh pr close 5', 'gh -R o/r pr close 5'], noMatch: ['gh pr view 5', 'gh pr merge 5'] } },
+    'pr-reopen': { pattern: new RegExp(`^${GH}pr\\s+reopen${END}`), native: ghGlobs('pr reopen'),
+      examples: { match: ['gh pr reopen 5', 'gh -R o/r pr reopen 5'], noMatch: ['gh pr view 5', 'gh pr close 5'] } },
+    'pr-edit': { pattern: new RegExp(`^${GH}pr\\s+edit${END}`), native: ghGlobs('pr edit'),
+      examples: { match: ['gh pr edit 5 --base main', 'gh --repo o/r pr edit 5 --title x'], noMatch: ['gh pr view 5', 'gh pr checks 5'] } },
+    'issue-close': { pattern: new RegExp(`^${GH}issue\\s+close${END}`), native: ghGlobs('issue close'),
+      examples: { match: ['gh issue close 3', 'gh -R o/r issue close 3'], noMatch: ['gh issue view 3', 'gh issue list'] } },
+    'issue-delete': { pattern: new RegExp(`^${GH}issue\\s+delete${END}`), native: ghGlobs('issue delete'),
+      examples: { match: ['gh issue delete 3', 'gh -R o/r issue delete 3 --yes'], noMatch: ['gh issue view 3', 'gh issue close 3'] } },
+    'release-create': { pattern: new RegExp(`^${GH}release\\s+create${END}`), native: ghGlobs('release create'),
+      examples: { match: ['gh release create v1', 'gh -R o/r release create v1'], noMatch: ['gh release list', 'gh release view v1'] } },
+    'release-delete': { pattern: new RegExp(`^${GH}release\\s+delete${END}`), native: ghGlobs('release delete'),
+      examples: { match: ['gh release delete v1', 'gh --repo o/r release delete v1 --yes'], noMatch: ['gh release list', 'gh release view v1', 'gh release delete-asset v1 a'] } },
+    'release-upload': { pattern: new RegExp(`^${GH}release\\s+upload${END}`), native: ghGlobs('release upload'),
+      examples: { match: ['gh release upload v1 f.zip', 'gh -R o/r release upload v1 f.zip'], noMatch: ['gh release list', 'gh release download v1'] } },
+    'comment-post': { pattern: new RegExp(`^${GH}(?:issue|pr)\\s+comment${END}`), native: [...ghGlobs('issue comment'), ...ghGlobs('pr comment')],
+      examples: { match: ['gh issue comment 3 -b hi', 'gh pr comment 5 -b hi', 'gh -R o/r pr comment 5 -b hi'], noMatch: ['gh issue view 3', 'gh pr checks'] } },
   },
 };
 export const PROVIDER_IDS = Object.keys(PROVIDERS);

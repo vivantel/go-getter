@@ -156,7 +156,7 @@ test('deny-raw-tracker-writes: raw gh issue writes are denied naming the verb, r
   writeFileSync(path.join(dir, 'docs/guardrails/tracker-writes-follow-the-answer.md'), source);
   const bash = (command) => ({ tool_name: 'Bash', tool_input: { command } });
   try {
-    for (const command of ['gh issue create --title x', 'gh issue comment 3 -b hi', 'gh issue close 3', 'git status && gh issue close 4']) {
+    for (const command of ['gh issue create --title x', 'gh issue comment 3 -b hi', 'gh issue close 3', 'git status && gh issue close 4', 'gh -R o/r issue close 3', 'gh --repo o/r issue create --title x']) {
       const d = evaluatePreTool(dir, bash(command), 'claude-code');
       assert.equal(d.deny, true, command);
       assert.match(d.reason, /tracker-writes-follow-the-answer/);

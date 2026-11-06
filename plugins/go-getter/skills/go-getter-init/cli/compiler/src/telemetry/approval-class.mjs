@@ -24,6 +24,12 @@ export const APPROVAL_CLASS = {
   'pr-create': 'routine',
   'pr-merge': 'irreversible', // owner's call 2026-11-05: a merge can only be compensated (by a revert), not undone
   'pr-close': 'routine',
+  'pr-reopen': 'routine',
+  'pr-edit': 'routine',
+  'issue-close': 'routine',
+  'issue-delete': 'irreversible',
+  'release-delete': 'irreversible',
+  'release-upload': 'irreversible',
   'comment-post': 'routine',
   'git-tag-create': 'routine',
   'release-create': 'irreversible',
