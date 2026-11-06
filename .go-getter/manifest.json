@@ -6,7 +6,7 @@
     "context": "0.3.1",
     "cost-routing": "0.2.0",
     "data-policy": "0.6.0",
-    "git-workflow": "0.1.1",
+    "git-workflow": "0.1.2",
     "hitl": "0.7.0",
     "orchestration": "0.1.5",
     "restricted-data": "0.6.0",

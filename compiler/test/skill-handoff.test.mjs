@@ -31,3 +31,11 @@ test('every skill that asks the person names the selectable-question tool, and n
     assert.doesNotMatch(text, HOST_TOOLS, `${name} stays neutral`);
   }
 });
+
+test('the git-workflow procedure has the agent do its own prep and hand over only gated actions', () => {
+  const pack = JSON.parse(readFileSync(path.join(root, 'src/packs/git-workflow/pack.json'), 'utf8'));
+  const body = JSON.stringify(pack.practices ?? pack).toLowerCase();
+  assert.match(body, /before (opening )?the pull request[^"]*(yourself|itself)|do (the )?(pre-pr )?prep(aration)? yourself/, 'prep is the agent\'s');
+  assert.match(body, /only gated|gated actions/, 'a person gets only gated actions');
+  assert.match(body, /question tool/, 'asked through the question tool');
+});

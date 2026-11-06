@@ -15,7 +15,7 @@ go-getter:
       check: The head of the default branch is a single-parent commit (a squash), checked on a push to it in CI
       run: builtin:squash-merged-head
       origin: derived
-  generated-by: git-workflow@0.1.1
+  generated-by: git-workflow@0.1.2
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
 ---
