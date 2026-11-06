@@ -243,6 +243,7 @@ export async function claimUnit(root, ref, who, { now = clockNow(), hostDate, re
     // failures count under one claim; claimants accumulate across claims until an owner answers (which starts the count again)
     const next = previous && !previous.answer ? { ...entry, counters: { failures: 0, claimants: (previous.counters?.claimants ?? 0) + 1 } } : entry;
     if (previous?.spent) next.spent = previous.spent; // what a unit spent stays on its entry whoever holds it next
+    if (previous?.effected) next.effected = previous.effected; // so does the effect log its money cap sums, or a release and re-claim would reset the cap
     const commit = commitEntries(root, ledger.tip, { [name]: next }, { author: author ?? who.id, message: `claim ${unit} by ${who.kind} ${who.id}`, now });
     await hooks?.beforePush?.({ attempt, tip: ledger.tip, commit });
     const pushed = pushRef(root, rem, ledgerRef(stem), commit, ledger.tip);
