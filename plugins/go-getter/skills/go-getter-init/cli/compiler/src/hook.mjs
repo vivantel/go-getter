@@ -506,6 +506,11 @@ function redirectedCommand(entry, payload, stopped = new Set()) {
   return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI${verbs.get(hit.id) === 'go-getter ship' ? ' and merges on green' : ''}). A person may still run the raw command themselves with "! <command>".` };
 }
 
+// Raw tracker writes (guardrail tracker-writes-follow-the-answer): `gh issue create|comment|close` outside `go-getter plan issue`.
+// `go-getter plan issue` runs `gh` from its own process, so the verb never reaches the host hook. Reads (`gh issue view|list`) pass.
+const RAW_TRACKER_WRITE = '/^gh\\s+issue\\s+(?:create|comment|close)(?:\\s|$)/';
+export const rawTrackerWrite = (command) => (matchGated(command, { classes: [], extra: [RAW_TRACKER_WRITE] }).length ? command : null);
+
 // The guardrail a decision names: set by the code that decided it, else the id in a `blocked by guardrail <id>` reason.
 const decidedBy = (result) => result.guardrail ?? /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1];
 
@@ -655,6 +660,11 @@ function decidePreTool(project, payload, host) {
       if (why) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: ${why}` };
       const classed = mcpClassGate(project, e, toolName(payload), host);
       if (classed) return classed;
+      continue;
+    }
+    if (e.parsed.id === 'deny-raw-tracker-writes') {
+      const raw = rawTrackerWrite(shellCommand(payload));
+      if (raw) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: "${raw.length > 120 ? `${raw.slice(0, 120)}…` : raw}" writes to the tracker outside \`go-getter plan issue\` (create, comment, close); use that instead. A person may still run the raw command themselves with "! <command>".` };
       continue;
     }
     if (e.parsed.id === 'deny-path') {

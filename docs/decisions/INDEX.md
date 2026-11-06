@@ -187,4 +187,5 @@ id,title,tags,status
 0204-an-enforcement-entry-may-say-whether-its-check-is-derived,"An enforcement entry may say whether its check is derived from the guardrail or hand-written","enforcement, guardrail, knowledge-base",draft
 0206-approval-events-record-class-and-outcome,"Each point where work waits for a person is an approval event with a class from a fixed table and one of three outcomes","observability, hooks",draft
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
+draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
