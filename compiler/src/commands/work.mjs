@@ -14,7 +14,7 @@ import { planIssue, writeMode } from '../trackers/write.mjs';
 import { acceptUnit, unaccepted } from '../work/accept.mjs';
 import { LEVELS, recordEscape } from '../work/escapes.mjs';
 
-const USAGE = 'usage: go-getter work accept <unit> [--reviewer <cmd>] [--as <worker>] [--kind human|agent|ci] | accept-check | escape <unit> --merged-at step|plan|feature|product --found-at step|plan|feature|product | grant <unit> --scope <tokens> --spend <n> --shapes <ids> --asks all|default-reversible|unrecoverable-only --data <classes> [--effects reversible,money:50/day,physical:z1+z2,legal:nda@acme] [--to <worker> --to-kind human|agent|ci] [--parent <unit>] [--as <worker>] | spend <unit> <amount> [--as <worker>] | grant-check | next [--owner-kind human|agent|ci] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> [--as <worker>] | asks [--mine] [--as <worker>] [--kind human|agent|ci] | answer <ask> <choice> [--as <worker>] [--kind human] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
+const USAGE = 'usage: go-getter work accept <unit> [--reviewer <cmd>] [--as <worker>] [--kind human|agent|ci] | accept-check | escape <unit> --merged-at step|plan|feature|product --found-at step|plan|feature|product | grant <unit> --scope <tokens> --spend <n> --shapes <ids> --asks all|default-reversible|unrecoverable-only --data <classes> [--effects reversible,money:50/day,physical:z1+z2,legal:nda@acme] [--to <worker> --to-kind human|agent|ci] [--parent <unit>] [--as <worker>] | spend <unit> <amount> [--as <worker>] | grant-check | next [--owner-kind human|agent|ci] [--has <tag,tag>] [--dry-run] [--as <worker>] [--remote <name>] | scope-check [--base <ref>] | park <unit> --ask <file> [--as <worker>] | asks [--mine] [--as <worker>] [--kind human|agent|ci] | answer <ask> <choice> [--as <worker>] [--kind human] | request <unit> --to <unit> [--text <t>] [--park] [--as <worker>] | claim|heartbeat|release <unit> [--as <worker>] [--kind human|agent|ci] [--remote <name>] [--issuer <worker> --issuer-kind human|agent|ci] [--parent <unit>] [--accept-remote-ledger] [--unverified-clock]';
 const FLAGS = ['--as', '--kind', '--remote', '--issuer', '--issuer-kind', '--parent'];
 
 // One comment on the unit's issue for a state change, only where the project's tracker-writes answer is `allow`.
@@ -30,7 +30,7 @@ async function workNext(args) {
   const flags = {};
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--dry-run') flags.dry = true;
-    else if (['--owner-kind', '--as', '--remote'].includes(args[i]) && args[i + 1] !== undefined) flags[args[i].slice(2)] = args[++i];
+    else if (['--owner-kind', '--as', '--remote', '--has'].includes(args[i]) && args[i + 1] !== undefined) flags[args[i].slice(2)] = args[++i];
     else {
       console.error(USAGE);
       return 2;
@@ -55,7 +55,7 @@ async function workNext(args) {
   }
   try {
     const now = clockNow();
-    const found = nextUnits(root, { ownerKind: who.kind, worker: who, now, remote });
+    const found = nextUnits(root, { ownerKind: who.kind, worker: who, now, remote, has: flags.has === undefined ? null : flags.has.split(',').map((t) => t.trim()).filter(Boolean) });
     for (const q of found.queued) console.log(`${q.unit}: queued behind ${q.behind}${q.holder ? ` (${q.holder.kind} ${q.holder.id})` : ''}${q.tokens ? `, ${q.tokens.join(' and ')}` : ''}`);
     if (!found.ready.length) {
       console.log('work next: no unit is ready');

@@ -5,6 +5,7 @@ accepting-a-unit,"Accept a plan or feature on the integrated result","coordinati
 adding-a-host-agent,"Procedure for adding a host agent to the compiler","host-agents, compiler, harness, procedural",active
 adding-a-practice-pack,"Procedure for adding a practice pack","practice-packs, interview, dogfooding, procedural",active
 answering-a-parked-ask,"Answer a parked ask from the routed queue","coordination, hooks, procedural",draft
+capabilities,"Capability vocabulary","coordination, model-routing",active
 defining-a-meter,"Define a meter and its refresh schedule","coordination, observability, procedural",active
 defining-an-outcome-brief,"Define an outcome brief that a meter can accept","coordination, roadmap, procedural",active
 delegating-a-work-unit,"Delegate a work unit to a human or an agent","coordination, roadmap, procedural",draft

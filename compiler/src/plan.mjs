@@ -23,7 +23,7 @@ export const PLAN_DIR = path.join('docs', 'plans');
 export const OWNERS = ['human', 'agent', 'either'];
 const META = {
   Class: CLASSES, Effort: EFFORTS, Tier: TIERS, Data: DATA_CLASSES, Needs: null, Check: null, Issue: null, Human: null,
-  Scope: null, Owner: OWNERS, 'Owner-id': null, Accept: null, Parent: null, Priority: null, Flag: null, Budget: null,
+  Scope: null, Owner: OWNERS, 'Owner-id': null, Accept: null, Parent: null, Priority: null, Flag: null, Budget: null, 'Needs-capability': null,
 };
 // A header block takes the step fields plus the unit's own id.
 const HEADER_KEYS = new Set([...Object.keys(META), 'Id']);
@@ -72,6 +72,7 @@ function applyField(target, label, key, value, at, problems) {
     else target.issueRef = ref;
   } else if (key === 'Needs') target.needs = value === 'none' ? [] : csv(value);
   else if (key === 'Scope') target.scope = value === 'none' ? [] : csv(value.replace(/`/g, ''));
+  else if (key === 'Needs-capability') target.needsCapability = value === 'none' ? [] : csv(value);
   else if (key === 'Owner') target.owner = value;
   else if (key === 'Owner-id') target.ownerId = value;
   else if (key === 'Accept') target.accept = stripTicks(value);
@@ -461,7 +462,7 @@ export function stepBody(text, step) {
   for (let i = step.line; i < lines.length; i++) {
     const line = lines[i];
     if (/^#{1,3}\s/.test(line) || /^---\s*$/.test(line)) break;
-    if (/^(Class|Effort|Tier|Data|Needs|Check|Issue|Scope|Owner|Owner-id|Accept|Parent|Priority|Flag|Budget):\s/.test(line)) continue;
+    if (/^(Class|Effort|Tier|Data|Needs|Check|Issue|Scope|Owner|Owner-id|Accept|Parent|Priority|Flag|Budget|Needs-capability):\s/.test(line)) continue;
     out.push(line);
   }
   return out.join('\n').trim();
