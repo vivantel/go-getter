@@ -15,6 +15,8 @@ Detect what the project already has, the same way `roadmap` does: look for an ex
 
 Note the highest existing number in `facts/` and `decisions/` so new stubs continue the sequence rather than collide.
 
+When you must ask the person (an ambiguous extraction, a file-list approval), use the host's selectable-question tool where it has one, else one plain question.
+
 Write files directly — this is a setup pass, not a chat recommendation. If a file already covers the same ground, extend it rather than creating a duplicate.
 
 ## Steps

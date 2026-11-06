@@ -11,6 +11,8 @@ If `docs/{facts,decisions,guardrails,skills}/` doesn't exist or is clearly incom
 
 ## Step 2: find one real decision
 
+Use the host's selectable-question tool for any question here where it has one (candidates as options; its built-in "Other" is the free-text slot).
+
 Ask what decision or plan is currently live for the user — something they're actually facing, not a hypothetical. If they don't have one in mind, look for a candidate: an open question in recent git history, a TODO, or a choice `bootstrap`'s own decision-stub extraction flagged as ambiguous.
 
 ## Step 3: capture it
