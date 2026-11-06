@@ -94,10 +94,11 @@ function buildLadder(eligible, tiers, step, ttl) {
 }
 
 // Candidate models: priced, in some tier, run by the host, and allowed for the data class. Eligibility comes before any cost.
-function candidates({ models, tiers, hostProviders, dataClass, registry }) {
+// Required model-property tags (`vision`, `long-context`, `tool-use`, decision 0181 item 2) narrow the set right after governance, still before cost.
+function candidates({ models, tiers, hostProviders, dataClass, registry, capabilities = [] }) {
   const tiered = new Set(TIERS.flatMap((t) => tiers[t] ?? []));
   const pool = models.filter((m) => tiered.has(m.id) && (!hostProviders || hostProviders.includes(m.provider)));
-  return eligibleModels({ dataClass, models: pool, registry });
+  return eligibleModels({ dataClass, models: pool, registry }).filter((m) => capabilities.every((c) => (m.capabilities ?? []).includes(c)));
 }
 
 const summary = (rung, extra) => ({ model: rung.model.id, provider: rung.model.provider, tier: rung.name, ...extra });
@@ -106,11 +107,11 @@ const summary = (rung, extra) => ({ model: rung.model.id, provider: rung.model.p
  * Chooses where a step runs. `step`: { sessionTokens, handoffTokens, turns?, newTokens?, outputTokens?, cache? } (tokens
  * of the current session's prefix and of what a delegate must be handed). Returns { action: 'stay' | 'delegate' | 'human', ... }.
  */
-export function chooseRoute({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, policy, step, sessionModel = null, ttl = '5m', failureRates = { ...DEFAULT_FAILURE_RATES, ...policy.failureRates } }) {
+export function chooseRoute({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, capabilities = [], policy, step, sessionModel = null, ttl = '5m', failureRates = { ...DEFAULT_FAILURE_RATES, ...policy.failureRates } }) {
   const start = startTier(policy, taskClass);
   if (!start) return { action: 'human', reason: `no routing class for "${taskClass}"`, taskClass, dataClass };
-  const eligible = candidates({ models, tiers, hostProviders, dataClass, registry });
-  if (!eligible.length) return { action: 'human', reason: `no eligible model for data class "${dataClass}"`, taskClass, dataClass };
+  const eligible = candidates({ models, tiers, hostProviders, dataClass, registry, capabilities });
+  if (!eligible.length) return { action: 'human', reason: `no eligible model for data class "${dataClass}"${capabilities.length ? ` with ${capabilities.join(', ')}` : ''}`, taskClass, dataClass };
   const full = { ...DEFAULT_STEP, ...policy.step, handoffTokens: DEFAULT_HANDOFF_TOKENS, sessionTokens: 0, ...step };
   const ladder = buildLadder(eligible, tiers, full, ttl);
   const common = { ladder, step: full, failureRates, escalations: policy.maxEscalations, ttl };
@@ -135,9 +136,9 @@ export function chooseRoute({ taskClass, dataClass = DEFAULT_DATA_CLASS, models,
  * The next route after a failed verification: one tier up on the delegation ladder. After `policy.maxEscalations`
  * escalations, or with no stronger eligible tier, the step goes to a human and is never retried further.
  */
-export function escalate({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, policy, step, from, attempts, ttl = '5m' }) {
+export function escalate({ taskClass, dataClass = DEFAULT_DATA_CLASS, models, tiers, hostProviders = null, registry = {}, capabilities = [], policy, step, from, attempts, ttl = '5m' }) {
   if (attempts >= policy.maxEscalations) return { action: 'human', reason: `escalation bound of ${policy.maxEscalations} reached`, taskClass, dataClass, attempts };
-  const eligible = candidates({ models, tiers, hostProviders, dataClass, registry });
+  const eligible = candidates({ models, tiers, hostProviders, dataClass, registry, capabilities });
   const full = { ...DEFAULT_STEP, ...policy.step, handoffTokens: DEFAULT_HANDOFF_TOKENS, sessionTokens: 0, ...step };
   const next = buildLadder(eligible, tiers, full, ttl).find((rung) => rung.rank > rankOf(from));
   if (!next) return { action: 'human', reason: `no stronger eligible tier above "${from}"`, taskClass, dataClass, attempts };
