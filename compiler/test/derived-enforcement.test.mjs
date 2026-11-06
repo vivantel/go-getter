@@ -13,11 +13,11 @@ import { cleanGitEnv } from '../src/git-env.mjs';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const git = (dir, ...a) => execFileSync('git', a, { cwd: dir, stdio: 'pipe', encoding: 'utf8', env: cleanGitEnv(process.env) }).trim();
 const tmp = () => mkdtempSync(path.join(tmpdir(), 'gg-derived-'));
-const withEnv = (env, fn) => {
+const withEnv = async (env, fn) => {
   const saved = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]));
   for (const [k, v] of Object.entries(env)) v === undefined ? delete process.env[k] : (process.env[k] = v);
   try {
-    return fn();
+    return await fn();
   } finally {
     for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
   }
