@@ -1,12 +1,28 @@
 # go-getter
 
-*Set up a production-grade agent harness and SDLC practices for your AI coding agent — the required quality at minimal token spend, with zero friction.*
+*Coordinate humans and AI agents to achieve outcomes — software delivery first, with a production-grade agent harness and SDLC practices for your AI coding agent, the required quality at minimal token spend, and zero friction.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+go-getter coordinates humans and agents working many units of work in parallel toward an outcome: a result in the world that a meter can read ([decision 0176](docs/decisions/0176-go-getter-coordinates-humans-and-agents-to-achieve-outcomes-in-any-domain.md)). Software delivery is the first domain and the only one fully supported today; other domains are possible, not yet supported (see [Scope](#scope)).
 
 Agent = Model + Harness. go-getter configures the harness around your host agent — orchestration and agent roles, context management, verification loops, guardrails and DLP, human-in-the-loop gates, checkpointing, quality-gated cache-aware model routing, cost control, observability — plus the SDLC practices it works within: branching, worktrees, parallelization, testing, commit and PR rules. Setup is one guided interview; every choice is recorded as a durable, enforceable decision.
 
 Host agents: Claude Code, Codex, Kilo Code, OpenCode, Cursor, Gemini CLI, GitHub Copilot.
+
+## Scope
+
+Software delivery is fully supported: the harness packs, the verification layers and the SDLC practice packs below are built for it. Another domain is possible with the same units, meters and acceptance, but it is supported only when its units have an `Accept` that someone other than the author can run, its effects are classed, and its meters exist; a worker without git push access takes part through the tracker. Until a domain meets those conditions it is possible, not supported, and starts with fewer checks and more human review than software has. The effect classes are not shipped yet, so no domain other than software meets the conditions today. The name, CLI, plugin and packs are the same in every domain.
+
+## The five parts
+
+The framework splits by what each part owns ([decision 0177](docs/decisions/0177-each-part-of-the-framework-owns-one-artifact-and-one-kind-of-decision.md)):
+
+- **Discover** (`discover` skill): the *outcome brief* in `docs/outcomes/`: the hypothesis, the meter, a target, a window and an attribution method. It says what is worth achieving and how success is read.
+- **Decompose** (`roadmap` skill): splits an approved brief into a unit tree with scope and `Accept`.
+- **Deliver** (`go-getter work` and `queue`): claims, lifecycle and acceptance of each unit.
+- **Measure** (`go-getter measure`): a *meter* in `docs/meters/` names what is read and how; a reading is data, taken by any worker able to take it.
+- **Operate**: defined as an operating charter (`go-getter operation check|status`) for what is live after delivery; no skill or verb runs it yet.
 
 ## Install
 

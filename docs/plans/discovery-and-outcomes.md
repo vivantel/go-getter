@@ -75,11 +75,12 @@ Do: define an operating charter as `docs/operations/<id>.md` with frontmatter (i
 Done-when: tests show a complete charter passing, each missing field refused by name, an unknown meter refused, and `operation status` listing exactly the crossed thresholds from fixture readings and creating no unit.
 Progress 2026-11-04 · `feat/operating-charter` · `../go-getter-wt/operating-charter` · done: `compiler/src/operation.mjs`, `go-getter operation check|status [id]`, hand-kept `docs/operations/INDEX.md`, `compiler/test/operating-charter.test.mjs` · facts: 0045 records the strict comparison, local-only reads and the unchecked outcome link · next: crossed thresholds create no unit; incident and recurring units stay by hand until operate is built from D9 or real use; fold the INDEX row into the generated indexes at work-coordination K5.
 
-### D8 Say the scope — [ ]
+### D8 Say the scope — [x]
 Class: implement · Needs: D0, D7 · Check: `npm run check:plans && npm run check:guardrails`
 Context: decision 0176 item 3 says a domain is supported when its units have a runnable `Accept`, its effects are classed and its meters exist, and that the docs say which domains are supported. The README tagline reads "Set up a production-grade agent harness and SDLC practices for your AI coding agent"; INSTALLING.md and fact 0002 use "harness" and "host agent" and are unchanged in meaning.
 Do: reword the README tagline and opening, and INSTALLING.md, to the scope of 0176 (software delivery first and fully supported; other domains possible, with the conditions of item 3), describe the five parts and the outcome brief and meter in a short README section, and keep every command and pack name unchanged. Run `go-getter:lint`.
 Done-when: lint reports no errors, the README states the software-first scope and the support conditions, and no command or pack name changed.
+Result: README tagline, opening, Scope and five-parts sections and the INSTALLING.md opening state the 0176 scope; effect classes (D5/D6) are named as not shipped; no command or pack name changed.
 
 ### D9 Dogfood a non-software outcome — [ ]
 Class: review · Needs: D4, D5, D6, D7, D7a, D8 · Human: the owner picks a real outcome outside software, with a meter that can be read, and supplies any physical or paid access its caps allow; the figures need the observation window to pass · Check: `go-getter outcome check && go-getter operation check`
