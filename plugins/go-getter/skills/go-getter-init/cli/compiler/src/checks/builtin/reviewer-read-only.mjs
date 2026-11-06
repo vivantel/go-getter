@@ -8,9 +8,9 @@ const READ_TOOLS = new Set(['read', 'grep', 'glob', 'search', 'read_file', 'list
 
 const frontmatter = (text) => /^---\n([\s\S]*?)\n---/.exec(text)?.[1] ?? '';
 
-function problem(dir, text) {
+function problem(text) {
   const head = frontmatter(text);
-  const tools = /^tools:\s*(.+)$/m.exec(head)?.[1];
+  const tools = /^tools:[ \t]*(.+)$/m.exec(head)?.[1];
   if (tools) {
     const names = tools.replace(/[[\]"']/g, '').split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
     const extra = names.filter((t) => !READ_TOOLS.has(t));
@@ -30,7 +30,7 @@ export default function reviewerReadOnly({ project, args }) {
     if (!existsSync(abs)) continue;
     for (const f of readdirSync(abs).filter((n) => n === `${role}.md`)) {
       seen++;
-      const why = problem(dir, readFileSync(path.join(abs, f), 'utf8'));
+      const why = problem(readFileSync(path.join(abs, f), 'utf8'));
       if (why) bad.push(`${dir}/${f}: ${why}`);
     }
   }

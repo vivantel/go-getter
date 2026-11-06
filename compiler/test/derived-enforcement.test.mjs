@@ -80,6 +80,10 @@ test('squash-merged-head: a merge commit on the default branch fails, a squash p
     const bad = await run();
     assert.equal(bad.ok, false);
     assert.match(bad.message, /merge commit/);
+    // in CI the head is still a merge commit here: a pull request event is not judged, a push to the default branch is
+    const ci = (event) => withEnv({ GITHUB_ACTIONS: 'true', GITHUB_EVENT_NAME: event, GITHUB_REF_NAME: 'main' }, () => runBuiltin(dir, { kind: 'builtin', id: 'squash-merged-head', args: {} }));
+    assert.equal((await ci('pull_request')).ok, true);
+    assert.equal((await ci('push')).ok, false);
     git(dir, 'checkout', '-q', '-b', 'feat/y');
     assert.equal((await run()).ok, true);
     git(dir, 'checkout', '-q', 'main');
@@ -87,8 +91,6 @@ test('squash-merged-head: a merge commit on the default branch fails, a squash p
     git(dir, 'merge', '-q', '--squash', 'feat/x');
     git(dir, 'commit', '-q', '-m', 'feat: x (#1)');
     assert.equal((await run()).ok, true);
-    // a pull request's own CI ref is a merge commit and is not the default branch
-    assert.equal((await withEnv({ GITHUB_ACTIONS: 'true', GITHUB_EVENT_NAME: 'pull_request' }, () => runBuiltin(dir, { kind: 'builtin', id: 'squash-merged-head', args: {} }))).ok, true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
