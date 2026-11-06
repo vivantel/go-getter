@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { cleanGitEnv } from '../src/git-env.mjs';
-import { ledgerView } from '../src/work/ops.mjs';
+import { ledgerView, releaseUnit } from '../src/work/ops.mjs';
 import { issueGrant } from '../src/work/grant-ops.mjs';
 import { parseEffects } from '../src/work/effects.mjs';
 import { act } from '../src/act.mjs';
@@ -120,6 +120,19 @@ test('a capped money effect is allowed inside the cap, logged as metadata, and p
   assert.equal(e.state, 'parked');
   assert.equal(e.ask.kind, 'spend');
   assert.equal(e.effected.length, 1);
+});
+
+test('a release and re-claim keeps the logged effects, so the money cap is not reset', async () => {
+  const dir = await granted();
+  const t = stub();
+  assert.ok((await act(dir, 'pay-vendor', { unit: 'feat#S1', who: bot, amount: 25, currency: 'EUR', ...opts, run: t.run })).ok);
+  const rel = await releaseUnit(dir, 'feat#S1', bot, { ...opts, remote: 'origin' });
+  assert.ok(rel.ok, rel.error);
+  const again = await issueGrant(dir, 'feat#S1', dana, { ...opts, grant: CHILD, to: bot });
+  assert.ok(again.ok, again.error);
+  assert.equal(unitOf(dir, 'feat#S1').effected?.length, 1, 'the earlier effect is still on the entry');
+  const over = await act(dir, 'pay-vendor', { unit: 'feat#S1', who: bot, amount: 10, currency: 'EUR', ...opts, run: t.run });
+  assert.equal(over.code, 'effect-cap', 'the 25 already spent still counts against the 30 cap');
 });
 
 test('an effect counts against an ancestor cap across its children', async () => {
