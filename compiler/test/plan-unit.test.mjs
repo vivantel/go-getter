@@ -174,7 +174,7 @@ test('the repository plans carry the restored cross-plan Needs and no blocked st
   assert.deepEqual(step('discovery-and-outcomes', 'D4').needs, ['D2', 'D3', 'work-coordination#K9', 'work-coordination#K10', 'work-coordination#K14']);
   assert.deepEqual(step('discovery-and-outcomes', 'D5').needs, ['D0', 'work-coordination#K8']);
   assert.deepEqual(step('discovery-and-outcomes', 'D6').needs, ['D0', 'work-coordination#K3']);
-  for (const id of ['D4', 'D5', 'D6']) assert.equal(step('discovery-and-outcomes', id).marker, ' ');
+  for (const id of ['D4', 'D6']) assert.equal(step('discovery-and-outcomes', id).marker, ' ');
   const wc = plans.find((p) => p.stem === 'work-coordination');
   assert.deepEqual(wc.plans.map((p) => p.unit), ['work-coordination#A', 'work-coordination#B', 'work-coordination#C', 'work-coordination#D', 'work-coordination#E']);
   assert.equal(plans.find((p) => p.stem === 'discovery-and-outcomes').feature.claimable, true);

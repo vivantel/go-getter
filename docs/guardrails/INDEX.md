@@ -4,7 +4,7 @@ id,title,tags,status
 a-change-stays-inside-its-units-scope,"A change touches only paths inside its unit's declared scope","coordination, verification, guardrail",draft
 a-claim-names-its-holder,"A claim names its holder, and the holder is the author of the unit's commits","coordination, security, guardrail",draft
 a-delegated-grant-never-exceeds-its-parent,"A delegated grant never exceeds its parent's on any dimension","coordination, hooks, guardrail",draft
-a-real-world-effect-stays-inside-its-cap,"A money, physical or legal effect stays inside the cap its grant carries, and an unclassed action is not delegated","coordination, security, guardrail",draft
+a-real-world-effect-stays-inside-its-cap,"A money, physical or legal effect stays inside the cap its grant carries, and an unclassed action is not delegated","coordination, security, guardrail",active
 a-unit-is-accepted-by-someone-other-than-its-author,"A unit with an Accept check is accepted by a worker who is not its author","coordination, verification, guardrail",draft
 an-outcome-needs-an-attribution-method,"An outcome brief is not approved without a meter, a target, a window and an attribution method","coordination, verification, guardrail",active
 artifact-ids-have-no-shared-counter,"A new fact or decision takes a unit-scoped draft id, and index rows are generated","coordination, knowledge-base, guardrail",draft
