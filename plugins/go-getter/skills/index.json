@@ -109,6 +109,7 @@
         "cli/compiler/src/audit.mjs",
         "cli/compiler/src/build.mjs",
         "cli/compiler/src/capabilities.mjs",
+        "cli/compiler/src/capability-tags.mjs",
         "cli/compiler/src/checkpoint-trigger.mjs",
         "cli/compiler/src/checkpoint.mjs",
         "cli/compiler/src/checks/builtin/branch-name.mjs",
