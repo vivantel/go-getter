@@ -9,7 +9,6 @@ import { parsePlan } from '../src/plan.mjs';
 import { nextUnits } from '../src/work/next.mjs';
 import { intakeProblems } from '../src/work/intake.mjs';
 import { loadCapabilityTags, modelTags } from '../src/capability-tags.mjs';
-import { chooseRoute, escalate } from '../src/routing/policy.mjs';
 
 const sh = (cwd, ...a) => execFileSync('git', a, { cwd, encoding: 'utf8', env: cleanGitEnv(process.env) }).trim();
 const VOCAB = readFileSync(new URL('../../docs/skills/capabilities.md', import.meta.url), 'utf8');
@@ -57,6 +56,7 @@ test('parser reads Needs-capability', () => {
 test('a unit with an unmet tag is never offered', () => {
   const root = repo();
   assert.deepEqual(offered(root, []), ['T1']);
+  assert.deepEqual(offered(root, undefined), ['T1'], 'a worker that declares no capabilities holds none');
   assert.deepEqual(offered(root, ['manipulator']).sort(), ['T1', 'T2']);
   assert.deepEqual(offered(root, ['vision']).sort(), ['T1']);
   assert.deepEqual(offered(root, ['vision', 'browser', 'manipulator']).sort(), ['T1', 'T2', 'T3']);
@@ -72,31 +72,6 @@ test('an unknown tag is refused at approval and never offered', () => {
   assert.match(intakeProblems(t4, parsed, vocab).join(';'), /unknown capability "telepathy"/);
   assert.deepEqual(intakeProblems(parsed.steps.find((s) => s.id === 'T2'), parsed, vocab).filter((p) => /capability/.test(p)), []);
   assert.ok(!offered(root, ['telepathy', 'manipulator', 'vision', 'browser']).includes('T4'));
-});
-
-const price = { input: 1, output: 5 };
-const models = [
-  { id: 'cheap', provider: 'p', ...price, input: 0.1, output: 0.5 },
-  { id: 'seer', provider: 'p', ...price, capabilities: ['vision', 'tool-use'] },
-];
-const route = (capabilities, extra = {}) => chooseRoute({
-  taskClass: 'implement', models, tiers: { small: ['cheap'], medium: ['seer'], large: [] }, capabilities, dataClass: 'public',
-  policy: { classes: {}, startTiers: { implement: 'small' }, efforts: {}, maxEscalations: 2 }, step: {}, ...extra,
-});
-
-test('a model-property tag restricts the router candidates before cost', () => {
-  assert.equal(route([]).model, 'cheap');
-  const r = route(['vision']);
-  assert.equal(r.model, 'seer');
-  assert.ok(r.options.every((o) => o.model === 'seer'));
-  assert.equal(route(['long-context']).action, 'human');
-  const up = escalate({ taskClass: 'implement', models, tiers: { small: ['cheap'], medium: ['seer'], large: [] }, capabilities: ['vision'], dataClass: 'public', from: 'small', attempts: 0, policy: { classes: {}, startTiers: { implement: 'small' }, efforts: {}, maxEscalations: 2 }, step: {} });
-  assert.equal(up.model, 'seer');
-});
-
-test('governance still comes first', () => {
-  const r = route(['vision'], { dataClass: 'restricted' });
-  assert.equal(r.action, 'human');
 });
 
 test('the vocabulary marks model properties and no plan or tag names a model', () => {

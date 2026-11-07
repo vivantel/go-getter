@@ -44,7 +44,7 @@ export default function routeCommand({ args }) {
   }
   const taskClass = opt.class;
   if (!taskClass) {
-    console.error('usage: go-getter route --class <task-class> [--context-tokens <n>] [--cache warm|cold] [--session-model <id>] [--data-class <c>] [--host <id>]');
+    console.error('usage: go-getter route --class <task-class> [--context-tokens <n>] [--cache warm|cold] [--session-model <id>] [--data-class <c>] [--host <id>] [--capabilities <tags>]');
     return 2;
   }
   const tags = (opt.capabilities ?? '').split(',').map((t) => t.trim()).filter(Boolean);

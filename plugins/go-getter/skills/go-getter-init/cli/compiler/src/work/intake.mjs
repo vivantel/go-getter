@@ -21,7 +21,7 @@ const fullRef = (ref, stem) => (ref.includes('#') || ref === stem ? ref : `${ste
 
 // Why a unit cannot be approved yet, as a list: parse problems on its lines, an undeclared scope, a missing `Accept` where required
 // (a plan or feature, or a unit other units name as their parent).
-export function intakeProblems(step, parsed, vocab = null) {
+export function intakeProblems(step, parsed, vocab = new Map()) {
   const out = [];
   const end = parsed.steps.find((s) => s.line > step.line)?.line ?? Infinity;
   for (const p of parsed.problems) {
