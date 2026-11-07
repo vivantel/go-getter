@@ -47,15 +47,17 @@ An **atom** is a verb that (a) changes the state of exactly one noun in one way,
 
 `list` `show` `check` `create` `update` `remove` `start` `finish` `claim` `release` `approve` `answer` `read` `define` `expire` `restore` `prune` `render` `apply` `diff` `merge` `push` `open` `commit` `wait` `next` `status`
 
+The test also asserts that every action used in the atom list below is in this vocabulary and that no noun has more than 8 atoms (item 6).
+
 MECE is checked by a test, not by reading: the command table lists every atom as one row `(noun, action, effect, one-line summary, json-schema)`; the test fails if two rows share `(noun, action)`, if an action is outside the vocabulary, if a handler under `commands/` has no row, if a row has no handler, if a summary is empty or over 80 characters, or if two atoms write the same path pattern (declared in the row).
 
 Atoms by noun (old form in brackets; every old form stays as a deprecated alias, item 5):
 
-- `host`: `apply` [`apply`], `diff` [`apply --check`], `remove` [`apply --remove`], `update` [`update`], `show` [`coverage`], `check` [`doctor`], `detect` [`detect`], `sandbox` [`sandbox`].
+- `host`: `apply` [`apply`], `diff` [`apply --check`], `remove` [`apply --remove`], `update` [`update`], `check` [`doctor`], `list` [`detect`], `show` [`sandbox`, via `--sandbox`]. Coverage is `report show`, not a `host` atom.
 - `pack`: `list` [`packs`], `show` [`pack <id>`], `next` [`interview next`], `check` [`interview validate`], `render` [`render-pack`], `update` [`reconfigure`].
 - `kb`: `check` [`check <name>`], `update` [`artifacts index`], `create` [`artifacts assign`], `show` [`refs`].
 - `plan`: `status`, `next`, `start`, `finish` [`plan done`], `create` [`plan draft`], `approve`, `open` [`plan issue`].
-- `unit`: `next` [`work next`], `claim`, `release`, `update` [`work heartbeat`], `approve` [`work approve`], `finish` [`work accept`], `check` [`work accept-check`, `scope-check`], `open` [`work request`], `create` [`work escape`].
+- `unit`: `next` [`work next`], `claim`, `release`, `update` [`work heartbeat`], `approve` [`work approve`], `finish` [`work accept`], `check` [`work accept-check`, `scope-check`], `open` [`work request`]. An escaped defect is recorded with `report create` [`work escape`].
 - `ask`: `create` [`work park`], `list` [`work asks`], `answer`.
 - `grant`: `create` [`work grant`], `update` [`work spend`], `check` [`work grant-check`].
 - `run`: `start`, `status`, `next`, `update` [`run attempt`], `finish` [`run end`].
@@ -69,7 +71,7 @@ Atoms by noun (old form in brackets; every old form stays as a deprecated alias,
 - `approval`: `list`, `create` [`approvals add|allow`], `release`, `remove` [`approvals revoke`].
 - `secret`: `start` [`secret run`], `create` [`secret put`].
 - `meter`: `define`, `read`, `list` [`measure series`, `due`], `expire`, `show` [`operation status`], `check` [`outcome check`, `operation check`].
-- `report`: `show` [`telemetry summary`, `metrics day`, `digest`, `coverage`], `create` [`audit pick`], `update` [`audit fail`].
+- `report`: `show` [`telemetry summary`, `metrics day`, `digest`, `coverage`], `create` [`audit pick`, `work escape`], `update` [`audit fail`].
 - `serve`: `start` [`mcp serve`].
 - `dev`: `render` [`build`], `check` [`eval`, `eval bypass`].
 
@@ -92,7 +94,7 @@ A **recipe** is a named, ordered list of atoms that, executed in that order, yie
 
 | Recipe | Expands to | Result |
 |---|---|---|
-| `setup` | `host detect` → `pack next` (per pack, defaults) → `pack render` → `host apply` → `host check` | the project is configured and healthy |
+| `setup` | `host list` → `pack next` (per pack, defaults) → `pack render` → `host apply` → `host check` | the project is configured and healthy |
 | `status` | `plan status` → `unit next --dry-run` → `ask list` → `run status` → `ci status` → `host check` | one screen: what is next, what waits, what is red |
 | `start` | `plan next` → `tree create` → `unit claim` → `snapshot create` | a claimed step in its own worktree |
 | `pr` | `change check` → `snapshot create` → `change commit` → `change push` → `change open` → `ci wait` | a reviewed-ready pull request with CI read |
@@ -100,7 +102,7 @@ A **recipe** is a named, ordered list of atoms that, executed in that order, yie
 | `finish` | `unit check` → `unit finish` → `plan finish` → `tree prune` | the unit is accepted and cleaned up |
 | `release` | `release show` → `release create` → `ci wait` → `release merge` | one release pull request merged (never tags or publishes, 0094) |
 | `undo` | `snapshot list` → `snapshot restore` | the tree is back at a chosen snapshot |
-| `health` | `host check` → `kb check` (all) → `meter check` → `host show` | everything that can be red, in one read |
+| `health` | `host check` → `kb check` (all) → `meter check` → `report show` | everything that can be red, in one read |
 | `adopt <pack>` | `pack next` → `pack render` → `host apply` | one pack adopted |
 | `sync` | `host update` → `host diff` | host files match the installed version |
 
