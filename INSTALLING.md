@@ -1,6 +1,6 @@
 # Installing go-getter
 
-go-getter is a plugin of skills. Install it on one host agent, then ask that agent to **"set up the agent harness here"** (the `go-getter-init` skill). Its guided interview records your choices as decisions in `docs/` and generates the enforcement for every host agent you use.
+go-getter is a plugin of skills that coordinates humans and agents toward outcomes. Software delivery is the first domain and the only one fully supported today; another domain is supported only when its units have an `Accept` someone other than the author can run, its effects are classed and its meters exist (see the README's Scope section). Install it on one host agent, then ask that agent to **"set up the agent harness here"** (the `go-getter-init` skill). Its guided interview records your choices as decisions in `docs/` and generates the enforcement for every host agent you use.
 
 The `go-getter-init` skill carries its own copy of the CLI (`skills/go-getter-init/cli`), so setup needs no network, npx or environment variable; it needs Node.js 22 or newer. Install the whole skill directory: a copy that leaves out `cli/` cannot run. Without Node, your choices are still recorded but enforcement stays advisory.
 
