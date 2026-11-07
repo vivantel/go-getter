@@ -78,3 +78,15 @@ test('golden: the artifacts of the recommended path', () => {
   assert.deepEqual(actual, JSON.parse(readFileSync(goldenFile, 'utf8')));
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('plan-delivery renders one decision per option, and an answer file without it takes the recommended per-step', () => {
+  for (const [answers, title] of [[recommended, /one pull request per step/], [{ ...recommended, 'plan-delivery': 'per-step' }, /one pull request per step/], [{ ...recommended, 'plan-delivery': 'per-plan' }, /one pull request for the whole plan/]]) {
+    const dir = project();
+    const plan = planRender({ root: dir, pack, answers, acceptedBy: 't', date: '2026-11-03' });
+    applyRender({ root: dir, plan });
+    const delivery = plan.artifacts.filter((a) => a.path.includes('plan-delivery') || /plan.*delivery|delivered/i.test(readFileSync(path.join(dir, a.path), 'utf8').split('\n')[2] ?? ''));
+    assert.equal(delivery.length, 1, 'exactly one plan-delivery decision');
+    assert.match(readFileSync(path.join(dir, delivery[0].path), 'utf8'), title);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -14,7 +14,7 @@ go-getter:
       run: builtin:not-on-default-branch
     - tier: 1
       check: Never commit or push to the default branch; create a `type/slug` branch first
-  generated-by: git-workflow@0.1.2
+  generated-by: git-workflow@0.1.3
   pack-answer: default-branch
   pack-option: protect
 ---
