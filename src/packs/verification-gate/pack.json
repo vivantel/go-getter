@@ -76,6 +76,7 @@
     },
     {
       "id": "format-command",
+      "tier": "advanced",
       "type": "text",
       "detect": "commands.format",
       "pattern": "^[^\\n]*$",
@@ -91,6 +92,7 @@
     },
     {
       "id": "static-analysis-command",
+      "tier": "advanced",
       "type": "text",
       "detect": "commands.static-analysis",
       "pattern": "^[^\\n]*$",
@@ -106,6 +108,7 @@
     },
     {
       "id": "build-command",
+      "tier": "advanced",
       "type": "text",
       "detect": "commands.build",
       "pattern": "^[^\\n]*$",
@@ -121,6 +124,7 @@
     },
     {
       "id": "unit-command",
+      "tier": "advanced",
       "type": "text",
       "detect": "commands.unit",
       "pattern": "^[^\\n]*$",
@@ -136,6 +140,7 @@
     },
     {
       "id": "integration-command",
+      "tier": "advanced",
       "type": "text",
       "detect": "commands.integration",
       "pattern": "^[^\\n]*$",
@@ -210,6 +215,7 @@
     },
     {
       "id": "coverage-threshold",
+      "tier": "advanced",
       "type": "text",
       "pattern": "^(100|[1-9]?[0-9])$",
       "default": "80",
@@ -224,6 +230,7 @@
     },
     {
       "id": "affected-command",
+      "tier": "advanced",
       "type": "text",
       "pattern": "^[^\\n]*$",
       "default": "npm test",
