@@ -184,6 +184,7 @@ id,title,tags,status
 0200-the-paper-commits-to-five-claims-and-labels-the-scaling-claim-as-extrapolation,"The paper commits to five claims and labels the scaling claim as extrapolation","research, positioning, harness, enforcement",active
 0201-the-metadata-log-keeps-365-days,"The metadata log keeps 365 days","observability, harness",superseded
 0202-telemetry-retention,"The metadata log keeps 365 days","practice-packs, observability, harness",active
+0203-plan-class-steps-stop-a-run,"A Class: plan step stops an autonomous run for a person","roadmap, enforcement",active
 0204-an-enforcement-entry-may-say-whether-its-check-is-derived,"An enforcement entry may say whether its check is derived from the guardrail or hand-written","enforcement, guardrail, knowledge-base",draft
 0206-approval-events-record-class-and-outcome,"Each point where work waits for a person is an approval event with a class from a fixed table and one of three outcomes","observability, hooks",draft
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
