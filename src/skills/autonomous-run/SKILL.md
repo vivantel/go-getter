@@ -9,8 +9,12 @@ A run is a plan range under a plan the owner approved once (`go-getter plan appr
 
 1. `go-getter run status`. No active run: start one on the approved plan as above, or stop, nothing is granted.
 2. `go-getter run next`. It prints the next step, or `stop (<code>)` with a reason and exits 1.
-3. On a step: follow `docs/skills/working-a-change.md` for it (start, change, checks, pull request, merge when its checks are green, close the step's issue). Then go to 2.
-4. On a stop: do not work around it. Write what you did and why you stopped for the person, and finish the turn.
+3. On a step: follow `docs/skills/working-a-change.md` for it (start, change, checks, pull request, merge when its checks are green, close the step's issue). Before the pull request, run the prep yourself, in this order: `go-getter:capture`, `go-getter:conform`, `go-getter:lint` (at a plan phase boundary), `go-getter:attribute` for the commit message and description. Fix what they find. Then go to 2.
+4. On a stop: do not work around it. Report what you did and why you stopped, hand over as in Handing over, and finish the turn.
+
+## Handing over
+
+The prep above is yours, never the person's. Hand over only gated actions (an approval, a `Human:` step, a pull request or issue write the project gates, the always-human set). Put each as a question through the host's selectable-question tool where it has one (approve, change, decline), else as one plain question; never a list of next steps for the person to do, and never an automatable step phrased as theirs.
 
 ## Stops (never skip one, never take a later step instead)
 

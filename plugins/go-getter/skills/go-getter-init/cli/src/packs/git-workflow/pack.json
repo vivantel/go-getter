@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "git-workflow",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "family": "sdlc",
   "title": "Git workflow",
   "summary": "How a change moves from a branch to the default branch: branch names, working on the default branch, Refs trailers, and the fixed rules of Conventional Commit subjects, squash merge and green CI.",
@@ -177,7 +177,7 @@
                 "changes-land-as-one-squashed-pull-request"
               ]
             },
-            "body": "## Procedure\n\n1. Start from the default branch and create a branch named for the change: `git switch -c <type>/<slug>`.\n2. Commit with a Conventional Commit subject (`type: summary`) and a body that says why.\n3. Push the branch and open one pull request for it.\n4. When CI is green, squash merge the pull request and delete the branch.\n5. After `go-getter ship` confirms the merge, it removes the task's worktree from the main checkout when the remote branch is gone or the branch or its pull request is merged, and nothing is uncommitted (the rule of `go-getter worktree clean`); it keeps the local branch and prints the main checkout path, where you continue. Gitignored files in a removed worktree are deleted with it. `go-getter plan start --worktree` at the concurrency limit runs the same clean once and retries once before refusing; that clean can remove a worktree whose remote branch is gone even if another session still uses it, so finish or push work before its branch is merged or closed.\n"
+            "body": "## Procedure\n\n1. Start from the default branch and create a branch named for the change: `git switch -c <type>/<slug>`.\n2. Commit with a Conventional Commit subject (`type: summary`) and a body that says why.\n3. Before the pull request, do the preparation yourself: run the project's knowledge capture, conformance and lint checks and write the commit message and description, then fix what they find. Hand a person only gated actions (an approval, a write a guardrail gates), each as one question through the host's question tool where it has one, never a list of steps for them to do.\n4. Push the branch and open one pull request for it.\n5. When CI is green, squash merge the pull request and delete the branch.\n6. After `go-getter ship` confirms the merge, it removes the task's worktree from the main checkout when the remote branch is gone or the branch or its pull request is merged, and nothing is uncommitted (the rule of `go-getter worktree clean`); it keeps the local branch and prints the main checkout path, where you continue. Gitignored files in a removed worktree are deleted with it. `go-getter plan start --worktree` at the concurrency limit runs the same clean once and retries once before refusing; that clean can remove a worktree whose remote branch is gone even if another session still uses it, so finish or push work before its branch is merged or closed.\n"
           }
         ]
       }
