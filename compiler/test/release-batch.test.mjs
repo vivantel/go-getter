@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseCommit, bumpOf, nextVersion, changelogEntry, releaseApprovalId } from '../src/release.mjs';
 
@@ -156,4 +156,20 @@ test('nothing releasable merged since the tag refuses', () => {
 test('it needs --batch', () => {
   const s = scratch();
   assert.equal(s.run(['release']).code, 2);
+});
+
+test('a fresh checkout with dev dependencies gets them installed before the layers run', () => {
+  const s = scratch();
+  const dep = path.join(s.dir, 'other', 'dep');
+  mkdirSync(dep);
+  writeFileSync(path.join(dep, 'package.json'), `${JSON.stringify({ name: 'dep', version: '1.0.0' })}\n`);
+  const pkgFile = path.join(s.dir, 'other', 'package.json');
+  writeFileSync(pkgFile, `${JSON.stringify({ ...JSON.parse(readFileSync(pkgFile, 'utf8')), devDependencies: { dep: 'file:./dep' } }, null, 2)}\n`);
+  writeFileSync(path.join(s.dir, 'other', '.gitignore'), 'node_modules\n');
+  s.merge('fix: a fix that needs a dev tool (#11)');
+  assert.equal(s.approve('v0.4.2').code, 0);
+  s.setGh({ checks: [{ name: 'ci', bucket: 'pass' }] });
+  const r = s.batch();
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out + r.err, /dev dependencies are not installed/);
 });
