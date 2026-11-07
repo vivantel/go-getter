@@ -296,3 +296,23 @@ test('go-getter route answers from the adopted policy, escalates and stops at th
   done(bare);
   done(dir);
 });
+
+test('route --capabilities restricts the candidates to models that declare a model-property tag, and refuses an unknown tag', () => {
+  const dir = project();
+  try {
+    copyFileSync(path.join(root, 'docs/skills/capabilities.md'), path.join(dir, 'docs/skills/capabilities.md'));
+    const fact = path.join(dir, 'docs/facts/0011-model-pricing-anthropic.md');
+    writeFileSync(fact, readFileSync(fact, 'utf8').replace('{id: claude-sonnet-5-5,', '{id: claude-sonnet-5-5, capabilities: [vision],'));
+    const run = (...args) => spawnSync('node', [bin, 'route', '--project', dir, '--host', 'claude-code', '--class', 'implement', ...args], { encoding: 'utf8' });
+    const seen = run('--capabilities', 'vision');
+    assert.equal(seen.status, 0, seen.stderr);
+    assert.equal(JSON.parse(seen.stdout).model, 'claude-sonnet-5-5');
+    const none = run('--capabilities', 'long-context');
+    assert.equal(JSON.parse(none.stdout).action, 'human');
+    const odd = run('--capabilities', 'telepathy');
+    assert.equal(odd.status, 2);
+    assert.match(odd.stderr, /unknown capability telepathy/);
+  } finally {
+    done(dir);
+  }
+});

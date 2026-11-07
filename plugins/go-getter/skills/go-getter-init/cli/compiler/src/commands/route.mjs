@@ -1,7 +1,9 @@
 // go-getter route --class <c> [--context-tokens <n>] [--handoff-tokens <n>] [--cache warm|cold] [--session-model <id>]
-//                 [--data-class <public|internal|confidential|restricted>] [--host <id>] [--project <dir>]
+//                 [--data-class <public|internal|confidential|restricted>] [--capabilities <tag,tag>] [--host <id>] [--project <dir>]
 //   Where should this step run? Prints the cheapest eligible route by expected total step cost as JSON; `delegateModel` is
 //   the value the host's delegation tool accepts for `model` (an alias where the host has a table, else the full id).
+//   `--capabilities` takes a unit's `Needs-capability` tags: those marked `[model]` in docs/skills/capabilities.md drop every model that
+//   does not declare them (a model fact's `capabilities` list) before cost is compared; an unknown tag is refused (decision 0181).
 // go-getter route --escalate --class <c> --from <tier> --attempts <n> [--host <id>]
 //   The next route after a failed verification; a human once the escalation bound is reached.
 // go-getter route --headless-flags --host <id>
@@ -11,6 +13,7 @@ import { chooseRoute, escalate, routingInputs, TIERS } from '../routing/policy.m
 import { recordQuietly } from '../telemetry/record.mjs';
 import { delegatedModel, routeRecord } from '../routing/delegate.mjs';
 import { packageCapabilities } from '../governance.mjs';
+import { loadCapabilityTags, modelTags, unknownTags } from '../capability-tags.mjs';
 
 const SPEND_FLAG = { 'claude-code': (usd) => `--max-budget-usd ${usd}`, copilot: (usd) => `--max-ai-credits ${usd}` };
 
@@ -41,13 +44,20 @@ export default function routeCommand({ args }) {
   }
   const taskClass = opt.class;
   if (!taskClass) {
-    console.error('usage: go-getter route --class <task-class> [--context-tokens <n>] [--cache warm|cold] [--session-model <id>] [--data-class <c>] [--host <id>]');
+    console.error('usage: go-getter route --class <task-class> [--context-tokens <n>] [--cache warm|cold] [--session-model <id>] [--data-class <c>] [--host <id>] [--capabilities <tags>]');
+    return 2;
+  }
+  const tags = (opt.capabilities ?? '').split(',').map((t) => t.trim()).filter(Boolean);
+  const vocab = loadCapabilityTags(project);
+  const unknown = unknownTags(tags, vocab);
+  if (unknown.length) {
+    console.error(`route: unknown capability ${unknown.join(', ')} (docs/skills/capabilities.md)`);
     return 2;
   }
   const int = (v, d) => (v === undefined ? d : Number.parseInt(v, 10));
   const step = { sessionTokens: int(opt['context-tokens'], 0), handoffTokens: int(opt['handoff-tokens'], undefined), cache: opt.cache ?? 'warm' };
   if (step.handoffTokens === undefined) delete step.handoffTokens;
-  const common = { ...inputs, taskClass, ...(opt['data-class'] ? { dataClass: opt['data-class'] } : {}), step, ttl: inputs.policy.cacheTtl.subagent ?? '5m' };
+  const common = { ...inputs, taskClass, ...(opt['data-class'] ? { dataClass: opt['data-class'] } : {}), capabilities: modelTags(tags, vocab), step, ttl: inputs.policy.cacheTtl.subagent ?? '5m' };
   let route;
   if (flags.has('--escalate')) {
     if (!TIERS.includes(opt.from)) {

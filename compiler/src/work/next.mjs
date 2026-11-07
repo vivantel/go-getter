@@ -6,6 +6,7 @@ import { openNeeds, parsePlan, stemOf, activePlanFiles, unitRef, unitStates, eff
 import { conflict } from './claim.mjs';
 import { clockNow, ledgerView } from './ops.mjs';
 import { overlap } from './scope.mjs';
+import { loadCapabilityTags, unknownTags, unmetTags } from '../capability-tags.mjs';
 import { intakeState } from './intake.mjs';
 import { byPriority, chainLengths, effectivePriority, flowSettings, pickAmong } from './priority.mjs';
 
@@ -25,9 +26,11 @@ export function overlapsAny(scope, taken) {
 // Candidates are ordered by priority (inherited from the parent), the longest chain of units waiting on them, then plan order (age);
 // a ready unit overlaps no live claim and no earlier ready unit; an overlapping one is queued behind the claim or unit that holds the
 // scope. With a `worker`, nothing is offered above its WIP limit or a feature's, and its hash picks among the first `pickAmong` ready
-// units (decision 0174 items 1 and 2). `remote` null reads the last ledger seen; a remote name fetches from it first.
-export function nextUnits(root, { ownerKind = 'agent', worker = null, now = clockNow(), remote = null, limit = Infinity, flow = flowSettings(root) } = {}) {
+// units (decision 0174 items 1 and 2). With `has` (a list of tags), a unit is offered only when the worker holds every tag in its
+// `Needs-capability` (decision 0181); without it the worker holds none, so tagged units are not offered. `remote` null reads the last ledger seen; a remote name fetches from it first.
+export function nextUnits(root, { ownerKind = 'agent', worker = null, now = clockNow(), remote = null, limit = Infinity, has = null, flow = flowSettings(root) } = {}) {
   const external = unitStates(root);
+  const vocab = loadCapabilityTags(root);
   const out = { ready: [], queued: [], skipped: [] };
   const chosen = [];
   const plans = activePlanFiles(root).map((file) => {
@@ -60,6 +63,8 @@ export function nextUnits(root, { ownerKind = 'agent', worker = null, now = cloc
       if (!step.claimable) skip('no header with an Id');
       else if (step.human) skip(`needs a person: ${step.human}`);
       else if (!ownerFits(step.owner, ownerKind)) skip(`owner is ${step.owner}`);
+      else if (unknownTags(step.needsCapability, vocab).length) skip(`unknown capability ${unknownTags(step.needsCapability, vocab).join(', ')}`);
+      else if (unmetTags(step.needsCapability, has ?? []).length) skip(`needs capability ${unmetTags(step.needsCapability, has ?? []).join(', ')}`);
       else if (openNeeds(parsed, step, external).length) skip(`needs ${openNeeds(parsed, step, external).join(', ')}`);
       else if (view.annotated.states.get(step.unit)?.live) skip('claimed');
       else if (view.annotated.states.get(step.unit)?.entry.blockedByHuman) skip('blocked-by-human');

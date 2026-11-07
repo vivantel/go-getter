@@ -8,6 +8,7 @@ import { APPROVAL_SUFFIX, commitEntries, fetchLedger, git, ledgerRef, noteLedger
 import { claimSettings, clockNow, findUnit, ledgerView } from './ops.mjs';
 import { effectiveScope, splitRef } from '../plan.mjs';
 import { uncovered } from './scope.mjs';
+import { loadCapabilityTags, unknownTags } from '../capability-tags.mjs';
 
 // Rules whose declaration approves the units they generate (0179 readings, 0175 flake fixes, 0177 incident and recurring units, 0167 change requests).
 export const RULES = ['reading', 'flake-fix', 'incident', 'recurring', 'change-request'];
@@ -20,7 +21,7 @@ const fullRef = (ref, stem) => (ref.includes('#') || ref === stem ? ref : `${ste
 
 // Why a unit cannot be approved yet, as a list: parse problems on its lines, an undeclared scope, a missing `Accept` where required
 // (a plan or feature, or a unit other units name as their parent).
-export function intakeProblems(step, parsed) {
+export function intakeProblems(step, parsed, vocab = new Map()) {
   const out = [];
   const end = parsed.steps.find((s) => s.line > step.line)?.line ?? Infinity;
   for (const p of parsed.problems) {
@@ -30,6 +31,7 @@ export function intakeProblems(step, parsed) {
   if (step.scope === undefined) out.push('declares no Scope (use `Scope: none` for a unit that changes nothing)');
   const hasKids = [...parsed.steps, ...parsed.plans].some((s) => s.parent && fullRef(s.parent, parsed.stem) === step.unit);
   if ((step.kind || hasKids) && !step.accept) out.push('declares no Accept, which a plan, a feature and a unit with children need');
+  for (const t of unknownTags(step.needsCapability, vocab)) out.push(`names an unknown capability "${t}" (docs/skills/capabilities.md)`);
   if (ruleOf(step) && !RULES.includes(ruleOf(step))) out.push(`names an unknown Rule "${ruleOf(step)}" (${RULES.join(', ')})`);
   return out;
 }
@@ -67,7 +69,7 @@ export function readApproval(root, tip, unit, brief) {
 export function intakeState(root, found, { now = clockNow(), remote = null, tip } = {}) {
   const { step, stem, parsed, unit } = found;
   if (!isDraft(step)) return { ready: true };
-  const problems = intakeProblems(step, parsed);
+  const problems = intakeProblems(step, parsed, loadCapabilityTags(root));
   if (problems.length) return { ready: false, reason: `draft: ${problems[0]}` };
   const scope = effectiveScope(step);
   const rule = ruleOf(step);
@@ -89,7 +91,7 @@ export async function approveUnit(root, ref, who, { now = clockNow(), remote, ho
   if (found.error) return fail('unknown-unit', found.error);
   const { unit, stem, step } = found;
   if (!isDraft(step)) return fail('not-draft', `${unit} is not a draft (no \`Intake: draft\` line); a unit in a merged plan is approved by the merge`);
-  const problems = intakeProblems(step, found.parsed);
+  const problems = intakeProblems(step, found.parsed, loadCapabilityTags(root));
   if (problems.length) return fail('refused', `${unit} cannot be approved: ${problems.join('; ')}`, { problems });
   const scope = effectiveScope(step);
   const g = parentGrant(root, stem, step, { now, remote });
