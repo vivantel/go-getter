@@ -110,6 +110,7 @@
     },
     {
       "id": "jira-issue-type",
+      "tier": "advanced",
       "type": "text",
       "prompt": "Which issue type do new issues have?",
       "pattern": "^[A-Za-z][A-Za-z0-9 _-]{0,40}$",
