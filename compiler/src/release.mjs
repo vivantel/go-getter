@@ -189,6 +189,12 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     if (original && git('switch', original).code === 0) git('branch', '-D', branch);
   };
   try {
+    // The layers run the project's own dev tools (the evals need promptfoo); a fresh checkout has none, and the user should not have to know.
+    const devDeps = Object.keys(JSON.parse(readFileSync(path.join(project, 'package.json'), 'utf8')).devDependencies ?? {});
+    if (devDeps.length && !existsSync(path.join(project, 'node_modules'))) {
+      log('install', 'dev dependencies are not installed; installing the pinned versions');
+      need(npm(existsSync(path.join(project, 'package-lock.json')) ? 'ci' : 'install', '--no-audit', '--no-fund'), 'npm install');
+    }
     // 5 Changelog entry and version files, then the generated manifests.
     const date = now().toISOString().slice(0, 10);
     const entry = changelogEntry(version, date, commits);
