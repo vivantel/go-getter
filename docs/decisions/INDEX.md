@@ -147,6 +147,7 @@ id,title,tags,status
 0161-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",active
 0162-gated-free-channels,"Release and publish channels that run without asking are listed","practice-packs, hooks",draft
 0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request,"ship means the whole way to merge, and pr is the verb for stopping at the pull request","hooks, enforcement, dogfooding",active
+0164-plan-delivery,"A plan is delivered one pull request per step","practice-packs, git-hooks, guardrail",draft
 0165-a-work-unit-is-one-recursive-contract-at-every-level,"A work unit is one recursive contract at every level of product > feature > plan > step; a plan is the default unit of delegation","coordination, roadmap, architecture",active
 0166-claims-are-leased-git-refs-and-status-lives-in-the-tracker,"Claims are entries in a per-feature compare-and-swap ledger with expiring leases that name their holder; status lives in the tracker issue, not in a shared file","coordination, roadmap, architecture",active
 0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units,"Declared scope and a merge queue prevent collisions between parallel units, and shared artifacts need no shared counter","coordination, ci, architecture",active

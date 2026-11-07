@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "git-workflow",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "family": "sdlc",
   "title": "Git workflow",
   "summary": "How a change moves from a branch to the default branch: branch names, working on the default branch, Refs trailers, whether a plan is delivered per step or as one pull request, and the fixed rules of Conventional Commit subjects, squash merge and green CI.",
@@ -54,7 +54,7 @@
     },
     {
       "id": "plan-delivery",
-      "since": "0.1.2",
+      "since": "0.1.3",
       "prompt": "How is a plan delivered: one pull request per step, or one for the whole plan?",
       "options": [
         {
