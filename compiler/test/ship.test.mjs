@@ -254,3 +254,24 @@ test('a refused or dry run takes no checkpoint, and a red CI run keeps the one i
   assert.notEqual(red.code, 0);
   assert.equal(s.sh('for-each-ref', '--format=%(refname)', 'refs/go-getter/checkpoints').split('\n').filter(Boolean).length, 1);
 });
+
+test('unstageNewGitlinks unstages a nested worktree directory and leaves files staged', async () => {
+  const { unstageNewGitlinks } = await import('../src/ship.mjs');
+  const { mkdtempSync, writeFileSync, mkdirSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const path = (await import('node:path')).default;
+  const { execFileSync } = await import('node:child_process');
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-gitlink-'));
+  const g = (...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=[email-2]', ...a], { cwd: dir, encoding: 'utf8' });
+  try {
+    g('init', '-q', '-b', 'main');
+    g('commit', '-q', '--allow-empty', '-m', 'init');
+    g('update-index', '--add', '--cacheinfo', `160000,${g('rev-parse', 'HEAD').trim()},nested`);
+    writeFileSync(path.join(dir, 'a.txt'), 'a\n');
+    g('add', 'a.txt');
+    assert.deepEqual(unstageNewGitlinks(dir), ['nested']);
+    assert.equal(g('diff', '--cached', '--name-only').trim(), 'a.txt');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

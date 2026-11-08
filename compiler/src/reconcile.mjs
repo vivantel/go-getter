@@ -90,6 +90,21 @@ export function gitSetting(project, name) {
   }
 }
 
+// Whether a core.hooksPath value names the same directory as the recorded one. A linked worktree or a tool may store the
+// recorded relative path as an absolute path into this project or into the main checkout; that is not a change by the user.
+export function sameHooksPath(project, current, recorded) {
+  if (current === recorded) return true;
+  if (typeof current !== 'string' || typeof recorded !== 'string' || !path.isAbsolute(current)) return false;
+  const roots = [path.resolve(project)];
+  try {
+    const common = execFileSync('git', ['rev-parse', '--git-common-dir'], { cwd: project, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    roots.push(path.dirname(path.resolve(project, common)));
+  } catch {
+    // not a git repository
+  }
+  return roots.some((root) => path.resolve(root, recorded) === path.normalize(current));
+}
+
 // Set a local git setting, or unset it when value is undefined. Outside a repository this does nothing.
 export function setGitSetting(project, name, value) {
   try {

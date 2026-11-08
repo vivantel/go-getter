@@ -1,7 +1,7 @@
 // `go-getter refs` (plan A.1): candidate `Refs:` artifacts for a diff, in a must-have and a nice-to-have group,
 // each with a one-line reason that never repeats the artifact's title. Read-only; the attribute skill takes the list as it is.
 import { execFileSync } from 'node:child_process';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter } from './frontmatter.mjs';
 import { ARTIFACT_TYPES } from './artifacts.mjs';
@@ -64,6 +64,15 @@ function loadArtifacts(root) {
 }
 
 // Changed paths as [{status: A|M|D|R, path, from?}] for the chosen diff.
+// A path in a diff that is a regular file; a gitlink (a nested repository or worktree) is a directory.
+const isFile = (file) => {
+  try {
+    return statSync(file).isFile();
+  } catch {
+    return false;
+  }
+};
+
 export function changedFiles(root, { staged = false, base } = {}) {
   const range = base ? [`${base}...HEAD`] : staged ? ['--cached'] : ['HEAD'];
   return git(root, 'diff', '--name-status', '-M', ...range)
@@ -247,7 +256,7 @@ export function suggestRefs(root, { staged = false, base, today = new Date().toI
 
   // Decisions whose pack output the diff regenerates (a changed file generated from an artifact of that pack).
   for (const c of changes) {
-    if (c.status === 'D' || ARTIFACT_PATH.test(c.path) || !existsSync(path.join(root, c.path))) continue;
+    if (c.status === 'D' || ARTIFACT_PATH.test(c.path) || !isFile(path.join(root, c.path))) continue;
     const source = byId.get(GENERATED_FROM.exec(readFileSync(path.join(root, c.path), 'utf8'))?.[1]);
     if (!source) continue;
     const pack = packOf(source);
