@@ -243,7 +243,7 @@ export function hostHookOutputs(project, hosts, enabled, session = false, stop =
   const cmd = (host, event = 'pre-tool') =>
     `sh -c '` +
     `d=$PWD; while [ ! -f "$d/${RUNNER}" ] && [ "$d" != / ]; do d=$(dirname "$d"); done; ` +
-    `[ -f "$d/${RUNNER}" ] || { echo "go-getter: runner not found; hook skipped" >&2; exit 0; }; ` +
+    `[ -f "$d/${RUNNER}" ] || { echo "go-getter: runner not found; enforcement is OFF, run go-getter apply" >&2; exit 0; }; ` +
     `exec sh "$d/${RUNNER}" hook ${event} --host ${host} --project "$d"'`;
   const out = {};
   // Hosts whose stop event can keep the agent working (capability hooks.blockStop) get the gate; the rest stay advisory.

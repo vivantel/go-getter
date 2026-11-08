@@ -63,19 +63,21 @@ test('the pinned ref and the installed version are read from the settings and th
   } finally { rmSync(base, { recursive: true, force: true }); }
 });
 
-test('doctor prints the mismatch and the fix, and exits 0', () => {
+test('doctor prints the mismatch and the fix, and exits 1', () => {
   const base = tmp();
   const savedHome = process.env.HOME;
-  const log = console.log;
+  const log = console.error;
   const lines = [];
   try {
     write(path.join(base, 'home/.claude/plugins/installed_plugins.json'), JSON.stringify({ plugins: { 'go-getter@go-getter': [{ scope: 'user', version: '0.0.1' }] } }));
     process.env.HOME = path.join(base, 'home');
-    console.log = (m) => lines.push(m);
-    assert.equal(doctorCommand({ root: ROOT, args: ['--project', base] }), 0);
-    assert.match(lines.join('\n'), /plugin is 0\.0\.1 but the CLI is \d+\.\d+\.\d+; run "claude plugin update go-getter@go-getter"/);
+    console.error = (m) => lines.push(m);
+    const out = console.log;
+    console.log = () => {};
+    try { assert.equal(doctorCommand({ root: ROOT, args: ['--project', base] }), 1); } finally { console.log = out; }
+    assert.match(lines.join('\n'), /plugin is 0\.0\.1 but the CLI is \d+\.\d+\.\d+[^]*fix: claude plugin update go-getter@go-getter/);
   } finally {
-    console.log = log;
+    console.error = log;
     process.env.HOME === undefined || (process.env.HOME = savedHome);
     rmSync(base, { recursive: true, force: true });
   }

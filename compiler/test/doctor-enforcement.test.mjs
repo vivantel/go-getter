@@ -61,7 +61,7 @@ test('(c) absent hook entries in the host settings fail doctor', withProject((di
 }));
 
 test('(d) apply --check drift fails doctor', withProject((dir) => {
-  writeFileSync(path.join(dir, 'CLAUDE.md'), `${readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8')}\nhand edit\n`);
+  writeFileSync(path.join(dir, '.go-getter/bin/go-getter'), `${readFileSync(path.join(dir, '.go-getter/bin/go-getter'), 'utf8')}\n# hand edit\n`);
   const r = doctor(dir);
   assert.equal(r.status, 1);
   assert.match(r.stdout + r.stderr, /out of date/);

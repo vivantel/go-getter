@@ -1,11 +1,10 @@
 // go-getter doctor [--project <dir>] [--hosts <h1,h2>|all]
 // Prints what a person may need to do by hand: the allow rules for commands the project frees or approves that a host's own
-// permission layer can still refuse (decision 0152). Reads only; writes nothing.
+// permission layer can still refuse (decision 0152), and exits 1 when enforcement is silently off. Reads only; writes nothing.
 import path from 'node:path';
 import { allowSuggestions, formatSuggestions } from '../allow-rules.mjs';
 import { HOSTS } from '../capabilities.mjs';
-import { installedPluginVersion } from '../plugin-pin.mjs';
-import { packageVersion } from '../apply.mjs';
+import { enforcementProblems } from '../doctor-checks.mjs';
 
 export default function doctorCommand({ root, args }) {
   let project = process.cwd();
@@ -17,9 +16,8 @@ export default function doctorCommand({ root, args }) {
   }
   const lines = formatSuggestions(allowSuggestions(project, hosts));
   console.log(lines.length ? lines.join('\n') : 'doctor: no command is freed or approved that a host permission layer needs a rule for');
-  // A plugin the host installed at another version than this CLI: the skills then run older instructions (decision 0183).
-  const cli = packageVersion(root);
-  const plugin = installedPluginVersion(project);
-  if (plugin && plugin !== cli) console.log(`doctor: the installed go-getter plugin is ${plugin} but the CLI is ${cli}; run "claude plugin update go-getter@go-getter" and restart the host`);
-  return 0;
+  // Ways enforcement is silently off (plan enforcement-hardening H3): each is a failure with the one command that fixes it.
+  const problems = enforcementProblems(project, { root, hosts, nodeVersion: process.env.GO_GETTER_DOCTOR_NODE });
+  for (const p of problems) console.error(`doctor: ${p.what}\n  fix: ${p.fix}`);
+  return problems.length ? 1 : 0;
 }

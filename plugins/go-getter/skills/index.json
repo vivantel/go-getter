@@ -197,6 +197,7 @@
         "cli/compiler/src/defaults.mjs",
         "cli/compiler/src/detect.mjs",
         "cli/compiler/src/digest.mjs",
+        "cli/compiler/src/doctor-checks.mjs",
         "cli/compiler/src/emit.mjs",
         "cli/compiler/src/enforce.mjs",
         "cli/compiler/src/frontmatter.mjs",
