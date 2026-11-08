@@ -2,13 +2,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import './support/hermetic.mjs'; // a no-op under npm test (already preloaded); makes `node --test` on this file alone guarded too
 import { storeDir } from '../src/secrets/approvals.mjs';
 
 test('HOME and the approvals store are throwaway directories', () => {
-  assert.ok(os.homedir().startsWith(path.join(os.tmpdir(), 'gg-home-')), os.homedir());
+  assert.ok(os.homedir().startsWith(path.join(realpathSync(os.tmpdir()), 'gg-home-')), os.homedir());
   assert.ok(storeDir().startsWith(os.homedir()), storeDir());
 });
 

@@ -1,6 +1,6 @@
 // Preloaded into every test process (`node --import`): a test must not touch the developer's machine. It points `HOME` and
 // `GO_GETTER_HOME` at a throwaway directory (children inherit both) and makes these calls throw, so the test that made one fails
-// and names the call: a write under the real home or the real checkout's `.git`; `gh` that is not a stub; `git` run outside a
+// and names the call: a write under the real checkout's `.git` or `.go-getter`, or under the real home's `.local`, `.claude` or `.go-getter` (where the approvals, state and host settings live); `gh` that is not a stub; `git` run outside a
 // temp directory or with `GIT_DIR` set; a bare `node` child (use `process.execPath`); a temp directory whose name does not start
 // with `gg-` (the cleanup in tmp-cleanup.mjs removes only those).
 import childProcess from 'node:child_process';
@@ -56,10 +56,19 @@ for (const name of ['writeFileSync', 'appendFileSync', 'mkdirSync', 'rmSync', 'r
   };
 }
 
+for (const name of ['writeFile', 'appendFile', 'mkdir', 'rm', 'rename', 'copyFile']) {
+  const original = fs.promises[name];
+  fs.promises[name] = function (...args) {
+    const targets = name === 'copyFile' ? [args[1]] : name === 'rename' ? args.slice(0, 2) : [args[0]];
+    for (const target of targets) if (protectedPath(target)) fail(`promises.${name} writes ${target}, outside a temp directory`);
+    return original.apply(this, args);
+  };
+}
+
 for (const name of ['mkdtempSync', 'mkdtemp']) {
   const original = fs[name];
   fs[name] = function (prefix, ...rest) {
-    if (typeof prefix === 'string' && path.dirname(prefix) === path.resolve(tmp) && !path.basename(prefix).startsWith('gg-')) fail(`${name}(${prefix}) is not a gg- prefix, so tmp-cleanup.mjs would leave it behind`);
+    if (typeof prefix === 'string' && underTmp(path.dirname(prefix)) && !path.basename(prefix).startsWith('gg-')) fail(`${name}(${prefix}) is not a gg- prefix, so tmp-cleanup.mjs would leave it behind`);
     return original.call(this, prefix, ...rest);
   };
 }
