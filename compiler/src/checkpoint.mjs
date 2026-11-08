@@ -6,6 +6,9 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { cleanGitEnv } from './git-env.mjs';
+import { collectEnforcement } from './enforce.mjs';
+import { patternsOf } from './checks/builtin/deny-path.mjs';
+import { matchesAny } from './glob.mjs';
 
 export const CHECKPOINT_REF = 'refs/go-getter/checkpoints';
 export const DEFAULT_KEEP = 10;
@@ -26,12 +29,28 @@ function toplevel(project) {
 
 export const sanitizeLabel = (label) => (String(label ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '') || 'checkpoint');
 
-// The tree of the working tree as it is now, built in a throwaway index; `add -A` honours .gitignore.
+// Restricted patterns of the adopted tier-2 deny-path guardrails: what a snapshot must never hold (a checkpoint is pushed to a remote).
+function restrictedPatterns(root) {
+  try {
+    return collectEnforcement(root)
+      .filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'deny-path')
+      .flatMap((e) => patternsOf(e.parsed.args));
+  } catch {
+    return [];
+  }
+}
+
+// The tree of the working tree as it is now, built in a throwaway index; `add -A` honours .gitignore, and files matching a restricted pattern are left out.
 function snapshotTree(root) {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-checkpoint-'));
   try {
     const env = { GIT_INDEX_FILE: path.join(dir, 'index') };
     git(root, ['add', '-A'], { env });
+    const patterns = restrictedPatterns(root);
+    if (patterns.length) {
+      const restricted = git(root, ['ls-files', '-z'], { env }).split('\0').filter((f) => f && matchesAny(f, patterns));
+      if (restricted.length) git(root, ['rm', '--cached', '-q', '--ignore-unmatch', '--pathspec-from-file=-', '--pathspec-file-nul'], { env, input: restricted.join('\0') });
+    }
     return git(root, ['write-tree'], { env });
   } finally {
     rmSync(dir, { recursive: true, force: true });
