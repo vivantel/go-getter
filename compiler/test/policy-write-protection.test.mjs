@@ -101,6 +101,9 @@ test('the approvals store cannot be reached by a cd first, a relative name or a 
       `cd ${store} && node -e "require('fs').writeFileSync('approvals.json', '{}')"`,
       `pushd ${store} >/dev/null && cp x pending.json`,
       `cd ${path.dirname(store)} && cp x ${path.basename(store)}/approvals.json`,
+      `cd ${path.dirname(store)} && echo '{}' > ${path.basename(store)}/approvals.json`,
+      `cd ${store} && echo '{}' >> pending.json`,
+      `cd ${path.dirname(store)}; printf x | tee ${path.basename(store)}/approvals.json`,
       `node -e "require('fs').writeFileSync(require('path').join('${path.dirname(store)}', '${path.basename(store)}', 'approvals.json'), '{}')"`,
     ]) assert.equal(s.ask(bash(command)).deny, true, command);
     for (const command of ['cd src && ls', 'cd .. && ls', `echo ${path.basename(store)}`]) assert.equal(stops(s.ask(bash(command))), false, command);
