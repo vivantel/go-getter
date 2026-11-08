@@ -5,7 +5,7 @@
 // Where: `$GO_GETTER_HOME/approvals.json` if set (the tests do), else `$XDG_STATE_HOME/go-getter/approvals.json`, else
 // `~/.local/state/go-getter/approvals.json`; the directory is 0700 and the file 0600, replaced atomically. A project is
 // keyed by its real path, so an identical command in another repository is not approved there.
-import { chmodSync, existsSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
+import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,6 +21,43 @@ export const storeFile = (env = process.env) => path.join(storeDir(env), 'approv
 
 const keyOf = (project) => realpathSync(project);
 const idOf = (project, words, secretPath) => createHash('sha256').update([keyOf(project), secretPath, ...words].join('\0')).digest('hex').slice(0, 8);
+
+// A read-modify-write of the store runs under a create-exclusive lock file, so parallel writers (several agents, hooks and a person)
+// cannot overwrite each other's update. A lock older than LOCK_STALE_MS belongs to a process that died and is taken over.
+const LOCK_STALE_MS = 10_000;
+const LOCK_WAIT_MS = 15_000;
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+function locked(env, fn) {
+  const dir = storeDir(env);
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const lock = path.join(dir, 'store.lock');
+  const until = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try {
+      closeSync(openSync(lock, 'wx', 0o600));
+      break;
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) unlinkSync(lock);
+      } catch {
+        // released or taken over by another process meanwhile
+      }
+      if (Date.now() > until) throw new Error(`the approvals store is locked (${lock}); remove it if no go-getter command is running`);
+      sleep(5);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    try {
+      unlinkSync(lock);
+    } catch {
+      // already gone
+    }
+  }
+}
 
 function read(env) {
   try {
@@ -69,27 +106,31 @@ export function approved(project, words, secretPath, env = process.env) {
 
 // Records (or refreshes) the approval of `words` for `secretPath` against the code on disk now. Returns the entry.
 export function add(project, words, secretPath, { host, now = () => new Date(), env = process.env } = {}) {
-  if (!Array.isArray(words) || !words.length || words.some((w) => typeof w !== 'string')) throw new Error('an approval needs a command');
-  const rel = relativeSecretPath(project, secretPath);
-  const data = read(env);
-  const key = keyOf(project);
-  const entry = { id: idOf(project, words, rel), command: words, path: rel, hash: fileSet(words, project).hash, approvedAt: now().toISOString(), ...(host ? { host } : {}) };
-  data.projects[key] = [...(data.projects[key] ?? []).filter((e) => e.id !== entry.id), entry];
-  write(data, env);
-  return entry;
+  return locked(env, () => {
+    if (!Array.isArray(words) || !words.length || words.some((w) => typeof w !== 'string')) throw new Error('an approval needs a command');
+    const rel = relativeSecretPath(project, secretPath);
+    const data = read(env);
+    const key = keyOf(project);
+    const entry = { id: idOf(project, words, rel), command: words, path: rel, hash: fileSet(words, project).hash, approvedAt: now().toISOString(), ...(host ? { host } : {}) };
+    data.projects[key] = [...(data.projects[key] ?? []).filter((e) => e.id !== entry.id), entry];
+    write(data, env);
+    return entry;
+  });
 }
 
 // Removes the approval with `id` (or every one of the project with `{ all: true }`). Returns how many were removed.
 export function revoke(project, { id, all = false } = {}, env = process.env) {
-  const data = read(env);
-  const key = keyOf(project);
-  const before = data.projects[key] ?? [];
-  const kept = all ? [] : before.filter((e) => e.id !== id);
-  if (kept.length === before.length) return 0;
-  if (kept.length) data.projects[key] = kept;
-  else delete data.projects[key];
-  write(data, env);
-  return before.length - kept.length;
+  return locked(env, () => {
+    const data = read(env);
+    const key = keyOf(project);
+    const before = data.projects[key] ?? [];
+    const kept = all ? [] : before.filter((e) => e.id !== id);
+    if (kept.length === before.length) return 0;
+    if (kept.length) data.projects[key] = kept;
+    else delete data.projects[key];
+    write(data, env);
+    return before.length - kept.length;
+  });
 }
 
 // --- pending approvals -----------------------------------------------------------------------------------------------------
@@ -121,22 +162,26 @@ function writePending(items, env) {
 }
 
 export function addPending(project, words, secretPath, { now = () => new Date(), env = process.env } = {}) {
-  const rel = relativeSecretPath(project, secretPath);
-  const item = { project: keyOf(project), command: words, path: rel, hash: fileSet(words, project).hash, createdAt: now().toISOString() };
-  const others = readPending(env, now()).filter((i) => !(i.project === item.project && i.path === rel && i.command.join('\0') === words.join('\0')));
-  writePending([...others, item], env);
-  return item;
+  return locked(env, () => {
+    const rel = relativeSecretPath(project, secretPath);
+    const item = { project: keyOf(project), command: words, path: rel, hash: fileSet(words, project).hash, createdAt: now().toISOString() };
+    const others = readPending(env, now()).filter((i) => !(i.project === item.project && i.path === rel && i.command.join('\0') === words.join('\0')));
+    writePending([...others, item], env);
+    return item;
+  });
 }
 
 // True once, if the hook left an unexpired record for exactly this command and path and the code still hashes to what it saw.
 export function takePending(project, words, secretPath, { now = () => new Date(), env = process.env } = {}) {
-  const rel = relativeSecretPath(project, secretPath);
-  const items = readPending(env, now());
-  const at = items.findIndex((i) => i.project === keyOf(project) && i.path === rel && i.command.join('\0') === words.join('\0') && i.hash === fileSet(words, project).hash);
-  if (at < 0) return false;
-  items.splice(at, 1);
-  writePending(items, env);
-  return true;
+  return locked(env, () => {
+    const rel = relativeSecretPath(project, secretPath);
+    const items = readPending(env, now());
+    const at = items.findIndex((i) => i.project === keyOf(project) && i.path === rel && i.command.join('\0') === words.join('\0') && i.hash === fileSet(words, project).hash);
+    if (at < 0) return false;
+    items.splice(at, 1);
+    writePending(items, env);
+    return true;
+  });
 }
 
 // --- approved shapes -------------------------------------------------------------------------------------------------------
@@ -152,46 +197,54 @@ export function listShapes(project, env = process.env) {
 }
 
 export function addShape(project, id, { host, now = () => new Date(), env = process.env } = {}) {
-  if (typeof id !== 'string' || !id) throw new Error('an approval needs a command shape id');
-  const data = read(env);
-  const key = keyOf(project);
-  data.shapes ??= {};
-  const entry = { id, approvedAt: now().toISOString(), ...(host ? { host } : {}) };
-  data.shapes[key] = [...(data.shapes[key] ?? []).filter((e) => e.id !== id), entry];
-  write(data, env);
-  return entry;
+  return locked(env, () => {
+    if (typeof id !== 'string' || !id) throw new Error('an approval needs a command shape id');
+    const data = read(env);
+    const key = keyOf(project);
+    data.shapes ??= {};
+    const entry = { id, approvedAt: now().toISOString(), ...(host ? { host } : {}) };
+    data.shapes[key] = [...(data.shapes[key] ?? []).filter((e) => e.id !== id), entry];
+    write(data, env);
+    return entry;
+  });
 }
 
 // Removes the approved shape `id` (or every one with `all`). Returns how many were removed.
 export function revokeShape(project, { id, all = false } = {}, env = process.env) {
-  const data = read(env);
-  const key = keyOf(project);
-  const before = data.shapes?.[key] ?? [];
-  const kept = all ? [] : before.filter((e) => e.id !== id);
-  if (kept.length === before.length) return 0;
-  if (kept.length) data.shapes[key] = kept;
-  else delete data.shapes[key];
-  write(data, env);
-  return before.length - kept.length;
+  return locked(env, () => {
+    const data = read(env);
+    const key = keyOf(project);
+    const before = data.shapes?.[key] ?? [];
+    const kept = all ? [] : before.filter((e) => e.id !== id);
+    if (kept.length === before.length) return 0;
+    if (kept.length) data.shapes[key] = kept;
+    else delete data.shapes[key];
+    write(data, env);
+    return before.length - kept.length;
+  });
 }
 
 // A shape the hook asked the person about: single use, promoted by the post-tool hook once the call it asked about ran (so the
 // person said yes). Keyed by project and the command text.
 export function addPendingShape(project, id, command, { now = () => new Date(), env = process.env } = {}) {
-  const item = { project: keyOf(project), shape: id, text: command, createdAt: now().toISOString() };
-  const others = readPending(env, now()).filter((i) => !(i.project === item.project && i.shape === id && i.text === command));
-  writePending([...others, item], env);
-  return item;
+  return locked(env, () => {
+    const item = { project: keyOf(project), shape: id, text: command, createdAt: now().toISOString() };
+    const others = readPending(env, now()).filter((i) => !(i.project === item.project && i.shape === id && i.text === command));
+    writePending([...others, item], env);
+    return item;
+  });
 }
 
 // The shape id once, if an unexpired record exists for exactly this command in this project; null otherwise.
 export function takePendingShape(project, command, { now = () => new Date(), env = process.env } = {}) {
-  const items = readPending(env, now());
-  const at = items.findIndex((i) => i.project === keyOf(project) && i.shape && i.text === command);
-  if (at < 0) return null;
-  const [item] = items.splice(at, 1);
-  writePending(items, env);
-  return item.shape;
+  return locked(env, () => {
+    const items = readPending(env, now());
+    const at = items.findIndex((i) => i.project === keyOf(project) && i.shape && i.text === command);
+    if (at < 0) return null;
+    const [item] = items.splice(at, 1);
+    writePending(items, env);
+    return item.shape;
+  });
 }
 
 // --- session grants --------------------------------------------------------------------------------------------------------
@@ -204,15 +257,17 @@ const sessionKeyOf = (session) => createHash('sha256').update(String(session)).d
 const liveSessions = (data, key, now) => Object.fromEntries(Object.entries(data.sessions?.[key] ?? {}).filter(([, v]) => Date.parse(v.at) + SESSION_GRANT_TTL_MS > now.getTime()));
 
 export function addSessionGrant(project, session, ids, { now = () => new Date(), env = process.env } = {}) {
-  if (!session || !Array.isArray(ids) || !ids.length) throw new Error('a session grant needs a session and shape ids');
-  const data = read(env);
-  const key = keyOf(project);
-  const sessions = liveSessions(data, key, now());
-  const sk = sessionKeyOf(session);
-  sessions[sk] = { ids: [...new Set([...(sessions[sk]?.ids ?? []), ...ids])], at: now().toISOString() };
-  data.sessions = { ...(data.sessions ?? {}), [key]: sessions };
-  write(data, env);
-  return sessions[sk];
+  return locked(env, () => {
+    if (!session || !Array.isArray(ids) || !ids.length) throw new Error('a session grant needs a session and shape ids');
+    const data = read(env);
+    const key = keyOf(project);
+    const sessions = liveSessions(data, key, now());
+    const sk = sessionKeyOf(session);
+    sessions[sk] = { ids: [...new Set([...(sessions[sk]?.ids ?? []), ...ids])], at: now().toISOString() };
+    data.sessions = { ...(data.sessions ?? {}), [key]: sessions };
+    write(data, env);
+    return sessions[sk];
+  });
 }
 
 export function sessionGranted(project, session, id, { now = () => new Date(), env = process.env } = {}) {
@@ -222,17 +277,19 @@ export function sessionGranted(project, session, id, { now = () => new Date(), e
 
 // Withdraws `ids` (all of the session's grants when none are named). Returns how many shape ids were withdrawn.
 export function revokeSessionGrant(project, session, ids = [], { now = () => new Date(), env = process.env } = {}) {
-  if (!session) return 0;
-  const data = read(env);
-  const key = keyOf(project);
-  const sessions = liveSessions(data, key, now());
-  const sk = sessionKeyOf(session);
-  const before = sessions[sk]?.ids ?? [];
-  const kept = ids.length ? before.filter((i) => !ids.includes(i)) : [];
-  if (kept.length === before.length) return 0;
-  if (kept.length) sessions[sk] = { ...sessions[sk], ids: kept };
-  else delete sessions[sk];
-  data.sessions = { ...(data.sessions ?? {}), [key]: sessions };
-  write(data, env);
-  return before.length - kept.length;
+  return locked(env, () => {
+    if (!session) return 0;
+    const data = read(env);
+    const key = keyOf(project);
+    const sessions = liveSessions(data, key, now());
+    const sk = sessionKeyOf(session);
+    const before = sessions[sk]?.ids ?? [];
+    const kept = ids.length ? before.filter((i) => !ids.includes(i)) : [];
+    if (kept.length === before.length) return 0;
+    if (kept.length) sessions[sk] = { ...sessions[sk], ids: kept };
+    else delete sessions[sk];
+    data.sessions = { ...(data.sessions ?? {}), [key]: sessions };
+    write(data, env);
+    return before.length - kept.length;
+  });
 }
