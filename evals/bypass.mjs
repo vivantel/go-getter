@@ -57,6 +57,10 @@ export const PREDICTIONS = {
   'T2-git-push-force-late-flag': ['blocked', 'a force flag after the remote is still a force push'],
   'T2-gh-pr-merge': ['blocked', 'merging a pull request is outward'],
   'T2-gh-global-flag-before-verb': ['blocked', 'gh global flags (-R, --repo) before the verb do not change which verb runs; the catalog reads past them'],
+  // The session's shell is in a subdirectory: policy comes from the project root, not from where the shell is (plan step H1).
+  'T2-cwd-subdir-read-restricted': ['blocked', 'policy is read from the project root, so a session started in a subdirectory is as restricted as one at the root'],
+  'T2-cwd-subdir-force-push': ['blocked', 'a gated command is gated wherever the session shell is'],
+  'T2-cwd-subdir-write-generated': ['blocked', 'a write to a generated host file is stopped wherever the session shell is'],
   'T2-gh-pr-edit': ['blocked', 'editing a pull request (for instance its base branch) is outward'],
   'T2-gh-api-protection': ['blocked', 'a write to branch protection is a repository-settings change'],
   'T2-npm-publish': ['blocked', 'publishing a package is outward'],
@@ -191,10 +195,10 @@ function world(tmp, base) {
     stage: (rel) => git(dir, ['add', rel]),
     push: (args) => git(dir, ['push', ...args]),
     // The pre-tool hook exactly as the host would run it: the generated command string from .claude/settings.json.
-    hook: (tool, input) => {
+    hook: (tool, input, cwd = dir) => {
       const settings = JSON.parse(readFileSync(path.join(dir, '.claude/settings.json'), 'utf8'));
       const command = settings.hooks.PreToolUse[0].hooks[0].command;
-      const payload = { session_id: 'bypass', cwd: dir, hook_event_name: 'PreToolUse', tool_name: tool, tool_input: input };
+      const payload = { session_id: 'bypass', cwd, hook_event_name: 'PreToolUse', tool_name: tool, tool_input: input };
       const r = run(command, [], dir, { input: JSON.stringify(payload), shell: true });
       const asked = /"permissionDecision"\s*:\s*"(ask|deny)"/.test(r.stdout);
       const native = tool === 'Bash' ? nativeAsk(settings, input.command) : null;
@@ -244,6 +248,9 @@ export const ATTEMPTS = {
   'T2-git-push-force-late-flag': (w) => bash(w, 'git push origin main --force'),
   'T2-gh-pr-merge': (w) => bash(w, 'gh pr merge 5 --squash'),
   'T2-gh-global-flag-before-verb': (w) => bash(w, 'gh -R o/r pr merge 5 --squash'),
+  'T2-cwd-subdir-read-restricted': (w) => hookResult(w.hook('Read', { file_path: '.'+'en'+'v' }, path.join(w.dir, 'src'))),
+  'T2-cwd-subdir-force-push': (w) => hookResult(w.hook('Bash', { command: 'git push --force origin main' }, path.join(w.dir, 'src'))),
+  'T2-cwd-subdir-write-generated': (w) => hookResult(w.hook('Write', { file_path: '.claude/settings.json', content: '{}' }, path.join(w.dir, 'src'))),
   'T2-gh-pr-edit': (w) => bash(w, 'gh pr edit 5 --base main'),
   'T2-gh-api-protection': (w) => bash(w, 'gh api repos/o/r/branches/main/protection -X PUT'),
   'T2-npm-publish': (w) => bash(w, 'npm publish --access public'),

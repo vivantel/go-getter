@@ -7,7 +7,7 @@
 // go-getter hook user-prompt --host <id>: saves a release the user asked for in the chat (decision 0187); prints and blocks nothing.
 // go-getter hook session-end --host <id>: deletes the session's pseudonym map (best effort; a 24-hour sweep backs it up).
 import path from 'node:path';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { evaluatePreTool, evaluateUserPrompt, respond, sessionNudges, hookRecord, evaluatePostTool, respondPostTool, evaluateSessionEnd } from '../hook.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
@@ -15,13 +15,25 @@ import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegat
 import { wrapWatch } from '../watch.mjs';
 import { recordHostSpend } from '../spend/index.mjs';
 
+// Without --project: the nearest ancestor of `from` that holds the project's go-getter state, else `from` itself.
+function projectRootFrom(from) {
+  for (let d = from; ; d = path.dirname(d)) {
+    if (existsSync(path.join(d, '.go-getter'))) return d;
+    if (path.dirname(d) === d) return from;
+  }
+}
+
 export default async function hookCommand({ root, args }) {
   const [event, ...rest] = args;
   let host;
   let project = process.cwd();
+  let explicitProject = false;
   for (let i = 0; i < rest.length; i++) {
     if (rest[i] === '--host') host = rest[++i];
-    else if (rest[i] === '--project') project = path.resolve(rest[++i]);
+    else if (rest[i] === '--project') {
+      project = path.resolve(rest[++i]);
+      explicitProject = true;
+    }
   }
   if (event === 'session-start') {
     // The payload carries metadata only here (model, effort, resume token and cost estimates); a terminal stdin is skipped.
@@ -47,7 +59,8 @@ export default async function hookCommand({ root, args }) {
     if (event === 'user-prompt') recordQuietly(project, { event: 'user-prompt', host, outcome: 'fail', trigger: 'unreadable-payload' });
     return 0;
   }
-  const dir = payload.cwd ? path.resolve(payload.cwd) : project;
+  // Policy comes from the project root, never from where the session's shell happens to be (`cd compiler` must not drop every guardrail).
+  const dir = explicitProject ? project : projectRootFrom(payload.cwd ? path.resolve(payload.cwd) : project);
   if (event === 'user-prompt') {
     // One record per prompt, so a release request that did nothing can be told from a hook that never ran (no content, ever).
     recordQuietly(dir, { event: 'user-prompt', host, outcome: 'allowed' });
