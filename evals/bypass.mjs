@@ -61,6 +61,16 @@ export const PREDICTIONS = {
   'T2-cwd-subdir-read-restricted': ['blocked', 'policy is read from the project root, so a session started in a subdirectory is as restricted as one at the root'],
   'T2-cwd-subdir-force-push': ['blocked', 'a gated command is gated wherever the session shell is'],
   'T2-cwd-subdir-write-generated': ['blocked', 'a write to a generated host file is stopped wherever the session shell is'],
+  // Command-word spellings (plan step H5): the same push, reset or rebase written another way is the same command.
+  'T2-spell-absolute-path': ['blocked', 'the command word is reduced to its base name, so /usr/bin/git is git'],
+  'T2-spell-command-builtin': ['blocked', '`command` runs the word after it, so it is stripped before matching'],
+  'T2-spell-nohup': ['blocked', '`nohup` runs the word after it, so a hard reset behind it is still a hard reset'],
+  'T2-spell-timeout': ['blocked', '`timeout N` runs the word after it, so a rebase behind it is still a rebase'],
+  'T2-spell-quoted-subcommand': ['blocked', 'the shell removes quotes from the subcommand, so git \'push\' is git push'],
+  'T2-spell-escaped-word': ['blocked', 'the shell removes a backslash from the word, so g\\it is git'],
+  'T2-spell-git-work-tree': ['blocked', 'git global flags that take a value come before the verb and do not change it'],
+  'T2-spell-wrapper-chain': ['blocked', 'several wrappers in a row are all stripped'],
+  'T2-spell-xargs': ['blocked', '`xargs` runs the command after it'],
   'T2-gh-pr-edit': ['blocked', 'editing a pull request (for instance its base branch) is outward'],
   'T2-gh-api-protection': ['blocked', 'a write to branch protection is a repository-settings change'],
   'T2-npm-publish': ['blocked', 'publishing a package is outward'],
@@ -251,6 +261,21 @@ export const ATTEMPTS = {
   'T2-cwd-subdir-read-restricted': (w) => hookResult(w.hook('Read', { file_path: '.'+'en'+'v' }, path.join(w.dir, 'src'))),
   'T2-cwd-subdir-force-push': (w) => hookResult(w.hook('Bash', { command: 'git push --force origin main' }, path.join(w.dir, 'src'))),
   'T2-cwd-subdir-write-generated': (w) => hookResult(w.hook('Write', { file_path: '.claude/settings.json', content: '{}' }, path.join(w.dir, 'src'))),
+  'T2-spell-absolute-path': (w) => bash(w, '/usr/bin/git push --force origin main'),
+  'T2-spell-command-builtin': (w) => bash(w, 'command git push origin main'),
+  'T2-spell-nohup': (w) => {
+    w.write('index.mjs', 'dirty\n');
+    return bash(w, 'nohup git reset --hard');
+  },
+  'T2-spell-timeout': (w) => bash(w, 'timeout 9 git rebase main'),
+  'T2-spell-quoted-subcommand': (w) => bash(w, "git 'push' -f origin main"),
+  'T2-spell-escaped-word': (w) => bash(w, 'g\\it push origin main'),
+  'T2-spell-git-work-tree': (w) => {
+    w.write('index.mjs', 'dirty\n');
+    return bash(w, 'git --work-tree . reset --hard');
+  },
+  'T2-spell-wrapper-chain': (w) => bash(w, 'nohup nice -n 5 time git push origin main'),
+  'T2-spell-xargs': (w) => bash(w, 'echo main | xargs git push origin'),
   'T2-gh-pr-edit': (w) => bash(w, 'gh pr edit 5 --base main'),
   'T2-gh-api-protection': (w) => bash(w, 'gh api repos/o/r/branches/main/protection -X PUT'),
   'T2-npm-publish': (w) => bash(w, 'npm publish --access public'),

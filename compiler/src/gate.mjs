@@ -2,12 +2,16 @@
 // `irreversible` commands destroy history or data; `outward` commands publish work to other people.
 //
 // `matchGated` splits a command into segments (on `&&`, `||`, `;`, `|`, `&`, newlines, parentheses and backticks outside
-// quotes), strips leading `VAR=value` words, `sudo` and `env`, and matches each segment's command word and arguments.
+// quotes), reduces each segment to the command that runs (`normalise`: leading `VAR=value` words and the wrappers `command`,
+// `nohup`, `timeout N`, `time`, `nice`, `exec`, `env`, `sudo`, `doas`, `xargs` stripped; the command word cut to its base name
+// and unquoted; for git, global flags before the verb dropped and the verb unquoted), and matches the result.
 // Limits, by design:
 // - Text inside quotes is masked, so `echo "git push"` does not match. SQL entries read the quoted text of psql, mysql
 //   and sqlite3 commands, since that is where the statement is.
-// - A wrapped command (`sh -c "git push"`, `eval`, a script that pushes) is matched on its literal text only: the verb must
-//   be the segment's command word. Heredoc body lines count as segments, so a gated verb in one prompts: the safe failure.
+// - The string of `sh -c` (also bash, zsh, dash, ksh) is matched as a command of its own. `eval` and a script that pushes
+//   are not seen. Heredoc body lines count as segments, so a gated verb in one prompts: the safe failure.
+// - A segment naming a gated tool that cannot be parsed (an unterminated quote, a git flag with no value) matches the
+//   strictest candidate of that tool: it is not read as no match.
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -202,7 +206,127 @@ function segments(command) {
   return out;
 }
 
-const PREFIX = /^\s*(?:(?:[A-Za-z_]\w*=\S*|sudo(?:\s+(?:-[ugCphrtUT]\s+\S+|-\S+))*|env(?:\s+(?:-[uCS]\s+\S+|-\S+))*)(?:\s+|$))*/;
+// Splits a raw segment into shell words: { text (quotes and backslashes removed), start, end, quoted }. `ok` is false for an
+// unterminated quote or a trailing backslash.
+function words(raw) {
+  const out = [];
+  let cur = null;
+  let quote = null;
+  let ok = true;
+  const open = (i) => (cur ??= { text: '', start: i, end: i, quoted: false });
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (quote) {
+      cur.end = i + 1;
+      if (ch === quote) quote = null;
+      else if (quote === '"' && ch === '\\' && i + 1 < raw.length) cur.text += raw[++i], cur.end++;
+      else cur.text += ch;
+    } else if (/\s/.test(ch)) {
+      if (cur) out.push(cur);
+      cur = null;
+    } else if (ch === "'" || ch === '"') {
+      open(i).quoted = true;
+      cur.end = i + 1;
+      quote = ch;
+    } else if (ch === '\\') {
+      open(i);
+      if (i + 1 < raw.length) cur.text += raw[++i];
+      else ok = false;
+      cur.end = i + 1;
+    } else {
+      open(i).text += ch;
+      cur.end = i + 1;
+    }
+  }
+  if (cur) out.push(cur);
+  return { list: out, ok: ok && !quote };
+}
+
+// Wrappers that run the command after them, and the flags of each that take a value in the next word.
+const WRAPPERS = {
+  command: [], nohup: [], time: ['-f', '-o'], exec: ['-a'], nice: ['-n'], env: ['-u', '-C', '-S'], timeout: ['-s', '-k'],
+  sudo: ['-u', '-g', '-C', '-h', '-p', '-r', '-t', '-U', '-T', '-D', '-R'], doas: ['-u', '-C'], xargs: ['-n', '-I', '-L', '-P', '-s', '-d', '-E', '-a'],
+};
+const SHELLS = ['sh', 'bash', 'zsh', 'dash', 'ksh'];
+const GIT_VALUE_FLAGS = ['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--super-prefix', '--config-env'];
+const GH_VALUE_FLAGS = ['-R', '--repo'];
+// The tools the catalog gates, and the entries to report when a segment naming one cannot be parsed (the first the caller wants).
+const STRICTEST = { git: ['git-push-force', 'git-push'], rm: ['rm-rf'], gh: ['repo-settings', 'pr-merge'], npm: ['package-publish'], pnpm: ['package-publish'], yarn: ['package-publish'], psql: ['sql-destructive'], mysql: ['sql-destructive'], sqlite3: ['sql-destructive'] };
+const baseName = (w) => w.replace(/\/+$/, '').split('/').pop();
+
+// The command a segment runs, as { raw, masked, nested, strict, plain }. `plain` is true when the segment already began with the bare
+// command word and (for git and gh) unquoted verbs and no git global flag: a host's native ask globs see exactly that spelling.
+// `raw` and `masked` start at the command word (reduced to its base name for the tools the catalog gates, git and gh with unquoted verbs); `nested` is the string of a `sh -c`; `strict` names a gated
+// tool in a segment that could not be parsed.
+function normalise(seg) {
+  const { list, ok } = words(seg.raw);
+  if (!ok) {
+    const tool = list.map((w) => baseName(w.text)).find((b) => Object.hasOwn(STRICTEST, b));
+    return { raw: seg.raw.trim(), masked: seg.masked.trim(), strict: tool };
+  }
+  let i = 0;
+  while (i < list.length) {
+    const t = list[i].text;
+    if (/^[A-Za-z_]\w*=/.test(t)) {
+      i++;
+      continue;
+    }
+    const wrapper = WRAPPERS[baseName(t)];
+    if (!wrapper) break;
+    const wrapped = baseName(t);
+    i++;
+    while (i < list.length && list[i].text.length > 1 && list[i].text.startsWith('-')) i += wrapper.includes(list[i].text) ? 2 : 1;
+    if (wrapped === 'timeout') i++;
+  }
+  const word = list[i];
+  if (!word) return { raw: '', masked: '' };
+  const cmd = baseName(word.text);
+  const rest = (from) => ({ raw: seg.raw.slice(from).trimEnd(), masked: seg.masked.slice(from).trimEnd() });
+  if (cmd === 'git') {
+    let j = i + 1;
+    const globals = [];
+    while (j < list.length && list[j].text.startsWith('-')) {
+      const takes = GIT_VALUE_FLAGS.includes(list[j].text);
+      if (takes && !list[j + 1]) return { raw: seg.raw.slice(word.start).trim(), masked: seg.masked.slice(word.start).trim(), strict: 'git' };
+      globals.push(seg.raw.slice(list[j].start, list[takes ? j + 1 : j].end));
+      j += takes ? 2 : 1;
+    }
+    const verb = list[j];
+    if (!verb) return { raw: 'git', masked: 'git' };
+    const tail = rest(verb.end);
+    const plain = i === 0 && word.text === 'git' && !word.quoted && !globals.length && verb.text === seg.raw.slice(verb.start, verb.end);
+    return { raw: ['git', ...globals, verb.text].join(' ') + tail.raw, masked: `git ${verb.text}${tail.masked}`, plain };
+  }
+  if (cmd === 'gh') {
+    // Unquote the flags' neighbours up to the second non-flag word (`gh pr merge`): `gh 'pr' merge`.
+    let j = i + 1;
+    let seen = 0;
+    const parts = [];
+    while (j < list.length && seen < 2) {
+      const t = list[j].text;
+      if (GH_VALUE_FLAGS.includes(t) && list[j + 1]) {
+        parts.push(t, list[j + 1].text);
+        j += 2;
+      } else {
+        parts.push(t);
+        if (!t.startsWith('-')) seen++;
+        j++;
+      }
+    }
+    const tail = rest(list[j - 1]?.end ?? word.end);
+    const plain = i === 0 && seg.raw.slice(word.start, word.end) === 'gh' && list.slice(i + 1, j).every((w) => w.text === seg.raw.slice(w.start, w.end));
+    return { raw: ['gh', ...parts].join(' ') + tail.raw, masked: ['gh', ...parts].join(' ') + tail.masked, plain };
+  }
+  if (SHELLS.includes(cmd)) {
+    for (let j = i + 1; j < list.length && list[j].text.startsWith('-'); j++) {
+      if (/^-[A-Za-z]*c[A-Za-z]*$/.test(list[j].text)) return { raw: seg.raw.slice(word.start).trim(), masked: seg.masked.slice(word.start).trim(), nested: list[j + 1]?.text };
+    }
+  }
+  const tail = rest(word.end);
+  const plain = i === 0 && seg.raw.slice(word.start, word.end) === cmd;
+  if (Object.hasOwn(STRICTEST, cmd)) return { raw: cmd + tail.raw, masked: cmd + tail.masked, plain };
+  return { raw: seg.raw.slice(word.start).trim(), masked: seg.masked.slice(word.start).trim(), plain };
+}
 
 // A project pattern written /like this/ is a regex; any other is a command prefix. `extra` lists are comma-separated, so a
 // regex with a comma (a `{1,3}` quantifier) cannot be written there.
@@ -251,25 +375,33 @@ export function channelOf(id, command) {
 
 // `free` lists catalog ids the project lets run without a human (outward entries only, `gateEntries` rejects others).
 // `channels` lists the release and publish channels that run without a human; an unlisted channel is production and stays gated.
-export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [], channels = [], provider = DEFAULT_PROVIDER, all = false } = {}) {
+export function matchGated(command, opts = {}, depth = 0) {
+  const { classes = ['irreversible', 'outward'], extra = [], free = [], channels = [], provider = DEFAULT_PROVIDER, all = false } = opts;
   if (typeof command !== 'string' || !command.trim()) return [];
   const freed = normaliseFree(free);
   const wanted = catalogFor(provider).filter((e) => classes.includes(e.class) && !freed.includes(e.id) && !ALWAYS_FREE.includes(e.id));
   const extras = extra.map(String).filter((s) => s.trim()).map(parseExtra);
   const hits = new Set();
   const found = [];
+  // `respelled`: not written the way a host's native ask glob reads it, so only the hook sees it.
+  const add = (e, segment, respelled) => {
+    hits.add(e.id);
+    found.push({ ...e, segment, respelled });
+  };
   for (const seg of segments(command)) {
-    const cut = PREFIX.exec(seg.masked)[0].length;
-    const masked = seg.masked.slice(cut).trim();
-    const raw = seg.raw.slice(cut).trim();
+    const n = normalise(seg);
+    const masked = n.masked;
+    const raw = n.raw;
+    if (n.strict) {
+      const e = STRICTEST[n.strict].map((id) => wanted.find((w) => w.id === id)).find(Boolean);
+      if (e && !hits.has(e.id)) add(e, raw, true);
+    }
+    if (n.nested && depth < 3) for (const h of matchGated(n.nested, opts, depth + 1)) if (all || !hits.has(h.id)) add(h, h.segment, true);
     for (const e of wanted) {
-      if ((all || !hits.has(e.id)) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw) && !(CHANNEL_ENTRIES.includes(e.id) && channels.includes(channelOf(e.id, masked)))) {
-        hits.add(e.id);
-        found.push({ ...e, segment: raw });
-      }
+      if ((all || !hits.has(e.id)) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw) && !(CHANNEL_ENTRIES.includes(e.id) && channels.includes(channelOf(e.id, masked)))) add(e, raw, !n.plain);
     }
     for (const x of extras) {
-      if (!hits.has(x.id) && x.test(raw.replace(/\s+/g, ' '))) {
+      if (!hits.has(x.id) && [raw, seg.raw.trim()].some((r) => x.test(r.replace(/\s+/g, ' ')))) {
         hits.add(x.id);
         found.push({ id: x.id, class: 'outward', description: 'a command this project gates', pattern: null });
       }
