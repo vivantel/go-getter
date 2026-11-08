@@ -139,6 +139,73 @@ Red: a hook test that a Write or shell redirect to each generated path (from the
 Do: add a tier-2 `deny-path`/write gate from the manifest's generated paths (a person can still approve), or record in a decision that tier 3 is the intended control and lower the claim.
 Done-when: the test passes and the bypass class is observed `blocked`.
 
+## Phase 2b — Findings of the v0.4.1..master review (2026-11-08)
+
+Source: a review of 112 commits (#306 to #364). Fixed already: the plugin `bin/go-getter` shim is recognised as go-getter, and a quoted or commented policy `status` is read (#367). The steps below are what is left; each names its finding id from the review. Steps take no issue yet: create them with `go-getter plan issue`. Order: H15 and H16 first (a lost write and a leak), then H17, H18 and H19, then H20 to H23.
+
+### H15 The approvals lock is taken over atomically — [ ] ‖
+Class: implement · Needs: H8 · Check: `node --test compiler/test/approvals-lock.test.mjs`
+Finding (B2, T1; `secrets/approvals.mjs` `locked()`): two waiters both see a stale lock; one unlinks and re-creates it, the other then unlinks that fresh lock and also creates one, so both are in the critical section and a write or revoke is lost.
+Red: two real processes (not parallel calls in one process) race on a stale lock file; the store loses an entry. Fails today.
+Do: take a stale lock over with an atomic `renameSync(lock, lock + '.stale.' + pid)` (the loser gets ENOENT and retries); write pid and time into the lock; compute the staleness from the lock's own content.
+Done-when: the two-process test passes 50 runs in a row; the existing lock tests pass.
+
+### H16 A checkpoint fails closed when it cannot read the restricted paths — [ ] ‖
+Class: implement · Needs: H8 · Check: `node --test compiler/test/checkpoint-restricted.test.mjs`
+Finding (B3, T2; `checkpoint.mjs` `restrictedPatterns`): `catch { return []; }`. A malformed guardrail file (H2 made `collectEnforcement` throw on purpose) leaves the pattern list empty, so an untracked env file or key goes into the snapshot that is pushed to a remote.
+Red: a broken guardrail file plus an untracked env file: the snapshot is created and pushed with it inside. Fails today.
+Do: do not swallow the error; the checkpoint is a gated action, so it throws or returns an error result and no snapshot is pushed; say why in one line.
+Done-when: the test passes; a healthy repository still checkpoints.
+
+### H17 Scheduled or sent text is never a session grant — [ ]
+Class: implement · Needs: H13, H14 · Check: `node --test compiler/test/session-grant.test.mjs`
+Finding (S2, D7; `hook.mjs` `submittedPhraseRefusal`, `grantFromPrompt`): the refusal for text an agent schedules or sends (cron, schedule, wakeup, SendMessage, loop) covers release phrases only, while the grant reader takes any short prompt in an attended session as a possible grant. An agent can schedule "merge PRs from now on" and have it read as the user's.
+Red: a scheduled prompt and a SendMessage text holding a grant phrase record a session grant. Fails today.
+Do: refuse scheduling and sending tools whose text is short enough to be read as a grant, whatever its words (or, better, take the prompt source from the host payload when it carries one); when a grant is recorded, emit additional context "go-getter: allowed <shape> for this session" so the user sees it; `approvals list` shows session grants (D6). Decide inside H14 if the intent reader replaces this check.
+Done-when: the tests pass; the replay in `evals/grants.mjs` is unchanged (15 of 15).
+
+### H18 Policy-file and approvals-store protection covers git and tool spellings (H4b) — [ ]
+Class: implement · Needs: H4 · Check: `node --test compiler/test/policy-write-protection.test.mjs` and `eval bypass`
+Finding (S3, S5, S6, T3; the plan mentioned "H4b, small" with no step): not stopped today although they change an active guardrail or its availability: `git checkout HEAD~1 -- docs/guardrails/g.md`, `git restore --source=...`, `git rm`, `git mv`, `git apply`, `rm -r docs/guardrails`, `awk -i inplace`, `vim -es`, `dd of=`, globs and computed paths; a script that builds the store name (`'ap'+'provals.json'`); `ln -s / /tmp/x; rm -rf /tmp/x/` passes the temp exemption.
+Red: one row per spelling above in the bypass suite with a prediction first, plus unit tests for CRLF files, frontmatter past line 20, and a symlink in the temp exemption. Fails today.
+Do: add the git verbs and the in-place tools to the write class; resolve real paths before the temp exemption; check the store by content at read time (the HMAC check named in H4) instead of by filename; read the status with `parseFrontmatter` (D3).
+Done-when: the rows are observed `blocked`; no false-block increase (M5).
+
+### H19 The gate sees through tool flags and wrappers — [ ]
+Class: implement · Needs: H5 · Check: `node --test compiler/test/gate-wrappers.test.mjs` and `eval bypass`
+Finding (S4, T4): not gated: `npm --prefix . publish`, `npm -w a publish`, `pnpm --filter x publish`, `pnpm -r publish` (publish must directly follow the tool); `npx npm publish`, `corepack npm publish`; `gh api -X PUT repos/o/r/pulls/N/merge` and other `gh api` writes; `git clean -fd`, `git checkout -- .`, `git restore .`; `find -exec`, `stdbuf`, `watch`.
+Red: a row per spelling in `eval bypass` with a prediction first; a no-false-block row for `npm publish --dry-run`, `gh api` reads and `git clean -n`.
+Do: skip the tool's global flags before the verb; treat `gh api` with a method other than GET as a write to its path; add `git clean -f`, `checkout -- <path>` and `restore` to the discarding class; unwrap `find -exec`, `stdbuf`, `watch`.
+Done-when: the rows are observed `blocked`; the false-block rows pass.
+
+### H20 The hook's failure paths are honest and repeatable — [ ] ‖
+Class: implement · Needs: H3 · Check: `node --test compiler/test/hook-failclosed.test.mjs`
+Finding (B4, B5, B7, K4, T6; `commands/hook.mjs`): the fail-closed message says to run `go-getter doctor`, yet the same block stops that Bash call, and it says `approvals allow` lets one call through, which it does not (decision 0208 and the code disagree on who repairs); the retry after an exception runs `settlePending`, `recordDenial`, `logStop` and `addPendingApproval` twice; with no `--project`, the nearest `.go-getter` wins, so an agent that creates `sub/.go-getter` and works in `sub` makes the hook read an empty policy.
+Red: (a) the message names a command that is allowed in the fail-closed state, or says a person must run it; (b) a retry after an exception logs one stop and one pending approval; (c) a nested `.go-getter` below a root that has one does not replace the policy.
+Do: run the policy part once and retry only the decision; word the message after 0208; prefer the outermost `.go-getter` up to the repository root, or the git top level when they differ.
+Done-when: the three tests pass.
+
+### H21 Small writers keep what they should — [ ] ‖
+Class: implement · Check: `node --test compiler/test/release-atomic.test.mjs compiler/test/secret-scan.test.mjs`
+Finding (B6, B8): `writeAtomic` in `release.mjs` renames a new temp file, so the target loses its mode and a symlink becomes a file, with no fsync; `secret-scan` stores a path git quotes (`+++ "b/..."`, for spaces and special characters) verbatim with the quotes and the `b/`, so an `allow` glob never matches it.
+Red: a 0755 target keeps 0755 after a write; a file named `a b.txt` is reported as `a b.txt` and matched by `a b.txt`.
+Do: `chmodSync(tmp, statSync(file).mode)`, resolve a symlink target first, fsync file and directory; run `git diff --no-prefix -z` for the scan or unquote the header.
+Done-when: both tests pass.
+
+### H22 One shell tokenizer, and a hook split into rules — [ ]
+Class: implement · Needs: H19, H18 · Check: `npm test` and `eval bypass` unchanged
+Finding (D1, D2, D3): `gate.mjs` `words()`, `gate-state.mjs` `words()`, `shell.mjs` `commandWords` and `invocation.mjs` `parseSimpleCommand` disagree on escapes and quoting, which is the likely source of the H5 and H6 class of bugs; `hook.mjs` is about 1,000 lines and `decidePreTool` mixes policy-write, store, forgery, claim, gate, secrets and MCP.
+Red: a table test that runs every spelling in `eval bypass` through each former tokenizer and expects one answer. Fails today where they disagree.
+Do: one tokenizer module the four callers use; `hook/*.mjs` rules in an ordered list with a per-rule test table, keeping "first stop wins" explicit. No behaviour change otherwise.
+Done-when: the table test passes; `npm test` and `eval bypass` give the same counts as before.
+
+### H23 Knowledge-base and release hygiene — [ ] ‖
+Class: implement · Check: `go-getter lint` and `npm run check:indexes`
+Finding (K2 to K6, D5, B1): decision 0205 is missing between 0204 and 0206 (`check indexes` does not flag gaps); 0202 lacks `supersedes: 0201`; four shipped draft decisions are unnumbered (`draft-h4-...`, `draft-a7-...`, `draft-agents-do-their-own-prep`, `draft-release-request-survives-merges`, which `release.mjs` cites by name); `docs/facts/draft-k8-the-workers-file.md` is `active` under a draft name; the CHANGELOG has no section for #306 to #364, and `package.json` says 0.5.0 while this clone has no `v0.5.0` tag (confirm the tag was pushed); INSTALLING.md does not say the hook recognises the plugin shim.
+Red: a check that a gap in decision numbers needs a note, and that an `active` artifact is not named `draft-`.
+Do: confirm 0205 from git history before reusing the number; `go-getter artifacts assign` for the drafts the owner accepts; add `supersedes` to 0202; `go-getter:changelog` for the next release; one sentence in INSTALLING.md.
+Done-when: lint is clean and the new checks pass.
+
 ## Phase 3 — Honest coverage and a usable surface
 
 ### H9 One source of truth for host capability, checked — [x] ‖
@@ -302,6 +369,7 @@ Done-when: the test passes.
 - **Merged since this note was written:** H4 (#356), H13 (#357), H5 (#358), H6 (#359) and the four parts of H8 (#360 to #364). H4 has a decision draft (`draft-h4-...`) that waits for the owner.
 - **Owner actions waiting:** accept `draft-h4-policy-files-and-approvals-store-are-not-agent-writable` (its guardrail `policy-files-human-edited` has no file yet and needs `accepted-by`); accept `draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal`. One stray session-grant record from a debugging run sits in the real approvals store (expires within 24 hours, harmless).
 - **Next step: H14.** It supersedes the reading part of 0188: one reader (`release | grant | revoke | approve | other`), "go ahead" resolved against the agent's last proposal and scoped to the branch and its pull request, `ship` as a project word, no keyword filter, a detached read with a bounded wait, and a release pull request excluded from `pr-merge` grants (today a merge grant does not exclude it). Red tests and replay scenarios G18 onward first, predictions committed before code. Replay: `node evals/grants.mjs` (17 of 17 as predicted now); compare before and after with `--root`.
+- **Review findings (2026-11-08):** Phase 2b, H15 to H23, holds what the v0.4.1..master review left open; start with H15 (approvals lock race) and H16 (checkpoint fails open). Each step carries its finding ids from the review.
 - **After H14:** H7, H12 (tier-2 gate for writes to generated host files), H9, H10, then the Q and V phases as in Order. Also open: `approvals list` should show session grants; `evals/grants-intent.mjs` to measure the real model's reading of messages.
 - **Known facts to carry:** the verbs `go-getter host check --fix` and `go-getter approval create --once` do not exist yet; denial messages use `go-getter doctor` and `go-getter approvals allow <shape>`. Agents may not run `go-getter hook ...`, `go-getter approvals add|allow|revoke`, or touch the approvals store (a command that names it is denied, as designed). `go-getter artifacts assign` renames **every** draft, not one: do not run it to number a single draft (hand-number it). A tool call whose text names a restricted file in prose is denied (H7's false positive): build such names at runtime in tests.
 - **Each step:** branch `fix/<slug>` from `origin/master`; red test first and run; record `Red:`/`Green:` lines here; `npm run build`, `npm test`, `node compiler/bin/go-getter.mjs eval bypass`; red commit, then fix commit; `go-getter pr`.
