@@ -17,7 +17,7 @@ fitness-functions:
 
 ## Decision
 
-The `self-plugin` answer makes `go-getter apply` write, into Claude Code's project settings, `extraKnownMarketplaces` (the repo's marketplace at `ref: v<CLI version>`) and `enabledPlugins`. Only a project that gives the answer gets them; other settings keys are kept. `go-getter doctor` compares the plugin version the host has installed for the project with the CLI version and prints the fix on a mismatch. `check plugin-pin` fails when the pinned ref is older than the latest release tag.
+The `self-plugin` answer makes `go-getter apply` write, into Claude Code's project settings, `extraKnownMarketplaces` (the repo's marketplace at `ref: v<CLI version>`) and `enabledPlugins`. Only a project that gives the answer gets them; other settings keys are kept. `go-getter doctor` compares the plugin version the host has installed for the project with the CLI version and prints the fix on a mismatch and exits 1. `check plugin-pin` fails when the pinned ref is older than the latest release tag.
 
 ## Why
 
