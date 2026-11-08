@@ -465,12 +465,12 @@ function shapeGate(project, entry, payload, host) {
   if (typeof command !== 'string' || !command || !args.grantable.length) return null;
   let hits;
   try {
-    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, channels: args.channels, provider: args.provider });
+    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, channels: args.channels, provider: args.provider, all: true }); // every segment: two merges in one command are two checks
   } catch {
     return null;
   }
   if (!hits.length || hits.some((h) => !args.grantable.includes(h.id))) return null;
-  const verdicts = hits.map((h) => ({ id: h.id, ...shapeAllowance(project, h.id, command, { session: payload.session_id }) }));
+  const verdicts = hits.map((h) => ({ id: h.id, ...shapeAllowance(project, h.id, h.segment ?? command, { session: payload.session_id }) }));
   if (verdicts.every((v) => v.allowed)) return { allow: true };
   if (!canPrompt(host)) return null;
   const text = command.length > 200 ? `${command.slice(0, 200)}…` : command;
