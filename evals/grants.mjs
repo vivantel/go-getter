@@ -20,6 +20,17 @@ const root = arg > 0 ? path.resolve(process.argv[arg + 1]) : path.resolve(here, 
 const { evaluatePreTool, evaluateUserPrompt } = await import(pathToFileURL(path.join(root, 'compiler/src/hook.mjs')));
 const { installGh } = await import(pathToFileURL(path.join(here, '../compiler/test/support/gh-stub.mjs')));
 
+const { gateEntries, nativeRules } = await import(pathToFileURL(path.join(root, 'compiler/src/gate.mjs')));
+const { loadCapabilities } = await import(pathToFileURL(path.join(root, 'compiler/src/capabilities.mjs')));
+const caps = loadCapabilities(root);
+// The host's own permission engine, modelled as bypass.mjs does: a glob match of the generated `ask` rules over the command or a segment.
+const GATE = [{ tier: 2, guardrail: 'g', parsed: { kind: 'builtin', id: 'gate-command', args: { classes: 'irreversible,outward', grantable: 'git-push,pr-create,pr-merge,pr-close' } } }];
+function nativeAsk(host, command) {
+  const rules = (nativeRules(host, gateEntries(GATE), caps) ?? []).map((r) => /^Bash\((.*)\)$/.exec(r)?.[1]).filter(Boolean);
+  const segments = [command, ...String(command).split(/&&|\|\||;|\||\n/).map((x) => x.trim()).filter(Boolean)];
+  return rules.some((rule) => segments.some((x) => new RegExp(`^${rule.replace(/[.+^${}()|[\]\\?]/g, '\\$&').replace(/\*/g, '.*')}$`).test(x)));
+}
+
 const ATTENDED = { CLAUDE_CODE_SESSION_ATTENDED: '1' };
 const ANSWERS = {
   'merge PRs from now on': { action: 'grant', shapes: ['pr-merge'], scope: 'session' },
@@ -84,7 +95,7 @@ for (const [id, sc] of Object.entries(SCENARIOS)) {
     }
     const [command, session = 's1', host = 'claude-code'] = sc.then;
     const d = evaluatePreTool(dir, { tool_name: 'Bash', session_id: session, tool_input: { command } }, host);
-    observed = d.deny || d.ask ? 'stopped' : 'through';
+    observed = d.deny || d.ask || nativeAsk(host, command) ? 'stopped' : 'through';
   } finally {
     for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
     rmSync(base, { recursive: true, force: true });
