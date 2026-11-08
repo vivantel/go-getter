@@ -193,3 +193,46 @@ export function takePendingShape(project, command, { now = () => new Date(), env
   writePending(items, env);
   return item.shape;
 }
+
+// --- session grants --------------------------------------------------------------------------------------------------------
+// "Merge PRs from now on" typed in the chat (plan step H13): the user-prompt hook records the shape ids the user granted for that
+// session, keyed by the project and a hash of the host's session id. It holds shape ids and a date, never the user's words. It is
+// read like an approved shape (runs/shapes.mjs), so the shape's preconditions still decide at each use; it lapses after a day.
+export const SESSION_GRANT_TTL_MS = 24 * 60 * 60 * 1000;
+const sessionKeyOf = (session) => createHash('sha256').update(String(session)).digest('hex').slice(0, 16);
+
+const liveSessions = (data, key, now) => Object.fromEntries(Object.entries(data.sessions?.[key] ?? {}).filter(([, v]) => Date.parse(v.at) + SESSION_GRANT_TTL_MS > now.getTime()));
+
+export function addSessionGrant(project, session, ids, { now = () => new Date(), env = process.env } = {}) {
+  if (!session || !Array.isArray(ids) || !ids.length) throw new Error('a session grant needs a session and shape ids');
+  const data = read(env);
+  const key = keyOf(project);
+  const sessions = liveSessions(data, key, now());
+  const sk = sessionKeyOf(session);
+  sessions[sk] = { ids: [...new Set([...(sessions[sk]?.ids ?? []), ...ids])], at: now().toISOString() };
+  data.sessions = { ...(data.sessions ?? {}), [key]: sessions };
+  write(data, env);
+  return sessions[sk];
+}
+
+export function sessionGranted(project, session, id, { now = () => new Date(), env = process.env } = {}) {
+  if (!session) return false;
+  return Boolean(liveSessions(read(env), keyOf(project), now())[sessionKeyOf(session)]?.ids.includes(id));
+}
+
+// Withdraws `ids` (all of the session's grants when none are named). Returns how many shape ids were withdrawn.
+export function revokeSessionGrant(project, session, ids = [], { now = () => new Date(), env = process.env } = {}) {
+  if (!session) return 0;
+  const data = read(env);
+  const key = keyOf(project);
+  const sessions = liveSessions(data, key, now());
+  const sk = sessionKeyOf(session);
+  const before = sessions[sk]?.ids ?? [];
+  const kept = ids.length ? before.filter((i) => !ids.includes(i)) : [];
+  if (kept.length === before.length) return 0;
+  if (kept.length) sessions[sk] = { ...sessions[sk], ids: kept };
+  else delete sessions[sk];
+  data.sessions = { ...(data.sessions ?? {}), [key]: sessions };
+  write(data, env);
+  return before.length - kept.length;
+}

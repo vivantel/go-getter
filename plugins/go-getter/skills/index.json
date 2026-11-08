@@ -209,6 +209,7 @@
         "cli/compiler/src/git-env.mjs",
         "cli/compiler/src/glob.mjs",
         "cli/compiler/src/governance.mjs",
+        "cli/compiler/src/grant-intent.mjs",
         "cli/compiler/src/hook.mjs",
         "cli/compiler/src/hosts/agent-format.mjs",
         "cli/compiler/src/hosts/claude-code.mjs",

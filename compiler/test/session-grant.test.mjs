@@ -97,12 +97,14 @@ test('"stop merging" revokes it; a question or an unattended prompt grants nothi
   }
 });
 
-test('a grant never widens past the shape: a force push, a release and a tag stay stopped', async () => {
+test('a grant never widens past the shape: a force push, a branch delete and a tag push stay stopped', async () => {
   const s = setup();
   try {
     await s.say('you can merge and push to branches');
-    assert.ok(quiet(s.ask('git push origin feature')), 'the granted shape');
-    for (const command of ['git push --force origin main', 'git push origin v1.0.0', 'gh release create v1.0.0']) assert.equal(quiet(s.ask(command)), false, command);
+    // codex has no native ask rules, so the hook alone decides (on Claude Code the host's own rules stop these; evals/grants.mjs models both)
+    const host = 'codex';
+    assert.ok(quiet(s.ask('git push origin feature', { host })), 'the granted shape');
+    for (const command of ['git push --force origin main', 'git push origin --delete feature', 'git push origin v1.0.0', 'git push --tags', 'git push origin refs/tags/v1.0.0']) assert.equal(quiet(s.ask(command, { host })), false, command);
   } finally {
     s.cleanup();
   }
