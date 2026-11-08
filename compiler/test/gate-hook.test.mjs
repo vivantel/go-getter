@@ -120,9 +120,8 @@ test('a /regex/ extra has no native rule, so the hook gates it on native hosts t
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('an invalid regex extra neither breaks the hook nor stops the other guardrails', () => {
+test('an invalid regex extra is not skipped: the evaluation throws so the hook fails closed (plan step H2)', () => {
   const dir = project('builtin:gate-command classes=outward extra=/(unclosed/');
-  assert.equal(evaluatePreTool(dir, SHELL['claude-code']('echo hi'), 'claude-code').deny, false);
-  assert.equal(evaluatePreTool(dir, SHELL['claude-code']('cat secrets/prod/key.json'), 'claude-code').deny, true);
+  assert.throws(() => evaluatePreTool(dir, SHELL['claude-code']('echo hi'), 'claude-code'), /guardrail gated-actions/);
   rmSync(dir, { recursive: true, force: true });
 });

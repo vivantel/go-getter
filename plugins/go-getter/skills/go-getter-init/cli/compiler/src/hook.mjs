@@ -74,6 +74,10 @@ const TOOLS = {
   todowrite: 'todo', write_todos: 'todo', update_todo: 'todo', save_memory: 'memory',
 };
 
+// Tools that only read or ask: when enforcement cannot run they still pass (plan step H2).
+const READ_ONLY_TOOLS = new Set(['read', 'read_file', 'read_many_files', 'view', 'grep', 'grep_search', 'search_file_content', 'rg', 'glob', 'ls', 'list_directory', 'list_dir', 'webfetch', 'web_fetch', 'websearch', 'web_search', 'google_web_search', 'askuserquestion', 'todowrite', 'write_todos', 'update_todo', 'skill']);
+export const isReadOnlyTool = (payload) => READ_ONLY_TOOLS.has(String(payload?.tool_name ?? payload?.toolName ?? '').toLowerCase());
+
 const toolName = (payload) => {
   const name = payload.tool_name ?? payload.toolName;
   return typeof name === 'string' ? name : undefined;
@@ -258,8 +262,9 @@ function gatedCommand(entry, payload, host, project) {
       hit = { ...h, why: state?.why };
       break;
     }
-  } catch {
-    return null; // an invalid pattern gates nothing here rather than breaking every shell call; `apply` rejects it
+  } catch (e) {
+    // An invalid pattern must not switch the gate off: the caller fails closed (plan step H2).
+    throw new Error(`guardrail ${entry.guardrail}: ${e.message}`, { cause: e });
   }
   if (!hit) return null;
   const key = hit.stateful ? stopKey(hit.id, command, hit.why, project) : undefined;

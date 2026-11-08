@@ -13,6 +13,14 @@ const BUILTIN_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'che
 export const STAGES = ['pre-commit', 'pre-push', 'ci'];
 export const inStage = (entry, stage) => !stage || stage === 'ci' || (entry.stages ?? ['pre-push']).includes(stage);
 
+function parseGuardrailRun(id, run) {
+  try {
+    return parseRun(run);
+  } catch (e) {
+    throw new Error(`guardrail ${id}: ${e.message}`, { cause: e });
+  }
+}
+
 export function collectEnforcement(project) {
   return readArtifacts(project, ['guardrails'])
     .filter((g) => g.data.status === 'active')
@@ -25,7 +33,7 @@ export function collectEnforcement(project) {
         run: e.run,
         origin: e.origin ?? 'authored',
         stages: Array.isArray(e.stages) ? e.stages.map(String) : undefined,
-        parsed: e.run ? parseRun(e.run) : null,
+        parsed: e.run ? parseGuardrailRun(g.id, e.run) : null,
       })),
     );
 }

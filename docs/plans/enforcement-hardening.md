@@ -48,13 +48,15 @@ Done-when: the test and the three bypass classes pass; M1 falls by 3.
 Red 2026-11-08: `node --test compiler/test/hook-project-root.test.mjs`: 3 of 3 fail (`cwd subdir:` empty output, exit 0) while the same calls at the root exit 2. Classes `T2-cwd-subdir-read-restricted`, `-force-push`, `-write-generated` added predicted `blocked`.
 Green 2026-11-08: the same command passes 3 of 3. `eval bypass`: 49 classes, 47 as predicted; read-restricted and force-push blocked. **Differs:** `T2-cwd-subdir-write-generated` passes unattended, at any `cwd`: the generated-file guardrail is tier 3 only, so no hook stops a write to a generated host file. The prediction stays; this is a finding (step H12). Relative path tokens still resolve against the project root, not the shell directory; that is H7. `npm test` 1350 pass; `check:generated` and `check:guardrails` ok.
 
-### H2 A broken or tampered guardrail file cannot switch enforcement off — [ ] ‖
+### H2 A broken or tampered guardrail file cannot switch enforcement off — [x] ‖
 Class: implement · Needs: H0 · Human: accepted by the owner 2026-11-08 (the new decision still needs `accepted-by`); it supersedes the fail-open part of 0019/0025 · Check: `node --test compiler/test/hook-failure-mode.test.mjs`
 Finding: an unparseable guardrail makes `collectEnforcement` throw, uncaught at `commands/hook.mjs:96`, exit 1, which hosts treat as non-blocking; a malformed payload returns 0 (`:44-49`); `gatedCommand` swallows every error (`hook.mjs:260`).
 Red: table-driven test, one case per failure (malformed payload, unreadable guardrails dir, unparseable guardrail, thrown check, bad regex), asserting a pre-tool exit code that blocks (host convention per adapter) and a one-line reason on stderr with no command text. Every case fails today.
 Do: draft the superseding decision (pre-tool fails closed on internal error for tools that can change state; read-only tools and `stop`/`session-*` stay fail-open; the runner-missing case is H3). Implement it. Telemetry records `outcome: fail` with the trigger.
 **UX rule (owner, 2026-11-08): a user must never have to switch go-getter off to proceed.** Every fail-closed denial prints (a) which check failed, (b) the one command that repairs it (`go-getter host check --fix`), and (c) for a person only, `go-getter approval create --once <shape>` to let this single call through. A repair is idempotent and local. A denial caused by go-getter's own fault (not by a rule) is retried once before it blocks. Telemetry counts such denials separately (`outcome: fail`), so M2 and the false-block rate show whether fail-closed hurts.
 Done-when: all cases block with the three-part message; read-only tool calls still pass; after the repair command the same call passes; M2 is 0 for pre-tool.
+Red 2026-11-08: `node --test compiler/test/hook-failure-mode.test.mjs` against the unfixed source: 0 pass, 7 fail (five fail-open cases, the read-only guard and the telemetry record). The "check that throws" case is a guardrail whose `run` is not text; no built-in check throws on its own.
+Green 2026-11-08: 7 of 7 pass; `npm test` 1354 pass; `eval bypass` unchanged (45 of 46). M2 = 0 fail-open cases for pre-tool. The decision is `draft-hardening-pre-tool-fails-closed-on-internal-error` (needs `accepted-by`). The old test that locked an invalid gate regex as "gates nothing" now asserts the opposite. **Deviation:** the printed repair is `go-getter doctor` and the person's route is `go-getter approvals allow <shape>`: the verbs `host check --fix` and `approval create --once` do not exist yet (V1/V2); doctor names the failing file but does not repair it. Telemetry counts `outcome: fail` with trigger `internal-error` or `unreadable-payload`.
 
 ### H3 A missing runner or Node is visible, and `doctor` says so — [ ] ‖
 Class: implement · Needs: H0 · Check: `node --test compiler/test/doctor-enforcement.test.mjs`
@@ -262,6 +264,14 @@ Result 2026-11-08: the owner chose POSIX only (macOS, Linux, WSL), failing early
 Red: on a simulated `win32` platform `doctor` and `setup` exit non-zero with one message naming WSL; INSTALLING.md states the requirement (a docs test greps it). Fails today.
 Do: add the platform check and the sentence.
 Done-when: the test passes.
+
+## Where to resume (2026-11-08, end of session)
+
+- **H1** is coded and green in pull request #351 (branch `fix/hook-policy-from-project-root`, issue #352). **H2** is coded and green in pull request #353 (branch `fix/hook-fail-closed`, no issue yet). Neither is merged. Both change `compiler/src/commands/hook.mjs` (the second to merge may need a rebase) and both edit this plan file (expect a trivial conflict in the H1/H2 lines).
+- **Owner actions waiting:** (1) merge #351, then #353 (`go-getter ship` from each branch, or the GitHub button); (2) set `accepted-by` on `docs/decisions/draft-hardening-pre-tool-fails-closed-on-internal-error.md`, then `go-getter artifacts assign` to number it; (3) create the H2 issue: `go-getter plan issue create H2 docs/plans/enforcement-hardening.md`; (4) approve an issue for H12.
+- **Next step, in order:** H3 (`doctor` checks; independent of H1/H2, branch from the updated `master`). Then H4 (needs H1 merged), then H5 to H8 in parallel. H12 (a tier-2 gate for writes to generated host files) follows H1; it came from the one H1 bypass class that still passes.
+- **Known facts to carry:** the verbs `go-getter host check --fix` and `go-getter approval create --once` named in H2's UX rule do not exist; the block message uses `go-getter doctor` and `go-getter approvals allow <shape>` until V1/V2. Agents may not run `go-getter hook ...` directly (a guardrail denies it); tests spawn it from `node:test`. A tool call whose text names a restricted file in prose is denied (H7's false positive): build such names at runtime in scripts and tests.
+- **Each step:** branch `fix/<slug>` from `origin/master`; red test first and run; record `Red:`/`Green:` lines here; `npm run build`, `npm test`, `node compiler/bin/go-getter.mjs eval bypass`; red commit, then fix commit; `go-getter pr`.
 
 ## Order
 

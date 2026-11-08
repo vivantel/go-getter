@@ -8,7 +8,7 @@
 // go-getter hook session-end --host <id>: deletes the session's pseudonym map (best effort; a 24-hour sweep backs it up).
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
-import { evaluatePreTool, evaluateUserPrompt, respond, sessionNudges, hookRecord, evaluatePostTool, respondPostTool, evaluateSessionEnd } from '../hook.mjs';
+import { evaluatePreTool, isReadOnlyTool, evaluateUserPrompt, respond, sessionNudges, hookRecord, evaluatePostTool, respondPostTool, evaluateSessionEnd } from '../hook.mjs';
 import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
@@ -21,6 +21,24 @@ function projectRootFrom(from) {
     if (existsSync(path.join(d, '.go-getter'))) return d;
     if (path.dirname(d) === d) return from;
   }
+}
+
+// Enforcement could not run (plan step H2, decision draft on fail-closed hooks). A call that can change state is blocked, with what
+// failed, the one command that repairs it, and the route a person has; a read-only call passes. Metadata only: no command text.
+function failClosed(host, project, payload, err, trigger) {
+  const readOnly = payload && isReadOnlyTool(payload);
+  recordQuietly(project, { event: 'pre-tool', host, outcome: 'fail', trigger });
+  if (readOnly) return 0;
+  const what = String(err?.message ?? err ?? 'unknown error').split('\n')[0].replaceAll(project, '.').slice(0, 200);
+  const reason = [
+    `go-getter: enforcement could not run (${what}); this call is blocked, not skipped.`,
+    '  Fix: run `go-getter doctor` (it names the failing file), then repeat the call.',
+    '  A person at the keyboard can let this one call through with `go-getter approvals allow <shape>`.',
+  ].join('\n');
+  const out = respond(host, { deny: true, reason });
+  if (out.stdout) process.stdout.write(out.stdout);
+  if (out.stderr) process.stderr.write(`${out.stderr}\n`);
+  return out.code;
 }
 
 export default async function hookCommand({ root, args }) {
@@ -55,8 +73,9 @@ export default async function hookCommand({ root, args }) {
   let payload = {};
   try {
     payload = JSON.parse(readFileSync(0, 'utf8') || '{}');
-  } catch {
+  } catch (e) {
     if (event === 'user-prompt') recordQuietly(project, { event: 'user-prompt', host, outcome: 'fail', trigger: 'unreadable-payload' });
+    if (event === 'pre-tool') return failClosed(host, project, null, new Error('the host sent a payload that is not JSON'), 'unreadable-payload');
     return 0;
   }
   // Policy comes from the project root, never from where the session's shell happens to be (`cd compiler` must not drop every guardrail).
@@ -106,7 +125,16 @@ export default async function hookCommand({ root, args }) {
     if (out.stderr) process.stderr.write(`${out.stderr}\n`);
     return out.code;
   }
-  const decision = evaluatePreTool(dir, payload, host);
+  let decision;
+  try {
+    try {
+      decision = evaluatePreTool(dir, payload, host);
+    } catch {
+      decision = evaluatePreTool(dir, payload, host); // go-getter's own fault is retried once before it blocks
+    }
+  } catch (e) {
+    return failClosed(host, dir, payload, e, 'internal-error');
+  }
   recordQuietly(dir, hookRecord('pre-tool', host, payload, decision));
   if (!decision.deny) {
     let routed = null;

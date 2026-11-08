@@ -191,5 +191,6 @@ id,title,tags,status
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
+draft-hardening-pre-tool-fails-closed-on-internal-error,"The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair","enforcement, tooling",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft
