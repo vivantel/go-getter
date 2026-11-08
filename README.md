@@ -51,21 +51,21 @@ Ten harness packs and two SDLC (practice) packs, each a short guided interview w
 
 ### Harness coverage
 
-How each rule ends up enforced, per component and host agent, once all eight packs are adopted (`go-getter coverage` prints this for your project): `hook+ci` = blocked by a host hook and checked in CI, `hook` = blocked or prompted by a host hook or permission rule, `ci` = checked in CI, `advisory` = instruction only, `-` = not covered yet.
+How each rule ends up enforced, per component and host agent, once all eight packs are adopted (`go-getter coverage` prints this for your project): `hook+ci` = blocked by a host hook and checked in CI, `hook` = blocked or prompted by a host hook or permission rule, `ci` = checked in CI, `advisory` = instruction only, `-` = not covered yet. `(deferred)` = the host's adapter is a wrapper over Claude Code's code, not yet verified against a live host; `(unconfirmed)` = the tier rests on a host shape its source fact marks unconfirmed. The table is generated from `go-getter coverage` (`go-getter check docs-consistency --fix` rewrites it; CI fails when it drifts).
 
 | Component | Pack | Claude Code | Codex | Kilo | OpenCode | Cursor | Gemini CLI | Copilot |
 |---|---|---|---|---|---|---|---|---|
 | 1 Orchestration loop | — | - | - | - | - | - | - | - |
 | 2 Tool registry | — | - | - | - | - | - | - | - |
 | 3 Execution sandbox | — | - | - | - | - | - | - | - |
-| 4 Context management | `context` | ci | ci | ci | ci | ci | ci | ci |
+| 4 Context management | `context` | hook+ci | hook+ci (deferred) | hook+ci | hook+ci | hook+ci (deferred) | hook+ci (deferred) | hook+ci (deferred) |
 | 5 Memory | — | - | - | - | - | - | - | - |
-| 6 Verification loops | `verification-gate` | hook | hook | advisory | advisory | hook | hook | advisory |
-| 7 Guardrails & DLP | `restricted-data`, `sanitization`, `data-policy` | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci | hook+ci |
-| 8 Human-in-the-loop | `hitl` | hook | hook | hook | hook | hook | hook | advisory |
-| 9 Checkpointing | `checkpointing` | hook | hook | hook | hook | hook | hook | advisory |
-| 10 Multi-agent orchestration | `orchestration` | advisory | advisory | advisory | advisory | advisory | advisory | advisory |
-| 11 Cost & model routing | `cost-routing` | hook | hook | hook | hook | hook | hook | hook |
+| 6 Verification loops | `verification-gate` | hook | hook (deferred) | advisory | advisory | hook (deferred) | hook (deferred) | advisory (deferred) |
+| 7 Guardrails & DLP | `data-policy`, `restricted-data`, `sanitization` | hook+ci | hook+ci (deferred) | hook+ci | hook+ci | hook+ci (deferred) | hook+ci (deferred) | ci (deferred) |
+| 8 Human-in-the-loop | `hitl` | hook | hook (deferred) | hook | hook | hook (deferred) | hook (deferred) | advisory (deferred) |
+| 9 Checkpointing | `checkpointing` | hook | hook (deferred, unconfirmed) | hook | hook | hook (deferred) | hook (deferred) | advisory (deferred) |
+| 10 Multi-agent orchestration | `orchestration` | ci | ci (deferred) | ci | ci | ci (deferred) | ci (deferred) | ci (deferred) |
+| 11 Cost & model routing | `cost-routing` | hook | hook (deferred) | hook | hook | hook (deferred) | hook (deferred) | advisory (deferred) |
 | 12 Observability | `telemetry` | - | - | - | - | - | - | - |
 
 Component 7 also reports where tool output is masked (secrets, and personal data when the project masks it): on every host that can replace tool output, which is all but Cursor and OpenCode, so there nothing is masked and the coverage report says so. Prompts and file writes are never masked.

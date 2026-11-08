@@ -194,6 +194,12 @@
       "required": ["3", "6", "7", "8", "9", "10", "11", "12"],
       "patternProperties": { "^(3|6|7|8|9|10|11|12)$": { "type": "integer", "minimum": 0, "maximum": 2 } }
     },
+    "unconfirmedTiers": {
+      "description": "Components whose tier rests on a payload or behaviour the source fact marks unconfirmed; the coverage table marks those cells.",
+      "type": "array",
+      "items": { "enum": ["3", "6", "7", "8", "9", "10", "11", "12"] },
+      "uniqueItems": true
+    },
     "notes": { "type": "array", "items": { "type": "string" } }
   }
 }

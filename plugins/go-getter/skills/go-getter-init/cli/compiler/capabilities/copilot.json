@@ -54,11 +54,11 @@
   "tiers": {
     "3": 2,
     "6": 1,
-    "7": 2,
+    "7": 1,
     "8": 1,
     "9": 1,
     "10": 2,
-    "11": 2,
+    "11": 1,
     "12": 1
   },
   "notes": [
@@ -67,7 +67,9 @@
     "Content exclusion support in CLI/agent mode is contradictory in docs; treated as unenforced.",
     "Sandbox = cloud agent firewall.",
     "Node needed only for npm installs (>=22).",
-    "Component 9 stays tier 1 until Copilot's hook payload is confirmed (as for component 8)."
+    "Component 9 stays tier 1 until Copilot's hook payload is confirmed (as for component 8).",
+    "Component 7 stays tier 1: the path and command deny rules read a tool-input field the docs do not name, so no hook rule is shown to block until a real payload confirms it (tool-output replacement via modifiedResult is documented and still reported). Raise to 2 with component 8.",
+    "Component 11 stays tier 1: modelSwap is false and no spend source exists, so a per-agent model in the agent file is the only lever and --max-ai-credits is an autopilot-mode cap, not a hook. Raise to 2 once a hook or spend source can enforce the route."
   ],
   "secretLevers": [
     {

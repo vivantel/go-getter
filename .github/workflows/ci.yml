@@ -48,6 +48,7 @@ jobs:
       - run: npm run check:deps
       - run: npm run check:node-floor
       - run: npm run check:packs
+      - run: npm run check:docs-consistency
       - run: npm run check:plans
       - run: npm run check:indexes
       - run: npm run check:versions

@@ -56,7 +56,9 @@ test('coverage maps components to adopted packs and per-host tiers', () => {
   assert.deepEqual(byNum[4].packs, ['example@0.1.0']);
   assert.deepEqual(new Set(Object.values(byNum[4].tiers)), new Set([3]));
   assert.deepEqual(byNum[7].packs, ['guard@0.1.0']);
-  assert.deepEqual(new Set(Object.values(byNum[7].tiers)), new Set([2]));
+  // Copilot's component 7 is tier 1 until a hook payload confirms the field that holds the command or path (plan H9).
+  assert.deepEqual(new Set(Object.entries(byNum[7].tiers).filter(([h]) => h !== 'copilot').map(([, t]) => t)), new Set([2]));
+  assert.equal(byNum[7].tiers.copilot, 1);
   // Kilo and OpenCode have no sandbox lever (capability tier 0), so the tier-2 rule is advisory there.
   assert.equal(byNum[3].tiers.kilo, 1);
   assert.equal(byNum[3].tiers.opencode, 1);

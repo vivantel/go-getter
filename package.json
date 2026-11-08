@@ -27,6 +27,7 @@
     "check:plugin-pin": "node compiler/bin/go-getter.mjs check plugin-pin",
     "check:deps": "node compiler/bin/go-getter.mjs check deps",
     "check:packs": "node compiler/bin/go-getter.mjs check packs",
+    "check:docs-consistency": "node compiler/bin/go-getter.mjs check docs-consistency",
     "check:plans": "node compiler/bin/go-getter.mjs check plans",
     "check:indexes": "node compiler/bin/go-getter.mjs check indexes",
     "eval": "node compiler/bin/go-getter.mjs eval",
