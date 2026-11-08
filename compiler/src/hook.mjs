@@ -253,8 +253,9 @@ function gatedCommand(entry, payload, host, project) {
   let hit;
   try {
     // A stateful entry has no native rule, so the hook judges it on every host: it passes when the repository state makes it safe.
+    // A respelled command (absolute path, wrapper, quoted verb, git global flag) is not seen by the native globs, so the hook judges it too.
     const hits = hasNativeAsk(host)
-      ? [...matchGated(command, { classes: [], extra: args.extra.filter(isRegexExtra) }), ...matchGated(command, { ...args, extra: [] }).filter((h) => h.stateful)]
+      ? [...matchGated(command, { classes: [], extra: args.extra.filter(isRegexExtra) }), ...matchGated(command, { ...args, extra: [] }).filter((h) => h.stateful || h.respelled)]
       : matchGated(command, args);
     const dir = worktreeCd(command, project);
     const moved = !dir && /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command);
