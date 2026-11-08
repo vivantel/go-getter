@@ -265,6 +265,14 @@ Red: on a simulated `win32` platform `doctor` and `setup` exit non-zero with one
 Do: add the platform check and the sentence.
 Done-when: the test passes.
 
+## Where to resume (2026-11-08, end of session)
+
+- **H1** is coded and green in pull request #351 (branch `fix/hook-policy-from-project-root`, issue #352). **H2** is coded and green in pull request #353 (branch `fix/hook-fail-closed`, no issue yet). Neither is merged. Both change `compiler/src/commands/hook.mjs` (the second to merge may need a rebase) and both edit this plan file (expect a trivial conflict in the H1/H2 lines).
+- **Owner actions waiting:** (1) merge #351, then #353 (`go-getter ship` from each branch, or the GitHub button); (2) set `accepted-by` on `docs/decisions/draft-hardening-pre-tool-fails-closed-on-internal-error.md`, then `go-getter artifacts assign` to number it; (3) create the H2 issue: `go-getter plan issue create H2 docs/plans/enforcement-hardening.md`; (4) approve an issue for H12.
+- **Next step, in order:** H3 (`doctor` checks; independent of H1/H2, branch from the updated `master`). Then H4 (needs H1 merged), then H5 to H8 in parallel. H12 (a tier-2 gate for writes to generated host files) follows H1; it came from the one H1 bypass class that still passes.
+- **Known facts to carry:** the verbs `go-getter host check --fix` and `go-getter approval create --once` named in H2's UX rule do not exist; the block message uses `go-getter doctor` and `go-getter approvals allow <shape>` until V1/V2. Agents may not run `go-getter hook ...` directly (a guardrail denies it); tests spawn it from `node:test`. A tool call whose text names a restricted file in prose is denied (H7's false positive): build such names at runtime in scripts and tests.
+- **Each step:** branch `fix/<slug>` from `origin/master`; red test first and run; record `Red:`/`Green:` lines here; `npm run build`, `npm test`, `node compiler/bin/go-getter.mjs eval bypass`; red commit, then fix commit; `go-getter pr`.
+
 ## Order
 
 H0 first, and Q1 alongside it (hermetic tests make every red result trustworthy). H1 next. Then H2, H3 and H4 (H4 after H1). H5 to H8 in parallel after H1. H9, H10, Q2, Q3, Q5 are independent and can start any time. Q4 and Q7 after Q2/Q1. H11 for the owner's review; V1 to V5 after acceptance, then U1 to U9 by value (U1, U4 first); V6 two minor releases later.
