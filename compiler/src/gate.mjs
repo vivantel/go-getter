@@ -31,7 +31,7 @@ const LIST_FLAGS = '-d|--delete|-l|--list|-v|--verify|-n|--contains|--no-contain
 const inTemp = (text) => {
   const roots = ['/tmp', tmpdir().replace(/\/+$/, '')];
   const targets = text.split(/\s+/).slice(1).filter((w) => !w.startsWith('-')).map((w) => w.replace(/^["']|["']$/g, ''));
-  return targets.length > 0 && targets.every((t) => !t.split('/').includes('..') && roots.some((r) => t.startsWith(`${r}/`)));
+  return targets.length > 0 && targets.every((t) => !t.split('/').includes('..') && !/[{}$`()\\]/.test(t) && roots.some((r) => t.startsWith(`${r}/`) && t.replace(/\/+$/, '') !== r));
 };
 
 const ENTRIES = [
