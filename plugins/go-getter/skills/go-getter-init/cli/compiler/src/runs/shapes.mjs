@@ -1,23 +1,24 @@
 // Whether an outward command shape may run without asking now (decision 0130): a remembered approval of the shape, or the
 // active run granting it, and in both cases the shape's preconditions hold at this use.
 import path from 'node:path';
-import { shapeApproved } from '../secrets/approvals.mjs';
+import { shapeApproved, sessionGranted } from '../secrets/approvals.mjs';
 import { isApprovable } from '../gate.mjs';
 import { resolvePlan } from '../plan.mjs';
 import { activeRun, noteUse } from './record.mjs';
 import { checkShape } from './preconditions.mjs';
 
-// { allowed: true, by: 'run' | 'remembered' }, or { allowed: false, firstUse: true } when nothing grants the shape yet, or
+// { allowed: true, by: 'run' | 'session' | 'remembered' }, or { allowed: false, firstUse: true } when nothing grants the shape yet, or
 // { allowed: false, reason } when a grant exists but a precondition fails.
-export function shapeAllowance(project, id, command, { gh, env = process.env } = {}) {
+export function shapeAllowance(project, id, command, { gh, env = process.env, session } = {}) {
   const run = activeRun(project, { env });
   // Only approvable shapes: whatever a record says, tags, releases, publishing and repository settings are never allowed here.
   const inRun = Boolean(run?.grants.includes(id)) && isApprovable(id);
   if (!isApprovable(id)) return { allowed: false, never: true };
-  if (!inRun && !shapeApproved(project, id, env)) return { allowed: false, firstUse: true };
+  const bySession = !inRun && sessionGranted(project, session, id, { env });
+  if (!inRun && !bySession && !shapeApproved(project, id, env)) return { allowed: false, firstUse: true };
   const check = checkShape({ project, id, command, run: inRun ? run : null, ...(gh ? { gh } : {}) });
   if (check.ok && run) noteUse(project, id, { env });
-  return check.ok ? { allowed: true, by: inRun ? 'run' : 'remembered' } : { allowed: false, reason: check.reason };
+  return check.ok ? { allowed: true, by: inRun ? 'run' : bySession ? 'session' : 'remembered' } : { allowed: false, reason: check.reason };
 }
 
 // Whether `go-getter plan issue <verb> <step> [plan]` writes to a step of the active run (decision 0130 item 5): `comment` and

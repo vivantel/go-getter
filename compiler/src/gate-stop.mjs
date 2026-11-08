@@ -25,10 +25,13 @@ function stateOf(cwd) {
 export const stopKey = (id, command, why, cwd) => `stop:${createHash('sha256').update([id, command, why ?? '', stateOf(cwd)].join('\0')).digest('hex').slice(0, 16)}`;
 
 // `canAsk`: the host can prompt, so approving remembers the case; otherwise only a person running the command is left.
-export function stopReason({ command, id, lost, key, canAsk }) {
+// What the user can type to allow a shape for the rest of the session (plan step H13).
+export const GRANT_PHRASE = { 'pr-merge': 'merge PRs from now on', 'pr-create': 'open PRs from now on', 'pr-close': 'close PRs from now on', 'git-push': 'push to branches from now on' };
+
+export function stopReason({ command, id, lost, key, canAsk, grant }) {
   const approve = canAsk
     ? `Yes runs it now and remembers this exact case (same command, same state) until revoked: go-getter approvals revoke ${key}`
-    : `this needs a human: ask the user to run it themselves ("! ${command}"); this host cannot ask, so nothing is remembered`;
+    : `this needs a human: ask the user to run it themselves ("! ${command}"); this host cannot ask, so nothing is remembered${GRANT_PHRASE[grant] ? `. The user can allow it for this session by typing: "${GRANT_PHRASE[grant]}"` : ''}`;
   return `go-getter: "${command}" is stopped.\n  Lost: ${lost}\n  Instead: ${ALTERNATIVES[id] ?? FALLBACK}\n  Approve: ${approve}`;
 }
 

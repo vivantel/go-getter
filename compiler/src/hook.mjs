@@ -10,7 +10,7 @@ import { FIELDS } from './telemetry/schema.mjs';
 import { patternsOf } from './checks/builtin/deny-path.mjs';
 import { adoptedData, packageCapabilities } from './governance.mjs';
 import { driftNudge } from './manifest.mjs';
-import { matchGated, gateArgs, isRegexExtra } from './gate.mjs';
+import { matchGated, gateArgs, isRegexExtra, isApprovable } from './gate.mjs';
 import { stateCheck } from './gate-state.mjs';
 import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
@@ -21,8 +21,10 @@ import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords, unwrapWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
-import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved } from './secrets/approvals.mjs';
+import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved, addSessionGrant, revokeSessionGrant } from './secrets/approvals.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
+
+import { MAX_MESSAGE_CHARS } from './grant-intent.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
 import { readPlan } from './plan.mjs';
 import { approvalRefusal } from './plan-approval.mjs';
@@ -463,12 +465,12 @@ function shapeGate(project, entry, payload, host) {
   if (typeof command !== 'string' || !command || !args.grantable.length) return null;
   let hits;
   try {
-    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, channels: args.channels, provider: args.provider });
+    hits = matchGated(command, { classes: args.classes, extra: args.extra, free: args.free, channels: args.channels, provider: args.provider, all: true }); // every segment: two merges in one command are two checks
   } catch {
     return null;
   }
   if (!hits.length || hits.some((h) => !args.grantable.includes(h.id))) return null;
-  const verdicts = hits.map((h) => ({ id: h.id, ...shapeAllowance(project, h.id, command) }));
+  const verdicts = hits.map((h) => ({ id: h.id, ...shapeAllowance(project, h.id, h.segment ?? command, { session: payload.session_id }) }));
   if (verdicts.every((v) => v.allowed)) return { allow: true };
   if (!canPrompt(host)) return null;
   const text = command.length > 200 ? `${command.slice(0, 200)}…` : command;
@@ -589,7 +591,8 @@ function remoteHead(project) {
 export async function evaluateUserPrompt(project, payload, host, env = process.env, { run } = {}) {
   const message = payload?.prompt;
   // The model call below runs `claude` in this project: its own hooks must not read the prompt it was given as the user's.
-  if (env.GO_GETTER_CLASSIFIER || !looksLikeReleaseTalk(message)) return { recorded: false };
+  if (env.GO_GETTER_CLASSIFIER) return { recorded: false };
+  if (!looksLikeReleaseTalk(message)) return grantFromPrompt(project, payload, host, env, run);
   const note = (outcome, trigger) => logStop(project, host, { taskClass: 'release-request', outcome, trigger });
   // Turns the host starts itself (a scheduled task, a headless run) reach this hook too; only a session a person sits at counts.
   if (env.CLAUDE_CODE_SESSION_ATTENDED !== '1') return note('blocked', 'unattended'), { recorded: false };
@@ -605,6 +608,30 @@ export async function evaluateUserPrompt(project, payload, host, env = process.e
   const id = typeof payload.session_id === 'string' && payload.session_id && head ? recordRequest(project, { session: payload.session_id, release, head, env }) : null;
   note(id ? 'allowed' : 'blocked', id ? 'recorded' : 'not-recorded');
   return { recorded: Boolean(id) };
+}
+
+// The shape ids the project's gate lets a person grant (`grantable=`), which go-getter approves at all.
+function grantableShapes(project) {
+  return [...new Set(collectEnforcement(project).filter((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'gate-command').flatMap((e) => gateArgs(e.parsed.args).grantable))].filter(isApprovable);
+}
+
+// A short message that grants or withdraws permission for the session ("merge PRs from now on", plan step H13). Only an attended session
+// counts; the model is asked only when the project lets some shape be granted, and its closed answer is the only thing recorded:
+// shape ids and the session, never the words.
+async function grantFromPrompt(project, payload, host, env, run) {
+  const message = payload?.prompt;
+  const session = payload?.session_id;
+  if (typeof message !== 'string' || message.trim().length < 3 || message.length > MAX_MESSAGE_CHARS || message.trimStart().startsWith('/')) return { recorded: false };
+  if (env.CLAUDE_CODE_SESSION_ATTENDED !== '1' || typeof session !== 'string' || !session) return { recorded: false };
+  const shapes = grantableShapes(project);
+  if (!shapes.length) return { recorded: false };
+  const note = (outcome, trigger) => logStop(project, host, { taskClass: 'session-grant', outcome, trigger });
+  const { interpretGrant } = await import('./grant-intent.mjs');
+  const { lastAgentText } = await import('./release-intent.mjs');
+  const read = interpretGrant({ project, message, context: lastAgentText(payload.transcript_path), shapes, run });
+  if (read.action === 'grant') return addSessionGrant(project, session, read.shapes), note('allowed', 'granted'), { recorded: true };
+  if (read.action === 'revoke') return revokeSessionGrant(project, session, read.shapes), note('allowed', 'revoked'), { recorded: true };
+  return { recorded: false };
 }
 
 // An agent's tool call carrying text that the host would later submit as the user's prompt (a scheduled task, a wake-up, a message to the
@@ -757,7 +784,7 @@ function decidePreTool(project, payload, host) {
         continue;
       }
       if (gated?.stateful) return { deny: true, guardrail: e.guardrail, stopClass: gated.id, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.id, lost: gated.why, key: gated.key, canAsk: false })}` };
-      if (gated) return { deny: true, guardrail: e.guardrail, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false })}` };
+      if (gated) return { deny: true, guardrail: e.guardrail, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false, grant: gateArgs(e.parsed.args).grantable.includes(gated.id) ? gated.id : undefined })}` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
       continue;

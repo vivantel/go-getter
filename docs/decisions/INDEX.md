@@ -190,8 +190,10 @@ id,title,tags,status
 0206-approval-events-record-class-and-outcome,"Each point where work waits for a person is an approval event with a class from a fixed table and one of three outcomes","observability, hooks",draft
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
 0208-pre-tool-fails-closed-on-internal-error,"The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair","enforcement, tooling",active
+0209-a-grant-typed-in-the-chat-is-honoured-for-the-session,"A permission the user types in the chat (""merge PRs from now on"") is a session grant the gate honours, with the shape's preconditions still checked at each use","hooks, enforcement, security",active
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
+draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft
 draft-h4-policy-files-and-approvals-store-are-not-agent-writable,"The pre-tool hook asks a person before any call changes an active guardrail or an accepted decision, and reads the shell's working directory for the approvals store","enforcement, hooks",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft

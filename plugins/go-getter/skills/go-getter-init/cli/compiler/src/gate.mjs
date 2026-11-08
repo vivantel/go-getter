@@ -251,7 +251,7 @@ export function channelOf(id, command) {
 
 // `free` lists catalog ids the project lets run without a human (outward entries only, `gateEntries` rejects others).
 // `channels` lists the release and publish channels that run without a human; an unlisted channel is production and stays gated.
-export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [], channels = [], provider = DEFAULT_PROVIDER } = {}) {
+export function matchGated(command, { classes = ['irreversible', 'outward'], extra = [], free = [], channels = [], provider = DEFAULT_PROVIDER, all = false } = {}) {
   if (typeof command !== 'string' || !command.trim()) return [];
   const freed = normaliseFree(free);
   const wanted = catalogFor(provider).filter((e) => classes.includes(e.class) && !freed.includes(e.id) && !ALWAYS_FREE.includes(e.id));
@@ -263,7 +263,7 @@ export function matchGated(command, { classes = ['irreversible', 'outward'], ext
     const masked = seg.masked.slice(cut).trim();
     const raw = seg.raw.slice(cut).trim();
     for (const e of wanted) {
-      if (!hits.has(e.id) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw) && !(CHANNEL_ENTRIES.includes(e.id) && channels.includes(channelOf(e.id, masked)))) {
+      if ((all || !hits.has(e.id)) && e.pattern.test(e.raw ? raw : masked) && !e.exempt?.(raw) && !(CHANNEL_ENTRIES.includes(e.id) && channels.includes(channelOf(e.id, masked)))) {
         hits.add(e.id);
         found.push({ ...e, segment: raw });
       }
