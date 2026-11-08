@@ -74,11 +74,12 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
 
 const LABEL = { 3: 'ci', 2: 'hook', 1: 'advisory' };
 
+// A host that blocks in-host and is also checked in CI reads "hook+ci".
+export const cellLabel = (r, h) => (r.tiers[h] === 3 && r.inHost?.[h] === 2 ? 'hook+ci' : r.tiers[h] ? LABEL[r.tiers[h]] : '-');
+
 export function formatCoverage(rows, hosts = HOSTS) {
   const header = ['component', 'packs', ...hosts];
-  // A host that blocks in-host and is also checked in CI reads "hook+ci".
-  const cell = (r, h) => (r.tiers[h] === 3 && r.inHost?.[h] === 2 ? 'hook+ci' : r.tiers[h] ? LABEL[r.tiers[h]] : '-');
-  const body = rows.map((r) => [`${r.component} ${r.name}`, r.packs.length ? r.packs.join(', ') : 'none', ...hosts.map((h) => cell(r, h))]);
+  const body = rows.map((r) => [`${r.component} ${r.name}`, r.packs.length ? r.packs.join(', ') : 'none', ...hosts.map((h) => cellLabel(r, h))]);
   const widths = header.map((_, i) => Math.max(...[header, ...body].map((row) => row[i].length)));
   const table = [header, ...body].map((row) => row.map((cell, i) => cell.padEnd(widths[i])).join('  ').trimEnd()).join('\n');
   const lines = [table];
