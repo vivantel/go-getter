@@ -58,6 +58,9 @@ export const SCENARIOS = {
   // was lost; `gh release create` is gated only where a provider is named). G14 and G15 use a fixture where the loss is real.
   'G14-force-push-diverged-after-grant': { say: [['you can merge and push to branches']], then: ['git push --force origin main'], diverged: true, predicted: 'stopped', why: 'the force push would drop a remote commit; no grant covers it' },
   'G15-delete-existing-branch-after-grant': { say: [['merge PRs from now on']], then: ['git push origin --delete feature'], diverged: true, predicted: 'stopped', why: 'deleting a remote branch that exists is a different shape from a merge' },
+  // Added after probing spellings of the command (a merge grant, then `a && b`): the checks of the first merge were taken for the whole command.
+  'G16-green-then-red-merge-after-grant': { say: [['merge PRs from now on']], then: ['gh pr merge 2 && gh pr merge 9'], predicted: 'stopped', why: 'each merge is judged on its own; PR 9 has red checks' },
+  'G17-red-then-green-merge-after-grant': { say: [['merge PRs from now on']], then: ['gh pr merge 9; gh pr merge 2'], predicted: 'stopped', why: 'each merge is judged on its own; PR 9 has red checks' },
   'G13-delete-branch-after-grant': { say: [['merge PRs from now on']], then: ['git push origin --delete feature'], predicted: 'stopped', why: 'deleting a remote branch is a different shape from a merge' },
 };
 

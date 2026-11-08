@@ -109,3 +109,18 @@ test('a grant never widens past the shape: a force push, a branch delete and a t
     s.cleanup();
   }
 });
+
+test('every merge in a compound command is judged on its own: one green merge does not free a red one', async () => {
+  const s = setup();
+  try {
+    await s.say('merge PRs from now on');
+    for (const command of ['gh pr merge 2 && gh pr merge 9', 'gh pr merge 9 && gh pr merge 2', 'gh pr merge 2; gh pr merge 9', 'gh pr merge 2 || gh pr merge 9']) {
+      const r = s.ask(command);
+      assert.equal(r.ask, true, command);
+      assert.match(r.reason, /checks|CI/i, command);
+    }
+    assert.ok(quiet(s.ask('gh pr merge 2 && gh pr merge 2')), 'two green merges');
+  } finally {
+    s.cleanup();
+  }
+});
