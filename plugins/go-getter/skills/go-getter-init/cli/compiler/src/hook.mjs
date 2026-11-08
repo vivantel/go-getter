@@ -699,8 +699,8 @@ function policyWriteRefusal(project, payload, host) {
   if (!hit) return null;
   const why = `${hit} is a policy file (an active guardrail or an accepted decision), so a person changes it`;
   return canPrompt(host)
-    ? { deny: false, ask: true, guardrail: 'policy-files-human-edited', stopClass: 'policy-write', reason: `go-getter: this call changes ${why}. Approve it only if you asked for this change.` }
-    : { deny: true, guardrail: 'policy-files-human-edited', stopClass: 'policy-write', reason: `blocked: ${why}; ask the user to make the change or to run it with "! <command>".` };
+    ? { deny: false, ask: true, stopClass: 'policy-write', reason: `go-getter: this call changes ${why}. Approve it only if you asked for this change.` }
+    : { deny: true, stopClass: 'policy-write', reason: `blocked: ${why}; ask the user to make the change or to run it with "! <command>".` };
 }
 
 function decidePreTool(project, payload, host) {
