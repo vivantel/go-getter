@@ -44,6 +44,16 @@ export const defaultRunner = (cmd, args, { cwd, input } = {}) => {
 };
 
 // The summary line a branch name implies: `feat/add-ship-verb` is `feat: add ship verb`.
+// Unstage gitlinks that `git add -A` just added: a nested repository or linked worktree under the project is never meant to be committed by a ship.
+export function unstageNewGitlinks(project) {
+  const run = (...args) => spawnSync('git', args, { cwd: project, encoding: 'utf8', env: cleanGitEnv(process.env) });
+  const out = (run('diff', '--cached', '--raw', '-z', '--no-renames', '--diff-filter=A').stdout ?? '').split('\0');
+  const links = [];
+  for (let i = 0; i + 1 < out.length; i += 2) if (out[i].startsWith(':000000 160000')) links.push(out[i + 1]);
+  for (const link of links) run('rm', '--cached', '-q', '--', link);
+  return links;
+}
+
 export function titleFromBranch(branch) {
   const m = BRANCH.exec(branch);
   return m ? `${m[1]}: ${m[2].replace(/[._-]+/g, ' ').trim()}` : null;
@@ -186,6 +196,7 @@ export async function openPr(project, opts = {}, run = defaultRunner, log = () =
   if (cp) log('checkpoint', cp.ref);
   if (dirty.length) {
     need(git('add', '-A'), 'git add');
+    for (const link of unstageNewGitlinks(project)) log('scope', `not staging ${link} (a nested repository or worktree)`);
     const staged = suggestRefs(project, { staged: true }).must.map((r) => r.path);
     const message = buildMessage({ title, why, refs: [...new Set([...refs, ...staged])] });
     need(git('commit', '-m', message), 'git commit');

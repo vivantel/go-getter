@@ -80,3 +80,31 @@ test('an owned part that is no longer produced drops out of the manifest', () =>
   apply(dir);
   assert.equal(readManifest(dir).shared['.claude/settings.json']?.length ?? 0, 0);
 });
+
+test('an absolute core.hooksPath that names the recorded hooks directory is not a change', () => {
+  const dir = project();
+  apply(dir);
+  execFileSync('git', ['config', 'core.hooksPath', path.join(dir, '.githooks')], { cwd: dir });
+  const plan = planApply(dir, { hosts: ['claude-code'] });
+  assert.equal(plan.gitHeld, false);
+  assert.deepEqual(plan.modified.filter((m) => m.path === 'core.hooksPath'), []);
+});
+
+test('an absolute core.hooksPath into the main checkout of a linked worktree is not a change', () => {
+  const main = project();
+  apply(main);
+  execFileSync('git', ['add', '-A'], { cwd: main });
+  execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=[email-2]', 'commit', '-q', '--no-verify', '-m', 'init'], { cwd: main });
+  const wt = path.join(path.dirname(main), `${path.basename(main)}-wt`);
+  execFileSync('git', ['worktree', 'add', '-q', '-b', 'wt', wt], { cwd: main });
+  execFileSync('git', ['config', 'core.hooksPath', path.join(main, '.githooks')], { cwd: main });
+  const plan = planApply(wt, { hosts: ['claude-code'] });
+  assert.equal(plan.gitHeld, false);
+});
+
+test('a different core.hooksPath is still a change', () => {
+  const dir = project();
+  apply(dir);
+  execFileSync('git', ['config', 'core.hooksPath', '.other-hooks'], { cwd: dir });
+  assert.equal(planApply(dir, { hosts: ['claude-code'] }).gitHeld, true);
+});

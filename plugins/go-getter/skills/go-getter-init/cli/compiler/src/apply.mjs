@@ -18,7 +18,7 @@ import { listWorktrees, worktreeRoot } from './worktree.mjs';
 import { gateEntries, nativeRules, withAskRules } from './gate.mjs';
 import { otelConfig, otelReport, withOtel } from './telemetry/otel.mjs';
 import { MANIFEST, readManifest, buildManifest, bootstrapManifest, manifestText, hashContent } from './manifest.mjs';
-import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting, isLink, MARK_START, MARK_END } from './reconcile.mjs';
+import { undoJson, blockOf, setAt, at, fileEdited, gitSetting, setGitSetting, sameHooksPath, isLink, MARK_START, MARK_END } from './reconcile.mjs';
 
 export { RUNNER, upsert };
 // The CLI copy apply vendors into the project (decision 0096): the runner runs it before falling back to npx.
@@ -627,7 +627,7 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   // core.hooksPath: left alone when changed since go-getter set it; restored when the hooks are no longer produced.
   const recordedGit = previous?.shared?.['git-config']?.[0];
   const currentGit = gitSetting(project, 'core.hooksPath');
-  const gitHeld = !force && recordedGit && currentGit !== undefined && currentGit !== recordedGit.value;
+  const gitHeld = !force && recordedGit && currentGit !== undefined && !sameHooksPath(project, currentGit, recordedGit.value);
   if (gitHeld) modified.push({ path: 'core.hooksPath', what: 'git-config', reason: `changed to ${currentGit} since go-getter set it` });
   return {
     hosts: targetHosts, outputs, stale: [...stale].sort(), tier2, tier3, skills: withSkills, otel, notes,

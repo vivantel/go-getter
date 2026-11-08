@@ -177,3 +177,15 @@ test('the CLI prints the named artifacts in --json', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a staged gitlink (a nested worktree directory) is not read as a file', () => {
+  const dir = fixture();
+  try {
+    const sha = git(dir, 'rev-parse', 'HEAD').trim();
+    git(dir, 'update-index', '--add', '--cacheinfo', `160000,${sha},.claude/worktrees/agent-x`);
+    mkdirSync(path.join(dir, '.claude/worktrees/agent-x'), { recursive: true });
+    assert.doesNotThrow(() => suggestRefs(dir, { staged: true, today }));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
