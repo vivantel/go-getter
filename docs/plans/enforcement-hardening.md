@@ -29,11 +29,12 @@ Written 2026-11-08 from a read-only production-readiness review of the enforceme
 
 ## Phase 0 — Baseline
 
-### H0 Record the red baseline — [ ]
+### H0 Record the red baseline — [x]
 Class: explore · Needs: none · Check: `node compiler/bin/go-getter.mjs eval bypass`
 Context: the bypass suite runs scripted attempts against the compiled hooks and prints predicted against observed. The review found these spellings get past the tier-2 gate; none is in the suite yet.
 Do: run `eval bypass`, `telemetry summary` and the test suite; write the figures for M1, M2 and M5 into this table (a `Result:` line). Change no code.
 Done-when: M1, M2, M5 have a dated baseline figure and the command that gave it.
+Result 2026-11-08 (master at a354dbf): **M1** `go-getter eval bypass`: 46 classes, 19 pass unattended (20 predicted), 27 blocked; 45 as predicted. The one differing class is `T2-script-opens-file`: predicted `passes`, observed `blocked` (the hook sees the restricted file name in the command text). The prediction is not edited (the suite's rule); the paper reports it as a prediction that differed. None of the classes this plan adds exists yet, so M1's target of 0 unattended passes applies to the new classes H1, H5, H6 and H7 add. **M2** has no test yet; the baseline is the H2 red test (five fail-open cases, all expected to fail) and the telemetry count of `fail` outcomes: 13 of 9,880 records, 11 of them `user-prompt:exception`. **M5** `go-getter telemetry summary`: 26 denied of 3,545 pre-tool records (0.73 per 100); override data is not recorded, so a rise is read as a rise in this rate.
 
 ## Phase 1 — Blockers and fail-closed (do first, in this order)
 
