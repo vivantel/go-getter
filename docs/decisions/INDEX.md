@@ -192,5 +192,6 @@ id,title,tags,status
 0208-pre-tool-fails-closed-on-internal-error,"The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair","enforcement, tooling",active
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
+draft-h4-policy-files-and-approvals-store-are-not-agent-writable,"The pre-tool hook asks a person before any call changes an active guardrail or an accepted decision, and reads the shell's working directory for the approvals store","enforcement, hooks",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft

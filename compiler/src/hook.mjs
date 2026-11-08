@@ -389,11 +389,49 @@ function approvalsStoreRefusal(project, payload) {
     }
   }
   const store = storeDir();
+  const inStore = (abs) => abs === store || abs.startsWith(`${store}${path.sep}`);
+  const refusal = 'blocked: the approvals store is changed by a person only; go-getter approvals list shows it';
   for (const token of candidatePaths(payload, project)) {
-    const abs = token.startsWith('~/') ? path.join(os.homedir(), token.slice(2)) : path.resolve(project, token);
-    if (abs === store || abs.startsWith(`${store}${path.sep}`)) return 'blocked: the approvals store is changed by a person only; go-getter approvals list shows it';
+    if (inStore(token.startsWith('~/') ? path.join(os.homedir(), token.slice(2)) : path.resolve(project, token))) return refusal;
+  }
+  // Operands resolve against the directory the shell is in at that point, so `cd <dir> && cp x approvals.json` is read as the file it is.
+  const command2 = shellCommand(payload);
+  if (typeof command2 === 'string') {
+    const commands = effectiveCommands(command2) ?? [];
+    const walked = walkCwd(commands, project);
+    for (const { words, cwd } of walked) {
+      if (INTERPRETERS.has(path.basename(words[0])) && STORE_FILES.test(words.slice(1).join(' '))) return refusal;
+      if (words.slice(1).some((w) => !w.startsWith('-') && inStore(w.startsWith('~/') ? path.join(os.homedir(), w.slice(2)) : path.resolve(cwd, w)))) return refusal;
+    }
+    // A redirect target is not among the words: read every operand of the command from each directory the shell was in.
+    for (const op of shellOperands(command2) ?? []) {
+      for (const cwd of new Set([project, ...walked.map((c) => c.cwd)])) {
+        if (inStore(op.startsWith('~/') ? path.join(os.homedir(), op.slice(2)) : path.resolve(cwd, op))) return refusal;
+      }
+    }
   }
   return null;
+}
+
+// The files of the approvals store, named by an inline script (`node -e`, `python -c`) whose paths are built at run time.
+const STORE_FILES = /\b(?:approvals|pending)\.json\b/;
+const INTERPRETERS = new Set(['node', 'nodejs', 'python', 'python3', 'perl', 'ruby', 'php', 'deno', 'bun']);
+
+// The simple commands in order, each with the directory the shell is in when it runs (`cd`, `pushd` and `popd` move it).
+function walkCwd(commands, project) {
+  let cwd = project;
+  const stack = [];
+  const out = [];
+  for (const words of commands) {
+    const name = path.basename(words[0]);
+    if (name === 'cd' || name === 'pushd') {
+      const target = words.slice(1).find((w) => !w.startsWith('-'));
+      if (name === 'pushd') stack.push(cwd);
+      cwd = target === undefined ? os.homedir() : path.resolve(cwd, target.startsWith('~') ? path.join(os.homedir(), target.slice(1)) : target);
+    } else if (name === 'popd') cwd = stack.pop() ?? cwd;
+    out.push({ words, cwd });
+  }
+  return out;
 }
 
 // The first use of a secret by a command that is not approved: ask the person where the host can (leaving a pending record that
@@ -616,10 +654,68 @@ function rawEffectTool(project, payload) {
   return rows.find((r) => (name && name === r.tool) || commands.some((w) => path.basename(w[0]) === r.tool.split(/\s+/)[0])) ?? null;
 }
 
+// Policy files an agent cannot edit on its own (plan step H4): an active guardrail and an accepted decision are what the hook
+// reads live, so an agent that rewrote one (`status: superseded`, a `free=` entry) would switch its own limit off. Built in, not a
+// guardrail of the project, so removing the guardrail file cannot lift it. A new or draft file is open; a person approves the rest.
+const POLICY_FILES = [{ dir: 'docs/guardrails', status: /^(?:active)$/ }, { dir: 'docs/decisions', status: /^(?:accepted|active)$/ }];
+const WRITE_TOOLS = new Set(['write', 'edit', 'multiedit', 'notebookedit', 'write_file', 'replace', 'create', 'str_replace_editor', 'delete', 'apply_patch']);
+const WRITER_COMMANDS = new Set(['rm', 'mv', 'cp', 'tee', 'install', 'truncate', 'dd', 'ln', 'touch', 'chmod', 'chown', 'patch', 'ed', 'rsync', 'unlink', 'shred']);
+
+function policyFile(project, abs) {
+  const rel = path.relative(project, abs).split(path.sep).join('/');
+  const hit = POLICY_FILES.find((p) => path.dirname(rel) === p.dir && rel.endsWith('.md') && !rel.endsWith('INDEX.md'));
+  if (!hit) return null;
+  try {
+    const head = readFileSync(abs, 'utf8').split('\n').slice(0, 20);
+    const status = head.find((l) => /^status:/.test(l))?.replace(/^status:\s*/, '').trim();
+    return status && hit.status.test(status) ? rel : null;
+  } catch {
+    return null; // a file that does not exist yet is a new one
+  }
+}
+
+function policyWriteRefusal(project, payload, host) {
+  const name = toolName(payload)?.toLowerCase();
+  const command = shellCommand(payload);
+  let hit = null;
+  if (typeof command === 'string') {
+    const commands = effectiveCommands(command);
+    if (commands === null) return null; // approvalsStoreRefusal already stops a body that cannot be read
+    const redirect = /(?:^|[^<>=&|-])>>?(?![&(])/.test(command);
+    const resolve = (w, cwd) => path.resolve(cwd, w.startsWith('~/') ? path.join(os.homedir(), w.slice(2)) : w);
+    for (const { words, cwd } of walkCwd(commands, project)) {
+      const base = path.basename(words[0]);
+      const writes = redirect || WRITER_COMMANDS.has(base) || ((base === 'sed' || base === 'perl') && words.some((w) => /^(?:-[A-Za-z]*i|--in-place)/.test(w))) || (INTERPRETERS.has(base) && words.some((w) => /^-[A-Za-z]*[ec]$/.test(w)));
+      if (!writes) continue;
+      const text = words.slice(1).join(' ');
+      for (const w of [...words.slice(1), ...(INTERPRETERS.has(base) ? text.split(/[\s"'`;|&<>()=,]+/) : [])]) {
+        if (w && !w.startsWith('-') && (hit = policyFile(project, resolve(w, cwd)))) break;
+      }
+      if (hit) break;
+    }
+    // a redirect target is not among the words; look at every operand of the command from where the shell ends
+    if (!hit && redirect) {
+      const cwds = walkCwd(commands, project).map((c) => c.cwd);
+      for (const op of shellOperands(command) ?? []) {
+        for (const cwd of new Set([project, ...cwds])) if (!hit && (hit = policyFile(project, resolve(op, cwd)))) break;
+      }
+    }
+  } else if (WRITE_TOOLS.has(name)) {
+    for (const t of candidatePaths(payload, project)) if (!hit && (hit = policyFile(project, path.resolve(project, t)))) break;
+  }
+  if (!hit) return null;
+  const why = `${hit} is a policy file (an active guardrail or an accepted decision), so a person changes it`;
+  return canPrompt(host)
+    ? { deny: false, ask: true, stopClass: 'policy-write', reason: `go-getter: this call changes ${why}. Approve it only if you asked for this change.` }
+    : { deny: true, stopClass: 'policy-write', reason: `blocked: ${why}; ask the user to make the change or to run it with "! <command>".` };
+}
+
 function decidePreTool(project, payload, host) {
   let exempt;
   const forged = approvalsStoreRefusal(project, payload) ?? submittedPhraseRefusal(payload);
   if (forged) return { deny: true, reason: forged };
+  const policy = policyWriteRefusal(project, payload, host);
+  if (policy) return policy;
   try {
     claimForRelease(project, payload, host);
   } catch {
