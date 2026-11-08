@@ -39,7 +39,7 @@ go-getter covers exactly the functionality that belongs to a **part** of the fra
 | Plumbing | `serve` | the MCP server |
 | Maintain go-getter | `dev` | build and eval of this repository (not shown to users) |
 
-20 nouns. A noun owns one artifact kind and one kind of decision (the rule 0177 applies to the five parts), so two nouns never write the same file.
+21 nouns. A noun owns one artifact kind and one kind of decision (the rule 0177 applies to the five parts), so two nouns never write the same file.
 
 ### 2. Atoms: the MECE verb list
 
@@ -98,7 +98,7 @@ A **recipe** is a named, ordered list of atoms that, executed in that order, yie
 | `status` | `plan status` → `unit next --dry-run` → `ask list` → `run status` → `ci status` → `host check` | one screen: what is next, what waits, what is red |
 | `start` | `plan next` → `tree create` → `unit claim` → `snapshot create` | a claimed step in its own worktree |
 | `pr` | `change check` → `snapshot create` → `change commit` → `change push` → `change open` → `ci wait` | a reviewed-ready pull request with CI read |
-| `ship` | `pr` → `change merge` → `tree prune` → `unit finish` | the change is merged and its unit done |
+| `ship` | `change check` → `snapshot create` → `change commit` → `change push` → `change open` → `ci wait` → `change merge` → `tree prune` → `unit finish` (that is `pr`, then the merge) | the change is merged and its unit done |
 | `finish` | `unit check` → `unit finish` → `plan finish` → `tree prune` | the unit is accepted and cleaned up |
 | `release` | `release show` → `release create` → `ci wait` → `release merge` | one release pull request merged (never tags or publishes, 0094) |
 | `undo` | `snapshot list` → `snapshot restore` | the tree is back at a chosen snapshot |
