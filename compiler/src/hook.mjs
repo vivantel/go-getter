@@ -26,6 +26,7 @@ import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 import { activeRun, noteEvent } from './runs/record.mjs';
 import { readPlan } from './plan.mjs';
 import { approvalRefusal } from './plan-approval.mjs';
+import { readEffects } from './work/effects.mjs';
 import { mcpDenial, mcpCall, isReadTool, mcpShapeId, secretKinds } from './mcp.mjs';
 import { MCP_SHAPE } from './gate.mjs';
 import { fileSet } from './secrets/fileset.mjs';
@@ -599,6 +600,17 @@ function claimForRelease(project, payload, host) {
   }
 }
 
+// A raw tool that docs/effects.md maps to a real-world effect (decision 0180 item 5): a shell command whose program, or an MCP/host tool whose name, is a
+// mapped tool is denied with the verb named. `go-getter act` calls the tool from its own process, so the verb never matches here.
+function rawEffectTool(project, payload) {
+  const rows = readEffects(project).filter((r) => r.tool);
+  if (!rows.length) return null;
+  const command = shellCommand(payload);
+  const name = toolName(payload);
+  const commands = typeof command === 'string' ? effectiveCommands(command) ?? [] : [];
+  return rows.find((r) => (name && name === r.tool) || commands.some((w) => path.basename(w[0]) === r.tool.split(/\s+/)[0])) ?? null;
+}
+
 function decidePreTool(project, payload, host) {
   let exempt;
   const forged = approvalsStoreRefusal(project, payload) ?? submittedPhraseRefusal(payload);
@@ -647,6 +659,11 @@ function decidePreTool(project, payload, host) {
       if (gated) return { deny: true, guardrail: e.guardrail, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false })}` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
+      continue;
+    }
+    if (e.parsed.id === 'deny-effect-tools') {
+      const raw = rawEffectTool(project, payload);
+      if (raw) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: "${raw.tool}" performs the ${raw.class} effect "${raw.action}"; run \`go-getter act ${raw.action} --unit <unit> ...\` instead (it checks the cap in your grant, logs the effect, then calls the tool). A person may still run the raw command themselves with "! <command>".` };
       continue;
     }
     if (e.parsed.id === 'mcp-scan') {

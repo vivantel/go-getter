@@ -1,6 +1,8 @@
 // Harness coverage report (plan 4.6, fitness function of decision 0008): for each of the 12 harness
 // components (fact 0002), the adopted packs covering it and the strongest tier reached on each host.
 import { readArtifacts } from './artifacts.mjs';
+import { collectEnforcement } from './enforce.mjs';
+import { readWorkers } from './work/grant.mjs';
 import { STATEFUL } from './gate-state.mjs';
 import { hostIds, deferredHosts } from './hosts/registry.mjs';
 
@@ -107,4 +109,21 @@ export function formatCoverage(rows, hosts = HOSTS) {
   const native = Object.entries(checkpoints.nativeRestore ?? {}).map(([h, cmd]) => `${h} ${cmd}`);
   lines.push(`Restore (component 9): go-getter checkpoint restore on every host${native.length ? `; native, for file edits: ${native.join(', ')}` : ''}.`);
   return lines.join('\n\n');
+}
+
+// Where `go-getter act` is the sole path to a real-world effect (decision 0180 item 5), per host and per worker kind; null while the guardrail's
+// hook rule is not adopted. An agent worker on a host with a blocking pre-tool hook cannot reach a mapped effect tool another way; on any other host the
+// verb is an instruction. A person acts for themselves, and a worker that is not a host agent is configured to call the verb: neither is blocked.
+export function effectVerbCoverage(project, caps, hosts = HOSTS) {
+  const adopted = collectEnforcement(project).some((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'deny-effect-tools');
+  if (!adopted) return null;
+  const blocked = hosts.filter((h) => caps[h]?.hooks?.blockPreTool === true);
+  const kinds = new Set(readWorkers(project).map((w) => w.kind));
+  const listed = (k) => (kinds.size && !kinds.has(k) ? ' (none listed in the workers file)' : '');
+  return [
+    'Real-world effects (go-getter act): the verb is the sole path for',
+    `agent workers on ${blocked.length ? blocked.join(', ') : 'no host'}${listed('agent')}; an instruction only on ${hosts.filter((h) => !blocked.includes(h)).join(', ') || 'no host'} (no blocking pre-tool hook);`,
+    `human workers: not the sole path, a person may run the tool themselves${listed('human')};`,
+    `ci workers: configured to call the verb, not blocked by a hook${listed('ci')}.`,
+  ].join(' ');
 }
