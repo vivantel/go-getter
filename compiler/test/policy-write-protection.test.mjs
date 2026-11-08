@@ -111,3 +111,17 @@ test('the approvals store cannot be reached by a cd first, a relative name or a 
     s.cleanup();
   }
 });
+
+test('a policy file whose status is quoted or carries a comment is still a policy file', () => {
+  const s = setup();
+  try {
+    writeFileSync(path.join(s.dir, 'docs/guardrails/quoted.md'), doc('guardrail', 'quoted', '"active"'));
+    writeFileSync(path.join(s.dir, 'docs/guardrails/commented.md'), doc('guardrail', 'commented', 'active # kept'));
+    writeFileSync(path.join(s.dir, 'docs/decisions/0003-single.md'), doc('decision', '0003-single', "'accepted'"));
+    for (const file of ['docs/guardrails/quoted.md', 'docs/guardrails/commented.md', 'docs/decisions/0003-single.md']) {
+      assert.equal(stops(s.ask({ tool_name: 'Write', tool_input: { file_path: file, content: 'x' } })), true, file);
+    }
+  } finally {
+    s.cleanup();
+  }
+});
