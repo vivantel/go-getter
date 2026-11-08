@@ -695,7 +695,7 @@ function policyFile(project, abs) {
   if (!hit) return null;
   try {
     const head = readFileSync(abs, 'utf8').split('\n').slice(0, 20);
-    const status = head.find((l) => /^status:/.test(l))?.replace(/^status:\s*/, '').trim();
+    const status = head.find((l) => /^status:/.test(l))?.replace(/^status:\s*/, '').replace(/\s+#.*$/, '').trim().replace(/^(["'])(.*)\1$/, '$2');
     return status && hit.status.test(status) ? rel : null;
   } catch {
     return null; // a file that does not exist yet is a new one
