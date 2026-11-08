@@ -79,6 +79,12 @@ export function changelogEntry(version, date, commits) {
   return `${lines.join('\n')}\n`;
 }
 
+// Prepends `entry` to the project's CHANGELOG.md.
+export function writeChangelog(project, entry) {
+  const changelog = path.join(project, 'CHANGELOG.md');
+  writeFileSync(changelog, prependChangelog(existsSync(changelog) ? readFileSync(changelog, 'utf8') : '', entry));
+}
+
 export function prependChangelog(text, entry) {
   const head = '# Changelog\n';
   if (!text.startsWith(head)) return `${head}\n${entry}${text ? `\n${text}` : ''}`;
@@ -86,7 +92,7 @@ export function prependChangelog(text, entry) {
 }
 
 // The version files: package.json and, when there is one, package-lock.json (its root entries); the generated manifests follow from `npm run build`.
-function writeVersionFiles(project, version) {
+export function writeVersionFiles(project, version) {
   const pkgFile = path.join(project, 'package.json');
   const text = readFileSync(pkgFile, 'utf8');
   const next = text.replace(/("version"\s*:\s*)"[^"]*"/, `$1"${version}"`);
@@ -198,8 +204,7 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     // 5 Changelog entry and version files, then the generated manifests.
     const date = now().toISOString().slice(0, 10);
     const entry = changelogEntry(version, date, commits);
-    const changelog = path.join(project, 'CHANGELOG.md');
-    writeFileSync(changelog, prependChangelog(existsSync(changelog) ? readFileSync(changelog, 'utf8') : '', entry));
+    writeChangelog(project, entry);
     writeVersionFiles(project, version);
     if (scripts.build) need(npm('run', '--silent', 'build'), 'npm run build');
     // A project that applies itself pins its runner and plugin to the release tag (decision 0183), so apply moves the pin with the version.
