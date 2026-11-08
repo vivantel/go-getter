@@ -8,20 +8,48 @@ import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 
 export const STATEFUL = ['git-branch-delete', 'git-reset-hard', 'git-rebase', 'git-worktree-remove'];
 
-const unquote = (w) => w.replace(/^(["'])(.*)\1$/, '$2');
-const words = (segment) => segment.trim().split(/\s+/).filter(Boolean).map(unquote);
+// Splits on whitespace outside quotes and drops the quotes, so `-x "echo a b"` is one word.
+function words(segment) {
+  const out = [];
+  let cur = '';
+  let quote = null;
+  let any = false;
+  for (const ch of segment.trim()) {
+    if (quote) { if (ch === quote) quote = null; else cur += ch; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; any = true; continue; }
+    if (/\s/.test(ch)) { if (cur || any) out.push(cur); cur = ''; any = false; continue; }
+    cur += ch;
+  }
+  if (cur || any) out.push(cur);
+  return out;
+}
 
-// `git [-C dir] [--opt]... <sub> args`: the directory and the words after the subcommand, or null when the shape is not plain.
+const VALUE_GLOBALS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--exec-path', '--super-prefix', '--config-env']);
+
+// `[GIT_DIR=x] git [global flags] <sub> args`: the directory, the flags that select the repository (`target`, passed on to
+// every git call so the repository judged is the one the command acts on), and the words after the subcommand; null when the shape is not plain.
 function parseGit(segment, cwd) {
   const w = words(segment);
-  if (w[0] !== 'git') return null;
+  const env = {};
+  let i = 0;
+  for (; i < w.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(w[i]); i++) env[w[i].slice(0, w[i].indexOf('='))] = w[i].slice(w[i].indexOf('=') + 1);
+  if (w[i] !== 'git') return null;
+  i++;
   let dir = cwd;
-  let i = 1;
+  let gitDir = env.GIT_DIR;
+  let workTree = env.GIT_WORK_TREE;
   for (; i < w.length && w[i].startsWith('-'); i++) {
-    if (w[i] === '-C') dir = path.resolve(dir, w[++i] ?? '');
-    else if (w[i] === '-c') i++;
+    const [name, inline] = w[i].startsWith('--') && w[i].includes('=') ? [w[i].slice(0, w[i].indexOf('=')), w[i].slice(w[i].indexOf('=') + 1)] : [w[i], undefined];
+    const value = () => inline ?? w[++i] ?? '';
+    if (name === '-C') dir = path.resolve(dir, value());
+    else if (name === '--git-dir') gitDir = value();
+    else if (name === '--work-tree') workTree = value();
+    else if (VALUE_GLOBALS.has(name)) value();
   }
-  return { dir, sub: w[i], rest: w.slice(i + 1) };
+  const target = [];
+  if (gitDir) target.push('--git-dir', path.resolve(dir, gitDir));
+  if (workTree) { workTree = path.resolve(dir, workTree); target.push('--work-tree', workTree); dir = workTree; }
+  return { dir, target, sub: w[i], rest: w.slice(i + 1) };
 }
 
 const bad = (why) => ({ safe: false, why });
@@ -50,15 +78,28 @@ function branchDelete({ dir, rest }, run) {
   return ok;
 }
 
-function resetHard({ dir }, run) {
+function resetHard({ dir, rest }, run) {
   const dirty = run('git', ['status', '--porcelain', '--untracked-files=no'], dir);
   if (dirty === null) return bad('cannot read the working tree');
-  return dirty ? bad('the working tree has uncommitted changes that reset --hard would discard') : ok;
+  if (dirty) return bad('the working tree has uncommitted changes that reset --hard would discard');
+  // Commits that HEAD holds and neither a remote branch nor the reset target keeps would be lost with the branch pointer.
+  const to = rest.find((a) => !a.startsWith('-')) ?? 'HEAD';
+  const lost = run('git', ['rev-list', '-n1', 'HEAD', '--not', '--remotes', to], dir);
+  if (lost === null) return bad('cannot tell which commits the reset drops');
+  return lost ? bad('the reset drops commits that are on no remote branch') : ok;
 }
+
+const REBASE_VALUE_OPTIONS = new Set(['--onto', '-s', '--strategy', '-X', '--strategy-option']);
 
 function rebase({ dir, rest }, run) {
   if (rest.some((a) => ['--abort', '--continue', '--skip', '--quit'].includes(a))) return ok; // ends or resumes a rebase already started
-  const positional = rest.filter((a) => !a.startsWith('-'));
+  // `--exec` and `-x` (also inside a cluster such as `-ix`) run commands that nothing here can inspect.
+  if (rest.some((a) => a === '--exec' || a.startsWith('--exec=') || /^-[a-zA-Z]*x/.test(a))) return bad('--exec runs commands that cannot be inspected');
+  const positional = [];
+  for (let i = 0; i < rest.length; i++) {
+    if (REBASE_VALUE_OPTIONS.has(rest[i])) i++;
+    else if (!rest[i].startsWith('-')) positional.push(rest[i]);
+  }
   const branch = positional.length > 1 ? positional[1] : run('git', ['branch', '--show-current'], dir);
   if (!branch) return bad('cannot tell which branch is rebased');
   const published = run('git', ['for-each-ref', '--format=%(refname)', `refs/remotes/*/${branch}`], dir);
@@ -89,7 +130,9 @@ export function stateCheck(id, segment, cwd, run = defaultRun) {
   const parsed = parseGit(segment, cwd);
   if (!parsed || !CHECKS[id]) return bad('the command is not a plain git call');
   try {
-    return CHECKS[id](parsed, run);
+    const { target } = parsed;
+    const aimed = target.length ? (cmd, args, d) => run(cmd, cmd === 'git' ? [...target, ...args] : args, d) : run;
+    return CHECKS[id](parsed, aimed);
   } catch (err) {
     return bad(`state could not be read (${err.message})`);
   }
