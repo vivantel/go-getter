@@ -5,7 +5,7 @@
 // Where: `$GO_GETTER_HOME/approvals.json` if set (the tests do), else `$XDG_STATE_HOME/go-getter/approvals.json`, else
 // `~/.local/state/go-getter/approvals.json`; the directory is 0700 and the file 0600, replaced atomically. A project is
 // keyed by its real path, so an identical command in another repository is not approved there.
-import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,10 +23,40 @@ const keyOf = (project) => realpathSync(project);
 const idOf = (project, words, secretPath) => createHash('sha256').update([keyOf(project), secretPath, ...words].join('\0')).digest('hex').slice(0, 8);
 
 // A read-modify-write of the store runs under a create-exclusive lock file, so parallel writers (several agents, hooks and a person)
-// cannot overwrite each other's update. A lock older than LOCK_STALE_MS belongs to a process that died and is taken over.
+// cannot overwrite each other's update. A lock older than LOCK_STALE_MS belongs to a process that died and is taken over by an
+// exclusive takeover step (below), so several waiters that saw the same stale lock cannot each remove the other's fresh one.
 const LOCK_STALE_MS = 10_000;
 const LOCK_WAIT_MS = 15_000;
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// The lock holds `pid time`; one that cannot be read (just created, or written by an older version) is aged by its mtime.
+function lockAge(file) {
+  try {
+    const written = Number(readFileSync(file, 'utf8').split(' ')[1]);
+    if (Number.isFinite(written) && written > 0) return Date.now() - written;
+  } catch {
+    // fall through to the file time
+  }
+  return Date.now() - statSync(file).mtimeMs;
+}
+
+// One waiter at a time takes a stale lock over, holding `<lock>.takeover` (create-exclusive). It reads the age again inside, so a
+// lock another waiter has just replaced is fresh and is left alone; the others skip and retry.
+function takeOver(lock) {
+  const gate = `${lock}.takeover`;
+  try {
+    closeSync(openSync(gate, 'wx', 0o600));
+  } catch (err) {
+    if (err.code !== 'EEXIST') throw err;
+    if (Date.now() - statSync(gate).mtimeMs > LOCK_STALE_MS) unlinkSync(gate); // its holder died
+    return;
+  }
+  try {
+    if (lockAge(lock) > LOCK_STALE_MS) unlinkSync(lock);
+  } finally {
+    unlinkSync(gate);
+  }
+}
 
 function locked(env, fn) {
   const dir = storeDir(env);
@@ -35,12 +65,14 @@ function locked(env, fn) {
   const until = Date.now() + LOCK_WAIT_MS;
   for (;;) {
     try {
-      closeSync(openSync(lock, 'wx', 0o600));
+      const fd = openSync(lock, 'wx', 0o600);
+      writeSync(fd, `${process.pid} ${Date.now()}`);
+      closeSync(fd);
       break;
     } catch (err) {
       if (err.code !== 'EEXIST') throw err;
       try {
-        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS) unlinkSync(lock);
+        if (lockAge(lock) > LOCK_STALE_MS) takeOver(lock);
       } catch {
         // released or taken over by another process meanwhile
       }

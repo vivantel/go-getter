@@ -143,12 +143,14 @@ Done-when: the test passes and the bypass class is observed `blocked`.
 
 Source: a review of 112 commits (#306 to #364). Fixed already: the plugin `bin/go-getter` shim is recognised as go-getter, and a quoted or commented policy `status` is read (#367). The steps below are what is left; each names its finding id from the review. Steps take no issue yet: create them with `go-getter plan issue`. Order: H15 and H16 first (a lost write and a leak), then H17, H18 and H19, then H20 to H23.
 
-### H15 The approvals lock is taken over atomically — [ ] ‖
+### H15 The approvals lock is taken over atomically — [x] ‖
 Class: implement · Needs: H8 · Check: `node --test compiler/test/approvals-lock.test.mjs`
 Finding (B2, T1; `secrets/approvals.mjs` `locked()`): two waiters both see a stale lock; one unlinks and re-creates it, the other then unlinks that fresh lock and also creates one, so both are in the critical section and a write or revoke is lost.
 Red: two real processes (not parallel calls in one process) race on a stale lock file; the store loses an entry. Fails today.
 Do: take a stale lock over with an atomic `renameSync(lock, lock + '.stale.' + pid)` (the loser gets ENOENT and retries); write pid and time into the lock; compute the staleness from the lock's own content.
 Done-when: the two-process test passes 50 runs in a row; the existing lock tests pass.
+Red 2026-11-08 (commit aea77d3 on `fix/approvals-lock-atomic-takeover`): racing on a stale lock by chance never failed, so the test preloads `support/slow-lock.mjs` (a pause after the lock's stat and inside the critical section) in four real processes: `node --test compiler/test/approvals-lock.test.mjs` fails 3 of 3 ("racer-0 was lost").
+Green 2026-11-08: 50 runs in a row pass; `npm test` 1432 pass; `check:generated`, `check:guardrails` ok; `eval bypass` unchanged (55 of 58). **Deviation:** the plan's rename-aside takeover still lost writes (49 of 50 runs pass is not enough: a rename can move a fresh lock aside and a third process creates one before it is linked back, 13 of 50 failed), so takeover is serialized by a create-exclusive `store.lock.takeover` file and the age is re-read inside it; the lock now holds `pid time` and an unreadable one is aged by mtime.
 
 ### H16 A checkpoint fails closed when it cannot read the restricted paths — [ ] ‖
 Class: implement · Needs: H8 · Check: `node --test compiler/test/checkpoint-restricted.test.mjs`
