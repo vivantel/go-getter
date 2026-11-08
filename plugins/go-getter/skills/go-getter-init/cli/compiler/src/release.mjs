@@ -4,7 +4,7 @@
 // opens one release pull request and squash-merges it, but only after a person approved that exact version: recorded with
 // `go-getter approvals release <version>`, or asked for in the chat and taken from the host's saved request (decision 0187). It never tags or publishes: tags and releases stay with a human (decision 0094).
 // No model is involved. Each step is a small function over the injectable runner, as in ship.mjs.
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, rmSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { defaultBranch } from './git-env.mjs';
@@ -79,6 +79,24 @@ export function changelogEntry(version, date, commits) {
   return `${lines.join('\n')}\n`;
 }
 
+// Writes through a temp file in the same directory and renames it over the target, so a release killed halfway never leaves a truncated file.
+function writeAtomic(file, text) {
+  const tmp = `${file}.${process.pid}.tmp`;
+  try {
+    writeFileSync(tmp, text);
+    renameSync(tmp, file);
+  } catch (err) {
+    rmSync(tmp, { force: true });
+    throw err;
+  }
+}
+
+// Prepends `entry` to the project's CHANGELOG.md.
+export function writeChangelog(project, entry) {
+  const changelog = path.join(project, 'CHANGELOG.md');
+  writeAtomic(changelog, prependChangelog(existsSync(changelog) ? readFileSync(changelog, 'utf8') : '', entry));
+}
+
 export function prependChangelog(text, entry) {
   const head = '# Changelog\n';
   if (!text.startsWith(head)) return `${head}\n${entry}${text ? `\n${text}` : ''}`;
@@ -86,19 +104,19 @@ export function prependChangelog(text, entry) {
 }
 
 // The version files: package.json and, when there is one, package-lock.json (its root entries); the generated manifests follow from `npm run build`.
-function writeVersionFiles(project, version) {
+export function writeVersionFiles(project, version) {
   const pkgFile = path.join(project, 'package.json');
   const text = readFileSync(pkgFile, 'utf8');
   const next = text.replace(/("version"\s*:\s*)"[^"]*"/, `$1"${version}"`);
   if (next === text) throw new ShipError('release: package.json has no version to bump');
-  writeFileSync(pkgFile, next);
+  writeAtomic(pkgFile, next);
   const files = ['package.json'];
   const lockFile = path.join(project, 'package-lock.json');
   if (existsSync(lockFile)) {
     const lock = JSON.parse(readFileSync(lockFile, 'utf8'));
     lock.version = version;
     if (lock.packages?.['']) lock.packages[''].version = version;
-    writeFileSync(lockFile, `${JSON.stringify(lock, null, 2)}\n`);
+    writeAtomic(lockFile, `${JSON.stringify(lock, null, 2)}\n`);
     files.push('package-lock.json');
   }
   return files;
@@ -198,8 +216,7 @@ export async function releaseBatch(project, opts = {}, run = defaultRunner, log 
     // 5 Changelog entry and version files, then the generated manifests.
     const date = now().toISOString().slice(0, 10);
     const entry = changelogEntry(version, date, commits);
-    const changelog = path.join(project, 'CHANGELOG.md');
-    writeFileSync(changelog, prependChangelog(existsSync(changelog) ? readFileSync(changelog, 'utf8') : '', entry));
+    writeChangelog(project, entry);
     writeVersionFiles(project, version);
     if (scripts.build) need(npm('run', '--silent', 'build'), 'npm run build');
     // A project that applies itself pins its runner and plugin to the release tag (decision 0183), so apply moves the pin with the version.
