@@ -1,8 +1,9 @@
 ---
-id: draft-hardening-pre-tool-fails-closed-on-internal-error
+id: 0208-pre-tool-fails-closed-on-internal-error
 title: The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair
-status: draft
+status: active
 date: 2026-11-08
+accepted-by: sergemso
 tags: [enforcement, tooling]
 track: process
 governed-facts: [0009-host-capability-matrix]
