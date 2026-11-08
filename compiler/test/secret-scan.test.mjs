@@ -185,7 +185,7 @@ test('an added line that looks like a diff header is reported under its real fil
   const diff = ['diff --git a/a.txt b/a.txt', '--- a/a.txt', '+++ b/a.txt', '@@ -0,0 +1,3 @@', '+++ b/innocent.md', '+--- a/x', '+secret'].join('\n');
   assert.deepEqual(addedLines(diff), [
     { file: 'a.txt', line: 1, text: '++ b/innocent.md' },
-    { file: 'a.txt', line: 2, text: '-- a/x' },
+    { file: 'a.txt', line: 2, text: '--- a/x' },
     { file: 'a.txt', line: 3, text: 'secret' },
   ]);
 });

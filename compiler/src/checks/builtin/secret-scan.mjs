@@ -19,13 +19,19 @@ export function addedLines(diff) {
   const out = [];
   let file = null;
   let line = 0;
+  let inHunk = false;
   for (const l of diff.split('\n')) {
-    if (l.startsWith('+++ ')) {
+    // A header line counts only between a `diff --git` line and the first hunk; inside a hunk every `+` line is content, even one shaped like a header.
+    if (l.startsWith('diff --git ')) {
+      inHunk = false;
+      file = null;
+    } else if (!inHunk && l.startsWith('+++ ')) {
       file = l === '+++ /dev/null' ? null : l.replace(/^\+\+\+ b\//, '');
     } else if (l.startsWith('@@')) {
+      inHunk = true;
       const m = /\+(\d+)/.exec(l);
       line = m ? Number(m[1]) : 0;
-    } else if (file && l.startsWith('+') && !l.startsWith('+++')) {
+    } else if (inHunk && file && l.startsWith('+')) {
       out.push({ file, line, text: l.slice(1) });
       line++;
     }
