@@ -44,8 +44,8 @@ test('quoted text and ordinary commands do not match', () => {
   assert.deepEqual(ids(undefined), []);
 });
 
-test('a wrapped command is matched on its literal text only', () => {
-  assert.deepEqual(ids('sh -c "git push"'), []);
+test('a shell -c string is matched as a command; eval and scripts stay unseen', () => {
+  assert.deepEqual(ids('sh -c "git push"'), ['git-push']);
   assert.deepEqual(ids('eval git push'), []);
 });
 
