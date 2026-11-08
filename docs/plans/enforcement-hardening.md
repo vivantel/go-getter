@@ -107,6 +107,7 @@ Finding (the first-apply clobber was found independently by the test review: `ap
 Red: five tests, one per sentence: a snapshot of a tree with an untracked env file excludes it; a first apply over an existing foreign hook refuses without `--force`; 20 parallel store writers lose none and a revoke is not lost; a killed release leaves the old file intact; a spoofed header line is reported under its real file.
 Do: exclude restricted patterns from snapshots; treat any existing file without a manifest entry as foreign; lock the store (create-exclusive lock file with a stale timeout); write via temp file and rename; parse diff headers only at hunk boundaries.
 Done-when: five tests pass. (Split into five PRs if the diff is large; `guardrails: one change per branch`.)
+Part 3, approvals-store lock (`fix/approvals-store-lock`): Red 2026-11-08: `node --test compiler/test/approvals-lock.test.mjs` fails ("shape-4 was lost": 20 parallel writer processes plus a revoke), commit b131e26. Green: same command passes (3 repeat runs), 1411 of 1411 in `npm test`, `eval bypass` 55 of 58 as before; the fix commit follows it on the branch.
 
 ### H13 A grant the user types in the session is honoured, with no refusal — [x]
 Class: implement · Effort: high · Needs: H4 · Human: accepted by the owner 2026-11-08 as decision `0209` (generalises 0187/0188 from releases to grantable outward shapes) · Check: `node --test compiler/test/session-grant.test.mjs`
