@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, chmodSync, rmSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, chmodSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { parseSimpleCommand, goGetterCall, goGetterCommand, isGoGetterEntry } from '../src/invocation.mjs';
@@ -100,6 +100,20 @@ test('lookalikes, a missing install and a non-simple command are not go-getter',
     assert.equal(goGetterCall([], { cwd, env }), null);
     assert.equal(isGoGetterEntry(path.join(l.root, 'does-not-exist')), false);
     assert.equal(isGoGetterEntry(path.join(l.root, 'proj')), false, 'a directory');
+  } finally {
+    l.cleanup();
+  }
+});
+
+test('the plugin bin shim is go-getter, so a bare go-getter in a plugin install is judged like any other', () => {
+  const l = layout();
+  try {
+    const shim = path.join(l.root, 'plugin/bin/go-getter');
+    mkdirSync(path.dirname(shim), { recursive: true });
+    writeFileSync(shim, readFileSync(new URL('../../plugins/go-getter/bin/go-getter', import.meta.url)));
+    chmodSync(shim, 0o755);
+    const env = { PATH: `${path.dirname(shim)}${path.delimiter}/usr/bin` };
+    assert.deepEqual(goGetterCommand('go-getter approvals allow git-push', { cwd: l.root, env }), { via: 'path', args: ['approvals', 'allow', 'git-push'] });
   } finally {
     l.cleanup();
   }
