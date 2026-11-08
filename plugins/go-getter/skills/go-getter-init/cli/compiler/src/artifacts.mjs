@@ -13,7 +13,13 @@ export function readArtifacts(root, types = ARTIFACT_TYPES) {
     for (const name of readdirSync(dir).sort()) {
       if (!name.endsWith('.md') || name === 'INDEX.md') continue;
       const file = path.join(dir, name);
-      const { data, body } = parseFrontmatter(readFileSync(file, 'utf8'));
+      let parsed;
+      try {
+        parsed = parseFrontmatter(readFileSync(file, 'utf8'));
+      } catch (e) {
+        throw new Error(`${path.relative(root, file)}: ${e.message}`, { cause: e });
+      }
+      const { data, body } = parsed;
       out.push({ type, file: path.relative(root, file), id: name.slice(0, -3), data, body });
     }
   }
