@@ -19,8 +19,8 @@ Written 2026-11-08 from a read-only production-readiness review of the enforceme
 |---|---|---|---|---|
 | M1 | Bypass classes that pass tier 2/3 unattended | `go-getter eval bypass` (count of `passes`) | read first in H0 | 0 of the classes added here |
 | M2 | Hook calls that fail open on an internal error | `node --test compiler/test/hook-failure-mode.test.mjs` (count of fail-open cases) | read first in H0 | 0 for pre-tool |
-| M3 | Docs/capability disagreements | `go-getter check docs-consistency` (added in H9) | read in H9 red | 0 |
-| M4 | Unconfirmed claims in the coverage table | `go-getter coverage --json` cells with `confirmed: false` shown as plain `hook` | read in H8 red | 0 |
+| M3 | Docs/capability disagreements | `go-getter check docs-consistency` (added in H9) | 39 (H9 red) | 0 |
+| M4 | Unconfirmed claims in the coverage table | `go-getter coverage --json` cells with `confirmed: false` shown as plain `hook` | 20 (H9 red) | 0 |
 | M5 | False blocks | `go-getter telemetry summary` denials later overridden, per 100 gate events | read in H0 | no rise |
 
 **Paper note (owner, 2026-11-08: one registered batch).** H1 to H8 are registered once, as a single intervention batch with thesis C1/C2, metrics M1, M2 and M5, direction down, before the first of them merges; the bypass suite reports before and after for the whole batch. Phases 4 to 6 are separate entries when they start.
@@ -134,12 +134,14 @@ Done-when: the test passes and the bypass class is observed `blocked`.
 
 ## Phase 3 — Honest coverage and a usable surface
 
-### H9 One source of truth for host capability, checked — [ ] ‖
+### H9 One source of truth for host capability, checked — [x] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/docs-consistency.test.mjs`
 Finding: fact `0009` row 9 gives Codex, Kilo, OpenCode and Cursor checkpointing tier 1 while `compiler/capabilities/{kilo,opencode,cursor}.json:65` say 2; fact 0009 says Codex replaces output only with a block reason while `codex.json:30` sets `rewriteOutput: true`; Copilot is `hook` for components 7 and 11 although `copilot.json:35,49,57,66` mark the command field unconfirmed, `modelSwap:false` and no spend source; component 10 is shown advisory although fact 0009 gives tier 2; the README coverage table shows deferred hosts (Codex, Cursor, Gemini CLI, Copilot; `hosts/registry.mjs:13-18`) the same as Claude Code.
 Red: a check, `go-getter check docs-consistency`, that compares fact 0009's matrix with `capabilities/*.json` and the README coverage table with `go-getter coverage` output, run on the current tree. It must fail with the rows above. M3 and M4 baselines are the failure counts.
 Do: generate the README table from `coverage` (so it cannot drift); mark a cell `unconfirmed` or `deferred` where the capability file or adapter says so; lower Copilot 7 and 11 to tier 1 until a real payload confirms the field, or record the evidence; correct fact 0009.
 Done-when: the check passes in CI; M3 = 0, M4 = 0.
+Red 2026-11-08 (commit bb95734): `node compiler/bin/go-getter.mjs check docs-consistency` on the unfixed tree exits 1 with 39 problems (M3 = 39): 4 in fact 0009 (component 9 checkpointing tier 1 for codex, kilo, opencode and cursor; the capability files say 2) and 35 in the README coverage table (rows 4 and 10 differ on all seven hosts, the pack list of row 7 differs, and deferred-host cells). M4 baseline = 20 README cells on deferred hosts shown as plain `hook`/`advisory`/`hook+ci` (unmarked). `node --test compiler/test/docs-consistency.test.mjs`: 0 pass, 3 fail. Of the finding's rows, the Codex "block reason" cell is read as a replacement mechanism (as Gemini's deny `reason`), so it is a wording correction in fact 0009, not a counted problem; the Copilot 7/11 and component 10 rows show once the capability file and README are compared with `coverage` (README said advisory for 10, coverage says `ci`).
+Green 2026-11-08: the same command prints `check docs-consistency: ok` (M3 = 0, M4 = 0: every deferred cell and Codex's unconfirmed checkpointing cell carries its mark; `go-getter coverage --json` rows now carry `confirmed` and `marks` per host). The README table is generated (`check docs-consistency --fix` rewrites it from `coverage`); fact 0009 matrix corrected; Copilot 7 and 11 lowered to tier 1 in `copilot.json` with notes (no confirmed payload field; no model swap or spend source); schema gained `unconfirmedTiers` (Codex: 9). Wired as `npm run check:docs-consistency` in the `checks` CI job. `npm run eval:bypass`: 58 classes, 55 as predicted (unchanged). Two coverage tests that asserted Copilot 7 at tier 2 now assert tier 1.
 
 ### H10 The README and help tell the truth — [ ] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/readme-facts.test.mjs`

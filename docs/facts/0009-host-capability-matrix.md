@@ -20,7 +20,7 @@ Derived from facts 0003 (Claude Code, CC), 0004 (Codex, CX), 0005 (Kilo, KI; Ope
 | Commands | merged into skills | skills only | `.kilo/commands/*.md` (assumed to mirror OpenCode; unconfirmed) | `.opencode/commands/*.md` | migrated to skills | `.gemini/commands/*.toml` | skills/agents |
 | Blocking pre-tool hook | yes | yes | yes (plugin throws) | yes (plugin throws) | yes | yes | yes (`preToolUse` only) |
 | Path read deny | `Read(...)` rules, sandbox | hooks; permission profiles (sandboxed commands) | `permission.read` | `permission.read` | `beforeReadFile`, CLI `Read(...)`, `.cursorignore` | hooks / `argsPattern` | hooks; `--deny-tool='read(PATH)'` flag |
-| Replace tool output | `updatedToolOutput` | block `reason` | `tool.execute.after` | ? | MCP tools only | deny `reason` | `modifiedResult` |
+| Replace tool output | `updatedToolOutput` | block `reason` (replaces the output the model sees; `rewriteOutput: true`) | `tool.execute.after` | ? | MCP tools only | deny `reason` | `modifiedResult` |
 | Per-agent model | yes | yes | yes | yes | yes | yes | yes |
 | Effort control | yes (`effort`) | yes (`model_reasoning_effort`) | yes (variants) | yes (variants) | yes (`[effort=...]`) | no | ? |
 | Model swap by hook | `PreModelSwitch` (gate only) | no | no | no | no | `BeforeModel` | no |
@@ -35,17 +35,17 @@ Derived from facts 0003 (Claude Code, CC), 0004 (Codex, CX), 0005 (Kilo, KI; Ope
 
 ## Highest enforcement tier reachable inside the host (per 0009)
 
-Tier 3 (git hooks + CI) is available for every host and is omitted. `2` = a blocking host hook or permission exists; `1` = instruction only; `–` = component has no host lever.
+Tier 3 (git hooks + CI) is available for every host and is omitted. The values are those of `compiler/capabilities/*.json` (`tiers`); `go-getter check docs-consistency` fails when they differ. Checkpointing is 2 on every host except Copilot because the pre-tool hook takes the checkpoint before a gated command (decision 0097), not because the host has a native one (Codex's is unconfirmed: `unconfirmedTiers`). Copilot 7 and 11 are 1 until a real hook payload confirms the field that holds the command or path (7) and a hook or spend source can enforce the route (11). The README coverage table marks deferred and unconfirmed cells. `2` = a blocking host hook or permission exists; `1` = instruction only; `–` = component has no host lever.
 
 | Component | CC | CX | KI | OC | CU | GE | CP |
 |-|-|-|-|-|-|-|-|
 | 3 Sandbox | 2 | 2 | – | – | 2 | 2 | 2 (cloud firewall) |
 | 6 Verification loop (block stop) | 2 | 2 | 1 | 1 | 2 | 2 | 1 |
-| 7 Guardrails / DLP | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| 7 Guardrails / DLP | 2 | 2 | 2 | 2 | 2 | 2 | 1 |
 | 8 Human-in-the-loop | 2 | 2 | 2 | 2 | 2 | 2 | 1 |
-| 9 Checkpointing | 2 | 1 | 1 | 1 | 1 | 2 | 1 |
+| 9 Checkpointing | 2 | 2 | 2 | 2 | 2 | 2 | 1 |
 | 10 Multi-agent roles (tools/model per agent) | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
-| 11 Cost & routing (per-agent model; hard cap) | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+| 11 Cost & routing (per-agent model; hard cap) | 2 | 2 | 2 | 2 | 2 | 2 | 1 |
 | 12 Observability (export) | 2 | 2 | 1 | 1 | 1 | 2 | 1 |
 
 ## Symlink / shared-file candidates

@@ -158,7 +158,8 @@ test('coverage shows the DLP tier per host', () => {
   const dlp = rows.find((r) => r.component === 7);
   assert.deepEqual(dlp.packs, [...GOVERNANCE_IDS].sort().map((id) => `${id}@${governancePacks.find((p) => p.id === id).version}`));
   assert.ok(Object.values(dlp.tiers).every((t) => t === 3));
-  assert.ok(Object.values(dlp.inHost).every((t) => t === 2));
+  // Copilot's component 7 is tier 1 (unconfirmed hook payload field, plan H9): CI only there.
+  assert.ok(Object.entries(dlp.inHost).every(([h, t]) => t === (h === 'copilot' ? null : 2)));
   assert.match(formatCoverage(rows), new RegExp(`^7 Guardrails & DLP\\s+data-policy@${pack.version.replace(/\./g, '\\.')}, restricted-data@\\S+, sanitization@\\S+\\s+hook\\+ci\\s+hook\\+ci`, 'm'));
   rmSync(dir, { recursive: true, force: true });
 });

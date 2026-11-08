@@ -2,7 +2,7 @@
 // compares fact 0009's tier matrix and output-replacement row with those files, and the README coverage table with the
 // `go-getter coverage` rows of this repository. Each disagreement is one problem.
 import path from 'node:path';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { loadCapabilities, HOSTS } from '../capabilities.mjs';
 import { loadPack } from '../packs.mjs';
 import { coverage } from '../coverage.mjs';
@@ -52,6 +52,19 @@ export function factProblems(root, caps = loadCapabilities(root)) {
   return problems;
 }
 
+// The README coverage table, regenerated from the coverage rows (`check docs-consistency --fix`).
+export function writeReadmeTable(root, caps = loadCapabilities(root)) {
+  const file = path.join(root, 'README.md');
+  const lines = readFileSync(file, 'utf8').split('\n');
+  const start = lines.findIndex((l) => l.startsWith('| Component | Pack |'));
+  if (start < 0) return false;
+  let end = start;
+  while (lines[end + 1]?.startsWith('|')) end++;
+  lines.splice(start, end - start + 1, ...coverageMarkdown(coverage(root, readPacks(root), caps), HOSTS, caps, deferredHosts()));
+  writeFileSync(file, lines.join('\n'));
+  return true;
+}
+
 // The README coverage table against what `go-getter coverage` prints for this repository, cell by cell.
 export function readmeProblems(root, caps = loadCapabilities(root)) {
   const problems = [];
@@ -84,6 +97,7 @@ export function docsConsistencyProblems(root) {
 
 export default function checkDocsConsistency({ args }) {
   const root = args.includes('--project') ? path.resolve(args[args.indexOf('--project') + 1]) : process.cwd();
+  if (args.includes('--fix')) writeReadmeTable(root);
   const problems = docsConsistencyProblems(root);
   if (problems.length) {
     console.error(`check docs-consistency: ${problems.length} problem(s)`);

@@ -5,6 +5,7 @@ import { collectEnforcement } from './enforce.mjs';
 import { readWorkers } from './work/grant.mjs';
 import { STATEFUL } from './gate-state.mjs';
 import { hostIds, deferredHosts } from './hosts/registry.mjs';
+import { marksFor } from './coverage-table.mjs';
 
 const HOSTS = hostIds();
 
@@ -48,7 +49,10 @@ export function coverage(project, packs, caps, hosts = HOSTS) {
     const inHost = Object.fromEntries(
       hosts.map((h) => [h, entries.some((e) => e.tier === 2) && (caps[h]?.tiers?.[String(c)] ?? 2) >= 2 ? 2 : null]),
     );
-    const row = { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers, inHost };
+    // A cell is confirmed unless the host's adapter is deferred or its capability file lists the component as unconfirmed (plan H9, M4).
+    const marks = Object.fromEntries(hosts.map((h) => [h, tiers[h] ? marksFor(h, c, caps) : []]));
+    const confirmed = Object.fromEntries(hosts.map((h) => [h, marks[h].length === 0]));
+    const row = { component: c, name, packs: covering.map((id) => adopted.get(id)), tiers, inHost, confirmed, marks };
     // The host's own restore command for what its native checkpoint covers (file edits), beside `go-getter checkpoint restore`.
     // Tool-output masking (component 7, decision 0106): where the host can replace tool output, and what is masked there.
     if (c === 7) {
