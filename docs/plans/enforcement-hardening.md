@@ -106,6 +106,13 @@ Red: five tests, one per sentence: a snapshot of a tree with an untracked env fi
 Do: exclude restricted patterns from snapshots; treat any existing file without a manifest entry as foreign; lock the store (create-exclusive lock file with a stale timeout); write via temp file and rename; parse diff headers only at hunk boundaries.
 Done-when: five tests pass. (Split into five PRs if the diff is large; `guardrails: one change per branch`.)
 
+### H13 A grant the user types in the session is honoured, with no refusal — [ ]
+Class: implement · Effort: high · Needs: H4 · Human: the owner accepts the decision draft (generalises 0187/0188 from releases to grantable outward shapes) · Check: `node --test compiler/test/session-grant.test.mjs`
+Finding (owner, 2026-11-08): "merge PRs from now on" typed in the chat is a grant, yet the gate still stops the merge and the agent answers "I won't do this". Only a release has a typed-message route (0187/0188); every other shape needs `go-getter approvals allow`, which an agent may not run, or a prompt answered each time. The new policy-file ask (H4) records no approval either.
+Red: with the user-prompt hook fed "merge PRs from now on" (model stubbed to its closed answer) a later `gh pr merge` in the same session is allowed when the shape's preconditions hold, and still stopped when they do not (red CI, default branch); a grant from one session does not apply in another; "stop merging" revokes; a prompt the host started itself records nothing; a release, an irreversible action and a policy-file write are never granted by chat; the refusal for an ungranted shape names the phrase that would grant it. Fails today.
+Do: a session-grant record in the protected store written by the user-prompt hook from the closed model answer (shape ids from decision 0130, scope session or run); `shapeGate` reads it; ask answers (H4, 0130) are recorded as grants of the same kind, so a yes is remembered; no prompt text stored; telemetry as class, outcome and trigger.
+Done-when: the test passes; asked-then-granted shapes are not asked again in the session; M5 does not rise.
+
 ### H12 A write to a generated host file is stopped at tier 2 — [ ] ‖
 Class: implement · Needs: H1 · Check: `node compiler/bin/go-getter.mjs eval bypass`
 Finding (from H1): `generated-host-files-not-hand-edited` is tier 3 only (`npm run check:generated` in CI), so no hook stops an agent writing `.claude/settings.json` or another generated host file; class `T2-cwd-subdir-write-generated` is predicted `blocked` and observed `passes`.
