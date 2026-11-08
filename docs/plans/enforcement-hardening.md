@@ -38,12 +38,14 @@ Result 2026-11-08 (master at a354dbf): **M1** `go-getter eval bypass`: 46 classe
 
 ## Phase 1 — Blockers and fail-closed (do first, in this order)
 
-### H1 The hook reads policy from the project root, not the session directory — [ ]
+### H1 The hook reads policy from the project root, not the session directory — [x]
 Class: implement · Effort: high · Needs: H0 · Check: `node --test compiler/test/hook-project-root.test.mjs`
 Finding: `compiler/src/commands/hook.mjs:50` sets `dir = payload.cwd ?? project`, ignoring `--project`; after `cd compiler`, `collectEnforcement` finds no `docs/guardrails` and every check sees zero guardrails. Tests pipe `'{}'`, so `payload.cwd` is never exercised.
 Red: the test adopts the recommended packs in a scratch project, sends a pre-tool payload with `cwd` set to a subdirectory (and to an unrelated directory) for (a) a read of the restricted env file, (b) `git push --force`, (c) a Write to a generated host file, and asserts each is denied or asked exactly as with `cwd` at the root. It must fail on the current code. Add three bypass classes (`T2-cwd-subdir-*`) predicted `blocked`.
 Do: resolve policy from `--project` (walk up from `cwd` to the nearest `.go-getter` only when `--project` is absent); keep `cwd` only for resolving relative path tokens.
 Done-when: the test and the three bypass classes pass; M1 falls by 3.
+Red 2026-11-08: `node --test compiler/test/hook-project-root.test.mjs`: 3 of 3 fail (`cwd subdir:` empty output, exit 0) while the same calls at the root exit 2. Classes `T2-cwd-subdir-read-restricted`, `-force-push`, `-write-generated` added predicted `blocked`.
+Green 2026-11-08: the same command passes 3 of 3. `eval bypass`: 49 classes, 47 as predicted; read-restricted and force-push blocked. **Differs:** `T2-cwd-subdir-write-generated` passes unattended, at any `cwd`: the generated-file guardrail is tier 3 only, so no hook stops a write to a generated host file. The prediction stays; this is a finding (step H12). Relative path tokens still resolve against the project root, not the shell directory; that is H7. `npm test` 1350 pass; `check:generated` and `check:guardrails` ok.
 
 ### H2 A broken or tampered guardrail file cannot switch enforcement off — [ ] ‖
 Class: implement · Needs: H0 · Human: accepted by the owner 2026-11-08 (the new decision still needs `accepted-by`); it supersedes the fail-open part of 0019/0025 · Check: `node --test compiler/test/hook-failure-mode.test.mjs`
@@ -96,6 +98,13 @@ Finding (the first-apply clobber was found independently by the test review: `ap
 Red: five tests, one per sentence: a snapshot of a tree with an untracked env file excludes it; a first apply over an existing foreign hook refuses without `--force`; 20 parallel store writers lose none and a revoke is not lost; a killed release leaves the old file intact; a spoofed header line is reported under its real file.
 Do: exclude restricted patterns from snapshots; treat any existing file without a manifest entry as foreign; lock the store (create-exclusive lock file with a stale timeout); write via temp file and rename; parse diff headers only at hunk boundaries.
 Done-when: five tests pass. (Split into five PRs if the diff is large; `guardrails: one change per branch`.)
+
+### H12 A write to a generated host file is stopped at tier 2 — [ ] ‖
+Class: implement · Needs: H1 · Check: `node compiler/bin/go-getter.mjs eval bypass`
+Finding (from H1): `generated-host-files-not-hand-edited` is tier 3 only (`npm run check:generated` in CI), so no hook stops an agent writing `.claude/settings.json` or another generated host file; class `T2-cwd-subdir-write-generated` is predicted `blocked` and observed `passes`.
+Red: a hook test that a Write or shell redirect to each generated path (from the apply manifest) is denied or asked. Fails today.
+Do: add a tier-2 `deny-path`/write gate from the manifest's generated paths (a person can still approve), or record in a decision that tier 3 is the intended control and lower the claim.
+Done-when: the test passes and the bypass class is observed `blocked`.
 
 ## Phase 3 — Honest coverage and a usable surface
 
