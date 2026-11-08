@@ -398,9 +398,16 @@ function approvalsStoreRefusal(project, payload) {
   const command2 = shellCommand(payload);
   if (typeof command2 === 'string') {
     const commands = effectiveCommands(command2) ?? [];
-    for (const { words, cwd } of walkCwd(commands, project)) {
+    const walked = walkCwd(commands, project);
+    for (const { words, cwd } of walked) {
       if (INTERPRETERS.has(path.basename(words[0])) && STORE_FILES.test(words.slice(1).join(' '))) return refusal;
       if (words.slice(1).some((w) => !w.startsWith('-') && inStore(w.startsWith('~/') ? path.join(os.homedir(), w.slice(2)) : path.resolve(cwd, w)))) return refusal;
+    }
+    // A redirect target is not among the words: read every operand of the command from each directory the shell was in.
+    for (const op of shellOperands(command2) ?? []) {
+      for (const cwd of new Set([project, ...walked.map((c) => c.cwd)])) {
+        if (inStore(op.startsWith('~/') ? path.join(os.homedir(), op.slice(2)) : path.resolve(cwd, op))) return refusal;
+      }
     }
   }
   return null;
@@ -689,7 +696,7 @@ function policyWriteRefusal(project, payload, host) {
     // a redirect target is not among the words; look at every operand of the command from where the shell ends
     if (!hit && redirect) {
       const cwds = walkCwd(commands, project).map((c) => c.cwd);
-      for (const op of shellOperands(command)) {
+      for (const op of shellOperands(command) ?? []) {
         for (const cwd of new Set([project, ...cwds])) if (!hit && (hit = policyFile(project, resolve(op, cwd)))) break;
       }
     }
