@@ -39,6 +39,7 @@ Result 2026-11-08 (master at a354dbf): **M1** `go-getter eval bypass`: 46 classe
 ## Phase 1 — Blockers and fail-closed (do first, in this order)
 
 ### H1 The hook reads policy from the project root, not the session directory — [x]
+Issue: #352
 Class: implement · Effort: high · Needs: H0 · Check: `node --test compiler/test/hook-project-root.test.mjs`
 Finding: `compiler/src/commands/hook.mjs:50` sets `dir = payload.cwd ?? project`, ignoring `--project`; after `cd compiler`, `collectEnforcement` finds no `docs/guardrails` and every check sees zero guardrails. Tests pipe `'{}'`, so `payload.cwd` is never exercised.
 Red: the test adopts the recommended packs in a scratch project, sends a pre-tool payload with `cwd` set to a subdirectory (and to an unrelated directory) for (a) a read of the restricted env file, (b) `git push --force`, (c) a Write to a generated host file, and asserts each is denied or asked exactly as with `cwd` at the root. It must fail on the current code. Add three bypass classes (`T2-cwd-subdir-*`) predicted `blocked`.
