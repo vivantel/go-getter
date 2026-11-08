@@ -7,10 +7,12 @@ import { readManifest } from './manifest.mjs';
 import { hostOp } from './hosts/registry.mjs';
 import { installedPluginVersion } from './plugin-pin.mjs';
 
-export const NODE_FLOOR = 22;
+// The floor is package.json's engines.node (guardrail node-floor-is-oldest-supported-lts), never a second hard-coded number.
+const nodeFloor = (root) => Number(/(\d+)/.exec(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).engines.node)[1]);
 
 export function enforcementProblems(project, { root, hosts, nodeVersion = process.versions.node, home } = {}) {
   const problems = [];
+  const NODE_FLOOR = nodeFloor(root);
   const add = (what, fix) => problems.push({ what, fix });
   if (Number(nodeVersion.split('.')[0]) < NODE_FLOOR) add(`Node ${nodeVersion} is below ${NODE_FLOOR}; the hooks cannot run and enforcement is OFF`, `install Node ${NODE_FLOOR} or newer`);
   const cli = packageVersion(root);
