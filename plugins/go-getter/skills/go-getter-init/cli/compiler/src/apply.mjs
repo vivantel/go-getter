@@ -594,7 +594,8 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   const skipped = {};
   const planned = new Set(Object.keys(outputs));
   const edited = (rel, rec) => fileEdited(project, rel, rec);
-  if (previous && !force) {
+  if (!force && (previous || !bootstrap)) {
+    // With no manifest every existing file is foreign: the loop below holds it back like any edited file (a bootstrap records them instead).
     for (const [rel, o] of Object.entries(outputs)) {
       if (shared.has(rel) || 'symlink' in o || !edited(rel, owned[rel] ?? null)) continue;
       if (hashContent(readFileSync(path.join(project, rel), 'utf8')) === hashContent(o.content)) continue;
