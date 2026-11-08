@@ -35,7 +35,10 @@ const underTmp = (p) => inside(p, tmp) || inside(p, os.tmpdir());
 // A violation is recorded, not thrown: product code often catches errors (a hook fails closed, a digest tolerates a missing `gh`),
 // which would hide the call from the test. `afterEach` fails the test that made the call.
 const violations = [];
-const fail = (what) => { violations.push(what); };
+const fail = (what) => {
+  const frame = new Error().stack.split('\n').slice(2).find((l) => !l.includes('support/hermetic.mjs') && !l.includes('node:internal'));
+  violations.push(`${what} (${(frame ?? '').trim().replace(/^at /, '').replace(realRepo + '/', '')})`);
+};
 
 const protectedPath = (p) => {
   if (typeof p !== 'string' && !(p instanceof URL)) return false;
@@ -45,9 +48,11 @@ const protectedPath = (p) => {
 };
 for (const name of ['writeFileSync', 'appendFileSync', 'mkdirSync', 'rmSync', 'renameSync', 'copyFileSync', 'writeFile', 'appendFile', 'mkdir', 'rm', 'rename']) {
   const original = fs[name];
-  fs[name] = function (target, ...rest) {
-    if (protectedPath(target)) fail(`${name} writes ${target}, outside a temp directory`);
-    return original.call(this, target, ...rest);
+  fs[name] = function (...args) {
+    // copying reads its source; every other call here changes its first argument (rename also its second)
+    const targets = name.startsWith('copyFile') ? [args[1]] : name.startsWith('rename') ? args.slice(0, 2) : [args[0]];
+    for (const target of targets) if (protectedPath(target)) fail(`${name} writes ${target}, outside a temp directory`);
+    return original.apply(this, args);
   };
 }
 
@@ -67,7 +72,7 @@ const resolveOnPath = (command, env) => {
   return null;
 };
 // `file` is the program, `args` its arguments (exec/execSync give the whole line as `file`).
-function check(file, options, shell) {
+function check(file, options, shell, args = []) {
   const env = options?.env ?? process.env;
   const words = shell ? String(file).trim().split(/\s+/) : [file];
   const program = path.basename(String(words[0]));
@@ -75,20 +80,27 @@ function check(file, options, shell) {
   if (file === 'node' && !shell) fail(`child "node" must be process.execPath (${file})`);
   if (program === 'gh') {
     const found = resolveOnPath('gh', env);
-    if (!found || !underTmp(found)) fail(`gh would run the real gh (${found ?? 'not on PATH'}); put a stub first on PATH`);
+    if (found && !underTmp(found)) fail(`gh would run the real gh (${found}); put a stub first on PATH`);
   }
   if (program === 'git') {
     if (env.GIT_DIR) fail('git runs with GIT_DIR set; use cleanGitEnv');
-    if (!underTmp(cwd)) fail(`git runs in ${cwd}, outside a temp directory`);
+    const named = args.flatMap((a, i) => (a === '--git-dir' || a === '-C' ? [args[i + 1]] : []));
+    const makesNew = ['init', 'clone'].includes(args[0]) && underTmp(String(args.at(-1)));
+    if (!underTmp(cwd) && !(named.length > 0 && named.every((d) => underTmp(String(d)))) && !makesNew) fail(`git runs in ${cwd}, outside a temp directory`);
   }
 }
+// util.promisify(execFile) resolves { stdout, stderr } through a symbol property the wrapper must carry over.
+const keepPromisify = (wrapper, original) => {
+  for (const key of Object.getOwnPropertySymbols(original)) wrapper[key] = original[key];
+};
 for (const name of ['spawn', 'spawnSync', 'execFile', 'execFileSync']) {
   const original = childProcess[name];
   childProcess[name] = function (file, ...rest) {
     const options = rest.find((r) => r && typeof r === 'object' && !Array.isArray(r));
-    check(file, options, false);
+    check(file, options, false, rest.find(Array.isArray));
     return original.call(this, file, ...rest);
   };
+  keepPromisify(childProcess[name], original);
 }
 for (const name of ['exec', 'execSync']) {
   const original = childProcess[name];
@@ -96,6 +108,7 @@ for (const name of ['exec', 'execSync']) {
     check(line, rest.find((r) => r && typeof r === 'object'), true);
     return original.call(this, line, ...rest);
   };
+  keepPromisify(childProcess[name], original);
 }
 syncBuiltinESMExports();
 

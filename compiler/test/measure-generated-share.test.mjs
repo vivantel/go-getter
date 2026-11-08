@@ -14,7 +14,7 @@ const cli = path.resolve(here, '..', 'bin', 'go-getter.mjs');
 const reader = path.resolve(here, '..', 'src', 'meters', 'generated-share.mjs');
 const env = cleanGitEnv(process.env);
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, env: { ...env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' }, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-const gg = (cwd, ...args) => spawnSync('node', [cli, ...args], { cwd, env, encoding: 'utf8' });
+const gg = (cwd, ...args) => spawnSync(process.execPath, [cli, ...args], { cwd, env, encoding: 'utf8' });
 
 const METERS = ['generated-share-derived', 'generated-share-advisory'];
 const guardrail = (id, entries) =>
@@ -90,7 +90,7 @@ test('the reader counts the ref it is given, and --counts gives the raw figures'
   write(dir, 'docs/guardrails/g.md', guardrail('g', [{ tier: 1, origin: 'derived' }]));
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'add g');
-  const counts = (ref) => JSON.parse(execFileSync('node', [reader, '--counts', '--ref', ref], { cwd: dir, env, encoding: 'utf8' }));
+  const counts = (ref) => JSON.parse(execFileSync(process.execPath, [reader, '--counts', '--ref', ref], { cwd: dir, env, encoding: 'utf8' }));
   assert.deepEqual(counts(first), { derived: 2, entries: 7, advisory: 2, guardrails: 5 });
   assert.deepEqual(counts('HEAD'), { derived: 3, entries: 8, advisory: 3, guardrails: 6 });
 });

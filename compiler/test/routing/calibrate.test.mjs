@@ -33,7 +33,7 @@ function project() {
   copyFileSync(fixture, path.join(dir, LOG));
   return dir;
 }
-const run = (...args) => spawnSync('node', [bin, 'routing', ...args], { encoding: 'utf8' });
+const run = (...args) => spawnSync(process.execPath, [bin, 'routing', ...args], { encoding: 'utf8' });
 const decisions = (dir) => readdirSync(path.join(dir, 'docs/decisions')).filter((n) => n.endsWith('-routing-calibration.md'));
 
 test('the fixture log holds metadata only', () => {

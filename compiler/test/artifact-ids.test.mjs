@@ -10,12 +10,12 @@ import { expectedIndexes, indexProblems, assignIds, isDraftId } from '../src/art
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const bin = path.join(repo, 'compiler/bin/go-getter.mjs');
-const cli = (cwd, ...args) => spawnSync('node', [bin, ...args], { cwd, encoding: 'utf8' });
+const cli = (cwd, ...args) => spawnSync(process.execPath, [bin, ...args], { cwd, encoding: 'utf8' });
 
 const doc = (id, title, extra = '') => `---\nid: ${id}\ntitle: ${title}\nstatus: active\ndate: 2026-11-04\ntags: [coordination, roadmap]\n---\n\n## Body\n${extra}\n`;
 
 function project() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'k5-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-k5-'));
   for (const t of ['facts', 'decisions', 'guardrails', 'skills']) mkdirSync(path.join(dir, 'docs', t), { recursive: true });
   writeFileSync(path.join(dir, 'docs/facts/0001-first.md'), doc('0001-first', 'First fact'));
   writeFileSync(path.join(dir, 'docs/decisions/0004-chosen.md'), doc('0004-chosen', 'A "quoted", decision'));

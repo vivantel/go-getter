@@ -34,7 +34,7 @@ function legacyProject() {
 }
 
 const opts = { hosts: HOSTS, skills: false };
-const gg = (dir, ...args) => spawnSync('node', [cli, 'apply', '--project', dir, ...args], { encoding: 'utf8' });
+const gg = (dir, ...args) => spawnSync(process.execPath, [cli, 'apply', '--project', dir, ...args], { encoding: 'utf8' });
 
 test('a project adopted before manifests gets a manifest that owns every output', () => {
   const { dir, plan, adopted } = legacyProject();

@@ -47,7 +47,7 @@ const adoptTelemetry = (dir) => adopt(dir, { recording: 'metadata-log', retentio
 const dirty = (dir) => writeFileSync(path.join(dir, 'change.txt'), 'a change\n');
 const fix = (dir) => writeFileSync(path.join(dir, 'ok.flag'), 'fixed\n');
 const stop = (dir, host = 'claude-code', payload = {}) =>
-  spawnSync('node', [bin, 'hook', 'stop', '--host', host, '--project', dir], { input: JSON.stringify({ session_id: 's1', ...payload }), encoding: 'utf8' });
+  spawnSync(process.execPath, [bin, 'hook', 'stop', '--host', host, '--project', dir], { input: JSON.stringify({ session_id: 's1', ...payload }), encoding: 'utf8' });
 const done = (dir) => rmSync(dir, { recursive: true, force: true });
 
 test('the verification-gate pack is valid and covers component 6', () => {
@@ -94,7 +94,7 @@ test('an existing 0.1.0 answer file still renders with the same local checks', (
   const dir = project();
   const file = path.join(dir, 'answers.json');
   writeFileSync(file, JSON.stringify({ answers: { checks: 'detected', 'test-command': PASS, 'lint-command': LINT, 'typecheck-command': '', 'review-bar': 'reviewer-verdict', gate: 'block' }, acceptedBy: 't', date: '2026-10-05' }));
-  const run = spawnSync('node', [bin, 'render-pack', 'verification-gate', '--answers', file, '--project', dir], { encoding: 'utf8' });
+  const run = spawnSync(process.execPath, [bin, 'render-pack', 'verification-gate', '--answers', file, '--project', dir], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const config = verifyConfig(dir);
   assert.equal(config.profile, 'thin', 'a missing profile takes the recommended one');
@@ -174,7 +174,7 @@ test('verify runs one passing and one failing check, exits non-zero and records 
   const dir = project();
   adopt(dir);
   adoptTelemetry(dir);
-  const run = spawnSync('node', [bin, 'verify', '--class', 'implement', '--project', dir, '--host', 'claude-code'], { encoding: 'utf8' });
+  const run = spawnSync(process.execPath, [bin, 'verify', '--class', 'implement', '--project', dir, '--host', 'claude-code'], { encoding: 'utf8' });
   assert.equal(run.status, 1);
   assert.match(run.stdout, /FAIL lint\npass test/);
   assert.match(run.stderr, /lint exploded/);
@@ -192,7 +192,7 @@ test('verify exits 0 when every check passes or the class has none, and 2 on a b
   const dir = project();
   adopt(dir);
   fix(dir);
-  const code = (cls) => spawnSync('node', [bin, 'verify', '--class', cls, '--project', dir], { encoding: 'utf8' });
+  const code = (cls) => spawnSync(process.execPath, [bin, 'verify', '--class', cls, '--project', dir], { encoding: 'utf8' });
   assert.equal(code('implement').status, 0);
   assert.equal(code('debug').status, 0);
   const none = code('explore');
@@ -298,7 +298,7 @@ test('the stop hook answers a Cursor payload with a follow-up message', () => {
 
 test('a malformed payload or an unknown project never traps the session', () => {
   const dir = project();
-  const run = spawnSync('node', [bin, 'hook', 'stop', '--host', 'claude-code', '--project', dir], { input: 'not json', encoding: 'utf8' });
+  const run = spawnSync(process.execPath, [bin, 'hook', 'stop', '--host', 'claude-code', '--project', dir], { input: 'not json', encoding: 'utf8' });
   assert.equal(run.status, 0);
   done(dir);
 });
@@ -406,7 +406,7 @@ test('CI jobs of a project without Node run the command only; other CI providers
   adopt(gitlab, ciAnswers);
   assert.equal(planApply(gitlab, { hosts: ['claude-code'] }).outputs['.github/workflows/go-getter-checks.yml'], undefined);
   assert.match(ciChecksNote(gitlab), /\(build, test, e2e\) get generated jobs on GitHub Actions only/);
-  const run = spawnSync('node', [bin, 'coverage', '--project', gitlab], { encoding: 'utf8' });
+  const run = spawnSync(process.execPath, [bin, 'coverage', '--project', gitlab], { encoding: 'utf8' });
   assert.match(run.stdout, /note: verification checks placed in CI \(build, test, e2e\)/);
   done(gitlab);
 });

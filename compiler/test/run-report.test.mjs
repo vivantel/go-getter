@@ -40,7 +40,7 @@ function setup({ markers = [' ', ' ', ' '], extra, writes = 'allow' } = {}) {
     start: (opts = {}) => startRun(dir, { plan: 'docs/plans/p.md', steps: ['1', '2', '3'], grants: ['pr-merge'], ...opts }),
     setPlan: (m, e) => writeFileSync(path.join(dir, 'docs/plans/p.md'), PLAN(m, e)),
     commit: (subject) => git(dir, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-q', '--allow-empty', '-m', subject),
-    cli: (...args) => spawnSync('node', [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
+    cli: (...args) => spawnSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
     cleanup: () => {
       for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
       rmSync(base, { recursive: true, force: true });

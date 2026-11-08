@@ -45,7 +45,7 @@ function snapshot(dir, rel = '') {
   return out;
 }
 const hooksPath = (dir) => execFileSync('git', ['config', '--local', '--get', 'core.hooksPath'], { cwd: dir, encoding: 'utf8' }).trim();
-const gg = (dir, ...args) => spawnSync('node', [cli, 'apply', '--project', dir, ...args], { encoding: 'utf8' });
+const gg = (dir, ...args) => spawnSync(process.execPath, [cli, 'apply', '--project', dir, ...args], { encoding: 'utf8' });
 const adopt = (dir, hosts = HOSTS) => applyPlan(dir, planApply(dir, { hosts, skills: false }));
 
 test('apply then apply --remove restores the project except docs/ and .go-getter/state', () => {

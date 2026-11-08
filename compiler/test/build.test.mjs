@@ -22,7 +22,7 @@ function serialize(outputs) {
 }
 
 function tempRepo() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'go-getter-build-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-build-'));
   cpSync(fixture, dir, { recursive: true, dereference: true });
   return dir;
 }
@@ -88,7 +88,7 @@ test('vendored skills are compiled and every relative reference resolves on each
   const outputs = compile({ root: repoRoot });
   const vendoredSkills = Object.keys(outputs).filter((p) => /^plugins\/go-getter\/skills\/[^/]+\/SKILL\.md$/.test(p));
   assert.ok(vendoredSkills.length >= 14, `expected vendored skills, got ${vendoredSkills.length}`);
-  const tmp = mkdtempSync(path.join(tmpdir(), 'go-getter-refs-'));
+  const tmp = mkdtempSync(path.join(tmpdir(), 'gg-refs-'));
   writeOutputs(tmp, outputs, { copy: false });
   let checked = 0;
   // Plugin root (Claude Code, Codex, Cursor, Copilot) and repo root via symlinks (Gemini CLI).
@@ -131,11 +131,11 @@ test('go-getter-init carries a CLI copy that runs from where it is installed (de
   const init = index.skills.find((s) => s.name === 'go-getter-init');
   assert.ok(init.files.includes('cli/compiler/bin/go-getter.mjs'), 'remote skill indexes list the bundled files');
 
-  const installed = mkdtempSync(path.join(tmpdir(), 'go-getter-bundle-'));
+  const installed = mkdtempSync(path.join(tmpdir(), 'gg-bundle-'));
   try {
     writeOutputs(installed, outputs);
     const cli = path.join(installed, base, 'compiler/bin/go-getter.mjs');
-    const run = (args) => spawnSync('node', [cli, ...args], { cwd: installed, encoding: 'utf8' });
+    const run = (args) => spawnSync(process.execPath, [cli, ...args], { cwd: installed, encoding: 'utf8' });
     const packs = run(['packs']);
     assert.equal(packs.status, 0, packs.stderr);
     assert.match(packs.stdout, /^context@/m);
@@ -151,7 +151,7 @@ test('the Claude Code plugin ships an executable bin/go-getter that runs the bun
   const root = path.resolve(here, '..', '..');
   const outputs = compile({ root, hosts: ['claude-code'] });
   assert.equal(outputs['plugins/go-getter/bin/go-getter'].mode, 0o755);
-  const installed = mkdtempSync(path.join(tmpdir(), 'go-getter-shim-'));
+  const installed = mkdtempSync(path.join(tmpdir(), 'gg-shim-'));
   try {
     writeOutputs(installed, outputs);
     const shim = path.join(installed, 'plugins/go-getter/bin/go-getter');

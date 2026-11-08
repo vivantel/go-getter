@@ -1,6 +1,6 @@
 // Default-and-log and the digest (roadmap T7, decision 0155): a defaulted answer writes a draft artifact, each trigger stops
 // the run with a reason, and the digest lists the five kinds of item from fixtures.
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,6 +11,9 @@ import { parseFrontmatter } from '../src/frontmatter.mjs';
 import { triggersFor } from '../src/defaults.mjs';
 import { buildDigest } from '../src/digest.mjs';
 import { tieredPack } from './support/tiered-pack.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'compiler/bin/go-getter.mjs');

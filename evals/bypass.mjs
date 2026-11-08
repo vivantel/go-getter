@@ -96,7 +96,7 @@ const KEY_LINE = `-----BEGIN RSA ${'PRIVATE'} KEY-----`; // built in parts so th
 const gitEnv = { ...cleanGitEnv(process.env), GIT_AUTHOR_NAME: 'bypass', GIT_AUTHOR_EMAIL: 'bypass@example.invalid', GIT_COMMITTER_NAME: 'bypass', GIT_COMMITTER_EMAIL: 'bypass@example.invalid', GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_NOSYSTEM: '1' };
 
 const run = (cmd, args, cwd, extra = {}) => {
-  const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...gitEnv, ...extra.env }, input: extra.input, shell: extra.shell, timeout: 120000 });
+  const r = spawnSync(cmd === 'node' ? process.execPath : cmd, args, { cwd, encoding: 'utf8', env: { ...gitEnv, ...extra.env }, input: extra.input, shell: extra.shell, timeout: 120000 });
   return { code: r.status ?? 1, out: `${r.stdout ?? ''}${r.stderr ?? ''}`, stdout: r.stdout ?? '' };
 };
 const git = (dir, args, extra) => run('git', args, dir, extra);

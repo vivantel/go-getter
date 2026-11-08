@@ -1,11 +1,14 @@
 // The throughput report's edges (roadmap T1, decision 0154): turn classification, gap and median arithmetic, the gh query, and the command's success path.
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { activity, isHumanTurn, mergedPrs, prStats, readEvents, transcriptFiles } from '../src/metrics/day.mjs';
 import metricsCommand from '../src/commands/metrics.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const turn = (content, extra = {}) => ({ type: 'user', message: { content }, ...extra });
 const line = (iso, extra = {}) => JSON.stringify({ type: 'assistant', timestamp: iso, ...extra });

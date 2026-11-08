@@ -123,7 +123,7 @@ test('go-getter hook post-tool records the count of redactions and no content', 
   const token = ['gh', 'p_'].join('') + 'Zx90'.repeat(9); // built at runtime: no literal token in this file
   const bin = path.join(root, 'compiler/bin/go-getter.mjs');
   const payload = { tool_name: 'Bash', tool_input: { command: 'deploy' }, tool_response: { stdout: `a ${token} b ${token}`, stderr: '' }, model: 'model-a' };
-  assert.equal(spawnSync('node', [bin, 'hook', 'post-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify(payload), encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync(process.execPath, [bin, 'hook', 'post-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify(payload), encoding: 'utf8' }).status, 0);
   const log = readFileSync(path.join(dir, LOG), 'utf8');
   assert.ok(!log.includes(token) && !log.includes('deploy'));
   const [rec] = readLog(dir);
@@ -140,9 +140,9 @@ test('go-getter hook pre-tool records an event and the summary command reports i
   const dir = project();
   adopt(dir);
   const bin = path.join(root, 'compiler/bin/go-getter.mjs');
-  const run = spawnSync('node', [bin, 'hook', 'pre-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'ls' }, model: 'model-a' }), encoding: 'utf8' });
+  const run = spawnSync(process.execPath, [bin, 'hook', 'pre-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'ls' }, model: 'model-a' }), encoding: 'utf8' });
   assert.equal(run.status, 0);
-  const out = JSON.parse(execFileSync('node', [bin, 'telemetry', 'summary', '--project', dir], { encoding: 'utf8' }));
+  const out = JSON.parse(execFileSync(process.execPath, [bin, 'telemetry', 'summary', '--project', dir], { encoding: 'utf8' }));
   assert.equal(out.records, 1);
   assert.deepEqual(out.events, { 'pre-tool': 1 });
   assert.deepEqual(out.models, { 'model-a': 1 });

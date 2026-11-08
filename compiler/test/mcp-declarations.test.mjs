@@ -24,7 +24,7 @@ const withTools = (...mcp) => Object.assign(example(), { mcp });
 const errorsOf = (pack) => validatePack(schema, pack, { dirName: 'example' });
 
 function project(adoptedPack) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'mcp-decl-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-mcp-decl-'));
   mkdirSync(path.join(dir, 'docs/decisions'), { recursive: true });
   if (adoptedPack) {
     writeFileSync(

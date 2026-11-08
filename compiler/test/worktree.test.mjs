@@ -84,7 +84,7 @@ test('concurrent worktree new calls cannot exceed the limit', async () => {
     const script = `import { newWorktree } from ${JSON.stringify(path.join(root, 'compiler/src/worktree.mjs'))};
       try { newWorktree(process.argv[1], process.argv[2]); } catch (e) { process.exit(3); }`;
     const codes = await Promise.all(Array.from({ length: 6 }, (_, i) => new Promise((resolve) => {
-      spawn('node', ['--input-type=module', '-e', script, dir, `task-${i}`], { stdio: 'ignore' }).on('exit', resolve);
+      spawn(process.execPath, ['--input-type=module', '-e', script, dir, `task-${i}`], { stdio: 'ignore' }).on('exit', resolve);
     })));
     assert.equal(codes.filter((c) => c === 0).length, 3);
     assert.equal(listWorktrees(dir).length, 4);
