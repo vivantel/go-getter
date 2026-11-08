@@ -1,5 +1,5 @@
 // Roadmap G3: a stop says what is lost, the safe alternative and how to approve and remember; each stop is logged as metadata.
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -8,6 +8,9 @@ import { execFileSync } from 'node:child_process';
 import { evaluatePreTool, evaluatePostTool } from '../src/hook.mjs';
 import { readLog } from '../src/telemetry/record.mjs';
 import { cleanGitEnv } from '../src/git-env.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', env: cleanGitEnv(process.env), stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const guardrail = (id, run) =>

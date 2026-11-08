@@ -1,6 +1,6 @@
 // Roadmap G4 (decision 0159 item 3): a host whose capability says `gateFloor` runs state-dependent commands after a checkpoint,
 // writes no native ask rule for them, and `go-getter coverage` states what that leaves unprotected.
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,6 +15,9 @@ import { readLog } from '../src/telemetry/record.mjs';
 import { coverage, formatCoverage } from '../src/coverage.mjs';
 import { loadPack } from '../src/packs.mjs';
 import { cleanGitEnv } from '../src/git-env.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const caps = loadCapabilities(root);

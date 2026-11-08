@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,6 +10,9 @@ import { PENDING_TIMEOUT_MS, addPendingApproval, settlePending } from '../src/te
 import { validateRecord } from '../src/telemetry/schema.mjs';
 import { APPROVAL_CLASS, approvalClass } from '../src/telemetry/approval-class.mjs';
 import { CATALOG as GATED } from '../src/gate.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
 

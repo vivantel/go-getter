@@ -78,7 +78,7 @@ test('the replacement keeps the result shape, and MCP results use the MCP field'
 
 test('go-getter hook post-tool answers with the redacted result', () => {
   const dir = project();
-  const run = spawnSync('node', [cli, 'hook', 'post-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify(shell(`x ${TOKEN} y`)), encoding: 'utf8' });
+  const run = spawnSync(process.execPath, [cli, 'hook', 'post-tool', '--host', 'claude-code', '--project', dir], { input: JSON.stringify(shell(`x ${TOKEN} y`)), encoding: 'utf8' });
   assert.equal(run.status, 0);
   assert.equal(JSON.parse(run.stdout).hookSpecificOutput.updatedToolOutput.stdout, `x ${REDACTED} y`);
   assert.ok(!run.stdout.includes(TOKEN));

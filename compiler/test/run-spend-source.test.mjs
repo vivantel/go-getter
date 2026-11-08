@@ -62,7 +62,7 @@ function setup() {
   process.env.GO_GETTER_HOME = path.join(base, 'home');
   return {
     dir,
-    cli: (...args) => spawnSync('node', [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
+    cli: (...args) => spawnSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
     cleanup: () => {
       for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
       rmSync(base, { recursive: true, force: true });

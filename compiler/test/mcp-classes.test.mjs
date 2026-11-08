@@ -26,7 +26,7 @@ function setup({ servers = 'github', reads = 'github:list_issues' } = {}) {
   return {
     dir, call,
     after: (tool) => evaluatePostTool(dir, { tool_name: tool, tool_input: {}, tool_response: 'ok' }),
-    cli: (...args) => spawnSync('node', [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
+    cli: (...args) => spawnSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', env: process.env }),
     cleanup: () => {
       saved === undefined ? delete process.env.GO_GETTER_HOME : (process.env.GO_GETTER_HOME = saved);
       rmSync(base, { recursive: true, force: true });

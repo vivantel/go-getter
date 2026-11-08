@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, existsSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,6 +13,9 @@ import { readRoster } from '../src/agents.mjs';
 import { runTier3 } from '../src/enforce.mjs';
 import { HOSTS, loadCapabilities } from '../src/capabilities.mjs';
 import { newWorktree, listWorktrees, cleanWorktrees, planClean } from '../src/worktree.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'compiler/bin/go-getter.mjs');
@@ -174,7 +177,7 @@ test('worktree new creates a sibling worktree on a new branch and list shows it'
   assert.equal(made.branch, 'feat/login');
   assert.ok(existsSync(path.join(made.path, 'a.txt')));
   assert.deepEqual(listWorktrees(dir).map((t) => [path.basename(t.path), t.branch, t.main]), [['app', 'main', true], ['login', 'feat/login', false]]);
-  const out = spawnSync('node', [cli, 'worktree', 'list', '--json'], { cwd: made.path, encoding: 'utf8' });
+  const out = spawnSync(process.execPath, [cli, 'worktree', 'list', '--json'], { cwd: made.path, encoding: 'utf8' });
   assert.equal(JSON.parse(out.stdout).length, 2);
   assert.deepEqual(newWorktree(dir, 'login'), { path: made.path, branch: 'feat/login', existing: true }, 'a second call returns the same worktree');
   assert.throws(() => newWorktree(dir, 'other', { branch: 'feat/login' }), /already exists/, 'a new slug cannot take over a used branch name');

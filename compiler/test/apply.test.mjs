@@ -236,7 +236,12 @@ test('apply vendors the CLI, the runner uses it with npx unavailable, and a go-g
   assert.match(res.stdout, /go-getter check: \d+\/\d+ passed/);
   assert.deepEqual(diffApply(dir, planApply(dir, { hosts: HOSTS, skills: false })), [], 'a second run is clean');
   rmSync(dir, { recursive: true, force: true });
-  assert.deepEqual(Object.keys(planApply(repoRoot, { hosts: ['claude-code'], skills: false }).outputs).filter((p) => p.startsWith('.go-getter/cli/')), []);
+  const checkout = project();
+  mkdirSync(path.join(checkout, 'compiler/bin'), { recursive: true });
+  writeFileSync(path.join(checkout, 'compiler/bin/go-getter.mjs'), '');
+  writeFileSync(path.join(checkout, 'package.json'), '{\n  "name": "go-getter"\n}\n');
+  assert.deepEqual(Object.keys(planApply(checkout, { hosts: ['claude-code'], skills: false }).outputs).filter((p) => p.startsWith('.go-getter/cli/')), []);
+  rmSync(checkout, { recursive: true, force: true });
 });
 
 test('the generated CI workflow takes permissions, concurrency and action refs from the ci-workflow setting', () => {

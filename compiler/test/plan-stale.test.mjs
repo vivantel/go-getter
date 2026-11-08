@@ -14,7 +14,7 @@ const plan = (marker) => `# Plan\n\n### 1.1 First — [${marker}]\nClass: explor
 
 // A bare origin whose master marks 1.1 done, and a clone of it before that merge, on a feature branch.
 function fixture() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'plan-stale-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-plan-stale-'));
   const origin = path.join(dir, 'origin.git');
   const seed = path.join(dir, 'seed');
   const clone = path.join(dir, 'clone');

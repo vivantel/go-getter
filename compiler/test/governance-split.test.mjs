@@ -105,13 +105,13 @@ test('render-pack and reconfigure on the retired pack id say where its questions
     writeFileSync(file, JSON.stringify({ answers: answersOf(versions[1].pack), acceptedBy: 't', date: '2026-10-11' }));
     const bin = path.join(root, 'compiler/bin/go-getter.mjs');
     for (const command of ['render-pack', 'reconfigure']) {
-      const run = spawnSync('node', [bin, command, 'governance', '--answers', file, '--project', dir, '--dry-run'], { encoding: 'utf8' });
+      const run = spawnSync(process.execPath, [bin, command, 'governance', '--answers', file, '--project', dir, '--dry-run'], { encoding: 'utf8' });
       assert.notEqual(run.status, 0);
       assert.match(run.stderr, /pack "governance" was split into/);
       for (const id of GOVERNANCE_IDS) assert.match(run.stderr, new RegExp(id));
     }
     for (const id of GOVERNANCE_IDS) {
-      const run = spawnSync('node', [bin, 'render-pack', id, '--answers', file, '--project', dir, '--dry-run'], { encoding: 'utf8' });
+      const run = spawnSync(process.execPath, [bin, 'render-pack', id, '--answers', file, '--project', dir, '--dry-run'], { encoding: 'utf8' });
       assert.equal(run.status, 0, run.stderr);
     }
   } finally {

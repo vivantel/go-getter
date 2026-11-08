@@ -29,11 +29,12 @@ Written 2026-11-08 from a read-only production-readiness review of the enforceme
 
 ## Phase 0 — Baseline
 
-### H0 Record the red baseline — [ ]
+### H0 Record the red baseline — [x]
 Class: explore · Needs: none · Check: `node compiler/bin/go-getter.mjs eval bypass`
 Context: the bypass suite runs scripted attempts against the compiled hooks and prints predicted against observed. The review found these spellings get past the tier-2 gate; none is in the suite yet.
 Do: run `eval bypass`, `telemetry summary` and the test suite; write the figures for M1, M2 and M5 into this table (a `Result:` line). Change no code.
 Done-when: M1, M2, M5 have a dated baseline figure and the command that gave it.
+Result 2026-11-08 (master at a354dbf): **M1** `go-getter eval bypass`: 46 classes, 19 pass unattended (20 predicted), 27 blocked; 45 as predicted. The one differing class is `T2-script-opens-file`: predicted `passes`, observed `blocked` (the hook sees the restricted file name in the command text). The prediction is not edited (the suite's rule); the paper reports it as a prediction that differed. None of the classes this plan adds exists yet, so M1's target of 0 unattended passes applies to the new classes H1, H5, H6 and H7 add. **M2** has no test yet; the baseline is the H2 red test (five fail-open cases, all expected to fail) and the telemetry count of `fail` outcomes: 13 of 9,880 records, 11 of them `user-prompt:exception`. **M5** `go-getter telemetry summary`: 26 denied of 3,545 pre-tool records (0.73 per 100); override data is not recorded, so a rise is read as a rise in this rate.
 
 ## Phase 1 — Blockers and fail-closed (do first, in this order)
 
@@ -161,12 +162,14 @@ Done-when: the table has no `deprecated` rows.
 
 Findings of the three test-suite reviews (2026-11-08; 154 files, 1301 tests, all green). The suite is strong on exact values through public contracts, and weak on hermeticity and on the gaps this plan closes. Measures: M9 = tests that touch the real checkout, real home or real `gh` (today at least `dogfood-gates`, `digest`, `metrics-day-edges`), target 0; M10 = copies of the guardrail-text builder (today about 21), target 1; M11 = tests that pass on any error or accept either outcome (today about 12 listed in Q3), target 0.
 
-### Q1 Hermetic tests — [ ] ‖
+### Q1 Hermetic tests — [x] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/hermetic.test.mjs`
 Finding: `dogfood-gates.test.mjs:16,31,35` run `evaluatePreTool` on the real checkout, which writes refs under `refs/go-getter/checkpoints`, prunes the developer's real checkpoints, and appends to the real telemetry and stop logs; `GO_GETTER_HOME` is unset in `gate-identity`, `store-hardening`, `redirect-hook`, `gate-hook`, `hook-fields`, so `storeDir()` is the developer's real state; `digest:179` and `metrics-day-edges:123` run the real `gh`; transcripts are read from `os.homedir()`; `measure-generated-share:50`, `capability-tags:84`, `cost-routing-pack`, `frontmatter:109`, `coverage:107`, `delegate:11`, `update:139` read live repo docs or prices; git runs without `cleanGitEnv` in about 12 files (a global `commit.gpgsign=true` breaks `checkpoint.test:20`); children start as `'node'` not `process.execPath` (7 files); temp prefixes `go-getter-`, `captags-`, `k5-`, `plan-stale-` escape `tmp-cleanup.mjs`, which removes only `gg-*`.
 Red: a global guard (`--import` file) that fails any test which writes under the real `$HOME`, the real repo's `.git`, `refs/go-getter`, or runs `gh`/`git` outside a temp dir or with `GIT_DIR` set, and sets `GO_GETTER_HOME` to a temp dir for every test. It must fail on the files above before they are fixed.
 Do: fix each file to use temp repos, a per-test `GO_GETTER_HOME`, `cleanGitEnv`, `process.execPath`, the `gg-` prefix, `try/finally` cleanup, and fixtures instead of live docs.
 Done-when: the guard is on in `npm test` and green; M9 = 0.
+Red 2026-11-08 (commit b2e1a4a): `npm test` with `compiler/test/support/hermetic.mjs` preloaded: 107 failing tests. It named `dogfood-gates` (writes the checkout's telemetry log), `digest:176` and `metrics-day-edges:117` (real `gh pr list`), plus bare `'node'` children, non-`gg-` temp prefixes, `git` in the checkout (`merge-queue`, `apply`, `orchestration-pack`) and real `gh` in `gate-stop`, `gate-floor`, `telemetry-approval-class`, `work-claim`.
+Green: `npm test` 1335 pass, 0 fail with the guard on; `node --test compiler/test/hermetic.test.mjs` passes; `check:generated`, `check:guardrails`, `eval` and `eval bypass` (45 of 46 as predicted) unchanged. The guard sets `HOME` and `GO_GETTER_HOME` to a temp dir, puts a recording `gh` first on PATH, and fails the test that writes under the real checkout or home, runs the real `gh`, runs `git` outside a temp dir, spawns bare `node`, or makes a non-`gg-` temp dir. Left for Q2 and Q3: tests that read live repo docs or prices (`measure-generated-share`, `capability-tags`, `cost-routing-pack`, `frontmatter`, `coverage`, `delegate`, `update`); they only read, so the guard cannot see them.
 
 ### Q2 One fixture library — [ ] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/support-fixtures.test.mjs`

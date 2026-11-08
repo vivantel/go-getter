@@ -34,7 +34,7 @@ Do: unknown tag.
 `;
 
 function repo(plan = PLAN) {
-  const root = mkdtempSync(path.join(tmpdir(), 'captags-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'gg-captags-'));
   sh(root, 'init', '-q', '-b', 'main');
   mkdirSync(path.join(root, 'docs', 'plans'), { recursive: true });
   mkdirSync(path.join(root, 'docs', 'skills'), { recursive: true });

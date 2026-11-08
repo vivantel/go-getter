@@ -24,7 +24,7 @@ function snapshot(root) {
 }
 
 export function diffGenerated(root, { copy } = {}) {
-  const tmp = mkdtempSync(path.join(tmpdir(), 'go-getter-check-'));
+  const tmp = mkdtempSync(path.join(tmpdir(), 'gg-check-'));
   try {
     writeOutputs(tmp, compile({ root }), copy === undefined ? {} : { copy });
     const expected = snapshot(tmp);

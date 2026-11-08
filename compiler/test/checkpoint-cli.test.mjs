@@ -8,7 +8,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
 const git = (dir, ...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' });
-const gg = (dir, ...args) => spawnSync('node', [cli, 'checkpoint', ...args], { cwd: dir, encoding: 'utf8' });
+const gg = (dir, ...args) => spawnSync(process.execPath, [cli, 'checkpoint', ...args], { cwd: dir, encoding: 'utf8' });
 
 function repo() {
   const dir = mkdtempSync(path.join(tmpdir(), 'gg-cpcli-'));

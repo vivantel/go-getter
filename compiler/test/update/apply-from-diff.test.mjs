@@ -105,9 +105,9 @@ test('go-getter apply exits non-zero when it skips a modified item and zero with
   const dir = project();
   run(dir);
   writeFileSync(file(dir, '.githooks/pre-push'), 'mine\n');
-  const skip = spawnSync('node', [cli, 'apply', '--project', dir, '--hosts', 'claude-code'], { encoding: 'utf8' });
+  const skip = spawnSync(process.execPath, [cli, 'apply', '--project', dir, '--hosts', 'claude-code'], { encoding: 'utf8' });
   assert.equal(skip.status, 1);
   assert.match(skip.stderr, /modified: \.githooks\/pre-push/);
-  const force = spawnSync('node', [cli, 'apply', '--project', dir, '--hosts', 'claude-code', '--force'], { encoding: 'utf8' });
+  const force = spawnSync(process.execPath, [cli, 'apply', '--project', dir, '--hosts', 'claude-code', '--force'], { encoding: 'utf8' });
   assert.equal(force.status, 0);
 });

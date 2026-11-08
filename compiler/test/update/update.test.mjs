@@ -96,7 +96,7 @@ test('update --dry-run prints the plan and writes nothing; --yes applies it', ()
   const { dir } = fixture();
   // The CLI reads packs from the repository root, where "example" does not exist: no pack to update, apply only.
   const before = snapshot(dir);
-  const dry = execFileSync('node', [cli, 'update', '--dry-run', '--project', dir], { encoding: 'utf8' });
+  const dry = execFileSync(process.execPath, [cli, 'update', '--dry-run', '--project', dir], { encoding: 'utf8' });
   assert.match(dry, /update --dry-run:/);
   assert.match(dry, /note: pack example: not in this go-getter version/);
   assert.deepEqual(snapshot(dir), before);
@@ -161,13 +161,13 @@ test('the session-start nudge names the drift for an older manifest and is silen
 
 test('apply --check fails on a version mismatch and passes after update', () => {
   const { dir } = fixture();
-  const check = () => spawnSync('node', [cli, 'apply', '--check', '--project', dir], { encoding: 'utf8' });
+  const check = () => spawnSync(process.execPath, [cli, 'apply', '--check', '--project', dir], { encoding: 'utf8' });
   assert.equal(check().status, 0);
   withManifest(dir, { packs: { context: '0.0.1' } });
   const bad = check();
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /version: manifest .*packs context older.*run "go-getter update"/);
-  assert.equal(spawnSync('node', [cli, 'update', '--yes', '--project', dir], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync(process.execPath, [cli, 'update', '--yes', '--project', dir], { encoding: 'utf8' }).status, 0);
   assert.equal(check().status, 0);
 });
 

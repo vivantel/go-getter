@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, realpathSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,6 +9,9 @@ import { cleanGitEnv } from '../src/git-env.mjs';
 import { claimUnit, heartbeatUnit, releaseUnit, ledgerView, readEntries, identity, renewAll, hostDateFor, remoteHost } from '../src/work/ops.mjs';
 import { annotate, conflict, makeEntry, validEntry, briefVersion, lastValidBeat } from '../src/work/claim.mjs';
 import { commitEntries, fetchLedger, pushRef, ledgerRef, readBeats, heartbeatRef, pushHeartbeat, readRecord, updateRecord, beatTimes } from '../src/work/ledger.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(repoRoot, 'compiler/bin/go-getter.mjs');

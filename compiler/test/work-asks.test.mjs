@@ -256,7 +256,7 @@ test('an ask holding a secret, or missing a field, is refused', async () => {
 test('the verbs park, list and answer from the command line', () => {
   const dir = repo();
   const env = { ...cleanGitEnv(process.env), CI: '', GO_GETTER_WORKER: 'w-a' };
-  const run = (...args) => spawnSync('node', [cli, 'work', ...args], { cwd: dir, encoding: 'utf8', env });
+  const run = (...args) => spawnSync(process.execPath, [cli, 'work', ...args], { cwd: dir, encoding: 'utf8', env });
   assert.equal(run('claim', 'feat#S1').status, 0);
   writeFileSync(path.join(dir, 'ask.json'), JSON.stringify(ask()));
   const parked = run('park', 'feat#S1', '--ask', 'ask.json');

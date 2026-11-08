@@ -44,7 +44,7 @@ function project({ governance = {}, adoptGovernance = true, routing = answersFor
 }
 const done = (dir) => rmSync(dir, { recursive: true, force: true });
 const delegate = (host, input, extra = {}) => ({ tool_name: { 'claude-code': 'Agent', codex: 'spawn_agent', cursor: 'Task' }[host] ?? 'Agent', tool_input: input, ...extra });
-const hook = (dir, host, payload) => spawnSync('node', [bin, 'hook', 'pre-tool', '--host', host, '--project', dir], { input: JSON.stringify(payload), encoding: 'utf8' });
+const hook = (dir, host, payload) => spawnSync(process.execPath, [bin, 'hook', 'pre-tool', '--host', host, '--project', dir], { input: JSON.stringify(payload), encoding: 'utf8' });
 
 test('the cost-routing pack is valid and covers component 11', () => {
   assert.deepEqual(validatePack(loadPackSchema(root), pack, { dirName: 'cost-routing' }), []);
@@ -271,13 +271,13 @@ test('routed delegations are recorded as metadata only', () => {
 test('go-getter route answers from the adopted policy, escalates and stops at the bound', () => {
   const dir = project();
   const route = (...args) => {
-    const run = spawnSync('node', [bin, 'route', '--project', dir, '--host', 'claude-code', ...args], { encoding: 'utf8' });
+    const run = spawnSync(process.execPath, [bin, 'route', '--project', dir, '--host', 'claude-code', ...args], { encoding: 'utf8' });
     return { code: run.status, out: run.stdout.trim().startsWith('{') ? JSON.parse(run.stdout) : run.stdout.trim(), err: run.stderr };
   };
   const first = route('--class', 'explore', '--context-tokens', '5000', '--cache', 'cold');
   assert.deepEqual([first.code, first.out.action, first.out.model, first.out.effort], [0, 'delegate', 'claude-haiku-4-5', 'low']);
   assert.equal(first.out.delegateModel, 'haiku', "the host's Agent tool takes only the family alias");
-  const noHost = JSON.parse(spawnSync('node', [bin, 'route', '--project', dir, '--class', 'explore'], { encoding: 'utf8' }).stdout);
+  const noHost = JSON.parse(spawnSync(process.execPath, [bin, 'route', '--project', dir, '--class', 'explore'], { encoding: 'utf8' }).stdout);
   assert.equal(noHost.delegateModel, noHost.model, 'without a host the full id is the value');
   const up1 = route('--escalate', '--class', 'explore', '--from', 'small', '--attempts', '0');
   assert.deepEqual([up1.out.action, up1.out.tier, up1.out.attempts, up1.out.delegateModel], ['delegate', 'medium', 1, 'sonnet']);
@@ -288,11 +288,11 @@ test('go-getter route answers from the adopted policy, escalates and stops at th
   assert.equal(route('--class', 'explore', '--data-class', 'restricted').out.action, 'human');
   assert.equal(route().code, 2);
   assert.deepEqual(route('--headless-flags').out, { host: 'claude-code', spendCapUsd: 5, flags: '--max-budget-usd 5' });
-  const flags = (host) => JSON.parse(spawnSync('node', [bin, 'route', '--project', dir, '--host', host, '--headless-flags'], { encoding: 'utf8' }).stdout);
+  const flags = (host) => JSON.parse(spawnSync(process.execPath, [bin, 'route', '--project', dir, '--host', host, '--headless-flags'], { encoding: 'utf8' }).stdout);
   assert.equal(flags('copilot').flags, '--max-ai-credits 5');
   assert.equal(flags('cursor').flags, null);
   const bare = project({ withRouting: false });
-  assert.equal(spawnSync('node', [bin, 'route', '--project', bare, '--class', 'explore'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync(process.execPath, [bin, 'route', '--project', bare, '--class', 'explore'], { encoding: 'utf8' }).status, 2);
   done(bare);
   done(dir);
 });
@@ -303,7 +303,7 @@ test('route --capabilities restricts the candidates to models that declare a mod
     copyFileSync(path.join(root, 'docs/skills/capabilities.md'), path.join(dir, 'docs/skills/capabilities.md'));
     const fact = path.join(dir, 'docs/facts/0011-model-pricing-anthropic.md');
     writeFileSync(fact, readFileSync(fact, 'utf8').replace('{id: claude-sonnet-5-5,', '{id: claude-sonnet-5-5, capabilities: [vision],'));
-    const run = (...args) => spawnSync('node', [bin, 'route', '--project', dir, '--host', 'claude-code', '--class', 'implement', ...args], { encoding: 'utf8' });
+    const run = (...args) => spawnSync(process.execPath, [bin, 'route', '--project', dir, '--host', 'claude-code', '--class', 'implement', ...args], { encoding: 'utf8' });
     const seen = run('--capabilities', 'vision');
     assert.equal(seen.status, 0, seen.stderr);
     assert.equal(JSON.parse(seen.stdout).model, 'claude-sonnet-5-5');

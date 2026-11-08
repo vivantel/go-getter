@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,6 +10,9 @@ import { planRender, applyRender } from '../src/render.mjs';
 import { ciStatus } from '../src/ci.mjs';
 import { evaluateStop, respondStop } from '../src/verify.mjs';
 import { readLog } from '../src/telemetry/record.mjs';
+import { offlineGh } from './support/offline-gh.mjs';
+
+after(offlineGh());
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const bin = path.join(root, 'compiler/bin/go-getter.mjs');

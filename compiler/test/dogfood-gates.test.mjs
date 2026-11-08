@@ -1,12 +1,23 @@
 // This repository's own gates (dogfooding, decision 0010): what the project's recorded answers do to the calls an agent makes here.
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { test, after } from 'node:test';
 import { evaluatePreTool } from '../src/hook.mjs';
 import { writeMode } from '../src/trackers/write.mjs';
 
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+// A copy of this repository's recorded answers (docs, instruction files, manifest) in a temp repository: the gate writes
+// checkpoint refs and telemetry where it runs, and that must not be the checkout.
+const repo = mkdtempSync(path.join(tmpdir(), 'gg-dogfood-'));
+for (const item of ['docs', 'AGENTS.md', 'CLAUDE.md', 'package.json', '.go-getter/manifest.json', '.claude', '.github']) {
+  if (existsSync(path.join(source, item))) cpSync(path.join(source, item), path.join(repo, item), { recursive: true });
+}
+execFileSync('git', ['init', '-q', '-b', 'feat/dogfood'], { cwd: repo });
+after(() => rmSync(repo, { recursive: true, force: true }));
 const bash = (command) => ({ tool_name: 'Bash', tool_input: { command } });
 
 test('the tracker answer is "allow": plan issue create, comment and close run without a stop', () => {

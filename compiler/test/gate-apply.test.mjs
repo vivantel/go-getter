@@ -198,7 +198,7 @@ test('apply --remove restores the files', () => {
   const dir = project();
   const original = snapshot(dir);
   adopt(dir);
-  const res = spawnSync('node', [cli, 'apply', '--project', dir, '--remove'], { encoding: 'utf8' });
+  const res = spawnSync(process.execPath, [cli, 'apply', '--project', dir, '--remove'], { encoding: 'utf8' });
   assert.equal(res.status, 0, res.stderr);
   assert.deepEqual(snapshot(dir), original);
   rmSync(dir, { recursive: true, force: true });

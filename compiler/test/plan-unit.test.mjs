@@ -150,14 +150,14 @@ test('nextSteps lists the unit fields only when a step sets them', () => {
 });
 
 test('check plans reports a cross-plan problem and passes the repository plans', () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'plan-unit-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-plan-unit-'));
   try {
     mkdirSync(path.join(dir, 'docs/plans'), { recursive: true });
     for (const [name, text] of Object.entries(FILES)) writeFileSync(path.join(dir, 'docs/plans', name), text);
-    const ok = spawnSync('node', [cli, 'check', 'plans', '--project', dir], { encoding: 'utf8' });
+    const ok = spawnSync(process.execPath, [cli, 'check', 'plans', '--project', dir], { encoding: 'utf8' });
     assert.equal(ok.status, 0, ok.stderr);
     writeFileSync(path.join(dir, 'docs/plans/alpha.md'), FILES['alpha.md'].replace('beta#B1', 'beta#B7'));
-    const bad = spawnSync('node', [cli, 'check', 'plans', '--project', dir], { encoding: 'utf8' });
+    const bad = spawnSync(process.execPath, [cli, 'check', 'plans', '--project', dir], { encoding: 'utf8' });
     assert.equal(bad.status, 1);
     assert.match(bad.stderr, /needs unknown unit beta#B7/);
     assert.deepEqual([...unitStates(dir)].filter(([id]) => id === 'beta#B1'), [['beta#B1', 'done']]);
