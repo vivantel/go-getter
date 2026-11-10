@@ -5,6 +5,7 @@ import path from 'node:path';
 import { planApply, diffApply, packageVersion, RUNNER, VENDORED_CLI } from './apply.mjs';
 import { readManifest } from './manifest.mjs';
 import { hostOp } from './hosts/registry.mjs';
+import { hasPreToolHook } from './hosts/hook-events.mjs';
 import { installedPluginVersion } from './plugin-pin.mjs';
 
 // The floor is package.json's engines.node (guardrail node-floor-is-oldest-supported-lts), never a second hard-coded number.
@@ -28,8 +29,7 @@ export function enforcementProblems(project, { root, hosts, nodeVersion = proces
     for (const host of plan.hosts) {
       const file = hostOp(host, 'describe').hookFile;
       if (!file) continue;
-      const text = existsSync(path.join(project, file)) ? readFileSync(path.join(project, file), 'utf8') : '';
-      if (!text.includes(`${RUNNER}`) || !/hook pre-tool/.test(text)) add(`${host}: no go-getter pre-tool hook in ${file}; enforcement is OFF for that host`, 'go-getter apply');
+      if (!hasPreToolHook(project, file)) add(`${host}: no go-getter pre-tool hook in ${file}; enforcement is OFF for that host`, 'go-getter apply');
     }
   }
   const drift = diffApply(project, plan);

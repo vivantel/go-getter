@@ -123,6 +123,8 @@ test('reviewer-read-only: a reviewer file that can write fails, a read-only one 
   }
 });
 
+const HOOKED = '.go-getter/bin/go-getter hook pre-tool';
+
 test('hosts-block-pre-tool: a configured host without a blocking hook fails, hosts that block pass', async () => {
   const dir = tmp();
   const caps = tmp();
@@ -133,15 +135,36 @@ test('hosts-block-pre-tool: a configured host without a blocking hook fails, hos
     const run = () => runBuiltin(dir, { kind: 'builtin', id: 'hosts-block-pre-tool', args: {}, }, { capabilities: caps });
     assert.equal((await run()).ok, true); // nothing configured
     mkdirSync(path.join(dir, '.alpha'));
-    writeFileSync(path.join(dir, '.alpha/hooks.json'), '{}');
+    writeFileSync(path.join(dir, '.alpha/hooks.json'), HOOKED);
     assert.equal((await run()).ok, true);
     mkdirSync(path.join(dir, '.beta'));
-    writeFileSync(path.join(dir, '.beta/hooks.json'), '{}');
+    writeFileSync(path.join(dir, '.beta/hooks.json'), HOOKED);
     const r = await run();
     assert.equal(r.ok, false);
     assert.match(r.message, /beta/);
-    // the real capability files: every host go-getter supports blocks
-    assert.equal((await runBuiltin(ROOT, { kind: 'builtin', id: 'hosts-block-pre-tool', args: {} })).ok, true);
+    // the real capability files: no host config in the repo's own root is claimed to block without a hook (see the installed-hook test)
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(caps, { recursive: true, force: true });
+  }
+});
+
+test('hosts-block-pre-tool: a host config without the installed go-getter pre-tool hook fails (F05)', async () => {
+  const dir = tmp();
+  const caps = tmp();
+  try {
+    writeFileSync(path.join(caps, 'alpha.json'), JSON.stringify({ host: 'alpha', hooks: { config: '.alpha/hooks.json', blockPreTool: true }, agents: { dir: '.alpha/agents' } }));
+    const run = () => runBuiltin(dir, { kind: 'builtin', id: 'hosts-block-pre-tool', args: {} }, { capabilities: caps });
+    mkdirSync(path.join(dir, '.alpha/agents'), { recursive: true }); // host configured, no hook file at all
+    let r = await run();
+    assert.equal(r.ok, false);
+    assert.match(r.message, /alpha/);
+    writeFileSync(path.join(dir, '.alpha/hooks.json'), '{}'); // hook file without the go-getter entry
+    assert.equal((await run()).ok, false);
+    writeFileSync(path.join(dir, '.alpha/hooks.json'), JSON.stringify({ hooks: { PreToolUse: [{ command: '.go-getter/bin/go-getter hook pre-tool --host alpha' }] } }));
+    r = await run();
+    assert.equal(r.ok, true);
+    assert.match(r.message, /alpha/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
     rmSync(caps, { recursive: true, force: true });
