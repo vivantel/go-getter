@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { evaluatePreTool } from '../src/hook.mjs';
 import { collectEnforcement, runBuiltin } from '../src/enforce.mjs';
 import { cleanGitEnv } from '../src/git-env.mjs';
+import { listWorktrees } from '../src/worktree.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const git = (dir, ...a) => execFileSync('git', a, { cwd: dir, stdio: 'pipe', encoding: 'utf8', env: cleanGitEnv(process.env) }).trim();
@@ -58,6 +59,38 @@ test('max-worktrees: more linked worktrees than the limit fails, within it passe
     assert.equal(over.ok, false);
     assert.match(over.message, /2 linked worktrees.*limit is 1/);
     assert.equal((await runBuiltin(dir, { kind: 'builtin', id: 'max-worktrees', args: { max: 'x' } })).ok, false);
+  } finally {
+    for (const s of ['', '-a', '-b']) rmSync(dir + s, { recursive: true, force: true });
+  }
+});
+
+test('max-worktrees: prunable worktrees are not counted', async () => {
+  const dir = repo();
+  try {
+    git(dir, 'worktree', 'add', '-q', '-b', 'feat/a', dir + '-a');
+    git(dir, 'worktree', 'add', '-q', '-b', 'feat/b', dir + '-b');
+    rmSync(dir + '-b', { recursive: true, force: true });
+    assert.ok(listWorktrees(dir).find((t) => t.branch === 'feat/b').prunable, 'git reports the vanished worktree as prunable');
+    const run = (max) => runBuiltin(dir, { kind: 'builtin', id: 'max-worktrees', args: { max: String(max) } });
+    assert.equal((await run(1)).ok, true);
+    assert.match((await run(1)).message, /1\/1 linked worktrees/);
+  } finally {
+    for (const s of ['', '-a', '-b']) rmSync(dir + s, { recursive: true, force: true });
+  }
+});
+
+test('max-worktrees: the pack answer max-concurrent sets the limit, the guardrail literal is only a fallback', async () => {
+  const dir = repo();
+  try {
+    git(dir, 'worktree', 'add', '-q', '-b', 'feat/a', dir + '-a');
+    git(dir, 'worktree', 'add', '-q', '-b', 'feat/b', dir + '-b');
+    const run = () => runBuiltin(dir, { kind: 'builtin', id: 'max-worktrees', args: { max: '10' } });
+    assert.equal((await run()).ok, true, 'no pack answer: the literal applies');
+    mkdirSync(path.join(dir, 'docs', 'decisions'), { recursive: true });
+    writeFileSync(path.join(dir, 'docs', 'decisions', '0001-max.md'), '---\nid: 0001-max\ntitle: Max\nstatus: active\ndate: 2026-11-10\ntags: [practice-packs]\ngo-getter:\n  max-concurrent: "1"\n  generated-by: orchestration@0.1.2\n  pack-answer: max-concurrent\n---\n\nBody.\n');
+    const over = await run();
+    assert.equal(over.ok, false, 'the pack answer 1 wins over the literal 10');
+    assert.match(over.message, /2 linked worktrees.*limit is 1/);
   } finally {
     for (const s of ['', '-a', '-b']) rmSync(dir + s, { recursive: true, force: true });
   }
