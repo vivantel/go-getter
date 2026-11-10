@@ -553,10 +553,14 @@ function redirectedCommand(entry, payload, stopped = new Set()) {
   return { deny: true, guardrail: entry.guardrail, reason: `blocked by guardrail ${entry.guardrail}: "${text}" is covered by \`${verbs.get(hit.id)}\`; run that instead (it checks, takes a checkpoint, pushes, opens the pull request, waits for CI${verbs.get(hit.id) === 'go-getter ship' ? ' and merges on green' : ''}). A person may still run the raw command themselves with "! <command>".` };
 }
 
-// Raw tracker writes (guardrail tracker-writes-follow-the-answer): `gh issue create|comment|close` outside `go-getter plan issue`.
-// `go-getter plan issue` runs `gh` from its own process, so the verb never reaches the host hook. Reads (`gh issue view|list`) pass.
-const RAW_TRACKER_WRITE = '/^gh(?:\\s+(?:-R\\s*\\S+|--repo(?:=|\\s+)\\S+))*\\s+issue\\s+(?:create|comment|close)(?:\\s|$)/';
-export const rawTrackerWrite = (command) => (matchGated(command, { classes: [], extra: [RAW_TRACKER_WRITE] }).length ? command : null);
+// Raw tracker writes (guardrail tracker-writes-follow-the-answer): `gh issue create|comment|close|edit|delete|reopen` and a `gh api` write
+// to an issue or issue-comment endpoint (`repos/<o>/<r>/issues[/N][/comments[/N]]` with -X POST|PATCH|PUT|DELETE or a -f/-F/--field/--input
+// body, which makes gh POST) outside `go-getter plan issue`. `-R`/`--repo` may precede the verb. `go-getter plan issue` runs `gh` from its
+// own process, so the verb never reaches the host hook. Reads (`gh issue view|list`, `gh api` with GET) pass. Other `gh api` writes are not covered here.
+const GH_HEAD = '^gh(?:\\s+(?:-R\\s*\\S+|--repo(?:=|\\s+)\\S+))*';
+const RAW_TRACKER_WRITE = `/${GH_HEAD}\\s+issue\\s+(?:create|comment|close|edit|delete|reopen)(?:\\s|$)/`;
+const RAW_TRACKER_API = `/${GH_HEAD}\\s+api(?=\\s)(?=.*\\s["']?/?repos/[^/\\s]+/[^/\\s]+/issues(?:/\\d+)?(?:/comments(?:/\\d+)?)?["']?(?:\\s|$))(?=.*(?:\\s-X\\s*(?:POST|PATCH|PUT|DELETE)|\\s--method(?:=|\\s+)(?:POST|PATCH|PUT|DELETE)|\\s(?:-f|-F|--field|--raw-field|--input)(?:\\s|=)))(?!.*(?:\\s-X\\s*GET|\\s--method(?:=|\\s+)GET))/i`;
+export const rawTrackerWrite = (command) => (matchGated(command, { classes: [], extra: [RAW_TRACKER_WRITE, RAW_TRACKER_API] }).length ? command : null);
 
 // The guardrail a decision names: set by the code that decided it, else the id in a `blocked by guardrail <id>` reason.
 const decidedBy = (result) => result.guardrail ?? /guardrail ([a-z0-9-]+)/.exec(result.reason ?? '')?.[1];
@@ -810,7 +814,7 @@ function decidePreTool(project, payload, host) {
     }
     if (e.parsed.id === 'deny-raw-tracker-writes') {
       const raw = rawTrackerWrite(shellCommand(payload));
-      if (raw) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: "${raw.length > 120 ? `${raw.slice(0, 120)}…` : raw}" writes to the tracker outside \`go-getter plan issue\` (create, comment, close); use that instead. A person may still run the raw command themselves with "! <command>".` };
+      if (raw) return { deny: true, guardrail: e.guardrail, reason: `blocked by guardrail ${e.guardrail}: "${raw.length > 120 ? `${raw.slice(0, 120)}…` : raw}" writes to the tracker outside \`go-getter plan issue\` (create, comment, close; edit, delete, reopen and gh api issue writes are denied too); use that instead. A person may still run the raw command themselves with "! <command>".` };
       continue;
     }
     if (e.parsed.id === 'deny-path') {
