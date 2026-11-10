@@ -1,7 +1,16 @@
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+
 // Hook-config editing shared by apply and the host adapters: go-getter's own entries are replaced, everything else kept.
 export const RUNNER = '.go-getter/bin/go-getter';
 // Recognises go-getter's hook entries in both command shapes (the old relative `sh <runner> hook` and the walk-up one that quotes the path).
 const HOOK_TAG = new RegExp(`${RUNNER.replaceAll('.', '\\.')}(\\\\")? hook`);
+
+// True when the project's hook file exists and carries go-getter's pre-tool hook (the test `doctor` and the hosts-block-pre-tool check share).
+export function hasPreToolHook(project, file) {
+  const text = existsSync(path.join(project, file)) ? readFileSync(path.join(project, file), 'utf8') : '';
+  return text.includes(RUNNER) && /hook pre-tool/.test(text);
+}
 
 const isOurs = (h) => HOOK_TAG.test(JSON.stringify(h));
 

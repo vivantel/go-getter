@@ -12,7 +12,7 @@ go-getter:
     - tier: 1
       check: Instruction; the coverage report shows the tier per host
     - tier: 3
-      check: Every host agent configured in the project declares a blocking pre-tool hook in its capability file
+      check: Every host agent configured in the project declares a blocking pre-tool hook in its capability file and has go-getter's pre-tool hook installed in the hook file that names
       run: builtin:hosts-block-pre-tool
       origin: derived
   generated-by: restricted-data@0.6.0
