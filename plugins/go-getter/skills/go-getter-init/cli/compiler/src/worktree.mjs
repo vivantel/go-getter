@@ -62,17 +62,17 @@ export function worktreeConfig(project) {
       .filter((d) => d.data.status === 'active' && String(d.data['go-getter']?.['generated-by'] ?? '').startsWith('orchestration@'))
       .map((d) => d.data['go-getter']),
   );
-  return { isolation: data.isolation ?? 'worktree', location: data['worktree-location'] ?? 'sibling', max: Number(data['max-concurrent'] ?? 3) };
+  return { isolation: data.isolation ?? 'worktree', location: data['worktree-location'] ?? 'sibling', max: Number(data['max-concurrent'] ?? 3), maxAnswered: data['max-concurrent'] != null };
 }
 
-// [{path, branch|null, head, main}] from `git worktree list --porcelain`; the first entry is the main working tree.
+// [{path, branch|null, head, main, prunable}] from `git worktree list --porcelain`; the first entry is the main working tree.
 export function listWorktrees(cwd) {
   return git(cwd, 'worktree', 'list', '--porcelain')
     .split('\n\n')
     .filter(Boolean)
     .map((block, i) => {
       const field = (name) => new RegExp(`^${name} (.*)$`, 'm').exec(block)?.[1] ?? null;
-      return { path: field('worktree'), branch: field('branch')?.replace(/^refs\/heads\//, '') ?? null, head: field('HEAD'), main: i === 0 };
+      return { path: field('worktree'), branch: field('branch')?.replace(/^refs\/heads\//, '') ?? null, head: field('HEAD'), main: i === 0, prunable: /^prunable\b/m.test(block) };
     });
 }
 
