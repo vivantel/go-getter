@@ -156,13 +156,16 @@ test('deny-raw-tracker-writes: raw gh issue writes are denied naming the verb, r
   writeFileSync(path.join(dir, 'docs/guardrails/tracker-writes-follow-the-answer.md'), source);
   const bash = (command) => ({ tool_name: 'Bash', tool_input: { command } });
   try {
-    for (const command of ['gh issue create --title x', 'gh issue comment 3 -b hi', 'gh issue close 3', 'git status && gh issue close 4', 'gh -R o/r issue close 3', 'gh --repo o/r issue create --title x']) {
+    for (const command of ['gh issue create --title x', 'gh issue comment 3 -b hi', 'gh issue close 3', 'git status && gh issue close 4', 'gh -R o/r issue close 3', 'gh --repo o/r issue create --title x',
+      'gh issue edit 3 --title y', 'gh issue delete 3 --yes', 'gh issue reopen 3', 'gh -R o/r issue edit 3 -b z', 'gh --repo o/r issue reopen 3', 'gh --repo=o/r issue delete 3',
+      'gh api repos/o/r/issues -f title=x', 'gh api repos/o/r/issues/3/comments -f body=x', 'gh api -X PATCH repos/o/r/issues/3 -f state=closed', 'gh api --method DELETE /repos/o/r/issues/comments/9', 'gh -R o/r api "repos/o/r/issues/3" --method=PATCH']) {
       const d = evaluatePreTool(dir, bash(command), 'claude-code');
       assert.equal(d.deny, true, command);
       assert.match(d.reason, /tracker-writes-follow-the-answer/);
       assert.match(d.reason, /go-getter plan issue/);
     }
-    for (const command of ['gh issue view 3', 'gh issue list', 'gh pr comment 3 -b x', 'go-getter plan issue create --step A1 --dry-run', 'echo "gh issue create"', 'npm test']) {
+    for (const command of ['gh issue view 3', 'gh issue list', 'gh pr comment 3 -b x', 'go-getter plan issue create --step A1 --dry-run', 'echo "gh issue create"', 'npm test',
+      'gh api repos/o/r/issues', 'gh api repos/o/r/issues/3/comments', 'gh api -X GET repos/o/r/issues -f state=open', 'gh api repos/o/r/pulls/3/comments -f body=x', 'gh api user']) {
       assert.deepEqual(evaluatePreTool(dir, bash(command), 'claude-code'), { deny: false }, command);
     }
   } finally {
