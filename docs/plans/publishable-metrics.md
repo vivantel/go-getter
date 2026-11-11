@@ -2,13 +2,13 @@
 
 **Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
 
-Written in the paper repo from a read of this repository (README, decisions 0154, 0170, 0199, 0200, fact 0040, outcome `faster-plan-start`, meters, plan `throughput.md`), the paper repo's `data/` and the scoring runs of 2026-11-11 (`articles.deterministic-edge/docs/plans/go-getter-publishable-capabilities-plan.md`). **Status: proposed, not accepted.** Step ids are `J1` to `J8` (the paper copy called them G1 to G7, which collide with `automation-first-gates.md`; mapping: G1 to G3 are J1 to J3, G5 is split into J4 and J5, G6 is J6, G7 is J7, G4 is J8). No step has an issue yet; the owner approves each `plan issue create`. Each change carries a `Refs:` trailer per decision 0199 item 6 and is labelled an intervention with its date, so baseline and treatment stay split by time (item 7).
+Written in the paper repo from a read of this repository (README, decisions 0154, 0170, 0199, 0200, fact 0040, outcome `faster-plan-start`, meters, plan `throughput.md`), the paper repo's `data/` and the scoring runs of 2026-11-11 (`articles.deterministic-edge/docs/plans/go-getter-publishable-capabilities-plan.md`). **Status: proposed, not accepted.** Step ids are `J1` to `J8` (the paper copy called them G1 to G7, which collide with `automation-first-gates.md`; mapping: G1 to G3 are J1 to J3, G5 is split into J4 and J5, G6 is J6, G7 is J7, G4 is J8). J1, J2, J4 and J5 have issues; the owner approves each further `plan issue create`. Each change carries a `Refs:` trailer per decision 0199 item 6 and is labelled an intervention with its date, so baseline and treatment stay split by time (item 7).
 
 ## Relation to existing plans
 
 - J1 extends `throughput.md` T1 (`metrics day`, done): it adds durable attention events, a `range` report and the three denominators side by side. It does not rebuild T1.
 - `paper-instruments.md` P1 to P6 (all done) cover telemetry retention, guardrail ids, approval events, derived-versus-hand-written enforcement, the generated-share meter and the bypass eval. J-steps build on them.
-- `enforcement-hardening.md` H2 (done, decision 0208) made the pre-tool hook fail closed. J5 does not repeat it; it adds only what is still missing for a tier claim.
+- `enforcement-hardening.md` H2 (done, decision 0208) made the pre-tool hook fail closed. J4 and J5 do not repeat it; they add only what is still missing for a tier claim.
 - `throughput.md` T10 (measure against the baseline) consumes J1 to J3 and J7.
 
 ## What is measured today, and why it does not publish
@@ -37,7 +37,7 @@ Done-when: the test feeds fixture events and PR JSON and gets exact figures for 
 Issue: #377
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-quality.test.mjs`
 Context: decision 0154 says quality is unchanged; no instrument reads it. Meters live in `docs/meters/` (decision 0179); the meter format is in `docs/meters/questions-to-first-plan.md`.
-Do: per merged outcome record the first-pass gate result, gate retries, post-merge rework (a fix commit touching the same files within N days), reverts, CI flake and review findings. Add a meter in `docs/meters/` whose non-inferiority margin is written before any reading is taken. The rework window N is 7 days (owner, 2026-11-11), written in the meter beside the margin. Report a per-PR table and a per-day rate.
+Do: per merged outcome record the first-pass gate result, gate retries, post-merge rework (a fix commit touching the same files within N days), reverts, CI flake and review findings. Add a meter in `docs/meters/` whose non-inferiority margin is the one registered in J7, written before any reading is taken. The rework window N is 7 days (owner, 2026-11-11), written in the meter beside the margin. Report a per-PR table and a per-day rate.
 Done-when: the test derives each column from fixture git and PR data; the meter file states the margin and N; the per-PR table and per-day rate print and can serve as the quality arm of the throughput claim.
 
 ## Phase 2 — Fix the design before the window opens
@@ -47,14 +47,14 @@ Class: plan · Needs: J1, J2 · Human: none for the rule; the cutoff date is wri
 Context: decision 0199 item 7 requires the cutoff and rule to be written before the window opens. Chosen by the owner 2026-11-11: **(a) an interrupted series** with interventions labelled by date and the pre-period taken from the transcripts and PRs that exist. Not chosen: (b) matched task kinds with a feature on and off; (c) alternating weeks for one capability.
 Cutoff rule (owner, 2026-11-11): the cutoff is the merge date of the later of J1 and J2, so the instruments exist and change no behaviour; everything before it is baseline, read from retained data, and the date is recorded on this line when it is known: **Cutoff date: pending.**
 Do: write the rest of the design in this file: the cutoff date once known, the rule for what counts as an intervention (a go-getter change that can move a metric, labelled with its merge date), non-interventions as controls (days without change), the attribution method, the breakers (easy tasks chosen, familiarity) and the analysis.
-Done-when: the design is in this file with all five parts and a date earlier than the first reading it governs.
+Done-when: the design is in this file with all six parts and a date earlier than the first reading it governs.
 
 ## Phase 3 — Close the enforcement gaps (parallel with Phase 2)
 
 ### J4 Branch protection is read so tier 3 can be claimed — [ ] ‖
 Issue: #378
 Class: implement · Needs: none · Check: `node --test compiler/test/coverage-branch-protection.test.mjs`
-Context: tier 3 is claimed from CI links read for 53 candidates; branch protection was never read, so "CI required" is untested. `go-getter coverage` is the report; enforcement-hardening step H10 makes it honest elsewhere.
+Context: tier 3 is claimed from CI links read for 53 candidates; branch protection was never read, so "CI required" is untested. `go-getter coverage` is the report; enforcement-hardening step H9 (done) made its table honest for host capability.
 Do: `go-getter coverage` reads the default branch's required checks through the tracker/`gh` adapter and reports tier 3 as `ci-required`, `ci-not-required` or `unreadable`. A failed or unauthorised read is `unreadable`, never `ci-required`.
 Done-when: the test covers the three outcomes with fixture API responses; `coverage` prints the tier 3 state; `unreadable` is reported when the read fails.
 
@@ -66,7 +66,7 @@ Do: `go-getter eval bypass` writes its raw result per run (commit, class ids, pr
 Done-when: the test shows two runs producing two files with the fields above; an edited prediction after a recorded result fails the check; the file holds no command text beyond the class id.
 
 ### J6 Finish the `faster-plan-start` outcome — [ ] ‖
-Class: review · Needs: none · Human: a person runs and counts the trial goals; the brief's attribution method is not changed · Check: `go-getter measure read questions-to-first-plan`
+Class: review · Needs: none · Human: a person runs and counts the trial goals; the brief's attribution method is not changed · Check: `go-getter measure series questions-to-first-plan`
 Context: the outcome `faster-plan-start` is draft, with no readings. Its meter is `questions-to-first-plan`.
 Do: run its registered attribution: re-run two past goals, read three new goals, five trial goals in all, median at most 8 questions, one session each. Record each reading with `go-getter measure read` and the kind of goal in the review log, as the brief requires.
 Done-when: five readings are in the review log with goal kinds, and the median is reported even if it misses 8.
@@ -74,7 +74,7 @@ Done-when: five readings are in the review log with goal kinds, and the median i
 ## Phase 4 — Replication and the bar
 
 ### J7 Publishability bar for the throughput metric — [x]
-Class: plan · Needs: J1, J2 · Human: set by the owner 2026-11-11, before any reading under J1 or J2 · Check: `npm run check:plans`
+Class: plan · Needs: none · Human: set by the owner 2026-11-11, before any reading under J1 or J2 · Check: `npm run check:plans`
 Context: decision 0154 sets the floor (5 to 10 times fewer human minutes per merged outcome, stretch 50 times, quality unchanged); decision 0199 item 8 says a result below the floor is reported as such.
 The bar (owner, 2026-11-11):
 - **Floor per denominator:** the claim is stated on owner attention with the 10-minute idle cap (J1), where decision 0154 defines the metric as human minutes. Active agent time and the PR-level figure are reported beside it as context and never as the headline.
@@ -91,10 +91,10 @@ Done-when: another operator's series exists, or by the paper's submission this f
 
 ## Order
 
-J1 and J2 first (cheap, no behaviour change), then J3 (needs the owner's choice) and J7 (needs J2). J4, J5 and J6 run in parallel with them. J8 needs another person. The paper plan `article-excellent-knowledge-plan.md` E4 consumes J1 to J3; E3 consumes the J4 and J5 outputs.
+J1 and J2 first (cheap, no behaviour change), then J3 (written when both have merged, because that date is the cutoff). J7 is done: its numbers are consumed by J1, J2 and J3. J4, J5 and J6 run in parallel with them. J8 needs another person. The paper plan `article-excellent-knowledge-plan.md` E4 consumes J1 to J3; E3 consumes the J4 and J5 outputs.
 
 ## Stop rules
 
 - A change to go-getter made to move a metric rather than to make it readable is labelled an intervention and the baseline window is not rewritten.
 - A target set after seeing a reading is not counted as a target.
-- Quality constant means the margin registered in J2; dropping a gate to gain speed (0158) voids the reading.
+- Quality constant means the margin registered in J7 (copied into the J2 meter); dropping a gate to gain speed (0158) voids the reading.
