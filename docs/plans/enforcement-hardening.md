@@ -151,6 +151,7 @@ Do: take a stale lock over with an atomic `renameSync(lock, lock + '.stale.' + p
 Done-when: the two-process test passes 50 runs in a row; the existing lock tests pass.
 Red 2026-11-08 (commit aea77d3 on `fix/approvals-lock-atomic-takeover`): racing on a stale lock by chance never failed, so the test preloads `support/slow-lock.mjs` (a pause after the lock's stat and inside the critical section) in four real processes: `node --test compiler/test/approvals-lock.test.mjs` fails 3 of 3 ("racer-0 was lost").
 Green 2026-11-08: 50 runs in a row pass; `npm test` 1432 pass; `check:generated`, `check:guardrails` ok; `eval bypass` unchanged (55 of 58). **Deviation:** the plan's rename-aside takeover still lost writes (49 of 50 runs pass is not enough: a rename can move a fresh lock aside and a third process creates one before it is linked back, 13 of 50 failed), so takeover is serialized by a create-exclusive `store.lock.takeover` file and the age is re-read inside it; the lock now holds `pid time` and an unreadable one is aged by mtime.
+**Merged** as #369. Residual: a takeover-gate holder that dies is cleared after the stale timeout by the next waiter, with the same small unserialized window as before the fix.
 
 ### H16 A checkpoint fails closed when it cannot read the restricted paths — [ ] ‖
 Class: implement · Needs: H8 · Check: `node --test compiler/test/checkpoint-restricted.test.mjs`
