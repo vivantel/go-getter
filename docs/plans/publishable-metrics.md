@@ -20,7 +20,7 @@ Written in the paper repo from a read of this repository (README, decisions 0154
 | Quality "unchanged" (0154) | no instrument | The speedup claim has no quality arm |
 | Enforcement tier 3 | CI links read for 53 candidates | Branch protection never read, so "CI required" is untested |
 | Fail-open hook runner | observed (F12) | Closed for the pre-tool hook by H2 (0208); the paper must re-state it as before and after |
-| Bypass catalogue | 44 classes, one host, author-run | Script lives here (`evals/bypass.mjs`); raw output not in the paper repo; commit state ambiguous (62a1d74, f9c5d83) |
+| Bypass catalogue | 44 classes in the paper's read; 58 on master on 2026-11-11 (55 as predicted); one host, author-run | Script lives here (`evals/bypass.mjs`); raw output not in the paper repo; commit state ambiguous (62a1d74, f9c5d83) |
 | Questions to first plan | about 32 over two sessions, one simulated run | Outcome `faster-plan-start` is draft; no readings |
 | Operators | 1 | No replication |
 
@@ -28,7 +28,7 @@ Written in the paper repo from a read of this repository (README, decisions 0154
 
 ### J1 Attention events that outlive transcripts — [ ] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-range.test.mjs`
-Context: human minutes per merged PR is read from host transcripts, and only 5 survived for 2026-10-31. `metrics day` is `compiler/src/metrics/day.mjs` (T1). Telemetry is metadata only (`telemetry-records-metadata-only`); retention is set by decision 0201.
+Context: human minutes per merged PR is read from host transcripts, and only 5 survived for 2026-10-31. `metrics day` is `compiler/src/metrics/day.mjs` (T1). Telemetry is metadata only (`telemetry-records-metadata-only`); retention is 365 days (decision 0202, which supersedes 0201 and 0052).
 Do: record human attention as metadata-only telemetry events (turn start, turn end, idle cap) so the series does not depend on transcripts. Add `go-getter metrics range --from D --to D` and give `day` and `range` a header that names the denominator and a provenance line (which source each figure came from). Report three denominators side by side: owner attention with the idle cap, active agent time, and PR-level. Per-PR rows. This step changes no go-getter behaviour a person sees, so it is not an intervention.
 Done-when: the test feeds fixture events and PR JSON and gets exact figures for all three denominators; the report prints no prompt text; the series for every day since 2026-10-09 regenerates from committed or retained data, with each day's source named.
 
@@ -69,7 +69,7 @@ Done-when: five readings are in the review log with goal kinds, and the median i
 ## Phase 4 — Replication and the bar
 
 ### J7 Publishability bar for the throughput metric — [!]
-Class: plan · Needs: J2 · Human: the owner sets the numbers; a target set after seeing a reading does not count · Check: `npm run check:plans`
+Class: plan · Needs: J1, J2 · Human: the owner sets the numbers; a target set after seeing a reading does not count · Check: `npm run check:plans`
 Context: decision 0154 sets the floor (5 to 10 times fewer human minutes per merged outcome, stretch 50 times, quality unchanged); decision 0199 item 8 says a result below the floor is reported as such.
 Do: before the next window, write in this file the floor stated per denominator (from J1), the minimum n (weeks or PRs), the quality margin (from J2) and what is reported when only part is met.
 Done-when: all four are written with a date before the first reading they govern.
