@@ -29,21 +29,21 @@ Written in the paper repo from a read of this repository (README, decisions 0154
 ### J1 Attention events that outlive transcripts — [ ] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-range.test.mjs`
 Context: human minutes per merged PR is read from host transcripts, and only 5 survived for 2026-10-31. `metrics day` is `compiler/src/metrics/day.mjs` (T1). Telemetry is metadata only (`telemetry-records-metadata-only`); retention is 365 days (decision 0202, which supersedes 0201 and 0052).
-Do: record human attention as metadata-only telemetry events (turn start, turn end, idle cap) so the series does not depend on transcripts. Add `go-getter metrics range --from D --to D` and give `day` and `range` a header that names the denominator and a provenance line (which source each figure came from). Report three denominators side by side: owner attention with the idle cap, active agent time, and PR-level. Per-PR rows. This step changes no go-getter behaviour a person sees, so it is not an intervention.
+Do: record human attention as metadata-only telemetry events (turn start, turn end, idle cap) so the series does not depend on transcripts. The idle cap is 10 minutes, as in `metrics day` (T1), fixed before any reading so the series stays comparable. Add `go-getter metrics range --from D --to D` and give `day` and `range` a header that names the denominator and a provenance line (which source each figure came from). Report three denominators side by side: owner attention with the idle cap, active agent time, and PR-level. Per-PR rows. This step changes no go-getter behaviour a person sees, so it is not an intervention.
 Done-when: the test feeds fixture events and PR JSON and gets exact figures for all three denominators; the report prints no prompt text; the series for every day since 2026-10-09 regenerates from committed or retained data, with each day's source named.
 
 ### J2 Quality ledger for "same quality" — [ ] ‖
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-quality.test.mjs`
 Context: decision 0154 says quality is unchanged; no instrument reads it. Meters live in `docs/meters/` (decision 0179); the meter format is in `docs/meters/questions-to-first-plan.md`.
-Do: per merged outcome record the first-pass gate result, gate retries, post-merge rework (a fix commit touching the same files within N days), reverts, CI flake and review findings. Add a meter in `docs/meters/` whose non-inferiority margin is written before any reading is taken. Report a per-PR table and a per-day rate.
+Do: per merged outcome record the first-pass gate result, gate retries, post-merge rework (a fix commit touching the same files within N days), reverts, CI flake and review findings. Add a meter in `docs/meters/` whose non-inferiority margin is written before any reading is taken. The rework window N is 7 days (owner, 2026-11-11), written in the meter beside the margin. Report a per-PR table and a per-day rate.
 Done-when: the test derives each column from fixture git and PR data; the meter file states the margin and N; the per-PR table and per-day rate print and can serve as the quality arm of the throughput claim.
 
 ## Phase 2 — Fix the design before the window opens
 
-### J3 A comparison design — [!]
-Class: plan · Needs: J1, J2 · Human: the owner picks the design and writes the cutoff; nothing here is measured until they do · Check: `npm run check:plans`
-Context: decision 0199 item 7 requires the cutoff and rule to be written before the window opens. Options: (a) interrupted series with interventions labelled by date, the pre-period taken from the transcripts and PRs that exist; (b) matched task kinds, the same kind of PR done with a feature on and off; (c) alternating weeks for one capability.
-Do: after the owner's choice, write the design in this file: cutoff date, the rule, non-interventions as controls (days without change), the attribution method, the breakers (easy tasks chosen, familiarity) and the analysis.
+### J3 A comparison design — [ ]
+Class: plan · Needs: J1, J2 · Human: the owner writes the cutoff date; nothing here is measured until they do · Check: `npm run check:plans`
+Context: decision 0199 item 7 requires the cutoff and rule to be written before the window opens. Chosen by the owner 2026-11-11: **(a) an interrupted series** with interventions labelled by date and the pre-period taken from the transcripts and PRs that exist. Not chosen: (b) matched task kinds with a feature on and off; (c) alternating weeks for one capability.
+Do: write the rest of the design in this file: the cutoff date (owner), the rule for what counts as an intervention (a go-getter change that can move a metric, labelled with its merge date), non-interventions as controls (days without change), the attribution method, the breakers (easy tasks chosen, familiarity) and the analysis.
 Done-when: the design is in this file with all five parts and a date earlier than the first reading it governs.
 
 ## Phase 3 — Close the enforcement gaps (parallel with Phase 2)
