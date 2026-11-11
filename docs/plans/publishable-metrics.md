@@ -27,12 +27,14 @@ Written in the paper repo from a read of this repository (README, decisions 0154
 ## Phase 1 — Make the series readable (no behaviour change)
 
 ### J1 Attention events that outlive transcripts — [ ] ‖
+Issue: #376
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-range.test.mjs`
 Context: human minutes per merged PR is read from host transcripts, and only 5 survived for 2026-10-31. `metrics day` is `compiler/src/metrics/day.mjs` (T1). Telemetry is metadata only (`telemetry-records-metadata-only`); retention is 365 days (decision 0202, which supersedes 0201 and 0052).
 Do: record human attention as metadata-only telemetry events (turn start, turn end, idle cap) so the series does not depend on transcripts. The idle cap is 10 minutes, as in `metrics day` (T1), fixed before any reading so the series stays comparable. Add `go-getter metrics range --from D --to D` and give `day` and `range` a header that names the denominator and a provenance line (which source each figure came from). Report three denominators side by side: owner attention with the idle cap, active agent time, and PR-level. Per-PR rows. This step changes no go-getter behaviour a person sees, so it is not an intervention.
 Done-when: the test feeds fixture events and PR JSON and gets exact figures for all three denominators; the report prints no prompt text; the series for every day since 2026-10-09 regenerates from committed or retained data, with each day's source named.
 
 ### J2 Quality ledger for "same quality" — [ ] ‖
+Issue: #377
 Class: implement · Needs: none · Check: `node --test compiler/test/metrics-quality.test.mjs`
 Context: decision 0154 says quality is unchanged; no instrument reads it. Meters live in `docs/meters/` (decision 0179); the meter format is in `docs/meters/questions-to-first-plan.md`.
 Do: per merged outcome record the first-pass gate result, gate retries, post-merge rework (a fix commit touching the same files within N days), reverts, CI flake and review findings. Add a meter in `docs/meters/` whose non-inferiority margin is written before any reading is taken. The rework window N is 7 days (owner, 2026-11-11), written in the meter beside the margin. Report a per-PR table and a per-day rate.
@@ -50,12 +52,14 @@ Done-when: the design is in this file with all five parts and a date earlier tha
 ## Phase 3 — Close the enforcement gaps (parallel with Phase 2)
 
 ### J4 Branch protection is read so tier 3 can be claimed — [ ] ‖
+Issue: #378
 Class: implement · Needs: none · Check: `node --test compiler/test/coverage-branch-protection.test.mjs`
 Context: tier 3 is claimed from CI links read for 53 candidates; branch protection was never read, so "CI required" is untested. `go-getter coverage` is the report; enforcement-hardening step H10 makes it honest elsewhere.
 Do: `go-getter coverage` reads the default branch's required checks through the tracker/`gh` adapter and reports tier 3 as `ci-required`, `ci-not-required` or `unreadable`. A failed or unauthorised read is `unreadable`, never `ci-required`.
 Done-when: the test covers the three outcomes with fixture API responses; `coverage` prints the tier 3 state; `unreadable` is reported when the read fails.
 
 ### J5 The bypass suite leaves a rerunnable record — [ ] ‖
+Issue: #379
 Class: implement · Needs: none · Check: `node --test compiler/test/bypass-record.test.mjs`
 Context: `evals/bypass.mjs` prints predicted against observed (P6) but writes nothing a reader can re-run later; the 2026-11-08 baseline in `enforcement-hardening.md` H0 is in prose. Its rule: predictions are committed before a run and never edited after a result.
 Do: `go-getter eval bypass` writes its raw result per run (commit, class ids, predicted, observed, host) to a file under version control, such as `evals/results/<date>-<commit>.json`. Add a check that a class present in a result has its prediction committed no later than the run's commit.
