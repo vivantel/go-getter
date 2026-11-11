@@ -41,9 +41,10 @@ Done-when: the test derives each column from fixture git and PR data; the meter 
 ## Phase 2 — Fix the design before the window opens
 
 ### J3 A comparison design — [ ]
-Class: plan · Needs: J1, J2 · Human: the owner writes the cutoff date; nothing here is measured until they do · Check: `npm run check:plans`
+Class: plan · Needs: J1, J2 · Human: none for the rule; the cutoff date is written here when J1 and J2 have both merged · Check: `npm run check:plans`
 Context: decision 0199 item 7 requires the cutoff and rule to be written before the window opens. Chosen by the owner 2026-11-11: **(a) an interrupted series** with interventions labelled by date and the pre-period taken from the transcripts and PRs that exist. Not chosen: (b) matched task kinds with a feature on and off; (c) alternating weeks for one capability.
-Do: write the rest of the design in this file: the cutoff date (owner), the rule for what counts as an intervention (a go-getter change that can move a metric, labelled with its merge date), non-interventions as controls (days without change), the attribution method, the breakers (easy tasks chosen, familiarity) and the analysis.
+Cutoff rule (owner, 2026-11-11): the cutoff is the merge date of the later of J1 and J2, so the instruments exist and change no behaviour; everything before it is baseline, read from retained data, and the date is recorded on this line when it is known: **Cutoff date: pending.**
+Do: write the rest of the design in this file: the cutoff date once known, the rule for what counts as an intervention (a go-getter change that can move a metric, labelled with its merge date), non-interventions as controls (days without change), the attribution method, the breakers (easy tasks chosen, familiarity) and the analysis.
 Done-when: the design is in this file with all five parts and a date earlier than the first reading it governs.
 
 ## Phase 3 — Close the enforcement gaps (parallel with Phase 2)
@@ -68,17 +69,21 @@ Done-when: five readings are in the review log with goal kinds, and the median i
 
 ## Phase 4 — Replication and the bar
 
-### J7 Publishability bar for the throughput metric — [!]
-Class: plan · Needs: J1, J2 · Human: the owner sets the numbers; a target set after seeing a reading does not count · Check: `npm run check:plans`
+### J7 Publishability bar for the throughput metric — [x]
+Class: plan · Needs: J1, J2 · Human: set by the owner 2026-11-11, before any reading under J1 or J2 · Check: `npm run check:plans`
 Context: decision 0154 sets the floor (5 to 10 times fewer human minutes per merged outcome, stretch 50 times, quality unchanged); decision 0199 item 8 says a result below the floor is reported as such.
-Do: before the next window, write in this file the floor stated per denominator (from J1), the minimum n (weeks or PRs), the quality margin (from J2) and what is reported when only part is met.
-Done-when: all four are written with a date before the first reading they govern.
+The bar (owner, 2026-11-11):
+- **Floor per denominator:** the claim is stated on owner attention with the 10-minute idle cap (J1), where decision 0154 defines the metric as human minutes. Active agent time and the PR-level figure are reported beside it as context and never as the headline.
+- **Minimum n:** at least 4 weeks and at least 30 merged PRs in the window, both.
+- **Quality margin:** rework (a fix commit touching the same files within 7 days) may exceed the baseline rate by at most 5 percentage points, and reverts per merged PR may not rise (J2).
+- **When only part is met:** report what was measured with the unmet condition beside it (for example "3.1 weeks, below the minimum") and make no claim against the floor. A quality result outside the margin voids the speedup claim (stop rule, 0158). A result below the floor is reported as such.
+Done-when: the four parts above are written with a date before the first reading they govern.
 
-### J8 Second operator or second repository — [!]
-Class: implement · Needs: J1 · Human: needs another person or repository willing to run it · Check: `node --test compiler/test/metrics-export.test.mjs`
+### J8 Second operator or second repository — [ ]
+Class: implement · Needs: J1 · Human: someone other than the owner must run the export; build first, recruit once it exists (owner, 2026-11-11) · Check: `node --test compiler/test/metrics-export.test.mjs`
 Context: one operator means no replication. Meters mark data class `internal`.
 Do: add an opt-in, metadata-only export of the J1 series (data class `internal`) so one more operator or repository can produce the same report.
-Done-when: another operator's series exists, or this file records the reason the claim stays n=1 and the paper words it that way.
+Done-when: another operator's series exists, or by the paper's submission this file records the reason the claim stays n=1 and the paper words it that way.
 
 ## Order
 
