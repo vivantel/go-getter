@@ -4,7 +4,6 @@ title: A release the user asks for in the chat is the approval to merge it; no c
 status: active
 date: 2026-11-04
 tags: [hooks, enforcement, security]
-track: product
 accepted-by: sergemso
 ---
 

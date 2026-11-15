@@ -4,7 +4,6 @@ title: The verification-gate pack recommends detected test, lint and typecheck c
 status: active
 date: 2026-10-05
 tags: [practice-packs, verification, harness]
-track: product
 accepted-by: sergemso
 ---
 

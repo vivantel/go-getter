@@ -4,7 +4,6 @@ title: Telemetry is not exported
 status: active
 date: 2026-10-05
 tags: [practice-packs, observability, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   telemetry-export: none

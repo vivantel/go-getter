@@ -4,8 +4,6 @@ title: operation status compares strictly and reads local readings only
 status: active
 date: 2026-11-04
 tags: [outcomes, observability]
-kind: decision
-governed-by: 0177-each-part-of-the-framework-owns-one-artifact-and-one-kind-of-decision
 last-verified: 2026-11-04
 ---
 

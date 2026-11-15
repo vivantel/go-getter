@@ -4,7 +4,6 @@ title: Retrieval contract v0 is three files (index policy, declaration, endpoint
 status: active
 date: 2026-10-12
 tags: [practice-packs, hooks, security]
-track: product
 accepted-by: sergemso
 governed-facts: [0038-virage-integration-surface]
 ---

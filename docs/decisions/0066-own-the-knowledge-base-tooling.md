@@ -4,10 +4,11 @@ title: go-getter owns its knowledge-base tooling and artifact format; nothing is
 status: active
 date: 2026-10-05
 tags: [knowledge-base, configuration, vendoring, packaging]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - The compiler builds all skills and templates and support files from src/ and nothing reads a vendor directory
+  - check: "The compiler builds all skills and templates and support files from src/ and nothing reads a vendor directory"
+    enforced-by: unverified
+    last-verified: 2026-10-05
 ---
 
 ## Decision

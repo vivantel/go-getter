@@ -4,7 +4,6 @@ title: The commands approved to receive a use path are listed
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   use-commands: ""

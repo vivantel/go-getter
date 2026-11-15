@@ -4,7 +4,6 @@ title: The go-getter-init skill carries a copy of the CLI and runs it from its o
 status: active
 date: 2026-10-07
 tags: [packaging, nodejs, tooling, generated-files]
-track: process
 accepted-by: sergemso
 ---
 

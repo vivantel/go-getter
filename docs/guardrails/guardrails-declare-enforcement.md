@@ -4,14 +4,14 @@ title: Every guardrail must declare how it is enforced
 status: active
 date: 2026-10-04
 tags: [enforcement, guardrail, configuration]
-governed-by: 0009-tiered-enforcement-git-ci-floor
-grounded-in: [0009-tiered-enforcement-git-ci-floor, 0066-own-the-knowledge-base-tooling]
+governed-by: [0009-tiered-enforcement-git-ci-floor]
 derivation-note: Given tiered enforcement (0009) read only from frontmatter (0066), a guardrail without a `go-getter.enforcement` entry is unenforceable and must be flagged.
 go-getter:
   enforcement:
     - tier: 3
       check: "Every guardrail has a go-getter.enforcement entry; tier 2/3 entries have run; tier-1-only is marked advisory"
       run: "npm run check:guardrails"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

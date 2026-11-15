@@ -4,7 +4,6 @@ title: Secret scanning and PII masking share one pattern library, scan added lin
 status: active
 date: 2026-10-10
 tags: [governance, security, enforcement]
-track: product
 accepted-by: sergemso
 ---
 

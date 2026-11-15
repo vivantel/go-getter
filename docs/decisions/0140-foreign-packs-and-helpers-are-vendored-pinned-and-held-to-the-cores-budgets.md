@@ -4,7 +4,6 @@ title: Foreign packs and helpers are vendored by digest, trusted through the pul
 status: active
 date: 2026-10-12
 tags: [architecture, roadmap, practice-packs, cost]
-track: product
 accepted-by: sergemso
 ---
 

@@ -4,7 +4,6 @@ title: Partial features merge behind a flag until accepted, and flaky required c
 status: active
 date: 2026-11-03
 tags: [coordination, ci, verification]
-track: process
 accepted-by: sergemso
 ---
 

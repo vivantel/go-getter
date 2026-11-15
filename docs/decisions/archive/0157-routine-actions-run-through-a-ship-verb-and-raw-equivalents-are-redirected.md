@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request
 date: 2026-11-01
 tags: [hooks, enforcement, dogfooding]
-track: process
 accepted-by: sergemso
 ---
 

@@ -4,7 +4,6 @@ title: Work is delegated to planner, explorer, implementer, reviewer and tester 
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   roles:

@@ -4,7 +4,6 @@ title: update and reconfigure treat pack-rendered artifacts that are still draft
 status: active
 date: 2026-10-09
 tags: [generated-files, configuration]
-track: process
 accepted-by: sergemso
 governed-facts: [0033-apply-keeps-no-record-of-what-it-wrote]
 ---

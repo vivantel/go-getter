@@ -4,7 +4,6 @@ title: Vendor the core at a kms release tag, checked by check core-pin and updat
 status: draft
 date: 2026-11-15
 tags: [knowledge-base, vendoring, packaging]
-track: process
 ---
 
 ## Decision

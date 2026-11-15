@@ -4,7 +4,6 @@ title: Host prompt logging is disabled on every host
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, observability]
-track: process
 accepted-by: sergemso
 go-getter:
   prompt-logging:

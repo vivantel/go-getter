@@ -4,7 +4,6 @@ title: MCP servers are allowlisted by name; their tool calls are classed read or
 status: active
 date: 2026-10-12
 tags: [hooks, enforcement, roadmap, practice-packs]
-track: product
 accepted-by: sergemso
 ---
 

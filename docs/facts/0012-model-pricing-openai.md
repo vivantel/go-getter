@@ -4,8 +4,6 @@ title: OpenAI model pricing including cached input
 status: active
 date: 2026-10-04
 tags: [cost, model-routing, governance]
-kind: environmental
-governed-by: 0016-quality-gated-cache-aware-model-routing
 expires: 2027-01-04
 go-getter:
   models:

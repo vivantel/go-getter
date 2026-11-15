@@ -4,7 +4,6 @@ title: Human attention goes to plan approval, four ask-triggers and batched rele
 status: active
 date: 2026-11-01
 tags: [hooks, roadmap, agent-roles]
-track: process
 accepted-by: sergemso
 ---
 

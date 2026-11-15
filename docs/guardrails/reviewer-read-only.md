@@ -4,8 +4,7 @@ title: The reviewer must not modify files
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, guardrail]
-governed-by: 0039-reviewer-access
-grounded-in: [0039-reviewer-access]
+governed-by: [0039-reviewer-access]
 derivation-note: Given a findings-only reviewer, a reviewer that edits marks its own work.
 go-getter:
   enforcement:
@@ -18,6 +17,7 @@ go-getter:
   generated-by: orchestration@0.1.5
   pack-answer: reviewer
   pack-option: read-only
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

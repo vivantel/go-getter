@@ -168,7 +168,7 @@ Done-when: the tests pass; the replay in `evals/grants.mjs` is unchanged (15 of 
 
 ### H18 Policy-file and approvals-store protection covers git and tool spellings (H4b) — [ ]
 Class: implement · Needs: H4 · Check: `node --test compiler/test/policy-write-protection.test.mjs` and `eval bypass`
-Finding (S3, S5, S6, T3; the plan mentioned "H4b, small" with no step): not stopped today although they change an active guardrail or its availability: `git checkout HEAD~1 -- docs/guardrails/g.md`, `git restore --source=...`, `git rm`, `git mv`, `git apply`, `rm -r docs/guardrails`, `awk -i inplace`, `vim -es`, `dd of=`, globs and computed paths; a script that builds the store name (`'ap'+'provals.json'`); `ln -s / /tmp/x; rm -rf /tmp/x/` passes the temp exemption.
+Finding (S3, S5, S6, T3; the plan mentioned "H4b, small" with no step): not stopped today although they change an active guardrail or its availability: `git checkout HEAD~1 -- docs/guardrails/<id>.md`, `git restore --source=...`, `git rm`, `git mv`, `git apply`, `rm -r docs/guardrails`, `awk -i inplace`, `vim -es`, `dd of=`, globs and computed paths; a script that builds the store name (`'ap'+'provals.json'`); `ln -s / /tmp/x; rm -rf /tmp/x/` passes the temp exemption.
 Red: one row per spelling above in the bypass suite with a prediction first, plus unit tests for CRLF files, frontmatter past line 20, and a symlink in the temp exemption. Fails today.
 Do: add the git verbs and the in-place tools to the write class; resolve real paths before the temp exemption; check the store by content at read time (the HMAC check named in H4) instead of by filename; read the status with `parseFrontmatter` (D3).
 Done-when: the rows are observed `blocked`; no false-block increase (M5).

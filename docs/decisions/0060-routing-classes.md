@@ -4,7 +4,6 @@ title: Routing distinguishes explore, plan, implement, review and debug
 status: active
 date: 2026-10-05
 tags: [practice-packs, model-routing, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   routing-classes:

@@ -4,8 +4,7 @@ title: No credentials or non-public information may be committed
 status: active
 date: 2026-10-04
 tags: [security, licensing, guardrail]
-governed-by: 0012-public-mit-repo
-grounded-in: [0012-public-mit-repo]
+governed-by: [0012-public-mit-repo]
 derivation-note: Given a public repo (0012), anything committed, including history, is world-readable, so secrets and private data must never enter it.
 go-getter:
   enforcement:
@@ -15,6 +14,7 @@ go-getter:
     - tier: 3
       check: "No tracked file is an env file or key material"
       run: "builtin:deny-path paths=.env,.env.*,*.pem,*.key,id_rsa,id_ed25519"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

@@ -4,7 +4,6 @@ title: The cost-routing pack recommends five task classes, balanced tiers, two e
 status: active
 date: 2026-10-05
 tags: [practice-packs, model-routing, cost]
-track: product
 accepted-by: sergemso
 ---
 

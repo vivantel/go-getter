@@ -4,8 +4,7 @@ title: Detailed procedures live in skills loaded on demand
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, guardrail]
-governed-by: 0034-procedure-delivery
-grounded-in: [0034-procedure-delivery]
+governed-by: [0034-procedure-delivery]
 derivation-note: Given the delivery decision, procedures placed elsewhere cost tokens or go unread.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: context@0.3.1
   pack-answer: procedures
   pack-option: skills-on-demand
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

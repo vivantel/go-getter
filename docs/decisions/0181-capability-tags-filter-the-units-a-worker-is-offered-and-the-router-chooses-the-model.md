@@ -4,7 +4,6 @@ title: Capability tags filter the units a worker is offered, and the router stil
 status: active
 date: 2026-11-03
 tags: [coordination, model-routing, agent-roles]
-track: process
 accepted-by: sergemso
 ---
 

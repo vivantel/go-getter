@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0176-go-getter-coordinates-humans-and-agents-to-achieve-outcomes-in-any-domain
 date: 2026-10-04
 tags: [positioning, harness, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

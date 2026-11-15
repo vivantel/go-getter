@@ -4,8 +4,7 @@ title: A step is not done while its verification checks fail
 status: active
 date: 2026-10-06
 tags: [practice-packs, verification, guardrail]
-governed-by: 0059-verification-gate
-grounded-in: [0059-verification-gate]
+governed-by: [0059-verification-gate]
 derivation-note: Given the quality bar of routing is the verification checks (0016, 0031), completion must wait for them, since an instruction alone lets a failing step end.
 go-getter:
   enforcement:
@@ -17,6 +16,7 @@ go-getter:
   generated-by: verification-gate@0.4.0
   pack-answer: gate
   pack-option: block
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

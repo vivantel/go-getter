@@ -4,7 +4,6 @@ title: The sources allowed to fill a sink path are listed
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   sink-sources: ""

@@ -4,7 +4,6 @@ title: A meter may name a command that takes its reading
 status: draft
 date: 2026-11-05
 tags: [coordination, observability, knowledge-base]
-track: product
 ---
 
 ## Decision

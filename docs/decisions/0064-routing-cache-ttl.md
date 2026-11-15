@@ -4,7 +4,6 @@ title: The prompt cache lives one hour in the main session and five minutes in s
 status: active
 date: 2026-10-05
 tags: [practice-packs, model-routing, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   cache-ttl:

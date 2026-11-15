@@ -4,7 +4,6 @@ title: The repo is public on GitHub as vivantel/go-getter under the MIT license
 status: active
 date: 2026-10-04
 tags: [licensing, packaging, security]
-track: process
 accepted-by: sergemso
 ---
 

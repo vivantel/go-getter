@@ -4,7 +4,6 @@ title: An approved plan and the run-grants answer are the authority to start a r
 status: active
 date: 2026-11-04
 tags: [hooks, enforcement, roadmap]
-track: product
 ---
 
 ## Decision

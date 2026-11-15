@@ -4,7 +4,6 @@ title: Classes start at balanced tiers and the lowest effort they allow
 status: active
 date: 2026-10-05
 tags: [practice-packs, model-routing, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   routing-start-tiers:

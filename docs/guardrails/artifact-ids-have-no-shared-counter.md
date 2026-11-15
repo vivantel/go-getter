@@ -4,13 +4,14 @@ title: A new fact or decision takes a unit-scoped draft id, and index rows are g
 status: draft
 date: 2026-11-03
 tags: [coordination, knowledge-base, guardrail]
-governed-by: 0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units
-grounded-in: [0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units, 0041-coordination-hotspots-and-contradictions-in-the-current-design]
+governed-by: [0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units]
+grounded-in: [0041-coordination-hotspots-and-contradictions-in-the-current-design]
 derivation-note: Given that parallel units each add artifacts, a shared next-number and four hand-edited index files collide on every pair of them.
 go-getter:
   enforcement:
     - tier: 1
       check: Instruction; file a new fact or decision as draft-<unit>-<slug> and leave INDEX.md rows to the generator
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

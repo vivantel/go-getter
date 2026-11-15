@@ -4,7 +4,6 @@ title: Behavior is a layer over the four artifact types, with no generated runbo
 status: active
 date: 2026-10-10
 tags: [knowledge-management, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

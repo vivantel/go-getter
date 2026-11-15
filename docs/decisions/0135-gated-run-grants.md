@@ -4,7 +4,6 @@ title: Outward commands a run or a remembered approval may allow are listed
 status: active
 date: 2026-10-11
 tags: [practice-packs, hooks]
-track: process
 accepted-by: sergemso
 go-getter:
   run-grants: git-push, pr-create, pr-merge, pr-close

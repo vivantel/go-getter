@@ -4,7 +4,6 @@ title: The verb system is a closed set of nouns, atomic noun-action verbs, and r
 status: draft
 date: 2026-11-08
 tags: [architecture, compiler, enforcement]
-track: product
 ---
 
 ## Decision

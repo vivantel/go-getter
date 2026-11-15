@@ -4,7 +4,6 @@ title: An autonomous run is a plan range the operator starts, with approve-once 
 status: active
 date: 2026-10-11
 tags: [hooks, enforcement, roadmap, practice-packs]
-track: product
 accepted-by: sergemso
 ---
 

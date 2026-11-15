@@ -4,7 +4,6 @@ title: At most none work units of one feature are claimed at once
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   wip-per-feature: none
   generated-by: orchestration@0.1.4

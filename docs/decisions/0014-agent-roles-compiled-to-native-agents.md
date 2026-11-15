@@ -4,7 +4,6 @@ title: Agent roles are declared once and compiled to native host agents' subagen
 status: active
 date: 2026-10-04
 tags: [agent-roles, compiler, practice-packs, harness]
-track: product
 accepted-by: sergemso
 ---
 

@@ -4,7 +4,6 @@ title: Secrets in added lines are scanned before a commit and a push
 status: active
 date: 2026-10-10
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: sanitization@0.3.0

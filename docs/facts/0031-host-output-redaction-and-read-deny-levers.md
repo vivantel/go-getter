@@ -4,8 +4,6 @@ title: Copilot, Codex, Gemini CLI and Kilo hooks can replace a tool result; Curs
 status: active
 date: 2026-10-06
 tags: [host-agents, governance, security, hooks]
-kind: environmental
-governed-by: 0072-restricted-paths-have-access-modes
 expires: 2027-01-04
 ---
 

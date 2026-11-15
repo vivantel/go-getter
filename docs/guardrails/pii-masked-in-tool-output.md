@@ -4,8 +4,7 @@ title: Personal data is masked in tool output
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, security, guardrail]
-governed-by: 0113-pii-masking
-grounded-in: [0113-pii-masking, 0106-scanning-and-masking-share-one-pattern-library]
+governed-by: [0113-pii-masking]
 derivation-note: Given the agent must not read personal data it does not need (0106), tool output that carries it must be masked before the agent sees it, where the host allows.
 go-getter:
   enforcement:
@@ -17,6 +16,7 @@ go-getter:
   generated-by: sanitization@0.7.0
   pack-answer: pii-masking
   pack-option: on
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

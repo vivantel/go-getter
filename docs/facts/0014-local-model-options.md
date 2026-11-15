@@ -4,8 +4,6 @@ title: Local and custom model endpoints each host agent can use
 status: active
 date: 2026-10-04
 tags: [governance, model-routing, host-agents]
-kind: derived
-governed-by: 0018-data-classes-constrain-routing-with-tiered-dlp
 ---
 
 Derived from facts 0003–0008. Local endpoints have no per-token price; their cost is infrastructure and their eligibility is decided by data class (0018).

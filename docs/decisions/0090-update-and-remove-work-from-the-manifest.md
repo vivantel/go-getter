@@ -4,7 +4,6 @@ title: go-getter update re-renders from recorded answers, apply --remove undoes 
 status: active
 date: 2026-10-06
 tags: [generated-files, configuration, dogfooding]
-track: process
 accepted-by: sergemso
 governed-facts: [0033-apply-keeps-no-record-of-what-it-wrote]
 ---

@@ -4,7 +4,6 @@ title: Where the current design assumes one owner, one machine and shared files,
 status: active
 date: 2026-11-03
 tags: [coordination, roadmap, architecture]
-kind: environmental
 last-verified: 2026-11-03
 ---
 

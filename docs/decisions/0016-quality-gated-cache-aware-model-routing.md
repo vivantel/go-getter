@@ -4,10 +4,11 @@ title: Model routing is a quality-gated cascade that minimizes expected total st
 status: active
 date: 2026-10-04
 tags: [model-routing, cost, harness, verification]
-track: product
 accepted-by: sergemso
 fitness-functions:
-  - Routing unit tests include a case where a warm-cache larger model beats a cold-cache cheaper model
+  - check: "Routing unit tests include a case where a warm-cache larger model beats a cold-cache cheaper model"
+    enforced-by: unverified
+    last-verified: 2026-10-04
 ---
 
 ## Decision

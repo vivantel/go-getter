@@ -4,8 +4,7 @@ title: Work must not happen on the default branch
 status: active
 date: 2026-10-10
 tags: [practice-packs, git-hooks, guardrail]
-governed-by: 0102-default-branch
-grounded-in: [0102-default-branch]
+governed-by: [0102-default-branch]
 derivation-note: Given every change goes through a branch and a pull request, a commit or push on the default branch skips review and CI.
 go-getter:
   enforcement:
@@ -17,6 +16,7 @@ go-getter:
   generated-by: git-workflow@0.1.3
   pack-answer: default-branch
   pack-option: protect
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

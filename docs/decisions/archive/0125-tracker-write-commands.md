@@ -4,7 +4,6 @@ title: The commands that write to the tracker are listed
 status: deprecated
 date: 2026-10-11
 tags: [practice-packs, roadmap]
-track: process
 accepted-by: sergemso
 go-getter:
   tracker-write-commands: go-getter plan issue create, go-getter plan issue comment, go-getter plan issue close, .go-getter/bin/go-getter plan issue create, .go-getter/bin/go-getter plan issue comment, .go-getter/bin/go-getter plan issue close, node compiler/bin/go-getter.mjs plan issue create, node compiler/bin/go-getter.mjs plan issue comment, node compiler/bin/go-getter.mjs plan issue close

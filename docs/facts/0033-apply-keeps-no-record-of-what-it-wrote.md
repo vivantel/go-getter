@@ -4,8 +4,6 @@ title: Until the manifest (0089), apply kept no record of what it wrote, so it c
 status: active
 date: 2026-10-06
 tags: [generated-files, enforcement]
-kind: environmental
-governed-by: 0089-apply-records-ownership-in-a-manifest
 expires: 2027-01-04
 ---
 

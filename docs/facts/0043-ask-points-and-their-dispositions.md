@@ -4,7 +4,6 @@ title: Every point where go-getter asks a human, what it protects and its dispos
 status: active
 date: 2026-11-04
 tags: [hooks, enforcement, governance, roadmap]
-kind: environmental
 last-verified: 2026-11-04
 ---
 

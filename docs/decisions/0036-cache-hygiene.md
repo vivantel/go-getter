@@ -4,7 +4,6 @@ title: No mid-task model, effort or instruction-file change; switches are confir
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: context@0.1.0

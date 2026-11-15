@@ -4,11 +4,12 @@ title: Restricted paths have access modes deny, use and sink, enforced in layers
 status: active
 date: 2026-10-05
 tags: [governance, security, enforcement, hooks]
-track: product
 accepted-by: sergemso
 governed-facts: [0027-claude-code-secret-use-and-output-redaction-levers]
 fitness-functions:
-  - "A hook-runtime test shows a tool call that only names a restricted path inside prose is not blocked, and a read of the path is blocked"
+  - check: "A hook-runtime test shows a tool call that only names a restricted path inside prose is not blocked, and a read of the path is blocked"
+    enforced-by: unverified
+    last-verified: 2026-10-05
 ---
 
 ## Decision

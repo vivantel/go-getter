@@ -4,7 +4,6 @@ title: A lease lapses 5 minutes after its expiry, and a clock that far off the h
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   clock-skew: "5"
   generated-by: orchestration@0.1.3

@@ -4,7 +4,6 @@ title: apply records what it owns in .go-getter/manifest.json and never overwrit
 status: active
 date: 2026-10-06
 tags: [generated-files, enforcement, configuration]
-track: process
 accepted-by: sergemso
 governed-facts: [0033-apply-keeps-no-record-of-what-it-wrote]
 ---

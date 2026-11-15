@@ -4,7 +4,6 @@ title: The first behavior evals run init with scripted answers, with no model an
 status: active
 date: 2026-10-05
 tags: [verification, eval, ci]
-track: process
 accepted-by: sergemso
 ---
 

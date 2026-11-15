@@ -4,7 +4,6 @@ title: Watcher noise is a project policy, quiet by default, enforced by a wrappe
 status: active
 date: 2026-10-05
 tags: [harness, cost, hooks, practice-packs]
-track: process
 accepted-by: sergemso
 governed-facts: [0026-claude-code-watcher-and-hook-context-levers]
 ---

@@ -4,7 +4,6 @@ title: A decision stays draft until the owner accepts it or it is adopted, which
 status: active
 date: 2026-10-06
 tags: [knowledge-management, dogfooding]
-track: process
 accepted-by: sergemso
 ---
 

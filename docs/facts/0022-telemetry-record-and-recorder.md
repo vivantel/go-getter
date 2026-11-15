@@ -4,8 +4,6 @@ title: Telemetry records allow only short-identifier and numeric metadata fields
 status: active
 date: 2026-10-05
 tags: [observability, practice-packs, compiler]
-kind: decision
-governed-by: 0030-telemetry-pack-defaults
 ---
 
 - `telemetry/schema.mjs` allows `ts`, `event`, `host`, `model`, `effort`, `taskClass`, `trigger`, `guardrail` (a lowercase kebab-case guardrail id, optional; set on denied `pre-tool` and `gate:stop` records), `tokens` (`input`, `cacheRead`, `cacheWrite`, `output`), `cost`, `outcome`, `escalations`, `redactions`, and on `approval` events only `action` (a key of the class table in `telemetry/approval-class.mjs`) and `class` (`irreversible` or `routine`, from that table; decision 0206); the outcomes `approved`, `rejected`, `timed-out` belong to `approval` events; any other field, or a string that is not a short identifier, is rejected.

@@ -4,7 +4,6 @@ title: A pack question may be tiered advanced; the interview then takes its reco
 status: active
 date: 2026-10-31
 tags: [interview, practice-packs, configuration]
-track: process
 accepted-by: sergemso
 ---
 

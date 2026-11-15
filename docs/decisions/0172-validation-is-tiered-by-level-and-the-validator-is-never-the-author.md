@@ -4,7 +4,6 @@ title: Validation is tiered by level, strictness rises up the tree, and the vali
 status: active
 date: 2026-11-03
 tags: [coordination, verification, agent-roles]
-track: process
 accepted-by: sergemso
 ---
 

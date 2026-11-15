@@ -4,7 +4,6 @@ title: Rules are enforced in tiers, with host-independent git hooks and CI as th
 status: active
 date: 2026-10-04
 tags: [enforcement, git-hooks, ci, hooks]
-track: process
 accepted-by: sergemso
 ---
 

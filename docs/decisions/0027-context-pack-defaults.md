@@ -4,7 +4,6 @@ title: The context pack recommends a 150-line instruction cap, skills on demand,
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, cost]
-track: product
 accepted-by: sergemso
 ---
 

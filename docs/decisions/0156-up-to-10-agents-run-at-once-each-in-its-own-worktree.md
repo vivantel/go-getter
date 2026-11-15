@@ -4,7 +4,6 @@ title: Up to 10 agents run at once, each in its own worktree on its own branch
 status: active
 date: 2026-11-01
 tags: [practice-packs, agent-roles, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   max-concurrent: "10"

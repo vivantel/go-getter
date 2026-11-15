@@ -4,7 +4,6 @@ title: We publish a position-and-system paper on go-getter as a deterministic ed
 status: active
 date: 2026-11-04
 tags: [research, positioning, roadmap]
-track: process
 accepted-by: sergemso
 ---
 

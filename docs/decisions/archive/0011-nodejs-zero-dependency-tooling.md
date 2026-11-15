@@ -5,10 +5,11 @@ status: superseded
 superseded-by: 0019-node-prerequisite-oldest-supported-lts
 date: 2026-10-04
 tags: [nodejs, tooling, compiler]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - package.json declares no runtime dependencies
+  - check: "package.json declares no runtime dependencies"
+    enforced-by: unverified
+    last-verified: 2026-10-04
 ---
 
 ## Decision

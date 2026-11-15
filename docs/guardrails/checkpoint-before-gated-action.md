@@ -4,8 +4,7 @@ title: A gated action is preceded by a checkpoint
 status: active
 date: 2026-10-10
 tags: [practice-packs, hooks, guardrail]
-governed-by: 0098-checkpoint-before-gated-action
-grounded-in: [0098-checkpoint-before-gated-action, 0097-checkpoints-are-hidden-git-refs-taken-before-gated-actions]
+governed-by: [0098-checkpoint-before-gated-action]
 derivation-note: Given work in progress must be recoverable after an irreversible command (0097), a checkpoint must exist before the command runs, since the host cannot undo what a shell command did.
 go-getter:
   enforcement:
@@ -17,6 +16,7 @@ go-getter:
   generated-by: checkpointing@0.2.0
   pack-answer: creation
   pack-option: hook-and-instruction
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

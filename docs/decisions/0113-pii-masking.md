@@ -4,7 +4,6 @@ title: Personal data in tool output is masked with per-session pseudonyms
 status: active
 date: 2026-10-10
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: sanitization@0.4.0

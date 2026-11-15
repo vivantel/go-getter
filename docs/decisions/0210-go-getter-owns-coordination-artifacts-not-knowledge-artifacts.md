@@ -4,7 +4,6 @@ title: go-getter owns coordination artifacts and the harness, not the knowledge 
 status: draft
 date: 2026-11-15
 tags: [knowledge-base, packaging]
-track: process
 ---
 
 ## Decision

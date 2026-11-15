@@ -4,13 +4,16 @@ title: go-getter tooling is zero-dependency Node.js, requiring the oldest suppor
 status: active
 date: 2026-10-04
 tags: [nodejs, tooling, compiler, enforcement]
-track: process
 accepted-by: sergemso
 governed-facts: [0010-nodejs-release-schedule, 0009-host-capability-matrix]
 fitness-functions:
-  - package.json declares no runtime dependencies
-  - engines.node equals the oldest Node.js LTS line still supported per the official schedule
-expires: 2027-04-30 (end of life of the current floor, Node 22)
+  - check: "package.json declares no runtime dependencies"
+    enforced-by: unverified
+    last-verified: 2026-10-04
+  - check: "engines.node equals the oldest Node.js LTS line still supported per the official schedule"
+    enforced-by: unverified
+    last-verified: 2026-10-04
+expires-when: "2027-04-30 (end of life of the current floor, Node 22)"
 ---
 
 ## Decision

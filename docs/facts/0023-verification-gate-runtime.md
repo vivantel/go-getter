@@ -4,8 +4,6 @@ title: The verification gate runs adopted check commands by task class and block
 status: active
 date: 2026-10-06
 tags: [verification, practice-packs, compiler, hooks]
-kind: decision
-governed-by: 0031-verification-gate-pack-defaults
 ---
 
 - `go-getter verify --class <explore|plan|implement|review|debug>` runs the checks of the class (`compiler/src/verify.mjs`): implement and debug run the commands of the adopted decisions (`go-getter.verify-scope`, `verify-<check>-command` for each check of the catalog of decision 0071; an empty command is skipped) whose `verify-where` placement is `local` or `both` (no placement, as adopted before pack 0.2.0: all local); review runs every tier-3 guardrail check when the bar is verdict + conform; explore and plan have none. Exit 0 when all pass or none are configured, 1 on a failure, 2 on a bad class. Check commands run through the shell, with the same trust as a literal guardrail `run` command.

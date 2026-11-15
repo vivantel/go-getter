@@ -4,7 +4,6 @@ title: A host adapter answers nine questions as plain data and shares the rest
 status: draft
 date: 2026-10-12
 tags: [architecture, compiler, host-agents]
-track: product
 ---
 
 ## Decision

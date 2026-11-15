@@ -8,6 +8,8 @@ id,title,tags,status
 0007-kms-artifacts-as-configuration-source-of-truth,"A project's chosen practices live only as knowledge-base artifacts, with machine-readable data under a go-getter frontmatter key","knowledge-base, configuration, enforcement",superseded
 0011-nodejs-zero-dependency-tooling,"Compiler and enforcement scripts are Node.js ESM with zero runtime dependencies","nodejs, tooling, compiler",superseded
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",superseded
+0042-max-concurrent-agents,"At most 3 agents run at once","practice-packs, agent-roles, harness",superseded
+0052-telemetry-retention,"The metadata log keeps 30 days","practice-packs, observability, harness",superseded
 0068-post-v0.1-milestone-sequence,"v0.2 hardens the agent core in three waves; git workflow and spec workflow follow in v0.3","milestones, roadmap, harness",superseded
 0073-spec-workflow-through-a-tool-adapter,"The spec and change workflow is an SDLC pack over a spec-tool adapter, OpenSpec first, with no native spec format","roadmap, practice-packs, tooling",superseded
 0074-keep-warm-is-cost-model-advice,"Cache keep-warm is advice from the cost model, not an autonomous pinger skill","cost, model-routing, harness",deprecated
@@ -15,5 +17,9 @@ id,title,tags,status
 0120-gated-commands-may-be-freed-by-name,"A project may let named outward-facing commands run without a human; irreversible ones never","practice-packs, hooks, enforcement",superseded
 0121-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0122-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
+0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",superseded
 0125-tracker-write-commands,"The commands that write to the tracker are listed","practice-packs, roadmap",deprecated
+0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0128-post-v0.3-milestone-sequence,"v0.4 is the autonomous run contract with approve-once, then testing and memory; adapters, helpers and MCP follow","milestones, roadmap, harness",superseded
+0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",superseded
+0201-the-metadata-log-keeps-365-days,"The metadata log keeps 365 days","observability, harness",superseded

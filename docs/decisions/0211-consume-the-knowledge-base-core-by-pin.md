@@ -4,7 +4,6 @@ title: go-getter consumes the knowledge-base core by pinned schema version; it s
 status: draft
 date: 2026-11-15
 tags: [knowledge-base, packaging, vendoring]
-track: process
 ---
 
 ## Decision

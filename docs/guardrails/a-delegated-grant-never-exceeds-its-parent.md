@@ -4,8 +4,7 @@ title: A delegated grant never exceeds its parent's on any dimension
 status: draft
 date: 2026-11-03
 tags: [coordination, hooks, guardrail]
-governed-by: 0171-grants-only-narrow-down-the-delegation-tree
-grounded-in: [0171-grants-only-narrow-down-the-delegation-tree, 0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops]
+governed-by: [0171-grants-only-narrow-down-the-delegation-tree]
 derivation-note: Given that agents may sub-delegate without a human, a grant that could widen would let any worker escape the authority a human wrote.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
     - tier: 2
       check: go-getter work grant refuses a grant wider than its parent's on any dimension or carrying an always-human action, every reader ignores such an entry, and go-getter verify fails while the ledger holds one
       run: node compiler/bin/go-getter.mjs work grant-check
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

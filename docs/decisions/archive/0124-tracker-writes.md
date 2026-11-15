@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0160-tracker-writes
 date: 2026-10-11
 tags: [practice-packs, roadmap]
-track: process
 accepted-by: sergemso
 go-getter:
   tracker-writes: ask

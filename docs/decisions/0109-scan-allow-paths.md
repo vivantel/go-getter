@@ -4,7 +4,6 @@ title: The secret scan skips a declared list of paths
 status: active
 date: 2026-10-10
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   scan-allow-paths: compiler/test/**

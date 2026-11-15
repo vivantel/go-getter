@@ -4,7 +4,6 @@ title: An enforcement entry may say whether its check is derived from the guardr
 status: draft
 date: 2026-11-05
 tags: [enforcement, guardrail, knowledge-base]
-track: product
 ---
 
 ## Decision

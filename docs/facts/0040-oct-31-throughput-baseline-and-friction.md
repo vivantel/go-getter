@@ -4,7 +4,6 @@ title: Oct 31 throughput baseline and where the owner's time went
 status: active
 date: 2026-11-01
 tags: [roadmap, dogfooding, cost]
-kind: environmental
 last-verified: 2026-11-01
 ---
 

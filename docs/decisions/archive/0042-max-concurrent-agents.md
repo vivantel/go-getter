@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   max-concurrent: "3"

@@ -4,14 +4,15 @@ title: apply, update and remove must not overwrite or delete a modified owned it
 status: active
 date: 2026-10-06
 tags: [generated-files, enforcement, guardrail]
-governed-by: 0089-apply-records-ownership-in-a-manifest
-grounded-in: [0089-apply-records-ownership-in-a-manifest, 0033-apply-keeps-no-record-of-what-it-wrote]
+governed-by: [0089-apply-records-ownership-in-a-manifest]
+grounded-in: [0033-apply-keeps-no-record-of-what-it-wrote]
 derivation-note: Given 0089 skips modified owned items, a command that overwrote or deleted one would lose a user's edit with nothing to show for it.
 go-getter:
   enforcement:
     - tier: 3
       check: "Update and remove tests cover a modified file, key and block, each skipped and reported, and overwritten or removed only with --force"
       run: "npm run test:update"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

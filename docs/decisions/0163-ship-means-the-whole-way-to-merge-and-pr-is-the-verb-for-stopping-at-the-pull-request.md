@@ -4,7 +4,6 @@ title: ship means the whole way to merge, and pr is the verb for stopping at the
 status: active
 date: 2026-11-03
 tags: [hooks, enforcement, dogfooding]
-track: process
 accepted-by: sergemso
 supersedes: [0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected]
 ---

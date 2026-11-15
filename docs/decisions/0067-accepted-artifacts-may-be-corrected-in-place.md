@@ -4,7 +4,6 @@ title: Accepted decisions and facts may be corrected in place for wording and fa
 status: active
 date: 2026-10-05
 tags: [knowledge-management]
-track: process
 accepted-by: sergemso
 ---
 

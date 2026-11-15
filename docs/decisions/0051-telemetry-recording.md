@@ -4,7 +4,6 @@ title: Each routed step is recorded as one metadata JSON line in the local state
 status: active
 date: 2026-10-05
 tags: [practice-packs, observability, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   telemetry-recording: metadata-log

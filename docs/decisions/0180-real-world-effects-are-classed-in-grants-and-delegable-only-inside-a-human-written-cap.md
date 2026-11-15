@@ -4,7 +4,6 @@ title: Real-world effects are classed in grants and delegable only inside a huma
 status: active
 date: 2026-11-03
 tags: [coordination, security, guardrail]
-track: product
 accepted-by: sergemso
 ---
 

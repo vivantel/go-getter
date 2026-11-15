@@ -4,7 +4,6 @@ title: Ready work is ordered by priority under WIP limits, new units pass an int
 status: active
 date: 2026-11-03
 tags: [coordination, roadmap, observability]
-track: process
 accepted-by: sergemso
 ---
 

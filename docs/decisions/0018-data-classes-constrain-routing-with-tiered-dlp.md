@@ -4,7 +4,6 @@ title: Data classes are hard constraints on model eligibility, enforced with tie
 status: active
 date: 2026-10-04
 tags: [governance, security, model-routing, harness]
-track: product
 accepted-by: sergemso
 ---
 

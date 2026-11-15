@@ -4,7 +4,6 @@ title: The telemetry pack recommends a local metadata log kept 30 days with no e
 status: active
 date: 2026-10-05
 tags: [practice-packs, observability, governance]
-track: product
 accepted-by: sergemso
 ---
 

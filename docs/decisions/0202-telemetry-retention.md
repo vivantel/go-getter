@@ -4,7 +4,6 @@ title: The metadata log keeps 365 days
 status: active
 date: 2026-11-05
 tags: [practice-packs, observability, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   telemetry-retention-days: "365"

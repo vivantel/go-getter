@@ -4,7 +4,6 @@ title: A failed step escalates at most 2 times, then a human decides
 status: active
 date: 2026-10-05
 tags: [practice-packs, model-routing, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   max-escalations: "2"

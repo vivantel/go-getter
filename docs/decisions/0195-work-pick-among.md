@@ -4,7 +4,6 @@ title: Workers pick among the first 5 ready work units
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   pick-among: "5"
   generated-by: orchestration@0.1.4

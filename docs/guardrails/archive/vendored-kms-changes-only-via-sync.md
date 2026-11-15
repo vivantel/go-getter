@@ -4,8 +4,7 @@ title: Vendored kms files change only through the sync script
 status: deprecated
 date: 2026-10-04
 tags: [vendoring, knowledge-base, guardrail]
-governed-by: 0006-vendor-kms-as-builtin-pack
-grounded-in: [0006-vendor-kms-as-builtin-pack]
+governed-by: [0006-vendor-kms-as-builtin-pack]
 derivation-note: Given kms is vendored from an upstream authority (0006), local edits would silently diverge from upstream and be overwritten at the next sync.
 go-getter:
   enforcement:

@@ -35,7 +35,6 @@ id,title,tags,status
 0039-reviewer-access,"The reviewer reports findings and changes nothing","practice-packs, agent-roles, harness",active
 0040-parallel-isolation,"Each parallel task runs in its own git worktree","practice-packs, agent-roles, harness",active
 0041-worktree-location,"Task worktrees live next to the repository","practice-packs, agent-roles, harness",active
-0042-max-concurrent-agents,"At most 3 agents run at once","practice-packs, agent-roles, harness",superseded
 0043-human-escalation,"Agents hand over to a human when blocked, before irreversible or outward-facing actions, and on a guardrail denial","practice-packs, agent-roles, harness",active
 0044-handoff-contract,"Handoffs are a brief in, then a result and evidence out","practice-packs, agent-roles, harness",active
 0045-restricted-paths,"Restricted data lives at a declared list of paths","practice-packs, governance, security",active
@@ -45,7 +44,6 @@ id,title,tags,status
 0049-prompt-logging,"Host prompt logging is disabled on every host","practice-packs, governance, observability",active
 0050-restricted-data-hosts,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, security",active
 0051-telemetry-recording,"Each routed step is recorded as one metadata JSON line in the local state directory","practice-packs, observability, harness",active
-0052-telemetry-retention,"The metadata log keeps 30 days","practice-packs, observability, harness",superseded
 0053-telemetry-export,"Telemetry is not exported","practice-packs, observability, harness",active
 0054-verification-checks,"Implement and debug steps pass the project's test, lint and typecheck commands","practice-packs, verification, harness",active
 0055-verification-test-command,"The verification test command is ""npm test""","practice-packs, verification, harness",active
@@ -109,9 +107,7 @@ id,title,tags,status
 0118-extension-architecture-core-and-edges,"go-getter keeps a small core and moves the open-ended edges behind interfaces that can later become helper processes","architecture, roadmap, compiler",active
 0119-helper-contract-v0,"A helper is a pinned executable behind a JSON contract; its output is untrusted data and MCP is only a possible backend","architecture, roadmap, enforcement",active
 0123-plans-in-github,"Plan steps live in GitHub Issues","practice-packs, roadmap",active
-0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",superseded
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
-0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0129-pack-boundaries-neutral-ids-and-a-retrieval-pack,"Each concern has one pack, provider ids are neutral, and memory beyond the knowledge base is a provider-neutral retrieval pack","practice-packs, roadmap, architecture",active
 0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops,"An autonomous run is a plan range the operator starts, with approve-once for outward commands, preconditions checked at use and bounded stops","hooks, enforcement, roadmap, practice-packs",active
 0131-pack-boundaries-then-the-run-approvals-then-mcp,"Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers","milestones, roadmap, harness",active
@@ -140,7 +136,6 @@ id,title,tags,status
 0154-throughput-is-measured-in-human-minutes-per-merged-outcome,"Throughput is measured in human minutes per merged outcome, with a 5-10x floor and a 50x stretch","roadmap, dogfooding, cost",active
 0155-human-attention-goes-to-plan-approval-triggers-and-batched-releases,"Human attention goes to plan approval, four ask-triggers and batched releases; agents merge on green and log defaulted decisions","hooks, roadmap, agent-roles",active
 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree,"Up to 10 agents run at once, each in its own worktree on its own branch","practice-packs, agent-roles, harness",active
-0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",superseded
 0158-merge-requires-a-gate-stack-and-a-sampled-human-audit,"An agent merges only after a gate stack passes, and the owner audits a sample of merged PRs","verification, ci, agent-roles",active
 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository's state","positioning, hooks, enforcement, guardrail, roadmap",active
 0160-tracker-writes,"go-getter may write to the tracker without asking","practice-packs, roadmap",active
@@ -183,7 +178,6 @@ id,title,tags,status
 0198-merge-queue,"The merge queue is off: ship merges through it only when it is on","practice-packs, agent-roles, harness",draft
 0199-we-publish-a-position-and-system-paper-and-may-change-go-getter-to-support-it,"We publish a position-and-system paper on go-getter as a deterministic edge, and may change go-getter to support it","research, positioning, roadmap",active
 0200-the-paper-commits-to-five-claims-and-labels-the-scaling-claim-as-extrapolation,"The paper commits to five claims and labels the scaling claim as extrapolation","research, positioning, harness, enforcement",active
-0201-the-metadata-log-keeps-365-days,"The metadata log keeps 365 days","observability, harness",superseded
 0202-telemetry-retention,"The metadata log keeps 365 days","practice-packs, observability, harness",active
 0203-plan-class-steps-stop-a-run,"A Class: plan step stops an autonomous run for a person","roadmap, enforcement",active
 0204-an-enforcement-entry-may-say-whether-its-check-is-derived,"An enforcement entry may say whether its check is derived from the guardrail or hand-written","enforcement, guardrail, knowledge-base",draft

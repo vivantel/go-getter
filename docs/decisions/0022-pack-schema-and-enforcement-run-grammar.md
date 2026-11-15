@@ -4,10 +4,11 @@ title: Practice packs are JSON files with questions, options and per-answer arti
 status: active
 date: 2026-10-05
 tags: [practice-packs, interview, enforcement, configuration]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - npm run check:packs validates every pack against compiler/schemas/pack.schema.json and the semantic rules below
+  - check: "npm run check:packs validates every pack against compiler/schemas/pack.schema.json and the semantic rules below"
+    enforced-by: unverified
+    last-verified: 2026-10-05
 ---
 
 ## Decision

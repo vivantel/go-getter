@@ -4,8 +4,6 @@ title: Priced models are grouped into small, medium and large tiers per provider
 status: active
 date: 2026-10-05
 tags: [model-routing, cost, host-agents]
-kind: derived
-governed-by: 0016-quality-gated-cache-aware-model-routing
 expires: 2027-01-04
 go-getter:
   model-tiers:

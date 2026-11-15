@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0202-telemetry-retention
 date: 2026-11-04
 tags: [observability, harness]
-track: process
 accepted-by: sergemso
 supersedes: [0052-telemetry-retention]
 go-getter:

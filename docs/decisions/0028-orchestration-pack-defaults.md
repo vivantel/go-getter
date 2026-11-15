@@ -4,7 +4,6 @@ title: The orchestration pack recommends five roles, a read-only reviewer, workt
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
-track: product
 accepted-by: sergemso
 ---
 

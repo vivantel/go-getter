@@ -4,8 +4,7 @@ title: Watches start through go-getter watch, --until done for CI runs and long 
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, guardrail]
-governed-by: 0076-watcher-noise
-grounded-in: [0076-watcher-noise]
+governed-by: [0076-watcher-noise]
 derivation-note: Given the noise decision, a watch started outside the wrapper is not throttled.
 go-getter:
   enforcement:
@@ -17,6 +16,7 @@ go-getter:
   generated-by: context@0.3.1
   pack-answer: watcher-noise
   pack-option: quiet
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

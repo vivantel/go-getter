@@ -4,7 +4,6 @@ title: Work is checkpointed before a gated action
 status: active
 date: 2026-10-10
 tags: [practice-packs, hooks, guardrail]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: checkpointing@0.1.0

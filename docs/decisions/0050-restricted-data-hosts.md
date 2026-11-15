@@ -4,7 +4,6 @@ title: Restricted data is handled only on hosts with a blocking pre-tool hook
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   restricted-data-hosts:

@@ -4,11 +4,14 @@ title: go-getter dogfoods itself from commit 0 through a self-hosting ratchet
 status: active
 date: 2026-10-04
 tags: [dogfooding, ci, roadmap]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - CI regenerates this repo's own host files from its own knowledge-base artifacts and fails on drift
-  - A release is blocked unless every shipped pack has been adopted by this repo
+  - check: "CI regenerates this repo's own host files from its own knowledge-base artifacts and fails on drift"
+    enforced-by: unverified
+    last-verified: 2026-10-04
+  - check: "A release is blocked unless every shipped pack has been adopted by this repo"
+    enforced-by: unverified
+    last-verified: 2026-10-04
 ---
 
 ## Decision

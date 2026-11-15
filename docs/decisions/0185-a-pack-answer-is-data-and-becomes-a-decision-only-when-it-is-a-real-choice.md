@@ -4,7 +4,6 @@ title: A pack answer is data and becomes a decision only when it is a real choic
 status: draft
 date: 2026-11-04
 tags: [practice-packs, knowledge-base]
-track: process
 ---
 
 ## Decision

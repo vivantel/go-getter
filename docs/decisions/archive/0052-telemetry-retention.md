@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0201-the-metadata-log-keeps-365-days
 date: 2026-10-05
 tags: [practice-packs, observability, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   telemetry-retention-days: "30"

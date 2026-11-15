@@ -4,7 +4,6 @@ title: A command's use of a secret file is approved once per user, bound to its 
 status: active
 date: 2026-10-11
 tags: [governance, security, enforcement, hooks]
-track: product
 accepted-by: sergemso
 ---
 

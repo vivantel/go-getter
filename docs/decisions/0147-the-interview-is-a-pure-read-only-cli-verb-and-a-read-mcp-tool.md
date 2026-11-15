@@ -4,7 +4,6 @@ title: The interview's question logic is a pure read-only verb, `interview next|
 status: active
 date: 2026-10-31
 tags: [interview, practice-packs, compiler, hooks]
-track: product
 accepted-by: sergemso
 ---
 

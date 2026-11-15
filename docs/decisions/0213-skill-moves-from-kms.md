@@ -4,7 +4,6 @@ title: go-getter keeps roadmap, refactor-plan, brainstorm, clarify and changelog
 status: draft
 date: 2026-11-15
 tags: [knowledge-base, packaging]
-track: process
 ---
 
 ## Decision

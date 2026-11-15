@@ -4,7 +4,6 @@ title: A delegated unit keeps at most 8 KB of brief fields in the claims ledger
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   brief-max: "8"
   generated-by: orchestration@0.1.3

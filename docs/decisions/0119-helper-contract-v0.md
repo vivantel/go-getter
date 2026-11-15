@@ -4,7 +4,6 @@ title: A helper is a pinned executable behind a JSON contract; its output is unt
 status: active
 date: 2026-10-11
 tags: [architecture, roadmap, enforcement]
-track: product
 accepted-by: sergemso
 ---
 

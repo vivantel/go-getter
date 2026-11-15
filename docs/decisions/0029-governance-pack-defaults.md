@@ -4,7 +4,6 @@ title: The governance pack recommends blocking restricted paths, paid no-trainin
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, security]
-track: product
 accepted-by: sergemso
 ---
 

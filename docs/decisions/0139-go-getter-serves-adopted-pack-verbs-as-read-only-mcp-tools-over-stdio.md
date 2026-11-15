@@ -4,7 +4,6 @@ title: go-getter serves the verbs of the packs a project adopted as read-only MC
 status: active
 date: 2026-10-12
 tags: [architecture, roadmap, hooks, compiler]
-track: product
 accepted-by: sergemso
 ---
 

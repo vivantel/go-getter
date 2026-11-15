@@ -4,8 +4,7 @@ title: Restricted data is handled only on hosts with a blocking pre-tool hook
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, guardrail]
-governed-by: 0050-restricted-data-hosts
-grounded-in: [0050-restricted-data-hosts]
+governed-by: [0050-restricted-data-hosts]
 derivation-note: Given DLP must not depend on agent compliance (0018), only hosts whose hook can block may be near restricted data.
 go-getter:
   enforcement:
@@ -18,6 +17,7 @@ go-getter:
   generated-by: restricted-data@0.6.0
   pack-answer: restricted-hosts
   pack-option: hook-hosts
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

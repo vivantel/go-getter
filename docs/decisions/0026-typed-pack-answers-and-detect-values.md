@@ -4,7 +4,6 @@ title: Pack questions can take typed free-text and list answers, and templates c
 status: active
 date: 2026-10-05
 tags: [practice-packs, interview, configuration]
-track: process
 accepted-by: sergemso
 ---
 

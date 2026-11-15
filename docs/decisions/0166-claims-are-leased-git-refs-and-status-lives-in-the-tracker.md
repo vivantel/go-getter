@@ -4,7 +4,6 @@ title: Claims are entries in a per-feature compare-and-swap ledger with expiring
 status: active
 date: 2026-11-03
 tags: [coordination, roadmap, architecture]
-track: process
 accepted-by: sergemso
 ---
 

@@ -4,7 +4,6 @@ title: Core skill evals stay in kms; go-getter runs the conformance fixtures and
 status: draft
 date: 2026-11-15
 tags: [eval, knowledge-base]
-track: process
 ---
 
 ## Decision

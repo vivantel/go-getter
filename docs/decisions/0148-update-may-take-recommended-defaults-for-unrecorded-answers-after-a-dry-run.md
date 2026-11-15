@@ -1,10 +1,9 @@
 ---
 id: 0148-update-may-take-recommended-defaults-for-unrecorded-answers-after-a-dry-run
-title: `update` may take recommended defaults for answers no artifact records, only after a dry run that lists each one, and renders them as draft
+title: "`update` may take recommended defaults for answers no artifact records, only after a dry run that lists each one, and renders them as draft"
 status: active
 date: 2026-10-31
 tags: [interview, configuration, generated-files, enforcement]
-track: process
 accepted-by: sergemso
 ---
 

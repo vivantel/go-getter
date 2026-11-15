@@ -4,8 +4,7 @@ title: Parallel tasks must each use their own worktree
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, guardrail]
-governed-by: 0040-parallel-isolation
-grounded-in: [0040-parallel-isolation]
+governed-by: [0040-parallel-isolation]
 derivation-note: Given worktree isolation, two agents in one working tree overwrite each other.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: orchestration@0.1.5
   pack-answer: isolation
   pack-option: worktree-per-task
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

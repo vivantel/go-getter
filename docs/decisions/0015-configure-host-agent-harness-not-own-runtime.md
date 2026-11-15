@@ -4,7 +4,6 @@ title: go-getter configures and complements host agents' harness; it does not ru
 status: active
 date: 2026-10-04
 tags: [harness, host-agents, architecture, positioning]
-track: product
 accepted-by: sergemso
 governed-facts: [0002-agent-harness-and-host-agent-terminology]
 ---

@@ -4,7 +4,6 @@ title: A delegated grant is a subset of its parent's, so authority can only shri
 status: active
 date: 2026-11-03
 tags: [coordination, hooks, security]
-track: product
 accepted-by: sergemso
 ---
 

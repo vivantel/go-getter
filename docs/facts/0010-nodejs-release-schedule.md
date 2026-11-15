@@ -4,8 +4,6 @@ title: Node.js LTS release schedule and the oldest supported LTS line
 status: active
 date: 2026-10-04
 tags: [nodejs, tooling]
-kind: environmental
-governed-by: 0019-node-prerequisite-oldest-supported-lts
 expires: 2027-04-30
 ---
 

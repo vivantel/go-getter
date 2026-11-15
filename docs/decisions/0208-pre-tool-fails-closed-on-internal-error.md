@@ -5,10 +5,11 @@ status: active
 date: 2026-11-08
 accepted-by: sergemso
 tags: [enforcement, tooling]
-track: process
 governed-facts: [0009-host-capability-matrix]
 fitness-functions:
-  - "the hook-failure-mode test passes: five failure cases block, read-only calls pass"
+  - check: "the hook-failure-mode test passes: five failure cases block, read-only calls pass"
+    enforced-by: unverified
+    last-verified: 2026-11-08
 ---
 
 ## Decision

@@ -4,8 +4,6 @@ title: Claude Code can deny or mask credentials for sandboxed shell commands (ma
 status: active
 date: 2026-10-05
 tags: [claude-code, governance, security, hooks]
-kind: environmental
-governed-by: 0072-restricted-paths-have-access-modes
 expires: 2027-01-04
 ---
 

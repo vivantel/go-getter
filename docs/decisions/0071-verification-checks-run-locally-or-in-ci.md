@@ -4,7 +4,6 @@ title: Each verification check runs locally, in CI or both, so thin dev machines
 status: active
 date: 2026-10-05
 tags: [verification, ci, harness, practice-packs]
-track: process
 accepted-by: sergemso
 ---
 

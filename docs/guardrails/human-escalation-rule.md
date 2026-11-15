@@ -4,8 +4,7 @@ title: Agents must hand over to a human when blocked, before irreversible action
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, guardrail]
-governed-by: 0043-human-escalation
-grounded-in: [0043-human-escalation]
+governed-by: [0043-human-escalation]
 derivation-note: Given the escalation decision, an agent that routes around a denial defeats the guardrail.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: orchestration@0.1.5
   pack-answer: escalation
   pack-option: blocked-irreversible-denial
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

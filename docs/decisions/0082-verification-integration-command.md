@@ -4,7 +4,6 @@ title: The verification integration command is ""
 status: active
 date: 2026-10-06
 tags: [practice-packs, verification, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   verify-integration-command: ""

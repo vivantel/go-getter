@@ -4,8 +4,6 @@ title: How vendored knowledge-base tooling 0.15.0 is packaged and where it falls
 status: deprecated
 date: 2026-10-05
 tags: [knowledge-base, vendoring, packaging]
-kind: decision
-governed-by: 0006-vendor-kms-as-builtin-pack
 ---
 
 - The plugin ships kms's skills plus `shared/` and `templates/` at its root, so `../../shared/...` references resolve.

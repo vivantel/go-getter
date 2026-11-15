@@ -4,7 +4,6 @@ title: One change is one branch and one pull request
 status: active
 date: 2026-10-10
 tags: [practice-packs, git-hooks, guardrail]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: git-workflow@0.1.0

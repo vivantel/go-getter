@@ -4,7 +4,6 @@ title: Confidential data may go wherever internal data may
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   data-classes:

@@ -4,7 +4,6 @@ title: A parent unit with live children is flagged idle after 7 days without act
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   parent-idle: "7"
   generated-by: orchestration@0.1.3

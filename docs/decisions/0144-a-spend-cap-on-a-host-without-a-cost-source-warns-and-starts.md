@@ -4,7 +4,6 @@ title: A spend cap on a host with no cost source is reported, not refused; sourc
 status: active
 date: 2026-10-12
 tags: [cost, enforcement, host-agents]
-track: product
 accepted-by: sergemso
 ---
 

@@ -4,8 +4,7 @@ title: A money, physical or legal effect stays inside the cap its grant carries,
 status: active
 date: 2026-11-03
 tags: [coordination, security, guardrail]
-governed-by: 0180-real-world-effects-are-classed-in-grants-and-delegable-only-inside-a-human-written-cap
-grounded-in: [0180-real-world-effects-are-classed-in-grants-and-delegable-only-inside-a-human-written-cap, 0171-grants-only-narrow-down-the-delegation-tree]
+governed-by: [0180-real-world-effects-are-classed-in-grants-and-delegable-only-inside-a-human-written-cap]
 derivation-note: Given that a real-world effect may not be undoable, the human-written cap is the only bound on what a delegated worker can cause.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
     - tier: 2
       check: The pre-tool hook denies a raw tool that docs/effects.md maps to a money, physical or legal effect, naming go-getter act, which refuses an unmapped action and an effect above the cap
       run: builtin:deny-effect-tools
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

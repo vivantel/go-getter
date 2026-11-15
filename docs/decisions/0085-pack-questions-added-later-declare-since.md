@@ -4,7 +4,6 @@ title: A pack question added in a later version declares `since` and falls back 
 status: active
 date: 2026-10-06
 tags: [practice-packs, interview, configuration]
-track: process
 accepted-by: sergemso
 ---
 

@@ -4,8 +4,6 @@ title: Only Claude Code and Codex are confirmed to show an MCP call as mcp__serv
 status: active
 date: 2026-10-12
 tags: [hooks, host-agents, security]
-kind: environmental
-governed-by: 0138-mcp-servers-are-allowlisted-and-their-calls-classed-masked-and-scanned
 last-verified: 2026-10-12
 ---
 

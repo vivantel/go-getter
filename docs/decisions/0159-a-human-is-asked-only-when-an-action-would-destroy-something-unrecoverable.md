@@ -4,7 +4,6 @@ title: A human is asked only when an action would destroy something unrecoverabl
 status: active
 date: 2026-11-01
 tags: [positioning, hooks, enforcement, guardrail, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

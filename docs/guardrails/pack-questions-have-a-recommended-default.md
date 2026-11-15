@@ -4,14 +4,14 @@ title: Every choice question in a pack must name exactly one recommended option
 status: active
 date: 2026-10-05
 tags: [practice-packs, interview, guardrail]
-governed-by: 0150-a-pack-may-offer-profiles-that-expand-into-visible-answers
-grounded-in: [0150-a-pack-may-offer-profiles-that-expand-into-visible-answers, 0026-typed-pack-answers-and-detect-values]
+governed-by: [0150-a-pack-may-offer-profiles-that-expand-into-visible-answers]
 derivation-note: Given setup is an interview whose fast path is accepting recommended defaults (0003), a choice question without one breaks "accept the rest" and forces a decision the pack should have proposed.
 go-getter:
   enforcement:
     - tier: 3
       check: "Each choice question has exactly one option with recommended: true; text/list questions have a default or a detect key"
       run: "npm run check:packs"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

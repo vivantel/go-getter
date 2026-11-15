@@ -4,7 +4,6 @@ title: go-getter may write to the tracker without asking
 status: active
 date: 2026-11-01
 tags: [practice-packs, roadmap]
-track: process
 accepted-by: sergemso
 go-getter:
   tracker-writes: allow

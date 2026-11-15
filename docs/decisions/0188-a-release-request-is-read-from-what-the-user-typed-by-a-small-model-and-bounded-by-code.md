@@ -4,7 +4,6 @@ title: A release request is read from what the user typed by a small model and b
 status: active
 date: 2026-11-04
 tags: [hooks, enforcement, security]
-track: product
 accepted-by: sergemso
 ---
 

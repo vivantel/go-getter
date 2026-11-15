@@ -4,7 +4,6 @@ title: Cache keep-warm is advice from the cost model, not an autonomous pinger s
 status: deprecated
 date: 2026-10-05
 tags: [cost, model-routing, harness]
-track: product
 governed-facts: [0028-prompt-cache-refresh-and-prewarm, 0011-model-pricing-anthropic]
 ---
 
