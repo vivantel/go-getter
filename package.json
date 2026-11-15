@@ -25,6 +25,7 @@
     "check:self-adoption": "node compiler/bin/go-getter.mjs check self-adoption",
     "check:versions": "node compiler/bin/go-getter.mjs check versions",
     "check:plugin-pin": "node compiler/bin/go-getter.mjs check plugin-pin",
+    "check:core-pin": "node compiler/bin/go-getter.mjs check core-pin",
     "check:deps": "node compiler/bin/go-getter.mjs check deps",
     "check:packs": "node compiler/bin/go-getter.mjs check packs",
     "check:docs-consistency": "node compiler/bin/go-getter.mjs check docs-consistency",

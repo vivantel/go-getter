@@ -20,6 +20,7 @@ export const COMMANDS = [
   { name: 'act', usage: 'act <action> --unit <unit> [--amount <n> --currency <c>] [--zone <z>] [--contract <k> --counterparty <p>] [-- <tool args>]' },
   { name: 'worktree', usage: 'worktree new|list|clean' },
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },
+  { name: 'core', usage: 'core update <ref> --from <kms checkout> | status' },
   { name: 'artifacts', usage: 'artifacts index | assign [--base <ref>]' },
   { name: 'refs', usage: 'refs [--staged | --base <ref>] [--json]' },
   { name: 'pr', usage: 'pr [--title <t>] [--why <intent>] [--dry-run]' },
