@@ -191,6 +191,11 @@ id,title,tags,status
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
 0208-pre-tool-fails-closed-on-internal-error,"The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair","enforcement, tooling",active
 0209-a-grant-typed-in-the-chat-is-honoured-for-the-session,"A permission the user types in the chat (""merge PRs from now on"") is a session grant the gate honours, with the shape's preconditions still checked at each use","hooks, enforcement, security",active
+0210-go-getter-owns-coordination-artifacts-not-knowledge-artifacts,"go-getter owns coordination artifacts and the harness, not the knowledge artifacts","knowledge-base, packaging",draft
+0211-consume-the-knowledge-base-core-by-pin,"go-getter consumes the knowledge-base core by pinned schema version; it ships no fork","knowledge-base, packaging, vendoring",draft
+0212-vendor-the-core-by-pin,"Vendor the core at a kms release tag, checked by check core-pin and updated by core update","knowledge-base, vendoring, packaging",draft
+0213-skill-moves-from-kms,"go-getter keeps roadmap, refactor-plan, brainstorm, clarify and changelog; kms deprecates its copies","knowledge-base, packaging",draft
+0214-core-skill-evals-live-in-kms,"Core skill evals stay in kms; go-getter runs the conformance fixtures and its own harness evals","eval, knowledge-base",draft
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
 draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft
