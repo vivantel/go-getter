@@ -1,7 +1,7 @@
 {
   "source": "kms",
-  "ref": "e1208e4c2ad6cae7a1ab7afbe69f6b40321f952b",
-  "commit": "e1208e4c2ad6cae7a1ab7afbe69f6b40321f952b",
+  "ref": "fdd1bba7459f2ee03b008d8b3d23f5e42c07fe10",
+  "commit": "fdd1bba7459f2ee03b008d8b3d23f5e42c07fe10",
   "schemaVersion": "1.0.0-draft",
   "expectedTag": "kms-schema-1.0.0",
   "files": {
@@ -176,7 +176,7 @@
     "compiler/test/kms-conformance/cases/valid/docs/skills/deploy.md": "b0d83844f5d25af9a1270a1dbce86d7f155f97ed56811c5fc4dcb7c3cb0d0f6d",
     "compiler/test/kms-conformance/cases/valid/docs/skills/tags.md": "890901d8d19485f49de2ed9c127c7aa03efbb09aae7c6272b92f7555a7e8c304",
     "compiler/test/kms-conformance/cases/valid/plugins/kms/templates/guardrails/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "compiler/test/kms-conformance/test_conformance.py": "2165d705ee7e7fdbab3a4bcd3dcc2a15ad31131c7a8484c4617319246b0b84fb",
+    "compiler/test/kms-conformance/test_conformance.py": "5f732b319f3df3d5488a919ea305053f2a5f852b063c84749d5a0ef38f48ccab",
     "src/shared/artifact-model.md": "ebc5d9f1812a0d28eeea60d63ee8481057b69e5ce690b4d67adddf967449fa91",
     "src/shared/lint_check.py": "6d71b9618fbc2396760627e24cd49e7acf35592088ca9d6d51def1dc26c1358a",
     "src/shared/migrate.py": "56c30819b3ab1596311e44f299d3ecdac0d97f41ade1b76fd1d579f9820228c0"

@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, realpathSync, writeFileSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pinProblems, schemaVersion, sha256 } from '../src/core-pin.mjs';
 
@@ -27,4 +28,11 @@ test('schemaVersion reads the first line only', () => {
   assert.equal(schemaVersion('schema-version: 1.2.3\nbody'), '1.2.3');
   assert.equal(schemaVersion('## Types\nschema-version: 1.2.3'), null);
   assert.equal(sha256(Buffer.from('a')).length, 64);
+});
+
+test("the vendored checker agrees with kms's conformance fixtures", () => {
+  const r = spawnSync('python3', ['-I', '-m', 'unittest', 'discover', '-s', 'compiler/test/kms-conformance', '-p', 'test_conformance.py'], {
+    cwd: ROOT, encoding: 'utf8', env: { ...process.env, CHECKER: path.join(ROOT, 'src/shared/lint_check.py'), PYTHONDONTWRITEBYTECODE: '1' },
+  });
+  assert.equal(r.status, 0, r.stderr);
 });
