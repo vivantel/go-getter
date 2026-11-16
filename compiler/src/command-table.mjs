@@ -13,7 +13,7 @@ export const COMMANDS = [
   { name: 'apply', usage: 'apply [--hosts <h1,h2>|all] [--check] [--force] | apply --remove [--dry-run]' },
   { name: 'update', usage: 'update [--yes] [--dry-run] [--force]' },
   { name: 'coverage', usage: 'coverage [--json]' },
-  { name: 'plan', usage: 'plan status|next|start|done|issue|draft|approve' },
+  { name: 'plan', usage: 'plan status|next|start|done|attempt|stop|issue|draft|approve' },
   { name: 'run', usage: 'run start|status|next|attempt|end' },
   { name: 'queue', usage: 'queue enqueue|run|status' },
   { name: 'work', usage: 'work accept|accept-check|escape|next|approve|scope-check|request|park|asks|answer|grant|spend|grant-check|claim|heartbeat|release' },

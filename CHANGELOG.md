@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- plan: autonomy is a property of an approved plan: `plan start --auto`, `plan next --auto`, `plan attempt`, `plan stop` and an active-run line in `plan status` replace `go-getter run`, which stays one release as a deprecated alias with the same person-only rules (draft decision plan-autonomy)
+
 ## [0.5.0] - 2026-11-04
 
 ### Added

@@ -37,8 +37,9 @@ function parseStart(rest) {
 
 const describe = (r) => `plan ${r.plan}, steps ${r.steps.join(', ')} (through ${r.through}), started ${r.startedAt}, times out ${r.timeoutAt}${r.spendCapUsd ? `, spend cap $${r.spendCapUsd}` : ''}${r.grants.length ? `, grants: ${r.grants.join(', ')}` : ''}`;
 
-export default async function runCommand({ args }) {
+export default async function runCommand({ args, quiet }) {
   const [sub, ...rest] = args;
+  if (!quiet) console.error('run: deprecated, use go-getter plan start --auto | next --auto | attempt | stop | status (draft decision plan-autonomy)');
   const project = repoRoot(process.cwd());
   try {
     if (sub === 'status' && rest.every((a) => a === '--json')) {
