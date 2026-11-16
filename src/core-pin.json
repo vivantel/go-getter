@@ -1,7 +1,7 @@
 {
   "source": "kms",
-  "ref": "fdd1bba7459f2ee03b008d8b3d23f5e42c07fe10",
-  "commit": "fdd1bba7459f2ee03b008d8b3d23f5e42c07fe10",
+  "ref": "d630c94",
+  "commit": "d630c9456e5d443c0117fc3b0abbdb948e66a0fb",
   "schemaVersion": "1.0.0-draft",
   "expectedTag": "kms-schema-1.0.0",
   "files": {
@@ -178,7 +178,7 @@
     "compiler/test/kms-conformance/cases/valid/plugins/kms/templates/guardrails/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "compiler/test/kms-conformance/test_conformance.py": "5f732b319f3df3d5488a919ea305053f2a5f852b063c84749d5a0ef38f48ccab",
     "src/shared/artifact-model.md": "ebc5d9f1812a0d28eeea60d63ee8481057b69e5ce690b4d67adddf967449fa91",
-    "src/shared/lint_check.py": "6d71b9618fbc2396760627e24cd49e7acf35592088ca9d6d51def1dc26c1358a",
-    "src/shared/migrate.py": "56c30819b3ab1596311e44f299d3ecdac0d97f41ade1b76fd1d579f9820228c0"
+    "src/shared/lint_check.py": "56d815b67740f9a4e741ef5ff532caaa2aa5c1a046a361e6eff58ac8e0429793",
+    "src/shared/migrate.py": "add56c733357ade0681d2c83d45dd510de4a2476aba9ebb57d3b431f6fc817a1"
   }
 }
