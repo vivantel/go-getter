@@ -1,7 +1,7 @@
 {
   "source": "kms",
-  "ref": "d630c94",
-  "commit": "d630c9456e5d443c0117fc3b0abbdb948e66a0fb",
+  "ref": "75188803945cf731b4c9a1afcc2ffe445fab598e",
+  "commit": "75188803945cf731b4c9a1afcc2ffe445fab598e",
   "schemaVersion": "1.0.0-draft",
   "expectedTag": "kms-schema-1.0.0",
   "files": {
@@ -177,8 +177,8 @@
     "compiler/test/kms-conformance/cases/valid/docs/skills/tags.md": "890901d8d19485f49de2ed9c127c7aa03efbb09aae7c6272b92f7555a7e8c304",
     "compiler/test/kms-conformance/cases/valid/plugins/kms/templates/guardrails/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "compiler/test/kms-conformance/test_conformance.py": "5f732b319f3df3d5488a919ea305053f2a5f852b063c84749d5a0ef38f48ccab",
-    "src/shared/artifact-model.md": "ebc5d9f1812a0d28eeea60d63ee8481057b69e5ce690b4d67adddf967449fa91",
-    "src/shared/lint_check.py": "56d815b67740f9a4e741ef5ff532caaa2aa5c1a046a361e6eff58ac8e0429793",
-    "src/shared/migrate.py": "add56c733357ade0681d2c83d45dd510de4a2476aba9ebb57d3b431f6fc817a1"
+    "src/shared/artifact-model.md": "a3150b876e679b19a92c756927103c0e2f2948feb0397a094476faa9283e9899",
+    "src/shared/lint_check.py": "6e9ad126c9f84b0b14502b447f192f16ed4f1e6c9ae504978908bc715d29a3b4",
+    "src/shared/migrate.py": "f7900ad355f2887c716f0eba762ec687f0ec9abeb5808f0011009e7be34a1436"
   }
 }
