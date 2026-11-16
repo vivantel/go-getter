@@ -1,7 +1,8 @@
 ---
 id: 0066-own-the-knowledge-base-tooling
 title: go-getter owns its knowledge-base tooling and artifact format; nothing is vendored or synced
-status: active
+status: superseded
+superseded-by: 0211-consume-the-knowledge-base-core-by-pin
 date: 2026-10-05
 tags: [knowledge-base, configuration, vendoring, packaging]
 accepted-by: sergemso

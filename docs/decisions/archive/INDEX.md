@@ -10,6 +10,7 @@ id,title,tags,status
 0023-cli-distributed-via-npx-from-github,"Skills invoke the go-getter CLI through npx from the GitHub repository","packaging, nodejs, tooling",superseded
 0042-max-concurrent-agents,"At most 3 agents run at once","practice-packs, agent-roles, harness",superseded
 0052-telemetry-retention,"The metadata log keeps 30 days","practice-packs, observability, harness",superseded
+0066-own-the-knowledge-base-tooling,"go-getter owns its knowledge-base tooling and artifact format; nothing is vendored or synced","knowledge-base, configuration, vendoring, packaging",superseded
 0068-post-v0.1-milestone-sequence,"v0.2 hardens the agent core in three waves; git workflow and spec workflow follow in v0.3","milestones, roadmap, harness",superseded
 0073-spec-workflow-through-a-tool-adapter,"The spec and change workflow is an SDLC pack over a spec-tool adapter, OpenSpec first, with no native spec format","roadmap, practice-packs, tooling",superseded
 0074-keep-warm-is-cost-model-advice,"Cache keep-warm is advice from the cost model, not an autonomous pinger skill","cost, model-routing, harness",deprecated

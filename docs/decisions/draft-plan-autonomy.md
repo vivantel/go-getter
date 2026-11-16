@@ -1,15 +1,15 @@
 ---
 id: draft-plan-autonomy
 title: Autonomy is a property of an approved plan, started and stopped with plan commands; go-getter run is a deprecated alias
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-16
 tags: [coordination, hooks, enforcement]
-track: process
 ---
 
 ## Decision
 
-Pending the owner's acceptance. Supersedes 0130's command surface (not its stops, bounds or grant model), and amends 0186 and 0203 only in the spelling of the commands they name.
+Accepted 2026-11-16 by the owner. Supersedes 0130's command surface (not its stops, bounds or grant model), and amends 0186 and 0203 only in the spelling of the commands they name.
 
 1. **One surface.** `go-getter plan start --auto [plan] [--through N] [--hours H] [--grant <id>]...` starts an autonomous range on an approved plan, `plan next --auto [--json]` hands the agent the next step or a stop, `plan attempt <id>` records a failed fix attempt, `plan stop` ends the run and posts its report, and `plan status` shows the active run. `plan start <id>` (one step by hand) is unchanged.
 2. **Same mechanism.** These forward to the run record of 0130; the stops (`spend-cap`, `human-needed`, `red-attempts`, `repeated-denial`, `needs-open`), the bounds, the approval of 0186 and the report are unchanged.

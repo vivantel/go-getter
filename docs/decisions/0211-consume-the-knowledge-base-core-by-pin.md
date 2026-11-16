@@ -1,7 +1,8 @@
 ---
 id: 0211-consume-the-knowledge-base-core-by-pin
 title: go-getter consumes the knowledge-base core by pinned schema version; it ships no fork
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-15
 tags: [knowledge-base, packaging, vendoring]
 ---
@@ -16,4 +17,4 @@ The two models were measured in kms plan step A1: 9 identical items, 2 conflicti
 
 ## Twin and status
 
-Twin of kms `docs/decisions/0070-kms-is-the-knowledge-base-core-consumed-by-pin.md`. Supersedes 0066 once accepted. Draft by an agent; accepting it (owner) means `status: active` and `accepted-by`. Plan: kms `docs/plans/kms-core-and-go-getter-consolidation.md`, step D0.
+Twin of kms `docs/decisions/0070-kms-is-the-knowledge-base-core-consumed-by-pin.md`. Supersedes 0066 once accepted. Accepted 2026-11-16 by the owner. Plan: kms `docs/plans/kms-core-and-go-getter-consolidation.md`, step D0.

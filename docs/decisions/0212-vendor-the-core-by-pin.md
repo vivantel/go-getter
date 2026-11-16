@@ -1,7 +1,8 @@
 ---
 id: 0212-vendor-the-core-by-pin
 title: Vendor the core at a kms release tag, checked by check core-pin and updated by core update
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-15
 tags: [knowledge-base, vendoring, packaging]
 ---
@@ -16,4 +17,4 @@ go-getter already has `check plugin-pin`, `check deps` and `check generated`; fo
 
 ## Twin and status
 
-Twin of kms `docs/decisions/0080-core-is-vendored-by-pin.md`. Draft by an agent; accepting it (owner) means `status: active` and `accepted-by`. Plan: kms `docs/plans/kms-core-and-go-getter-consolidation.md`, step D0.
+Twin of kms `docs/decisions/0080-core-is-vendored-by-pin.md`. Accepted 2026-11-16 by the owner. Plan: kms `docs/plans/kms-core-and-go-getter-consolidation.md`, step D0.

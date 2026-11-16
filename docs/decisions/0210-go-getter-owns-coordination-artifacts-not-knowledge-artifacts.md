@@ -1,7 +1,8 @@
 ---
 id: 0210-go-getter-owns-coordination-artifacts-not-knowledge-artifacts
 title: go-getter owns coordination artifacts and the harness, not the knowledge artifacts
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-15
 tags: [knowledge-base, packaging]
 ---
@@ -19,4 +20,4 @@ The cut is by artifact ownership: kms owns what outlives the work; go-getter own
 
 ## Twin and status
 
-Twin of kms `docs/decisions/0069-kms-owns-durable-knowledge-not-specs-or-coordination.md`. Draft by an agent; accepting it (owner) means `status: active` and `accepted-by`. Plan: kms `docs/plans/kms-core-and-go-getter-consolidation.md`, step D0.
+Twin of kms `docs/decisions/0069-kms-owns-durable-knowledge-not-specs-or-coordination.md`. Accepted 2026-11-16 by the owner. Plan: kms `docs/plans/kms-core-and-go-getter-consolidation.md`, step D0.

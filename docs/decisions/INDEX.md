@@ -57,7 +57,6 @@ id,title,tags,status
 0063-routing-spend-cap,"Headless runs are capped at 5 USD where the host has a cap","practice-packs, model-routing, cost",active
 0064-routing-cache-ttl,"The prompt cache lives one hour in the main session and five minutes in subagents","practice-packs, model-routing, cost",active
 0065-behavior-evals-are-scripted-and-keyless,"The first behavior evals run init with scripted answers, with no model and no API key","verification, eval, ci",active
-0066-own-the-knowledge-base-tooling,"go-getter owns its knowledge-base tooling and artifact format; nothing is vendored or synced","knowledge-base, configuration, vendoring, packaging",active
 0067-accepted-artifacts-may-be-corrected-in-place,"Accepted decisions and facts may be corrected in place for wording and factual errors; a change of meaning is superseded","knowledge-management",active
 0069-plan-steps-carry-class-and-dependencies,"Plan steps declare a task class, dependencies and a check, and go-getter offers the next steps as numbered options","roadmap, model-routing, harness",active
 0070-watcher-noise-is-a-project-policy,"Watcher noise is a project policy, quiet by default, enforced by a wrapper rather than by the host","harness, cost, hooks, practice-packs",active
@@ -185,15 +184,15 @@ id,title,tags,status
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
 0208-pre-tool-fails-closed-on-internal-error,"The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair","enforcement, tooling",active
 0209-a-grant-typed-in-the-chat-is-honoured-for-the-session,"A permission the user types in the chat (""merge PRs from now on"") is a session grant the gate honours, with the shape's preconditions still checked at each use","hooks, enforcement, security",active
-0210-go-getter-owns-coordination-artifacts-not-knowledge-artifacts,"go-getter owns coordination artifacts and the harness, not the knowledge artifacts","knowledge-base, packaging",draft
-0211-consume-the-knowledge-base-core-by-pin,"go-getter consumes the knowledge-base core by pinned schema version; it ships no fork","knowledge-base, packaging, vendoring",draft
-0212-vendor-the-core-by-pin,"Vendor the core at a kms release tag, checked by check core-pin and updated by core update","knowledge-base, vendoring, packaging",draft
-0213-skill-moves-from-kms,"go-getter keeps roadmap, refactor-plan, brainstorm, clarify and changelog; kms deprecates its copies","knowledge-base, packaging",draft
-0214-core-skill-evals-live-in-kms,"Core skill evals stay in kms; go-getter runs the conformance fixtures and its own harness evals","eval, knowledge-base",draft
+0210-go-getter-owns-coordination-artifacts-not-knowledge-artifacts,"go-getter owns coordination artifacts and the harness, not the knowledge artifacts","knowledge-base, packaging",active
+0211-consume-the-knowledge-base-core-by-pin,"go-getter consumes the knowledge-base core by pinned schema version; it ships no fork","knowledge-base, packaging, vendoring",active
+0212-vendor-the-core-by-pin,"Vendor the core at a kms release tag, checked by check core-pin and updated by core update","knowledge-base, vendoring, packaging",active
+0213-skill-moves-from-kms,"go-getter keeps roadmap, refactor-plan, brainstorm, clarify and changelog unchanged; kms deprecates its copies","knowledge-base, packaging",active
+0214-core-skill-evals-live-in-kms,"Core skill evals stay in kms; go-getter runs the conformance fixtures and its own harness evals","eval, knowledge-base",active
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
 draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft
 draft-h4-policy-files-and-approvals-store-are-not-agent-writable,"The pre-tool hook asks a person before any call changes an active guardrail or an accepted decision, and reads the shell's working directory for the approvals store","enforcement, hooks",draft
-draft-plan-autonomy,"Autonomy is a property of an approved plan, started and stopped with plan commands; go-getter run is a deprecated alias","coordination, hooks, enforcement",draft
+draft-plan-autonomy,"Autonomy is a property of an approved plan, started and stopped with plan commands; go-getter run is a deprecated alias","coordination, hooks, enforcement",active
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft
