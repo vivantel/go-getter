@@ -4,7 +4,6 @@ title: Watchers are quiet
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   watcher-noise: quiet

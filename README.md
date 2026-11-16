@@ -24,6 +24,10 @@ The framework splits by what each part owns ([decision 0177](docs/decisions/0177
 - **Measure** (`go-getter measure`): a *meter* in `docs/meters/` names what is read and how; a reading is data, taken by any worker able to take it.
 - **Operate**: defined as an operating charter (`go-getter operation check|status`) for what is live after delivery; no skill or verb runs it yet.
 
+## The knowledge base
+
+go-getter does not define knowledge artifacts. Facts, decisions, guardrails and procedures, their schema and their structural checker are the [kms](https://github.com/vivantel/kms) core, vendored here by pinned schema version ([`src/core-pin.json`](src/core-pin.json), checked by `go-getter check core-pin`, updated by `go-getter core update`; contract: [kms `core-contract.md`](https://github.com/vivantel/kms/blob/master/docs/skills/core-contract.md)). go-getter adds what has an owner, state and `Accept` (briefs, units, meters, charters, harness config). Product specs stay in a spec tool such as OpenSpec; a record points at a change with `source` and does not copy it. kms works alone if you want only the knowledge base.
+
 ## Install
 
 One plugin, seven host agents — see [INSTALLING.md](INSTALLING.md). Then ask your agent to *"set up the agent harness here"*.

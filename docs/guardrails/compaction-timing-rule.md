@@ -4,8 +4,7 @@ title: Context is compacted at task boundaries
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, guardrail]
-governed-by: 0037-compaction-timing
-grounded-in: [0037-compaction-timing]
+governed-by: [0037-compaction-timing]
 derivation-note: Given the timing decision, compacting at other moments loses detail or cache.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: context@0.3.1
   pack-answer: compaction
   pack-option: task-boundaries
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

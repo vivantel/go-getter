@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0122-gated-free-commands
 date: 2026-10-11
 tags: [practice-packs, hooks]
-track: process
 go-getter:
   generated-by: hitl@0.3.0
   pack-answer: free-commands

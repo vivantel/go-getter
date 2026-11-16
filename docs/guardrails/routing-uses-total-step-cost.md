@@ -4,14 +4,15 @@ title: Routing must compare expected total step cost, never per-token list price
 status: active
 date: 2026-10-04
 tags: [model-routing, cost, guardrail]
-governed-by: 0016-quality-gated-cache-aware-model-routing
-grounded-in: [0016-quality-gated-cache-aware-model-routing, 0011-model-pricing-anthropic, 0012-model-pricing-openai, 0013-model-pricing-google]
+governed-by: [0016-quality-gated-cache-aware-model-routing]
+grounded-in: [0011-model-pricing-anthropic, 0012-model-pricing-openai, 0013-model-pricing-google]
 derivation-note: Given 0016 defines cost as expected total step cost including cache state, handoff and escalation, comparing list prices alone would systematically pick wrongly when caching or delegation dominate.
 go-getter:
   enforcement:
     - tier: 3
       check: "Cost-model tests cover cache read/write/uncached pricing, handoff cost and escalation cost, incl. a warm-cache larger model beating a cold-cache cheaper one"
       run: "npm run test:routing"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

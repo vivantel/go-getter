@@ -4,8 +4,7 @@ title: Added lines must not contain secrets
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, security, guardrail]
-governed-by: 0108-secret-scan
-grounded-in: [0108-secret-scan, 0106-scanning-and-masking-share-one-pattern-library]
+governed-by: [0108-secret-scan]
 derivation-note: Given a committed credential must be rotated (0106), the lines a change adds must be checked for secrets before they leave the machine.
 go-getter:
   enforcement:
@@ -18,6 +17,7 @@ go-getter:
   generated-by: sanitization@0.7.0
   pack-answer: secret-scan
   pack-option: on
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

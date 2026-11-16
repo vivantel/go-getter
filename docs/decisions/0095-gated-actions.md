@@ -4,7 +4,6 @@ title: Gated actions need a human
 status: active
 date: 2026-10-09
 tags: [practice-packs, hooks, guardrail]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: hitl@0.1.0

@@ -4,7 +4,6 @@ title: Each concern has one pack, provider ids are neutral, and memory beyond th
 status: active
 date: 2026-10-11
 tags: [practice-packs, roadmap, architecture]
-track: product
 accepted-by: sergemso
 ---
 

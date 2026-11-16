@@ -4,8 +4,6 @@ title: Each cache hit refreshes the prompt cache lifetime at no charge, and the 
 status: active
 date: 2026-10-05
 tags: [cost, model-routing]
-kind: environmental
-governed-by: 0064-routing-cache-ttl
 expires: 2027-01-04
 ---
 

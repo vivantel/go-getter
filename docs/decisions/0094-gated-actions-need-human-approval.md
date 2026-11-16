@@ -4,7 +4,6 @@ title: Irreversible and outward-facing commands need a human, through native ask
 status: active
 date: 2026-10-09
 tags: [harness, hooks, enforcement, practice-packs]
-track: process
 accepted-by: sergemso
 governed-facts: [0009-host-capability-matrix]
 ---

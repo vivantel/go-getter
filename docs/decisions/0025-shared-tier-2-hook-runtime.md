@@ -4,7 +4,6 @@ title: Every host's hooks call one shared go-getter hook runtime instead of host
 status: active
 date: 2026-10-05
 tags: [enforcement, hooks, architecture]
-track: process
 accepted-by: sergemso
 ---
 

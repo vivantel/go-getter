@@ -4,7 +4,6 @@ title: An outcome is accepted when its meter meets the target over a window and 
 status: active
 date: 2026-11-03
 tags: [coordination, verification, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

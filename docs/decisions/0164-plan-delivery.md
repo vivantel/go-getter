@@ -4,7 +4,6 @@ title: A plan is delivered one pull request per step
 status: draft
 date: 2026-11-03
 tags: [practice-packs, git-hooks, guardrail]
-track: process
 go-getter:
   generated-by: git-workflow@0.1.3
   pack-answer: plan-delivery

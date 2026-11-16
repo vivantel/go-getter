@@ -4,8 +4,7 @@ title: docs/workers.md lists every worker and is changed by a human only
 status: active
 date: 2026-11-04
 tags: [coordination, security]
-kind: decision
-governed-by: 0171-grants-only-narrow-down-the-delegation-tree
+source: compiler/src/work/grant-ops.mjs
 last-verified: 2026-11-04
 ---
 

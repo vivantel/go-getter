@@ -4,10 +4,11 @@ title: The pre-tool hook asks a person before any call changes an active guardra
 status: draft
 date: 2026-11-08
 tags: [enforcement, hooks]
-track: process
 governed-facts: [0009-host-capability-matrix]
 fitness-functions:
-  - "the policy-write-protection test passes: policy writes are asked or denied, reads and new files pass, a cd-first store write is denied"
+  - check: "the policy-write-protection test passes: policy writes are asked or denied, reads and new files pass, a cd-first store write is denied"
+    enforced-by: unverified
+    last-verified: 2026-11-08
 ---
 
 ## Decision

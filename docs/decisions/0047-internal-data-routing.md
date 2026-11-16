@@ -4,7 +4,6 @@ title: Internal data goes only to approved cloud providers on paid no-training t
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, model-routing]
-track: process
 accepted-by: sergemso
 go-getter:
   model-registry:

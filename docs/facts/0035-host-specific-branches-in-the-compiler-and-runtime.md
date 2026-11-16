@@ -4,8 +4,7 @@ title: Host knowledge sits in thirteen places across the compiler and the runtim
 status: active
 date: 2026-10-12
 tags: [architecture, compiler, host-agents, hooks]
-kind: derived
-governed-by: 0118-extension-architecture-core-and-edges
+source: compiler/src/build.mjs
 ---
 
 Read from the code on 2026-10-12 (`compiler/src`, `compiler/adapters`). Hosts: `claude-code` (CC), `codex` (CX), `kilo` (KL), `opencode` (OC), `cursor` (CU), `gemini-cli` (GM), `copilot` (CP). `HOSTS` is `compiler/src/capabilities.mjs:6`; a capability row is `compiler/capabilities/<host>.json`, validated by `compiler/schemas/capabilities.schema.json`.

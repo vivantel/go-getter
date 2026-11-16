@@ -4,7 +4,6 @@ title: An agent merges only after a gate stack passes, and the owner audits a sa
 status: active
 date: 2026-11-01
 tags: [verification, ci, agent-roles]
-track: process
 accepted-by: sergemso
 ---
 

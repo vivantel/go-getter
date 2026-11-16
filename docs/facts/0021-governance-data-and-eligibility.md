@@ -4,8 +4,7 @@ title: Governance decisions carry the registry and class policy that eligibility
 status: active
 date: 2026-10-05
 tags: [governance, model-routing, practice-packs]
-kind: decision
-governed-by: 0018-data-classes-constrain-routing-with-tiered-dlp
+source: compiler/src/routing/eligibility.mjs
 ---
 
 - Registry: `go-getter.model-registry.providers` (approved providers) in the internal-data decision, joined by `routing/registry.mjs` with models from active facts carrying `go-getter.models` (`local: true` marks a local model); confidential policy is `go-getter.data-classes.confidential` (`enabled`, `requires-zdr`).

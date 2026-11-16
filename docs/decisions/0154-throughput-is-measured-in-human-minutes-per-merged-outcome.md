@@ -4,7 +4,6 @@ title: Throughput is measured in human minutes per merged outcome, with a 5-10x 
 status: active
 date: 2026-11-01
 tags: [roadmap, dogfooding, cost]
-track: process
 accepted-by: sergemso
 ---
 

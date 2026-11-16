@@ -4,8 +4,6 @@ title: Claude Code delivers every watcher output line as a notification and offe
 status: active
 date: 2026-10-05
 tags: [claude-code, hooks, cost, harness]
-kind: environmental
-governed-by: 0070-watcher-noise-is-a-project-policy
 expires: 2027-01-04
 ---
 

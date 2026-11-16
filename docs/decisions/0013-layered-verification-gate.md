@@ -4,7 +4,6 @@ title: go-getter is verified in three layers - unit, golden output, behavior eva
 status: active
 date: 2026-10-04
 tags: [verification, eval, ci]
-track: process
 accepted-by: sergemso
 ---
 

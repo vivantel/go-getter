@@ -4,7 +4,6 @@ title: apply writes host OpenTelemetry settings only where a host's project conf
 status: active
 date: 2026-10-06
 tags: [observability, cost, enforcement]
-track: product
 accepted-by: sergemso
 governed-facts: [0022-telemetry-record-and-recorder]
 ---

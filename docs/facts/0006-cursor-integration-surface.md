@@ -4,8 +4,6 @@ title: Cursor's harness extension points
 status: active
 date: 2026-10-04
 tags: [cursor, host-agents, harness]
-kind: environmental
-governed-by: 0002-six-host-agents-from-v0-1
 ---
 
 Cursor (IDE agent, `agent` CLI, cloud agents).

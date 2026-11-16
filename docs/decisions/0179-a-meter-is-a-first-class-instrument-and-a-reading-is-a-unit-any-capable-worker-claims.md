@@ -4,7 +4,6 @@ title: A meter is a first-class instrument and a reading is a unit that any capa
 status: active
 date: 2026-11-03
 tags: [coordination, observability, architecture]
-track: product
 accepted-by: sergemso
 ---
 

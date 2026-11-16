@@ -5,11 +5,12 @@ status: superseded
 superseded-by: 0066-own-the-knowledge-base-tooling
 date: 2026-10-04
 tags: [knowledge-base, vendoring, packaging]
-track: process
 accepted-by: sergemso
 governed-facts: [0001-kms-host-agent-packaging-coverage]
 fitness-functions:
-  - The vendored kms tree equals upstream vivantel/kms at the pinned ref
+  - check: "The vendored kms tree equals upstream vivantel/kms at the pinned ref"
+    enforced-by: unverified
+    last-verified: 2026-10-04
 ---
 
 ## Decision

@@ -4,7 +4,6 @@ title: The lease of an agent's claim is 60 minutes
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   lease-agent: "60"
   generated-by: orchestration@0.1.3

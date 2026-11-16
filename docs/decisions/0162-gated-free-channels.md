@@ -4,7 +4,6 @@ title: Release and publish channels that run without asking are listed
 status: draft
 date: 2026-11-02
 tags: [practice-packs, hooks]
-track: process
 go-getter:
   generated-by: hitl@0.7.0
   pack-answer: free-channels

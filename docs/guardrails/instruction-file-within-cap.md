@@ -4,8 +4,7 @@ title: The instruction file must stay within 150 lines
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, guardrail]
-governed-by: 0033-instruction-file-cap
-grounded-in: [0033-instruction-file-cap]
+governed-by: [0033-instruction-file-cap]
 derivation-note: Given the cap decision, every line past it is paid on every request.
 go-getter:
   enforcement:
@@ -15,6 +14,7 @@ go-getter:
   generated-by: context@0.3.1
   pack-answer: instruction-cap
   pack-option: cap-150
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

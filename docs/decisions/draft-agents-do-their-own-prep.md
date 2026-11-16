@@ -4,7 +4,6 @@ title: An agent does a change's preparation itself and hands a person only gated
 status: draft
 date: 2026-11-06
 tags: [coordination, agent-roles, procedural]
-track: product
 ---
 
 ## Decision

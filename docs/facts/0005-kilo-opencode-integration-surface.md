@@ -4,8 +4,6 @@ title: Kilo Code CLI and OpenCode harness extension points
 status: active
 date: 2026-10-04
 tags: [kilo, opencode, host-agents, harness]
-kind: environmental
-governed-by: 0002-six-host-agents-from-v0-1
 ---
 
 Kilo Code CLI is a fork of OpenCode. Both use the same configuration model; Kilo renames files: `kilo.json[c]` / `.kilo/` (project), `~/.config/kilo/` (global), and no longer reads `.opencode/` directories. Below, `.opencode/` paths apply to OpenCode; Kilo uses `.kilo/`.

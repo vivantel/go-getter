@@ -4,7 +4,6 @@ title: A run may be started by the agent when a person confirms it at the host p
 status: draft
 date: 2026-10-12
 tags: [hooks, enforcement, roadmap]
-track: product
 ---
 
 ## Decision

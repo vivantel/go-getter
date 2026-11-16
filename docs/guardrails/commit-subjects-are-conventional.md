@@ -4,8 +4,7 @@ title: Commit subjects must follow Conventional Commits
 status: active
 date: 2026-10-10
 tags: [practice-packs, git-hooks, guardrail]
-governed-by: 0100-branch-names
-grounded-in: [0100-branch-names]
+governed-by: [0100-branch-names]
 derivation-note: Given changelogs and release notes are generated from commit type prefixes, a non-conforming subject silently drops out of them.
 go-getter:
   enforcement:
@@ -15,6 +14,7 @@ go-getter:
   generated-by: git-workflow@0.1.3
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

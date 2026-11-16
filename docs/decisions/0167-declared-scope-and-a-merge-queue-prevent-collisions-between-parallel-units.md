@@ -4,7 +4,6 @@ title: Declared scope and a merge queue prevent collisions between parallel unit
 status: active
 date: 2026-11-03
 tags: [coordination, ci, architecture]
-track: process
 accepted-by: sergemso
 ---
 

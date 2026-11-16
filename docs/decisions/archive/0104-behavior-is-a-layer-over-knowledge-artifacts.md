@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0105-behavior-layer-without-generated-runbooks
 date: 2026-10-10
 tags: [knowledge-management, generated-files, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

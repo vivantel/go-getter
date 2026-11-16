@@ -4,7 +4,6 @@ title: A pack may offer profiles, named answer bundles for one topic that expand
 status: active
 date: 2026-10-31
 tags: [interview, practice-packs, configuration, positioning]
-track: product
 accepted-by: sergemso
 ---
 

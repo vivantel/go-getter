@@ -4,7 +4,6 @@ title: apply copies the CLI into the project and the generated runner runs that 
 status: active
 date: 2026-10-10
 tags: [packaging, nodejs, generated-files, enforcement]
-track: process
 accepted-by: sergemso
 ---
 

@@ -4,7 +4,6 @@ title: The paper commits to five claims and labels the scaling claim as extrapol
 status: active
 date: 2026-11-04
 tags: [research, positioning, harness, enforcement]
-track: product
 accepted-by: sergemso
 ---
 

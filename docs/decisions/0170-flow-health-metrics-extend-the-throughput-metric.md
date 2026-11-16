@@ -4,7 +4,6 @@ title: Flow-health metrics extend the human-minutes headline; a rising rate is a
 status: active
 date: 2026-11-03
 tags: [coordination, observability, cost]
-track: process
 accepted-by: sergemso
 ---
 

@@ -4,7 +4,6 @@ title: No project list of MCP servers
 status: draft
 date: 2026-10-12
 tags: [practice-packs, hooks]
-track: process
 go-getter:
   generated-by: hitl@0.6.0
   pack-answer: mcp-policy

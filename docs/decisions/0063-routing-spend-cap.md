@@ -4,7 +4,6 @@ title: Headless runs are capped at 5 USD where the host has a cap
 status: active
 date: 2026-10-05
 tags: [practice-packs, model-routing, cost]
-track: process
 accepted-by: sergemso
 go-getter:
   headless-spend-cap-usd: "5"

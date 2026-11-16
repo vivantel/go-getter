@@ -53,3 +53,4 @@ jobs:
       - run: npm run check:indexes
       - run: npm run check:versions
       - run: npm run check:plugin-pin
+      - run: npm run check:core-pin

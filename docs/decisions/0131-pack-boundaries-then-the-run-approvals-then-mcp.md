@@ -1,12 +1,11 @@
 ---
 id: 0131-pack-boundaries-then-the-run-approvals-then-mcp
-title: Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers
+title: "Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers"
 status: active
 date: 2026-10-11
 tags: [milestones, roadmap, harness]
-track: product
 accepted-by: sergemso
-expires: v0.4.0 is released
+expires-when: "v0.4.0 is released"
 ---
 
 ## Decision

@@ -4,7 +4,6 @@ title: Restricted data lives at a declared list of paths
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   restricted-paths: .env, .env.*, *.pem, *.key, id_rsa, id_ed25519, .go-getter/state/

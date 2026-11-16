@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "attribute",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -11,14 +11,14 @@
     },
     {
       "name": "autonomous-run",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md"
       ]
     },
     {
       "name": "bootstrap",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -27,7 +27,7 @@
     },
     {
       "name": "brainstorm",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -36,7 +36,7 @@
     },
     {
       "name": "capture",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -45,7 +45,7 @@
     },
     {
       "name": "changelog",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -54,7 +54,7 @@
     },
     {
       "name": "clarify",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -63,7 +63,7 @@
     },
     {
       "name": "conform",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -72,7 +72,7 @@
     },
     {
       "name": "discover",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -81,7 +81,7 @@
     },
     {
       "name": "go-getter-init",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "cli/compiler/adapters/claude-code.mjs",
@@ -135,6 +135,7 @@
         "cli/compiler/src/checks/builtin/secret-scan.mjs",
         "cli/compiler/src/checks/builtin/squash-merged-head.mjs",
         "cli/compiler/src/checks/builtin/workflow-needs.mjs",
+        "cli/compiler/src/checks/core-pin.mjs",
         "cli/compiler/src/checks/deps.mjs",
         "cli/compiler/src/checks/docs-consistency.mjs",
         "cli/compiler/src/checks/generated.mjs",
@@ -161,6 +162,7 @@
         "cli/compiler/src/commands/check.mjs",
         "cli/compiler/src/commands/checkpoint.mjs",
         "cli/compiler/src/commands/ci.mjs",
+        "cli/compiler/src/commands/core.mjs",
         "cli/compiler/src/commands/coverage.mjs",
         "cli/compiler/src/commands/detect.mjs",
         "cli/compiler/src/commands/digest.mjs",
@@ -194,6 +196,7 @@
         "cli/compiler/src/commands/watch.mjs",
         "cli/compiler/src/commands/work.mjs",
         "cli/compiler/src/commands/worktree.mjs",
+        "cli/compiler/src/core-pin.mjs",
         "cli/compiler/src/coverage-table.mjs",
         "cli/compiler/src/coverage.mjs",
         "cli/compiler/src/defaults.mjs",
@@ -336,7 +339,7 @@
     },
     {
       "name": "lint",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -345,7 +348,7 @@
     },
     {
       "name": "onboard",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -354,7 +357,7 @@
     },
     {
       "name": "query",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -363,7 +366,7 @@
     },
     {
       "name": "quickstart",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -372,7 +375,7 @@
     },
     {
       "name": "refactor-plan",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -381,7 +384,7 @@
     },
     {
       "name": "roadmap",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",
@@ -390,7 +393,7 @@
     },
     {
       "name": "uninstall",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "files": [
         "SKILL.md",
         "agents/openai.yaml",

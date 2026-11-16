@@ -4,7 +4,6 @@ title: The lease of a person's claim is 480 minutes
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   lease-human: "480"
   generated-by: orchestration@0.1.3

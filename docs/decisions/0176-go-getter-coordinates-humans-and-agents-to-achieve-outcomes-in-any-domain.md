@@ -4,7 +4,6 @@ title: go-getter coordinates humans and agents to achieve outcomes in any domain
 status: active
 date: 2026-11-03
 tags: [positioning, coordination, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

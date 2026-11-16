@@ -4,10 +4,11 @@ title: Plan steps declare a task class, dependencies and a check, and go-getter 
 status: active
 date: 2026-10-05
 tags: [roadmap, model-routing, harness]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - "A test parses every docs/plans file of this repo and rejects an unknown class value, an unknown Needs id or a dependency cycle"
+  - check: "A test parses every docs/plans file of this repo and rejects an unknown class value, an unknown Needs id or a dependency cycle"
+    enforced-by: unverified
+    last-verified: 2026-10-05
 ---
 
 ## Decision

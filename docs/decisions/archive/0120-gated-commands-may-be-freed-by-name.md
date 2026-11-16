@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable
 date: 2026-10-11
 tags: [practice-packs, hooks, enforcement]
-track: process
 accepted-by: sergemso
 ---
 

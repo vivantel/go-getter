@@ -4,7 +4,6 @@ title: A release request is bound to the version it asks for, not to the default
 status: draft
 date: 2026-11-04
 tags: [hooks, enforcement, security]
-track: product
 ---
 
 ## Decision

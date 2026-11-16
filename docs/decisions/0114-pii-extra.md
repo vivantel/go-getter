@@ -4,7 +4,6 @@ title: The locale-bound types masked in tool output are listed
 status: active
 date: 2026-10-10
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   pii-extra: ""

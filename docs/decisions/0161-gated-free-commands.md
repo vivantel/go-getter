@@ -4,7 +4,6 @@ title: Outward-facing commands that run without asking are listed
 status: active
 date: 2026-11-01
 tags: [practice-packs, hooks]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: hitl@0.6.0

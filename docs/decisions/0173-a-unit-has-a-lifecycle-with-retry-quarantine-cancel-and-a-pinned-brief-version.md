@@ -4,7 +4,6 @@ title: A unit has a lifecycle with lease reclaim, a retry budget, quarantine, ca
 status: active
 date: 2026-11-03
 tags: [coordination, roadmap, harness]
-track: process
 accepted-by: sergemso
 ---
 

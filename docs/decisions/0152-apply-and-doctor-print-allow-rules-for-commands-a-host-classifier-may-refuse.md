@@ -4,7 +4,6 @@ title: go-getter prints the allow rules a person may add for commands the projec
 status: draft
 date: 2026-10-31
 tags: [hooks, claude-code, enforcement, host-agents]
-track: process
 governed-facts: [0009-host-capability-matrix]
 ---
 

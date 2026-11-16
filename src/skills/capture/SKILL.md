@@ -7,16 +7,16 @@ If the project has no knowledge system yet, run `bootstrap` first — this skill
 
 ## Artifact model
 
-This skill's sibling `../../shared/artifact-model.md` defines the four artifact types, their fields, the derivation recipe, and the economy rule for anything drafted here — read it before drafting anything.
+This skill's siblings `../../shared/artifact-model.md` (the knowledge-base core) and `../../shared/artifact-extensions.md` (go-getter's additions) define the four artifact types, their fields, the derivation recipe, and the economy rule for anything drafted here — read it before drafting anything.
 
 ## Checks, one pass per invocation
 
-1. **New decision?** Draft a stub: next id, title, one-line motivation, `track: product | process`, `status: draft`. Don't finalize without the owning domain's sign-off — once given, set `status: active` and `accepted-by: <name>` in the same edit, not just the former. If it explicitly replaces an existing decision, also update that decision's `status` to `superseded` and add `superseded-by: <new-decision-id>` — don't leave two `active` decisions on the same topic for a later `lint` pass to catch.
+1. **New decision?** Draft a stub: next id, title, one-line motivation, `status: draft`. Don't finalize without the owning domain's sign-off — once given, set `status: active` and `accepted-by: <name>` in the same edit, not just the former. If it explicitly replaces an existing decision, also update that decision's `status` to `superseded` and add `superseded-by: <new-decision-id>` — don't leave two `active` decisions on the same topic for a later `lint` pass to catch.
 2. **Fact changed?** Update the fact file and its `last-verified`. If the governing decision is no longer current, surface the contradiction now.
 3. **New automatable rule?** Log as debt in the fitness-function inventory: rule text, governing decision, why not automated yet.
 4. **Contradiction found?** Block. Don't close the session until resolved or explicitly deferred with a written note (decision, fact, or stub).
 5. **Human-doc drift?** If watched paths overlap what changed this session, propose the specific update; if the doc's still accurate, bump its verified date.
-6. **Role list gap?** If a decision drafted this session suggests a role not on that track's role list (`docs/skills/{product,process}-track-roles.md`, if present), propose adding it. (A role that's gone cold over the project's whole history is `lint`'s job, not this session-scoped check's.)
+6. *(retired; the number stays unused)*
 7. **Index entry?** Add or update the row for anything drafted or edited this pass, per the artifact model's own index-maintenance rule (`../../shared/artifact-model.md`).
 
 ## Recommending a new skill

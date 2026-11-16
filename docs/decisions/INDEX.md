@@ -35,7 +35,6 @@ id,title,tags,status
 0039-reviewer-access,"The reviewer reports findings and changes nothing","practice-packs, agent-roles, harness",active
 0040-parallel-isolation,"Each parallel task runs in its own git worktree","practice-packs, agent-roles, harness",active
 0041-worktree-location,"Task worktrees live next to the repository","practice-packs, agent-roles, harness",active
-0042-max-concurrent-agents,"At most 3 agents run at once","practice-packs, agent-roles, harness",superseded
 0043-human-escalation,"Agents hand over to a human when blocked, before irreversible or outward-facing actions, and on a guardrail denial","practice-packs, agent-roles, harness",active
 0044-handoff-contract,"Handoffs are a brief in, then a result and evidence out","practice-packs, agent-roles, harness",active
 0045-restricted-paths,"Restricted data lives at a declared list of paths","practice-packs, governance, security",active
@@ -45,7 +44,6 @@ id,title,tags,status
 0049-prompt-logging,"Host prompt logging is disabled on every host","practice-packs, governance, observability",active
 0050-restricted-data-hosts,"Restricted data is handled only on hosts with a blocking pre-tool hook","practice-packs, governance, security",active
 0051-telemetry-recording,"Each routed step is recorded as one metadata JSON line in the local state directory","practice-packs, observability, harness",active
-0052-telemetry-retention,"The metadata log keeps 30 days","practice-packs, observability, harness",superseded
 0053-telemetry-export,"Telemetry is not exported","practice-packs, observability, harness",active
 0054-verification-checks,"Implement and debug steps pass the project's test, lint and typecheck commands","practice-packs, verification, harness",active
 0055-verification-test-command,"The verification test command is ""npm test""","practice-packs, verification, harness",active
@@ -59,7 +57,6 @@ id,title,tags,status
 0063-routing-spend-cap,"Headless runs are capped at 5 USD where the host has a cap","practice-packs, model-routing, cost",active
 0064-routing-cache-ttl,"The prompt cache lives one hour in the main session and five minutes in subagents","practice-packs, model-routing, cost",active
 0065-behavior-evals-are-scripted-and-keyless,"The first behavior evals run init with scripted answers, with no model and no API key","verification, eval, ci",active
-0066-own-the-knowledge-base-tooling,"go-getter owns its knowledge-base tooling and artifact format; nothing is vendored or synced","knowledge-base, configuration, vendoring, packaging",active
 0067-accepted-artifacts-may-be-corrected-in-place,"Accepted decisions and facts may be corrected in place for wording and factual errors; a change of meaning is superseded","knowledge-management",active
 0069-plan-steps-carry-class-and-dependencies,"Plan steps declare a task class, dependencies and a check, and go-getter offers the next steps as numbered options","roadmap, model-routing, harness",active
 0070-watcher-noise-is-a-project-policy,"Watcher noise is a project policy, quiet by default, enforced by a wrapper rather than by the host","harness, cost, hooks, practice-packs",active
@@ -109,9 +106,7 @@ id,title,tags,status
 0118-extension-architecture-core-and-edges,"go-getter keeps a small core and moves the open-ended edges behind interfaces that can later become helper processes","architecture, roadmap, compiler",active
 0119-helper-contract-v0,"A helper is a pinned executable behind a JSON contract; its output is untrusted data and MCP is only a possible backend","architecture, roadmap, enforcement",active
 0123-plans-in-github,"Plan steps live in GitHub Issues","practice-packs, roadmap",active
-0124-tracker-writes,"go-getter may write to the tracker with a human approving each write","practice-packs, roadmap",superseded
 0126-secret-use-is-approved-once-per-user-and-bound-to-code,"A command's use of a secret file is approved once per user, bound to its code, and recognised by what it runs","governance, security, enforcement, hooks",active
-0127-gated-free-commands,"Outward-facing commands that run without asking are listed","practice-packs, hooks",superseded
 0129-pack-boundaries-neutral-ids-and-a-retrieval-pack,"Each concern has one pack, provider ids are neutral, and memory beyond the knowledge base is a provider-neutral retrieval pack","practice-packs, roadmap, architecture",active
 0130-an-autonomous-run-is-a-granted-plan-range-with-bounded-stops,"An autonomous run is a plan range the operator starts, with approve-once for outward commands, preconditions checked at use and bounded stops","hooks, enforcement, roadmap, practice-packs",active
 0131-pack-boundaries-then-the-run-approvals-then-mcp,"Work order: pack boundaries, run record and approve-once, MCP governance, go-getter as an MCP server, then helpers","milestones, roadmap, harness",active
@@ -140,7 +135,6 @@ id,title,tags,status
 0154-throughput-is-measured-in-human-minutes-per-merged-outcome,"Throughput is measured in human minutes per merged outcome, with a 5-10x floor and a 50x stretch","roadmap, dogfooding, cost",active
 0155-human-attention-goes-to-plan-approval-triggers-and-batched-releases,"Human attention goes to plan approval, four ask-triggers and batched releases; agents merge on green and log defaulted decisions","hooks, roadmap, agent-roles",active
 0156-up-to-10-agents-run-at-once-each-in-its-own-worktree,"Up to 10 agents run at once, each in its own worktree on its own branch","practice-packs, agent-roles, harness",active
-0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected,"Routine actions run through a deterministic ship verb, and raw git and gh equivalents are redirected to it","hooks, enforcement, dogfooding",superseded
 0158-merge-requires-a-gate-stack-and-a-sampled-human-audit,"An agent merges only after a gate stack passes, and the owner audits a sample of merged PRs","verification, ci, agent-roles",active
 0159-a-human-is-asked-only-when-an-action-would-destroy-something-unrecoverable,"A human is asked only when an action would destroy something unrecoverable, judged from the repository's state","positioning, hooks, enforcement, guardrail, roadmap",active
 0160-tracker-writes,"go-getter may write to the tracker without asking","practice-packs, roadmap",active
@@ -183,7 +177,6 @@ id,title,tags,status
 0198-merge-queue,"The merge queue is off: ship merges through it only when it is on","practice-packs, agent-roles, harness",draft
 0199-we-publish-a-position-and-system-paper-and-may-change-go-getter-to-support-it,"We publish a position-and-system paper on go-getter as a deterministic edge, and may change go-getter to support it","research, positioning, roadmap",active
 0200-the-paper-commits-to-five-claims-and-labels-the-scaling-claim-as-extrapolation,"The paper commits to five claims and labels the scaling claim as extrapolation","research, positioning, harness, enforcement",active
-0201-the-metadata-log-keeps-365-days,"The metadata log keeps 365 days","observability, harness",superseded
 0202-telemetry-retention,"The metadata log keeps 365 days","practice-packs, observability, harness",active
 0203-plan-class-steps-stop-a-run,"A Class: plan step stops an autonomous run for a person","roadmap, enforcement",active
 0204-an-enforcement-entry-may-say-whether-its-check-is-derived,"An enforcement entry may say whether its check is derived from the guardrail or hand-written","enforcement, guardrail, knowledge-base",draft
@@ -191,9 +184,15 @@ id,title,tags,status
 0207-a-meter-may-name-a-command-that-takes-its-reading,"A meter may name a command that takes its reading","coordination, observability, knowledge-base",draft
 0208-pre-tool-fails-closed-on-internal-error,"The pre-tool hook blocks a call that can change state when enforcement cannot run, and names the repair","enforcement, tooling",active
 0209-a-grant-typed-in-the-chat-is-honoured-for-the-session,"A permission the user types in the chat (""merge PRs from now on"") is a session grant the gate honours, with the shape's preconditions still checked at each use","hooks, enforcement, security",active
+0210-go-getter-owns-coordination-artifacts-not-knowledge-artifacts,"go-getter owns coordination artifacts and the harness, not the knowledge artifacts","knowledge-base, packaging",active
+0211-consume-the-knowledge-base-core-by-pin,"go-getter consumes the knowledge-base core by pinned schema version; it ships no fork","knowledge-base, packaging, vendoring",active
+0212-vendor-the-core-by-pin,"Vendor the core at a kms release tag, checked by check core-pin and updated by core update","knowledge-base, vendoring, packaging",active
+0213-skill-moves-from-kms,"go-getter keeps roadmap, refactor-plan, brainstorm, clarify and changelog unchanged; kms deprecates its copies","knowledge-base, packaging",active
+0214-core-skill-evals-live-in-kms,"Core skill evals stay in kms; go-getter runs the conformance fixtures and its own harness evals","eval, knowledge-base",active
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
 draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft
 draft-h4-policy-files-and-approvals-store-are-not-agent-writable,"The pre-tool hook asks a person before any call changes an active guardrail or an accepted decision, and reads the shell's working directory for the approvals store","enforcement, hooks",draft
+draft-plan-autonomy,"Autonomy is a property of an approved plan, started and stopped with plan commands; go-getter run is a deprecated alias","coordination, hooks, enforcement",active
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft

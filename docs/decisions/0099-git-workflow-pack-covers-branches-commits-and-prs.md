@@ -4,7 +4,6 @@ title: The git-workflow pack covers branches, commits and pull requests, and one
 status: active
 date: 2026-10-10
 tags: [practice-packs, git-hooks, milestones]
-track: product
 accepted-by: sergemso
 ---
 

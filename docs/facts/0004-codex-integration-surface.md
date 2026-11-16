@@ -4,8 +4,6 @@ title: Codex's harness extension points
 status: active
 date: 2026-10-04
 tags: [codex, host-agents, harness]
-kind: environmental
-governed-by: 0002-six-host-agents-from-v0-1
 ---
 
 OpenAI Codex (CLI, IDE extension, cloud). Docs moved from developers.openai.com/codex to learn.chatgpt.com/docs.

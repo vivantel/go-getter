@@ -4,7 +4,6 @@ title: Spec and change tools such as OpenSpec are detected and tolerated, not wr
 status: active
 date: 2026-10-05
 tags: [roadmap, tooling, practice-packs]
-track: product
 accepted-by: sergemso
 governed-facts: [0029-openspec-layout-and-workflow]
 ---

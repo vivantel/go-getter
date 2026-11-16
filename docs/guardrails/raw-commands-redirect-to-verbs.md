@@ -4,8 +4,8 @@ title: When a go-getter verb covers an action, the raw git or gh form is denied 
 status: active
 date: 2026-11-01
 tags: [hooks, enforcement, guardrail]
-governed-by: 0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request
-grounded-in: [0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request, 0157-routine-actions-run-through-a-ship-verb-and-raw-equivalents-are-redirected, 0040-oct-31-throughput-baseline-and-friction]
+governed-by: [0163-ship-means-the-whole-way-to-merge-and-pr-is-the-verb-for-stopping-at-the-pull-request]
+grounded-in: [0040-oct-31-throughput-baseline-and-friction]
 derivation-note: Given verbs that are token-free and have one allow-rule, hand-run equivalents only add cost and classifier denials.
 go-getter:
   enforcement:
@@ -14,6 +14,7 @@ go-getter:
     - tier: 2
       check: The pre-tool hook denies a raw push or gh pr create (naming go-getter pr) and a raw gh pr merge (naming go-getter ship)
       run: builtin:redirect-to-verb verbs="git-push=go-getter pr,pr-create=go-getter pr,pr-merge=go-getter ship"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

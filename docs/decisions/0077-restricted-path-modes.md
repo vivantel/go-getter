@@ -4,7 +4,6 @@ title: Restricted paths have an access mode, deny unless listed
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, security]
-track: process
 accepted-by: sergemso
 go-getter:
   restricted-modes: ""

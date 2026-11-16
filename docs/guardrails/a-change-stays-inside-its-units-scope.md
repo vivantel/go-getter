@@ -4,8 +4,7 @@ title: A change touches only paths inside its unit's declared scope
 status: draft
 date: 2026-11-03
 tags: [coordination, verification, guardrail]
-governed-by: 0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units
-grounded-in: [0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units]
+governed-by: [0167-declared-scope-and-a-merge-queue-prevent-collisions-between-parallel-units]
 derivation-note: Given that parallel units are kept apart by their declared scopes, an edit outside the scope defeats the exclusion the claim gave.
 go-getter:
   enforcement:
@@ -17,6 +16,7 @@ go-getter:
     - tier: 3
       check: go-getter work scope-check passes against the default branch
       run: node compiler/bin/go-getter.mjs work scope-check --base origin/master
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

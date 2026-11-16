@@ -4,7 +4,6 @@ title: "\"Done\" is blocked while the verification checks fail"
 status: active
 date: 2026-10-05
 tags: [practice-packs, verification, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   verify-gate: block

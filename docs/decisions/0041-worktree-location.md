@@ -4,7 +4,6 @@ title: Task worktrees live next to the repository
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   worktree-location: sibling

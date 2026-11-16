@@ -4,7 +4,6 @@ title: A worker holds at most max-concurrent work units at once
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   wip-per-worker: max-concurrent
   generated-by: orchestration@0.1.4

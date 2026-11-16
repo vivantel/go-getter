@@ -4,7 +4,6 @@ title: A checkpoint is a hidden git ref taken by the pre-tool hook before a gate
 status: active
 date: 2026-10-10
 tags: [practice-packs, harness, hooks, enforcement]
-track: process
 accepted-by: sergemso
 ---
 

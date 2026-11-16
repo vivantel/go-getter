@@ -4,7 +4,6 @@ title: An answers file from another project or a profile may seed an interview a
 status: active
 date: 2026-10-31
 tags: [interview, practice-packs, security]
-track: process
 accepted-by: sergemso
 ---
 

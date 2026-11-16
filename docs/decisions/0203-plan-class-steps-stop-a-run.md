@@ -4,7 +4,6 @@ title: "A Class: plan step stops an autonomous run for a person"
 status: active
 date: 2026-11-05
 tags: [roadmap, enforcement]
-track: product
 accepted-by: sergemso
 ---
 

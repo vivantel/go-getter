@@ -4,8 +4,7 @@ title: Irreversible and outward-facing commands need a human
 status: active
 date: 2026-11-01
 tags: [practice-packs, hooks, guardrail]
-governed-by: 0095-gated-actions
-grounded-in: [0095-gated-actions, 0043-human-escalation]
+governed-by: [0095-gated-actions]
 derivation-note: Given agents must hand over before irreversible or outward-facing actions (0043), the host must ask a human or deny the command, since an instruction alone fails silently.
 go-getter:
   enforcement:
@@ -15,6 +14,7 @@ go-getter:
   generated-by: hitl@0.7.0
   pack-answer: gated-classes
   pack-option: both
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

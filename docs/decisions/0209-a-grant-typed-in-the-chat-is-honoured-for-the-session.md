@@ -5,9 +5,14 @@ status: active
 date: 2026-11-08
 accepted-by: sergemso
 tags: [hooks, enforcement, security]
-track: product
 governed-facts: [0009-host-capability-matrix]
-fitness-functions: ["the session-grant test passes: a typed grant lets the shape through for its session, red checks still ask, another session, a question, an unattended prompt and a revoked grant do not", "node evals/grants.mjs reports every scenario as predicted, 0 wrongful stops and 0 leaks"]
+fitness-functions:
+  - check: "the session-grant test passes: a typed grant lets the shape through for its session, red checks still ask, another session, a question, an unattended prompt and a revoked grant do not"
+    enforced-by: unverified
+    last-verified: 2026-11-08
+  - check: "node evals/grants.mjs reports every scenario as predicted, 0 wrongful stops and 0 leaks"
+    enforced-by: unverified
+    last-verified: 2026-11-08
 ---
 
 ## Decision

@@ -4,7 +4,6 @@ title: The verification test command is "npm test"
 status: active
 date: 2026-10-05
 tags: [practice-packs, verification, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   verify-test-command: npm test

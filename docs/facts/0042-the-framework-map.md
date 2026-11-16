@@ -4,8 +4,6 @@ title: The framework's entities, how they relate, and which part owns each artif
 status: active
 date: 2026-11-03
 tags: [coordination, outcomes, architecture]
-kind: decision
-governed-by: 0177-each-part-of-the-framework-owns-one-artifact-and-one-kind-of-decision
 ---
 
 States the vocabulary of decisions 0165-0181 once. If this fact and a decision disagree, the decision wins and this fact is corrected.

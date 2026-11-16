@@ -4,7 +4,6 @@ title: Branches are named ^(feat|fix|docs|chore|ci|test|refactor|perf|build|styl
 status: active
 date: 2026-10-10
 tags: [practice-packs, git-hooks, guardrail]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: git-workflow@0.1.0

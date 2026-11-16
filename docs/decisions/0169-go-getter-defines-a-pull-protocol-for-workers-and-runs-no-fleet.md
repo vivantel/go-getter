@@ -4,7 +4,6 @@ title: go-getter defines a pull protocol for workers and runs no fleet; the agen
 status: active
 date: 2026-11-03
 tags: [coordination, architecture, harness]
-track: product
 accepted-by: sergemso
 ---
 

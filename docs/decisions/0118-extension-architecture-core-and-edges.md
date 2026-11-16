@@ -4,7 +4,6 @@ title: go-getter keeps a small core and moves the open-ended edges behind interf
 status: active
 date: 2026-10-11
 tags: [architecture, roadmap, compiler]
-track: product
 accepted-by: sergemso
 ---
 

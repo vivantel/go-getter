@@ -4,7 +4,6 @@ title: Agents hand over to a human when blocked, before irreversible or outward-
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   escalation: Stop and hand over to a human when blocked, before any irreversible or outward-facing action, and when a guardrail denies an action.

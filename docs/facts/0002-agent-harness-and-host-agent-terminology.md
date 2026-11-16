@@ -4,8 +4,6 @@ title: Meaning of "agent harness" and "host agent" in this project
 status: active
 date: 2026-10-04
 tags: [harness, host-agents, positioning]
-kind: decision
-governed-by: 0015-configure-host-agent-harness-not-own-runtime
 ---
 
 **Agent harness**: the infrastructure around an LLM that turns it into an autonomous agent; Agent = Model + Harness. Its 12 components:

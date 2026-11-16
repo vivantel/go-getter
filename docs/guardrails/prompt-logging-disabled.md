@@ -4,8 +4,7 @@ title: Host prompt logging must stay disabled
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, guardrail]
-governed-by: 0049-prompt-logging
-grounded-in: [0049-prompt-logging]
+governed-by: [0049-prompt-logging]
 derivation-note: Given host telemetry can export prompt content, a restricted path read once would leave the machine through logs, so the setting must be off wherever the host exposes it.
 go-getter:
   enforcement:
@@ -15,6 +14,7 @@ go-getter:
   generated-by: data-policy@0.6.0
   pack-answer: prompt-logging
   pack-option: disable-everywhere
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

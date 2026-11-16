@@ -4,7 +4,6 @@ title: secret run runs only commands approved for that secret, secret put takes 
 status: active
 date: 2026-10-10
 tags: [governance, security, enforcement]
-track: product
 accepted-by: sergemso
 ---
 

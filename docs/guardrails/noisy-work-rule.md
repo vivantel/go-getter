@@ -4,8 +4,7 @@ title: Noisy work is delegated only when the cost model says the handoff is chea
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, guardrail]
-governed-by: 0035-noisy-work-placement
-grounded-in: [0035-noisy-work-placement]
+governed-by: [0035-noisy-work-placement]
 derivation-note: Given the placement decision, noise kept in the wrong context is re-paid on every request.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: context@0.3.1
   pack-answer: noisy-work
   pack-option: delegate-when-cheaper
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

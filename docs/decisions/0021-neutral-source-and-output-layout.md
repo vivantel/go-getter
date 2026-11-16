@@ -4,7 +4,6 @@ title: Neutral source, compiler and per-host output layout
 status: active
 date: 2026-10-04
 tags: [architecture, compiler, generated-files, packaging]
-track: process
 accepted-by: sergemso
 governed-facts: [0009-host-capability-matrix]
 ---

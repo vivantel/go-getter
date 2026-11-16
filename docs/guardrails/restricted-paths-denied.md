@@ -4,8 +4,7 @@ title: Agents must not touch restricted paths and none may be committed
 status: active
 date: 2026-10-11
 tags: [practice-packs, governance, guardrail]
-governed-by: 0046-restricted-paths-enforcement
-grounded-in: [0046-restricted-paths-enforcement]
+governed-by: [0046-restricted-paths-enforcement]
 derivation-note: Given restricted data must not reach a model or a repository (0018), the host must block access and git must refuse the files, since instructions alone fail silently.
 go-getter:
   enforcement:
@@ -18,6 +17,7 @@ go-getter:
   generated-by: restricted-data@0.6.0
   pack-answer: enforcement
   pack-option: hook-and-never-committed
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

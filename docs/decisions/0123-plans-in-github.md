@@ -4,7 +4,6 @@ title: Plan steps live in GitHub Issues
 status: active
 date: 2026-10-11
 tags: [practice-packs, roadmap]
-track: process
 accepted-by: sergemso
 go-getter:
   tracker: github

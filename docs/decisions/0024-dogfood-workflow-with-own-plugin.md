@@ -4,7 +4,6 @@ title: This repo runs its knowledge-base workflow through its own go-getter plug
 status: active
 date: 2026-10-05
 tags: [dogfooding, knowledge-management, git-hooks]
-track: process
 accepted-by: sergemso
 ---
 

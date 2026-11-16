@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0066-own-the-knowledge-base-tooling
 date: 2026-10-04
 tags: [knowledge-base, configuration, enforcement]
-track: process
 accepted-by: sergemso
 ---
 

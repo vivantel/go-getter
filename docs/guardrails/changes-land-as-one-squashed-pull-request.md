@@ -4,8 +4,7 @@ title: A change lands as one squashed pull request with green CI
 status: active
 date: 2026-10-10
 tags: [practice-packs, git-hooks, guardrail]
-governed-by: 0100-branch-names
-grounded-in: [0100-branch-names]
+governed-by: [0100-branch-names]
 derivation-note: Given one change is one branch and one pull request, the history keeps one commit per change only if the merge squashes, and a red pull request must not merge.
 go-getter:
   enforcement:
@@ -18,6 +17,7 @@ go-getter:
   generated-by: git-workflow@0.1.3
   pack-answer: branch-pattern
   pack-option: ^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

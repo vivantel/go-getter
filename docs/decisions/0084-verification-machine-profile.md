@@ -4,7 +4,6 @@ title: Cheap checks run locally, slow checks only in CI (thin machine profile)
 status: active
 date: 2026-10-06
 tags: [practice-packs, verification, harness, ci]
-track: process
 accepted-by: sergemso
 go-getter:
   verify-profile: thin

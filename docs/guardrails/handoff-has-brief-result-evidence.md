@@ -4,8 +4,7 @@ title: Handoffs must carry a brief, a result and evidence
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, guardrail]
-governed-by: 0044-handoff-contract
-grounded-in: [0044-handoff-contract]
+governed-by: [0044-handoff-contract]
 derivation-note: Given the contract, a result without evidence cannot be checked and a brief without done-when cannot be verified.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: orchestration@0.1.5
   pack-answer: handoff
   pack-option: brief-result-evidence
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

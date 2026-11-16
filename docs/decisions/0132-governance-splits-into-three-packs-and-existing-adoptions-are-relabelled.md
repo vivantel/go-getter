@@ -4,7 +4,6 @@ title: governance splits into restricted-data, sanitization and data-policy, and
 status: active
 date: 2026-10-11
 tags: [practice-packs, compiler, configuration]
-track: product
 accepted-by: sergemso
 ---
 

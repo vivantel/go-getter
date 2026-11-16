@@ -4,7 +4,6 @@ title: Routing quality bars and tiers are calibrated from verification signals a
 status: active
 date: 2026-10-04
 tags: [model-routing, observability, verification, cost]
-track: product
 accepted-by: sergemso
 ---
 

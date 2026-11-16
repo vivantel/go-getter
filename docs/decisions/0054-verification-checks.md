@@ -4,7 +4,6 @@ title: Implement and debug steps pass the project's test, lint and typecheck com
 status: active
 date: 2026-10-05
 tags: [practice-packs, verification, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   verify-scope: detected

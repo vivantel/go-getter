@@ -4,14 +4,14 @@ title: A practice pack must not ship before this repo has adopted it
 status: active
 date: 2026-10-04
 tags: [dogfooding, ci, guardrail]
-governed-by: 0010-self-hosting-ratchet
-grounded-in: [0010-self-hosting-ratchet]
+governed-by: [0010-self-hosting-ratchet]
 derivation-note: Given the self-hosting ratchet (0010), a release containing a pack this repo has not adopted via its own `init` breaks the ratchet.
 go-getter:
   enforcement:
     - tier: 3
       check: "Each pack@version in a release has artifacts in docs/ with a matching go-getter.generated-by"
       run: "npm run check:self-adoption"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

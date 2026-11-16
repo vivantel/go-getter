@@ -5,9 +5,8 @@ status: superseded
 superseded-by: 0068-post-v0.1-milestone-sequence
 date: 2026-10-04
 tags: [milestones, roadmap, harness]
-track: product
 accepted-by: sergemso
-expires: v0.1.0 is released
+expires-when: "v0.1.0 is released"
 ---
 
 ## Decision

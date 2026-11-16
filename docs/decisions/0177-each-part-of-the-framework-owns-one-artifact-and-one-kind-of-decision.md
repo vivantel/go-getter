@@ -4,7 +4,6 @@ title: Discover, decompose, deliver, measure and operate each own one artifact a
 status: active
 date: 2026-11-03
 tags: [coordination, roadmap, architecture]
-track: product
 accepted-by: sergemso
 ---
 

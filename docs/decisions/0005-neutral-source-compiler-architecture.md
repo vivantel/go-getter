@@ -4,10 +4,11 @@ title: Author content once in a neutral source and compile it to each host agent
 status: active
 date: 2026-10-04
 tags: [architecture, compiler, generated-files, agent-agnostic]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - CI regenerates all host output and fails on any diff against the committed files
+  - check: "CI regenerates all host output and fails on any diff against the committed files"
+    enforced-by: unverified
+    last-verified: 2026-10-04
 ---
 
 ## Decision

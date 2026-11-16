@@ -4,15 +4,18 @@ title: This repo enables its own plugin in project settings, pinned to a release
 status: active
 date: 2026-11-01
 tags: [dogfooding, ci, roadmap]
-track: process
 accepted-by: sergemso
 go-getter:
   self-plugin:
     marketplace: go-getter
     repo: vivantel/go-getter
 fitness-functions:
-  - CI fails when the pinned marketplace ref is older than the latest release tag
-  - doctor reports an installed plugin version that differs from the CLI version and prints the update command
+  - check: "CI fails when the pinned marketplace ref is older than the latest release tag"
+    enforced-by: unverified
+    last-verified: 2026-11-01
+  - check: "doctor reports an installed plugin version that differs from the CLI version and prints the update command"
+    enforced-by: unverified
+    last-verified: 2026-11-01
 ---
 
 ## Decision

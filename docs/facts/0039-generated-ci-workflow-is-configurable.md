@@ -4,7 +4,7 @@ title: The generated CI workflow takes permissions, concurrency and action refs 
 status: active
 date: 2026-10-24
 tags: [ci]
-kind: environmental
+source: compiler/src/ci.mjs
 last-verified: 2026-10-24
 ---
 

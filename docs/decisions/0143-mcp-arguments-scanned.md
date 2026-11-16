@@ -4,7 +4,6 @@ title: MCP call arguments are scanned for secrets
 status: draft
 date: 2026-10-12
 tags: [practice-packs, hooks]
-track: process
 go-getter:
   generated-by: sanitization@0.7.0
   pack-answer: mcp-argument-scan

@@ -4,7 +4,6 @@ title: An optional tracker pack makes issues the source of truth for plan steps,
 status: active
 date: 2026-10-11
 tags: [roadmap, practice-packs, tooling]
-track: product
 accepted-by: sergemso
 ---
 

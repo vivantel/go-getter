@@ -4,11 +4,14 @@ title: One small-model reader turns what the user typed into release, grant, rev
 status: draft
 date: 2026-11-08
 tags: [hooks, enforcement, security]
-track: product
 governed-facts: [0009-host-capability-matrix]
 fitness-functions:
-  - "the intent-reader test passes: approvals resolve against the last proposal, a hostile proposal grants nothing, a release stays on its route"
-  - "node evals/grants.mjs reports every scenario as predicted, 0 wrongful stops and 0 leaks"
+  - check: "the intent-reader test passes: approvals resolve against the last proposal, a hostile proposal grants nothing, a release stays on its route"
+    enforced-by: unverified
+    last-verified: 2026-11-08
+  - check: "node evals/grants.mjs reports every scenario as predicted, 0 wrongful stops and 0 leaks"
+    enforced-by: unverified
+    last-verified: 2026-11-08
 ---
 
 ## Decision

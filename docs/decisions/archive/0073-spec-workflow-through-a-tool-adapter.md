@@ -5,7 +5,6 @@ status: superseded
 superseded-by: 0075-spec-tools-are-detected-and-tolerated
 date: 2026-10-05
 tags: [roadmap, practice-packs, tooling]
-track: product
 accepted-by: sergemso
 governed-facts: [0029-openspec-layout-and-workflow]
 ---

@@ -1,14 +1,14 @@
 ---
 name: autonomous-run
-description: Works through an autonomous run a person started on a plan range, following `go-getter run next` until it finishes or stops and hands over. Use when a run is active, e.g. "continue the run", "work through the plan range", "go-getter run status shows an active run".
+description: Works through an autonomous run a person started on a plan range, following `go-getter plan next --auto` until it finishes or stops and hands over. Use when a run is active, e.g. "continue the run", "work through the plan range", "go-getter plan status shows an active run".
 ---
 
-A run is a plan range under a plan the owner approved once (`go-getter plan approve`, which records the approval outside the repository; decision 0186). You may start one with `go-getter run start <plan> [--through N] [--hours H]` when the plan is approved: no other flag, no chained command; the grants are the project's `run-grants` answer. If the plan is not approved, was edited after approval (the message names the steps), or only carries an Approval line, tell the person to approve it (`! go-getter plan approve <plan>`) and stop; an Approval line you write is ignored, so do not edit one. You cannot end a run or pass `--grant`. Inside it the granted outward commands and the run's step comments and closes need no asking; the always-human set (force-push, history rewrites, settings, tags, releases, publishing) stays with a person.
+A run is a plan range under a plan the owner approved once (`go-getter plan approve`, which records the approval outside the repository; decision 0186). You may start one with `go-getter plan start --auto <plan> [--through N] [--hours H]` when the plan is approved: no other flag, no chained command; the grants are the project's `run-grants` answer. If the plan is not approved, was edited after approval (the message names the steps), or only carries an Approval line, tell the person to approve it (`! go-getter plan approve <plan>`) and stop; an Approval line you write is ignored, so do not edit one. You cannot end a run or pass `--grant`. Inside it the granted outward commands and the run's step comments and closes need no asking; the always-human set (force-push, history rewrites, settings, tags, releases, publishing) stays with a person.
 
 ## Loop
 
-1. `go-getter run status`. No active run: start one on the approved plan as above, or stop, nothing is granted.
-2. `go-getter run next`. It prints the next step, or `stop (<code>)` with a reason and exits 1.
+1. `go-getter plan status`. No active run: start one on the approved plan as above, or stop, nothing is granted.
+2. `go-getter plan next --auto`. It prints the next step, or `stop (<code>)` with a reason and exits 1.
 3. On a step: follow `docs/skills/working-a-change.md` for it (start, change, checks, pull request, merge when its checks are green, close the step's issue). Before the pull request, run the prep yourself, in this order: `go-getter:capture`, `go-getter:conform`, `go-getter:lint` (at a plan phase boundary), `go-getter:attribute` for the commit message and description. Fix what they find. Then go to 2.
 4. On a stop: do not work around it. Report what you did and why you stopped, hand over as in Handing over, and finish the turn.
 
@@ -27,7 +27,7 @@ The prep above is yours, never the person's. Hand over only gated actions (an ap
 
 ## Red checks
 
-When CI or a step check fails, fix the cause and run `go-getter run attempt <step>` once per failed attempt. After the second, run `go-getter run next`; it stops. Never merge a red pull request.
+When CI or a step check fails, fix the cause and run `go-getter plan attempt <step>` once per failed attempt. After the second, run `go-getter plan next --auto`; it stops. Never merge a red pull request.
 
 ## After a denial
 

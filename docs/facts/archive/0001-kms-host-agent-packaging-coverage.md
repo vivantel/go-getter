@@ -4,8 +4,6 @@ title: kms 0.15.0 ships native packaging for three host agents - Claude Code, Co
 status: deprecated
 date: 2026-10-04
 tags: [knowledge-base, host-agents, packaging]
-kind: environmental
-governed-by: 0006-vendor-kms-as-builtin-pack
 ---
 
 kms 0.15.0 packages three host agents: a Claude Code marketplace (`.claude-plugin/marketplace.json`, `plugins/kms/.claude-plugin/plugin.json`), a Codex plugin (`plugins/kms/.codex-plugin/plugin.json`) and a Kilo remote-skills manifest (`kilo.jsonc` → `plugins/kms/skills/index.json`). It has no Cursor, Gemini CLI or Copilot packaging.

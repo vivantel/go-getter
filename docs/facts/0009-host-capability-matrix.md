@@ -4,8 +4,6 @@ title: Capability matrix of the seven host agents
 status: active
 date: 2026-10-04
 tags: [host-agents, harness, compiler, enforcement]
-kind: derived
-governed-by: 0005-neutral-source-compiler-architecture
 ---
 
 Derived from facts 0003 (Claude Code, CC), 0004 (Codex, CX), 0005 (Kilo, KI; OpenCode, OC), 0006 (Cursor, CU), 0007 (Gemini CLI, GE), 0008 (Copilot, CP); output and read levers from 0027 and 0031. `?` = unconfirmed in the source fact.

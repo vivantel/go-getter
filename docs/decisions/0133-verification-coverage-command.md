@@ -4,7 +4,6 @@ title: The verification coverage command is ""
 status: active
 date: 2026-10-11
 tags: [practice-packs, verification, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   verify-coverage-command: ""

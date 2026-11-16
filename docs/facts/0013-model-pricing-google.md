@@ -4,8 +4,6 @@ title: Google Gemini API model pricing including context caching
 status: active
 date: 2026-10-04
 tags: [cost, model-routing, governance]
-kind: environmental
-governed-by: 0016-quality-gated-cache-aware-model-routing
 expires: 2026-12-31
 go-getter:
   models:

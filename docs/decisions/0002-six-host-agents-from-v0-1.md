@@ -4,7 +4,6 @@ title: v0.1 supports seven host agents - Claude Code, Codex, Kilo, OpenCode, Cur
 status: active
 date: 2026-10-04
 tags: [host-agents, agent-agnostic, packaging]
-track: product
 accepted-by: sergemso
 ---
 

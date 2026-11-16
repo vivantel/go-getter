@@ -4,11 +4,14 @@ title: Practice areas are declarative packs in two families - harness packs and 
 status: active
 date: 2026-10-04
 tags: [practice-packs, interview, architecture, harness]
-track: process
 accepted-by: sergemso
 fitness-functions:
-  - Every pack validates against the pack schema in CI
-  - A coverage report maps every harness component to the packs covering it
+  - check: "Every pack validates against the pack schema in CI"
+    enforced-by: unverified
+    last-verified: 2026-10-04
+  - check: "A coverage report maps every harness component to the packs covering it"
+    enforced-by: unverified
+    last-verified: 2026-10-04
 ---
 
 ## Decision

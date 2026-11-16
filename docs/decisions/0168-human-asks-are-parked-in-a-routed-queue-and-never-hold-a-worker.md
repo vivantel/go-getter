@@ -4,7 +4,6 @@ title: A unit that needs a human is parked in a routed queue and releases its wo
 status: active
 date: 2026-11-03
 tags: [coordination, hooks, agent-roles]
-track: process
 accepted-by: sergemso
 ---
 

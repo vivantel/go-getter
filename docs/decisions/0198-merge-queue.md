@@ -4,7 +4,6 @@ title: "The merge queue is off: ship merges through it only when it is on"
 status: draft
 date: 2026-11-04
 tags: [practice-packs, agent-roles, harness]
-track: process
 go-getter:
   merge-queue: off
   generated-by: orchestration@0.1.5

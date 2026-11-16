@@ -4,8 +4,6 @@ title: OpenSpec keeps living specs under openspec/specs and per-change folders w
 status: active
 date: 2026-10-05
 tags: [roadmap, tooling, packaging]
-kind: environmental
-governed-by: 0075-spec-tools-are-detected-and-tolerated
 expires: 2027-01-04
 ---
 

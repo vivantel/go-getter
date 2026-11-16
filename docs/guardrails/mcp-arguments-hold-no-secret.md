@@ -4,8 +4,7 @@ title: MCP calls carry no secret
 status: active
 date: 2026-10-12
 tags: [practice-packs, hooks, guardrail]
-governed-by: 0143-mcp-arguments-scanned
-grounded-in: [0143-mcp-arguments-scanned]
+governed-by: [0143-mcp-arguments-scanned]
 derivation-note: Given an MCP server is third-party code reached with the project's context (0138), a secret in a call's arguments must be stopped by the host's hook before it leaves, since an instruction alone fails silently.
 go-getter:
   enforcement:
@@ -15,6 +14,7 @@ go-getter:
   generated-by: sanitization@0.7.0
   pack-answer: mcp-argument-scan
   pack-option: on
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

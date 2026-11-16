@@ -4,7 +4,6 @@ title: The throughput steps are built on the current layer and migrated to the w
 status: draft
 date: 2026-11-04
 tags: [coordination, roadmap]
-track: process
 ---
 
 ## Decision

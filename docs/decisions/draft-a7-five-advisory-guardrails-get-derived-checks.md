@@ -4,7 +4,6 @@ title: Five advisory-only guardrails get checks derived from their own text, and
 status: draft
 date: 2026-11-06
 tags: [enforcement, guardrail, research]
-track: product
 ---
 
 ## Decision

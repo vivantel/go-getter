@@ -4,7 +4,6 @@ title: Each point where work waits for a person is an approval event with a clas
 status: draft
 date: 2026-11-05
 tags: [observability, hooks]
-track: process
 ---
 
 ## Decision

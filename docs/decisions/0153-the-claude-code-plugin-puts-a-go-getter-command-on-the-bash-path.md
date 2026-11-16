@@ -4,7 +4,6 @@ title: The Claude Code plugin ships bin/go-getter so a skill's bare go-getter co
 status: draft
 date: 2026-10-31
 tags: [packaging, claude-code, tooling, generated-files]
-track: process
 ---
 
 ## Decision

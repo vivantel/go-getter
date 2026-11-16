@@ -4,7 +4,6 @@ title: Handoffs are a brief in, then a result and evidence out
 status: active
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
-track: process
 accepted-by: sergemso
 go-getter:
   handoff: "The brief gives goal, scope and done-when. Reply with the result, then the evidence: commands run with their outcome, and file references."

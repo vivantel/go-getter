@@ -4,8 +4,6 @@ title: Virage registers MCP and hooks only for Claude Code; its prompt hook inje
 status: active
 date: 2026-10-12
 tags: [tooling, security, hooks]
-kind: environmental
-governed-by: 0145-retrieval-tools-follow-a-go-getter-contract
 last-verified: 2026-10-12
 ---
 
@@ -43,4 +41,4 @@ Running `virage init` in a scratch project to compare the files written with thi
 
 ## Sources
 
-`docs/cli/{init,update,install-hooks,uninstall,index,config}.md`, `docs/packages/{embedders,stores}.md`, `docs/decisions/ADR-025-universal-agent-hook-base.md`, `packages/virage-agent-claude/src/{plugin,server,inject-context}.ts`, `packages/virage-agent-core/src/{base/base-agent,constants/vendor-configs}.ts`, `crates/virage-engine/src/{mcp,cli/serve}.rs` in the virage repository (read 2026-10-12).
+`docs/cli/{init,update,install-hooks,uninstall,index,config}.md`, `docs/packages/{embedders,stores}.md`, virage ADR-025 (universal-agent-hook-base), `packages/virage-agent-claude/src/{plugin,server,inject-context}.ts`, `packages/virage-agent-core/src/{base/base-agent,constants/vendor-configs}.ts`, `crates/virage-engine/src/{mcp,cli/serve}.rs` in the virage repository (read 2026-10-12).

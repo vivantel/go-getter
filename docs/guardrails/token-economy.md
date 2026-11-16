@@ -4,13 +4,13 @@ title: Facts, guardrails and procedures use the shortest phrasing that preserves
 status: active
 date: 2026-10-04
 tags: [knowledge-management, cost, guardrail]
-governed-by: 0016-quality-gated-cache-aware-model-routing
-grounded-in: [0016-quality-gated-cache-aware-model-routing, 0066-own-the-knowledge-base-tooling]
+governed-by: [0016-quality-gated-cache-aware-model-routing]
 derivation-note: Given artifacts are read into agent context (0066) and go-getter commits to minimal token spend (0016), every unnecessary word in them is a recurring cost.
 go-getter:
   enforcement:
     - tier: 1
       check: "knowledge-base lint check 10 (verbose artifacts)"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

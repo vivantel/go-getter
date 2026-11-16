@@ -4,8 +4,7 @@ title: Writes to the plan tracker follow the project's answer
 status: active
 date: 2026-11-01
 tags: [practice-packs, hooks, guardrail]
-governed-by: 0160-tracker-writes
-grounded-in: [0160-tracker-writes]
+governed-by: [0160-tracker-writes]
 derivation-note: Given the project chose no prompt for plan writes, the rule rests on the agent keeping to the verbs and the step text.
 go-getter:
   enforcement:
@@ -18,6 +17,7 @@ go-getter:
   generated-by: tracker@0.3.0
   pack-answer: writes
   pack-option: allow
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

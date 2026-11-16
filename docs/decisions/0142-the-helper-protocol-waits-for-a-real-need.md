@@ -4,7 +4,6 @@ title: The helper protocol waits for a second implementation or an external requ
 status: active
 date: 2026-10-12
 tags: [architecture, roadmap]
-track: product
 accepted-by: sergemso
 ---
 

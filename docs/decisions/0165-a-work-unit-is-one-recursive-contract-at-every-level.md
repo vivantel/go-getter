@@ -4,7 +4,6 @@ title: A work unit is one recursive contract at every level of product > feature
 status: active
 date: 2026-11-03
 tags: [coordination, roadmap, architecture]
-track: product
 accepted-by: sergemso
 ---
 

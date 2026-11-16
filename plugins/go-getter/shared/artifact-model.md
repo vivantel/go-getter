@@ -1,57 +1,51 @@
+schema-version: 1.0.0
+<!-- Contract for consumers: docs/skills/core-contract.md -->
+
 ## Artifact types
 
-| Type | Mode | Origin | Where | Verified by |
-|------|------|--------|-------|-------------|
-| Environmental fact | descriptive | original | `facts/` | Observe from the world (tool output, docs, benchmarks) |
-| Decision fact | descriptive | original | `facts/` | Check the governing decision is still current |
-| Decision | axiomatic | original | `decisions/` | Expert review; immutable once accepted |
-| Procedure | procedural | original | `skills/` | Expert review; can be refined |
-| Guardrail | normative | derived | `guardrails/` | Re-derive from its sources; compare |
+| Type | Mode | Where | Verified by |
+|------|------|-------|-------------|
+| Fact | descriptive: true now | `facts/` | Re-observe from `source` |
+| Decision | axiomatic: what the team commits to | `decisions/` | Expert review |
+| Guardrail | normative: must or must not happen | `guardrails/` | Re-derive from its sources |
+| Procedure | procedural: how to decide or act | `skills/` | Expert review |
 
-**Mode** is the kind of claim: descriptive — true right now; axiomatic — what the team commits to, with context and rationale; normative — must or must not happen, derived from an axiomatic commitment plus a descriptive fact; procedural — how to decide or act. A procedure covers both a shipped skill's own prescription and a project-specific workflow — both live in `skills/`.
+A fact is true of the environment or the process, not a restatement of product behaviour. Behaviour that must hold is a guardrail; what a product should do is a spec, kept in a spec tool. A guardrail is valid only while its sources are current.
 
-A guardrail is only valid while its sources are current — a source change invalidates it.
+The knowledge directory is the one containing `decisions/`, normally `docs/`. Retired files move to `<type>/archive/`, which has its own `INDEX.md`.
 
-## File formats
+## Fields
 
-Facts and decisions are filed as `docs/{facts,decisions}/NNNN-slug.md` (4-digit, 1-based, per directory). Where parallel units file artifacts, a new one may be filed as `docs/{facts,decisions}/draft-<unit>-<slug>.md` (id `draft-<unit>-<slug>`, no number): `go-getter artifacts assign` renames it to the next free `NNNN` (the highest on the default branch plus one) and rewrites references to it, and existing `NNNN` artifacts are read unchanged; guardrails and procedures as `docs/{guardrails,skills}/slug.md`, no numeric prefix.
+Every artifact: `id`, `title`, `status`, `date`, `tags`. Optional: `expires: <date>`, `expires-when: <condition>`.
 
-All four carry the base frontmatter `id, title, status, date, tags` — `status` is one of `draft | active | superseded | deprecated` — plus an optional `expires: <date or condition>` (when this stops being current), and these type-specific fields:
+- `id`: `NNNN-slug` for facts and decisions (4-digit, 1-based, per directory); `slug` for guardrails and procedures. Matches the file name.
+- `status`: `draft` (proposed, not binding) | `active` | `superseded` (replaced by a named successor) | `deprecated` (retired without replacement; the body's first line says why).
+- `date`: creation date; never moves.
+- `tags`: from `docs/skills/tags.md` when it exists. A new tag is proposed (name, meaning, why nothing fits) and confirmed before use.
+- `superseded-by: <id>`: any type; required when `status: superseded`.
+- Fact: optional `source: <url | path | command>`, `last-verified: <date>` (moves only on re-observation), `scope: {component, environment, version}` (any non-empty subset; set whenever the claim is limited).
+- Guardrail: `governed-by: [<decision-id>, ...]` (non-superseded decisions), `derivation-note: <one sentence naming every id in both edges: given X and Y, Z must or must not follow>`; optional `enforced-by: <code path | ci job | hook>` (the check that enforces it, which also keeps it from counting as orphaned); optional `grounded-in: [<fact-id>, ...]` (absent means a direct consequence of the governing decisions); optional `pinned: {<id>: <revision>}`.
+- Decision: optional `governed-facts: [<fact-id>, ...]`, `fitness-functions: [{check, enforced-by, last-verified}, ...]`, `accepted-by: <name | role>` (who is accountable; set when `status` first becomes `active`).
+- Procedure: optional `governed-by`, `operationalizes: [<guardrail-id>, ...]`.
 
-For `tags`: if `docs/skills/tags.md` exists, every tag assigned to any of the four types MUST come from it — check each intended tag against the list's stated meanings before writing it. If none fit, propose a new tag (name, one-line meaning, why nothing existing covers it) and get confirmation before using it and adding it to the list.
+Lists are always YAML lists. `TBD` stands for an unresolved id, a debt that ages.
 
-`INDEX.md` files are generated, not hand-edited: after writing any of the four types directly to disk, run `go-getter artifacts index` if the type has an `INDEX.md` (`go-getter check indexes` fails when one differs from its generation). Format: CSV — a header line naming the fields (`id, title, tags, status`), then one row per artifact, sorted by id, `title` and `tags` always double-quoted with `tags` comma-separated inside the quotes — e.g. `"naming, branding, packaging"`. Without the go-getter CLI, write the row by hand in the same shape.
+## Lifecycle
 
-Fact — add `kind: environmental | decision | derived | mixed` (mixed = file has both; label each section inline) and `governed-by: <decision-id>` (`TBD` = debt).
+`## Decision`, `## Why` and `## Tradeoffs considered` are frozen once a decision is `active`. `status`, `superseded-by`, `accepted-by`, `tags`, expiry, `fitness-functions` and dated, additive `## Amendment <date>` sections stay editable. Retiring a source (a superseded decision, a deprecated fact) triggers re-derivation of every guardrail that cites it in the same pass: re-point and note "re-derived <date> from <id>" if the consequence stands, else deprecate.
 
-Guardrail — add `governed-by: <decision-id>`, `grounded-in: [<fact-id, decision-id, or guardrail-id>, ...]`, and `derivation-note: <one sentence: given decision X and fact Y, Z must/must not follow>`. `grounded-in` normally holds the independent fact a guardrail rests on; when no such fact exists, it may instead hold a decision or sibling-guardrail id — including the same id already in `governed-by`, when the guardrail is a direct, unmediated consequence of that decision alone (`docs/decisions/0051-...`). Always a YAML list, even with one entry — never a comma-joined string. Missing any of the three = undeclared, flag as debt.
+A pin is the first 12 hex digits of the SHA-256 of the target without its edge fields, `pinned`, `date`, `accepted-by`, `last-verified`, `status`, `superseded-by`, `expires` and `expires-when`, whitespace collapsed. Write it with `python3 <plugin>/shared/lint_check.py --root <root> --pin <file>`, never by hand. Pins are optional; an unpinned edge is judged by `lint`.
 
-Decision — add `track: product | process` (required, exactly one — never `both`/`mixed`: product = what the project is for and who it serves; process = how it's built, organized, or shipped); `superseded-by: <decision-id>`, required when `status: superseded`; optionally `governed-facts: [<fact-id>, ...]`, `fitness-functions: [<check description>, ...]`, and `accepted-by: <name>` (who is accountable for this decision, independent of who committed it — a human directing an AI agent's commits is still the accountable party; set when `status` first becomes `active`).
+Stale threshold: 180 days, overridable by one line in the project's AGENTS.md block.
 
-Procedure — optionally add `operationalizes: [<guardrail-id>, ...]` when this procedure is a runbook/playbook for a guardrail's required behavior, not general reference material. Many-to-many: a procedure may list several guardrails, and more than one procedure may list the same guardrail. Most procedures won't carry this field at all. A procedure may also add `grounded-in: [<fact-id, decision-id, or guardrail-id>, ...]` for the artifacts its steps rest on, so `lint` catches a dangling one and `go-getter refs` lists them.
+## Registries and markers
 
-## The `go-getter:` key
+A registry is a non-governed file: `INDEX.md`, `docs/skills/tags.md`, role lists, the docs manifest. It carries `kms-registry: <name>` in frontmatter, or `<!-- kms-registry: <name> -->` as the first line of a pure CSV, and is skipped by the type checks. Other markers: `kms-seeded`, `kms-generated`, same two forms.
 
-Optional frontmatter key on any artifact; the only place go-getter tooling reads structured data from (it never parses prose). It is go-getter's own format, not a general knowledge-base field. Fields:
+`INDEX.md` per type: CSV, header `id, title, tags, status`, one row per artifact; a value with a comma is double-quoted, and a multi-tag `tags` cell joins its items with comma and space inside the quotes (`"kms, naming"`), exactly as the checker compares it. After writing an artifact, add or update its row.
 
-- `enforcement` (guardrails): list of `{tier, check, run, stages?, origin?}`. `tier` is `1` instruction, `2` host hook or permission, `3` git hook or CI; `check` is a one-line description; `run` is a built-in check id with params (`builtin:<id> key=value`) or a command, required for tiers 2 and 3. A tier-3 entry may list `stages` (`pre-commit`, `pre-push`; default `pre-push`); CI runs every entry. `origin` is `derived` (the check is produced from this guardrail's own text or parameters) or `authored` (hand-written); a missing value means `authored`.
-- `generated-by: <pack-id>@<version>` — set on pack-emitted artifacts.
-- `pack-answer: <question-id>` — the pack question the artifact answers.
-- `pack-option: <option-id>` — the chosen option (a list for multi-answer questions).
-- Pack data — pack-specific structured data (routing policy, data classes, model registry), under keys the pack defines.
+## Derivation
 
-```yaml
-go-getter:
-  enforcement:
-    - tier: 1
-      check: Where no hook routes the delegation, run `go-getter route --class <class> --host <host id>` and delegate with the `delegateModel` it returns
-    - tier: 2
-      check: Pre-delegation hook sets the delegated model from the router, or denies when no model is eligible
-      run: builtin:route-delegation
-  generated-by: cost-routing@0.1.0
-  pack-answer: tiers
-```
+`Decision (why) + Fact (what is) → Guardrail (ought)`. If a source changes, re-apply and propose updated guardrail text.
 
-**Derivation recipe**: `Decision (why) + Fact (what is) → Guardrail (ought)`. The `derivation-note` states that step in one sentence; if either source changes, re-apply and propose updated guardrail text.
-
-**Economy**: a fact, guardrail, or procedure stub (decisions and plans exempt) uses the shortest phrasing that preserves meaning. Before considering a newly-drafted one done, re-read it once specifically for restatement (a point already made earlier in this file, or in a sibling artifact from the same drafting pass) and length — tighten before finishing, not after, the same way a shipped `SKILL.md` edit gets one full re-read before being considered done.
+<!-- fields: id title status date tags expires expires-when superseded-by source last-verified scope governed-by derivation-note enforced-by grounded-in pinned governed-facts fitness-functions accepted-by operationalizes kms-registry kms-seeded kms-generated -->

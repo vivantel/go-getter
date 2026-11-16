@@ -4,8 +4,7 @@ title: No mid-task model, effort or instruction-file change; switches are confir
 status: active
 date: 2026-10-05
 tags: [practice-packs, harness, guardrail]
-governed-by: 0036-cache-hygiene
-grounded-in: [0036-cache-hygiene]
+governed-by: [0036-cache-hygiene]
 derivation-note: Given the cache decision, a mid-task switch changes the prefix and re-pays full input price.
 go-getter:
   enforcement:
@@ -14,6 +13,7 @@ go-getter:
   generated-by: context@0.3.1
   pack-answer: cache-hygiene
   pack-option: advisory-and-confirm
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

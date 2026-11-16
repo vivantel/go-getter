@@ -385,10 +385,13 @@ function approvalsStoreRefusal(project, payload) {
       // The one plan approval is a person's (decision 0155 item 1): an agent that approved its own plan would start every step.
       if (call?.args[0] === 'plan' && call.args[1] === 'approve') return 'blocked: a person approves a drafted plan (decision 0155); ask the user to run: ! go-getter plan approve <plan>';
       // A run changes what an agent may do without asking (decision 0130): a person starts and ends it.
-      if (call?.args[0] === 'run' && call.args[1] === 'start') {
-        const why = wrapped ? 'blocked: go-getter run start is allowed for an agent only as a plain command, not under go-getter watch; ask the user to run it themselves or to approve the plan once: ! go-getter plan approve <plan>' : agentStartRefusal(project, command, call.args.slice(2));
+      // `plan start --auto` and `plan stop` are the same acts as `run start` and `run end` (draft decision plan-autonomy).
+      const runStart = (call?.args[0] === 'run' && call.args[1] === 'start') || (call?.args[0] === 'plan' && call.args[1] === 'start' && call.args.includes('--auto'));
+      const runEnd = (call?.args[0] === 'run' && call.args[1] === 'end') || (call?.args[0] === 'plan' && call.args[1] === 'stop');
+      if (runStart) {
+        const why = wrapped ? 'blocked: go-getter run start is allowed for an agent only as a plain command, not under go-getter watch; ask the user to run it themselves or to approve the plan once: ! go-getter plan approve <plan>' : agentStartRefusal(project, command, call.args.slice(2).filter((a) => a !== '--auto'));
         if (why) return why;
-      } else if (call?.args[0] === 'run' && call.args[1] === 'end') return 'blocked: go-getter run end changes what an agent may do without asking, so a person runs it; ask the user to run it themselves';
+      } else if (runEnd) return 'blocked: go-getter run end changes what an agent may do without asking, so a person runs it; ask the user to run it themselves';
     }
   }
   const store = storeDir();

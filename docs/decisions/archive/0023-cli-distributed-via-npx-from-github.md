@@ -4,7 +4,6 @@ title: Skills invoke the go-getter CLI through npx from the GitHub repository
 status: superseded
 date: 2026-10-05
 tags: [packaging, nodejs, tooling]
-track: process
 accepted-by: sergemso
 superseded-by: 0093-init-skill-carries-its-own-cli
 ---

@@ -4,7 +4,6 @@ title: Routing runs as compiled per-role defaults plus a delegation-time router 
 status: active
 date: 2026-10-04
 tags: [model-routing, hooks, enforcement, cost]
-track: product
 accepted-by: sergemso
 governed-facts: [0009-host-capability-matrix, 0003-claude-code-integration-surface, 0004-codex-integration-surface, 0006-cursor-integration-surface, 0007-gemini-cli-integration-surface]
 ---

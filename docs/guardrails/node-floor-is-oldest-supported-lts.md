@@ -4,7 +4,7 @@ title: The Node.js floor must be the oldest LTS line still supported
 status: active
 date: 2026-10-04
 tags: [nodejs, tooling, guardrail]
-governed-by: 0019-node-prerequisite-oldest-supported-lts
+governed-by: [0019-node-prerequisite-oldest-supported-lts]
 grounded-in: [0010-nodejs-release-schedule]
 derivation-note: Given the floor is defined as the oldest supported LTS (0019) and the official schedule moves lines to end of life (fact 0010), a hard-coded floor goes stale and must be checked against the live schedule.
 go-getter:
@@ -12,6 +12,7 @@ go-getter:
     - tier: 3
       check: "engines.node in package.json equals >= the oldest LTS line not past end of life in the official Node.js schedule"
       run: "npm run check:node-floor"
+enforced-by: go-getter enforcement
 ---
 
 ## Guardrail

@@ -4,7 +4,6 @@ title: Restricted paths are blocked in the host and never committed
 status: active
 date: 2026-10-05
 tags: [practice-packs, governance, enforcement]
-track: process
 accepted-by: sergemso
 go-getter:
   generated-by: restricted-data@0.1.0

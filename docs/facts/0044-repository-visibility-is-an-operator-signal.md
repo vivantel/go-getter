@@ -4,8 +4,7 @@ title: go-getter cannot read a repository's visibility, so a public repository i
 status: active
 date: 2026-11-04
 tags: [outcomes, security]
-kind: mixed
-governed-by: 0179-a-meter-is-a-first-class-instrument-and-a-reading-is-a-unit-any-capable-worker-claims
+source: compiler/src/measure.mjs
 last-verified: 2026-11-04
 ---
 

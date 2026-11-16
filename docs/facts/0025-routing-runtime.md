@@ -4,8 +4,6 @@ title: Routing runs as an eligibility filter, an expected-total-step-cost compar
 status: active
 date: 2026-10-05
 tags: [model-routing, cost, compiler, hooks]
-kind: decision
-governed-by: 0032-cost-routing-pack-defaults
 ---
 
 - `routing/policy.mjs` chooses in the order the guardrails fix: models of a tier that the host runs and the data class allows (`eligibility.mjs`) come first; among them each delegation target is priced by `routing/cost.mjs`; escalation moves one tier up the ladder (cheapest eligible model per tier) and ends at a human after `go-getter.max-escalations` or when no stronger eligible tier exists. A project without governance adopted treats every model as eligible; with it, steps are `internal` data unless `--data-class` says otherwise.
