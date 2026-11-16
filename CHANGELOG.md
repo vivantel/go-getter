@@ -1,13 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.0] - 2026-11-16
 
 ### Changed
 
-- core: the knowledge-base model and structural checker are no longer a fork; `src/shared/` holds byte-identical copies of the kms core, pinned in `src/core-pin.json` (decisions 0210-0214, drafts until accepted)
+- core: the knowledge-base model and structural checker are no longer a fork; `src/shared/` holds byte-identical copies of the kms core, pinned in `src/core-pin.json` (decisions 0210-0214)
 - docs: the corpus is migrated to the core schema (`track` dropped, 21 facts given a `source`, guardrails carry `enforced-by` where a check enforces them); go-getter's own additions live in `shared/artifact-extensions.md`
 - skills: bootstrap, capture, lint and roadmap no longer teach `track` or role lists, and lint defers required-field rules to the core checker
-- plan: autonomy is a property of an approved plan: `plan start --auto`, `plan next --auto`, `plan attempt`, `plan stop` and an active-run line in `plan status` replace `go-getter run`, which stays one release as a deprecated alias with the same person-only rules (draft decision plan-autonomy)
+- plan: autonomy is a property of an approved plan: `plan start --auto`, `plan next --auto`, `plan attempt`, `plan stop` and an active-run line in `plan status` replace `go-getter run`, which stays one release as a deprecated alias with the same person-only rules (decision plan-autonomy)
 
 ### Added
 
