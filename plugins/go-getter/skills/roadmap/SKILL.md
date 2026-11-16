@@ -53,9 +53,7 @@ Do not tag or classify decisions while the interview is running — keep the int
 - **Normative** — this is what must or must not happen, derived from an axiomatic commitment plus a descriptive fact (a guardrail)
 - **Procedural** — this is how to decide or act (a procedure)
 
-Decisions carry a `track`: **product** — what the project is for and
-who it serves; or **process** — how it's built, organized, or shipped.
-Exactly one value, never both. Any of the four types may be bounded or
+Any of the four types may be bounded or
 provisional: add `expires` (a date or condition — when it stops being
 current). `status` is one of `draft | active | superseded | deprecated`;
 `superseded` also requires `superseded-by: <decision-id>`. A decision
@@ -63,11 +61,6 @@ reaching `active` also gets `accepted-by: <name>` — the accountable
 party, not necessarily whoever runs the commit. If
 `docs/skills/tags.md` exists, check any tag against it before
 assigning; propose additions there when none fit.
-
-If `docs/skills/product-track-roles.md` or `process-track-roles.md`
-exists for the decision's track, read it and weigh those perspectives
-before finalizing the recommendation. If it doesn't exist, proceed as
-today — don't require it.
 
 ## What must be captured
 
@@ -98,7 +91,7 @@ Done-when: …
 - `Needs` lists only ids in the same plan, with no cycles.
 - Each unit also states its scope (the paths or resources it may touch), `Accept` (the runnable acceptance, usually the `Check`), owner kind (person, agent or either), capability tags (hard filters; never a model name) and the grants it may hand to sub-units.
 
-A plan is not a 5th artifact type: it carries no `track`, no `status` from the enum above, and no `expires` — only its own per-step done/pending/blocked legend. The test for which bucket content belongs in: a procedure doesn't name the specific objects it acts on — those are supplied at invocation. A plan does — it names concrete files, decisions, and steps for one occasion. If a candidate procedure hardcodes the files/decisions it acts on, it's actually a plan.
+A plan is not a 5th artifact type: it carries no `status` from the enum above, and no `expires` — only its own per-step done/pending/blocked legend. The test for which bucket content belongs in: a procedure doesn't name the specific objects it acts on — those are supplied at invocation. A plan does — it names concrete files, decisions, and steps for one occasion. If a candidate procedure hardcodes the files/decisions it acts on, it's actually a plan.
 
 Before finalizing this file, verify each step's Done-when against each named file's actual content — not memory or assumption. A Done-when that can't be satisfied by its own preceding steps is a defect in the plan, like any other error.
 

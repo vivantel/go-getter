@@ -4,7 +4,7 @@
 
 **Prompt:** "We're uninstalling go-getter, clean up what it added."
 
-**What happens:** A report lists everything found: 4 seeded guardrails (`docs/guardrails/token-economy.md` and 3 siblings), 3 generated files (`docs/facts/docs-manifest.md`, `docs/skills/product-track-roles.md`, `docs/skills/process-track-roles.md`), the AGENTS.md `<!-- knowledge-base:start -->` block, and 1 still-draft decision stub nobody finalized. For each, the user is asked detach or remove; the draft stub is removed, the guardrails are removed, and the AGENTS.md block is removed — each confirmed individually before anything is written or deleted.
+**What happens:** A report lists everything found: 4 seeded guardrails (`docs/guardrails/token-economy.md` and 3 siblings), 2 generated files (`docs/facts/docs-manifest.md`, `docs/skills/tags.md`), the AGENTS.md `<!-- knowledge-base:start -->` block, and 1 still-draft decision stub nobody finalized. For each, the user is asked detach or remove; the draft stub is removed, the guardrails are removed, and the AGENTS.md block is removed — each confirmed individually before anything is written or deleted.
 
 ## 2. Keep the guardrails, just remove the go-getter wiring
 
