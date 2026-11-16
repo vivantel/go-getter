@@ -4,6 +4,7 @@ title: Only Claude Code and Codex are confirmed to show an MCP call as mcp__serv
 status: active
 date: 2026-10-12
 tags: [hooks, host-agents, security]
+source: compiler/src/hosts/hook-events.mjs
 last-verified: 2026-10-12
 ---
 

@@ -4,6 +4,7 @@ title: Only Claude Code (transcript, status line, -p JSON), Codex (exec JSON) an
 status: active
 date: 2026-10-12
 tags: [cost, hooks, host-agents]
+source: compiler/src/measure.mjs
 last-verified: 2026-10-12
 ---
 

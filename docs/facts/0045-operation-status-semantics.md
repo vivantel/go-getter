@@ -4,6 +4,7 @@ title: operation status compares strictly and reads local readings only
 status: active
 date: 2026-11-04
 tags: [outcomes, observability]
+source: compiler/src/commands
 last-verified: 2026-11-04
 ---
 

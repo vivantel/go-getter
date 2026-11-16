@@ -4,6 +4,7 @@ title: go-getter cannot read a repository's visibility, so a public repository i
 status: active
 date: 2026-11-04
 tags: [outcomes, security]
+source: compiler/src/measure.mjs
 last-verified: 2026-11-04
 ---
 

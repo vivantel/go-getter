@@ -4,6 +4,7 @@ title: Project agent roles come from adopted decisions and are compiled by apply
 status: active
 date: 2026-10-05
 tags: [agent-roles, compiler, host-agents]
+source: compiler/src/apply.mjs
 ---
 
 - Roles are data in the adopted orchestration decisions (`go-getter.roles`, `role-access`, `role-notes`, `handoff`, `escalation`), not files under `src/agents/` (0021); `apply` renders one agent file per role per host (0021 paths) and removes generated agent files of roles no longer in the roster.

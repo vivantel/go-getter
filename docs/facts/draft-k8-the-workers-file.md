@@ -4,6 +4,7 @@ title: docs/workers.md lists every worker and is changed by a human only
 status: active
 date: 2026-11-04
 tags: [coordination, security]
+source: compiler/src/work/grant-ops.mjs
 last-verified: 2026-11-04
 ---
 

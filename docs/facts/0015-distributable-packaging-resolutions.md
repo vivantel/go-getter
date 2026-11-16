@@ -4,6 +4,7 @@ title: Distributable packaging ships skills only, with a Gemini-compatible repo 
 status: active
 date: 2026-10-05
 tags: [packaging, compiler, generated-files]
+source: gemini-extension.json
 ---
 
 - **Skills only**: agent definitions, hooks and permissions depend on each project's pack answers, so they are project-local output of `apply` (output kind B), not plugin content.

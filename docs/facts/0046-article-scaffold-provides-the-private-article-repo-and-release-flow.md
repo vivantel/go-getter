@@ -4,6 +4,7 @@ title: article-scaffold provides the private article repo, the Zenodo release fl
 status: active
 date: 2026-11-04
 tags: [research, knowledge-management]
+source: src/packs/telemetry/pack.json
 last-verified: 2026-11-04
 ---
 

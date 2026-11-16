@@ -4,6 +4,7 @@ title: Manifest shapes the adapters emit for Agent Plugins 1.0 and Codex
 status: active
 date: 2026-10-05
 tags: [packaging, cursor, copilot, codex]
+source: https://agent-plugins.org/schemas/1.0.0/plugin.schema.json
 ---
 
 - **Agent Plugins 1.0** (Cursor, Copilot): `plugin.json` with `$schema` and `name` required and metadata only; components are found by directory convention, so `plugins/go-getter/plugin.json` sits next to the shared `skills/`. Source: https://agent-plugins.org/schemas/1.0.0/plugin.schema.json (accessed 2026-10-05).

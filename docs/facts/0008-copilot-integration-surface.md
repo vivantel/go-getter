@@ -4,6 +4,7 @@ title: GitHub Copilot's harness extension points
 status: active
 date: 2026-10-04
 tags: [copilot, host-agents, harness]
+source: https://docs.github.com/en/copilot/reference/hooks-reference
 ---
 
 GitHub Copilot: cloud agent (coding agent on GitHub), Copilot CLI, IDE agent mode (VS Code etc.), code review.

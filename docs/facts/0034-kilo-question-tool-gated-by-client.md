@@ -4,6 +4,7 @@ title: Kilo's question tool is on for the app, cli, desktop and vscode clients a
 status: active
 date: 2026-10-10
 tags: [kilo, host-agents, interview]
+source: compiler/src/hosts/kilo.mjs
 ---
 
 Kilo 7.6.2 registers its `question` tool (selectable options, custom answer allowed) when the client is `app`, `cli`, `desktop` or `vscode`, or when `KILO_ENABLE_QUESTION_TOOL` is set. Built-in agents allow it. Without an instruction to use it, models print options as plain text.
