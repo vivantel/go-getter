@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- core: the knowledge-base model and structural checker are no longer a fork; `src/shared/` holds byte-identical copies of the kms core, pinned in `src/core-pin.json` (decisions 0210-0214, drafts until accepted)
+- docs: the corpus is migrated to the core schema (`track` dropped, 21 facts given a `source`, guardrails carry `enforced-by` where a check enforces them); go-getter's own additions live in `shared/artifact-extensions.md`
+- skills: bootstrap, capture, lint and roadmap no longer teach `track` or role lists, and lint defers required-field rules to the core checker
+
+### Added
+
+- `go-getter check core-pin` fails when a vendored file differs from the pin; `go-getter core update <ref> --from <kms checkout>` refreshes the copy. The pin currently names a kms commit; the owner creates tag `kms-schema-1.0.0` in kms at release and runs `core update kms-schema-1.0.0 --from <kms>`
+- `npm test` runs kms's conformance fixtures against the vendored checker
+
 ## [0.5.0] - 2026-11-04
 
 ### Added
