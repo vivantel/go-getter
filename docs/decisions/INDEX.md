@@ -194,5 +194,6 @@ draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardra
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
 draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft
 draft-h4-policy-files-and-approvals-store-are-not-agent-writable,"The pre-tool hook asks a person before any call changes an active guardrail or an accepted decision, and reads the shell's working directory for the approvals store","enforcement, hooks",draft
+draft-plan-autonomy,"Autonomy is a property of an approved plan, started and stopped with plan commands; go-getter run is a deprecated alias","coordination, hooks, enforcement",draft
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft

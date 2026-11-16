@@ -11,9 +11,10 @@ import { planStaleness, planFromDefault, staleWarning } from '../plan-stale.mjs'
 import { cleanGitEnv } from '../git-env.mjs';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { activeRun } from '../runs/record.mjs';
 import { draftPlan, approvePlan, defaultPlanner, defaultReviewer, commandRunner } from '../plan-draft.mjs';
 
-const USAGE = `usage: go-getter plan status|next [plan] [--json] [--from-default] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned] | draft "<goal>" [--planner <cmd>] [--reviewer <cmd>] [--risk <file>] | approve [plan]`;
+const USAGE = `usage: go-getter plan status|next [plan] [--json] [--from-default] | start <id> [plan] [--worktree <slug>] | done <id> [plan] | issue ${VERBS.join('|')} <id> [plan] [--dry-run] [--text <t> | --stdin] [--reason completed|not-planned] | draft "<goal>" [--planner <cmd>] [--reviewer <cmd>] [--risk <file>] | approve [plan] | start --auto [plan] [--through N] [--hours H] [--grant <id>]... | next --auto [--json] | attempt <id> | stop`;
 
 function parseArgs(sub, rest) {
   const flags = { json: false };
@@ -71,6 +72,35 @@ async function withClaims(root, file, status) {
   const { claimOverlay } = await import('../work/ops.mjs');
   const { remoteOf } = await import('../work/ledger.mjs');
   return claimOverlay(root, stemOf(file), status, { remote: remoteOf(root) });
+}
+
+// `plan start --auto [plan] ...`, `plan next --auto [--json]`, `plan attempt <id>` and `plan stop` forward to the run command.
+// Returns its exit code, or undefined when the call is not one of these.
+async function autonomy(sub, rest) {
+  const forward = async (args) => (await import('./run.mjs')).default({ args, quiet: true });
+  if (sub === 'start' && rest.includes('--auto')) {
+    const args = rest.filter((a) => a !== '--auto');
+    const flagsWithValue = ['--through', '--hours', '--grant'];
+    const positional = args.filter((a, i) => !a.startsWith('--') && !flagsWithValue.includes(args[i - 1]));
+    if (positional.length > 1) {
+      console.error(USAGE);
+      return 2;
+    }
+    try {
+      const root = repoRoot(process.cwd());
+      const file = resolvePlan(process.cwd(), positional[0]);
+      const rel = path.relative(root, file).split(path.sep).join('/');
+      const at = positional.length ? args.findIndex((a, i) => a === positional[0] && !flagsWithValue.includes(args[i - 1])) : -1;
+      return await forward(['start', rel, ...args.filter((_, i) => i !== at)]);
+    } catch (e) {
+      console.error(`plan start: ${e.message.split('\n')[0]}`);
+      return 1;
+    }
+  }
+  if (sub === 'next' && rest.includes('--auto')) return forward(['next', ...rest.filter((a) => a !== '--auto')]);
+  if (sub === 'attempt') return forward(['attempt', ...rest]);
+  if (sub === 'stop' && !rest.length) return forward(['end']);
+  return undefined;
 }
 
 export default async function planCommand({ args, shared, io }) {
@@ -144,6 +174,10 @@ export default async function planCommand({ args, shared, io }) {
       return 1;
     }
   }
+  // Autonomy is a property of an approved plan (draft decision plan-autonomy): these spellings drive the same run record `go-getter run`
+  // writes, so the stops, the bounds and the hook's person-only rules (`stop`, `--grant`) are one mechanism, not two.
+  const auto = await autonomy(sub, rest);
+  if (auto !== undefined) return auto;
   const opts = ['status', 'next', 'start', 'done'].includes(sub) ? parseArgs(sub, rest) : null;
   if (!opts) {
     console.error(USAGE);
@@ -227,7 +261,12 @@ export default async function planCommand({ args, shared, io }) {
     const plan = { file: rel, steps: listed.result.steps };
     const result = sub === 'status' ? await withClaims(repoRoot(cwd), file, planStatus(plan)) : nextSteps(plan, undefined, unitStates(repoRoot(cwd)));
     if (sub === 'status' && opts.json) result.stale = stale.skipped ? null : stale.stale;
-    out(opts.json ? JSON.stringify(result, null, 2) : sub === 'status' ? formatStatus(result) : formatNext(result));
+    const run = sub === 'status' ? activeRun(repoRoot(cwd)) : null;
+    if (run && run.plan === rel.split(path.sep).join('/')) {
+      if (opts.json) result.run = run;
+      else result.runLine = `run active: through step ${run.through}, steps ${run.steps.join(', ')}, times out ${run.timeoutAt}${run.spendCapUsd ? `, spend cap $${run.spendCapUsd}` : ''}`;
+    }
+    out(opts.json ? JSON.stringify(result, null, 2) : (sub === 'status' ? formatStatus(result) : formatNext(result)) + (result.runLine ? `\n${result.runLine}` : ''));
     return 0;
   } catch (e) {
     err(`plan: ${(e.stderr?.toString().trim() || e.message).split('\n')[0]}`);
