@@ -1,8 +1,8 @@
 {
   "source": "kms",
-  "ref": "75188803945cf731b4c9a1afcc2ffe445fab598e",
-  "commit": "75188803945cf731b4c9a1afcc2ffe445fab598e",
-  "schemaVersion": "1.0.0-draft",
+  "ref": "kms-schema-1.0.0",
+  "commit": "90000fa7c022f3a99ff7564fe9d5c6e5409c919f",
+  "schemaVersion": "1.0.0",
   "expectedTag": "kms-schema-1.0.0",
   "files": {
     "compiler/test/kms-conformance/cases/c01-dangling-reference.expected.json": "12ab838d4ab91d8739dc052988bb0ded9f15b6afcef87920591a0677775dded0",
@@ -12,6 +12,14 @@
     "compiler/test/kms-conformance/cases/c01-dangling-reference/docs/skills/deploy.md": "b0d83844f5d25af9a1270a1dbce86d7f155f97ed56811c5fc4dcb7c3cb0d0f6d",
     "compiler/test/kms-conformance/cases/c01-dangling-reference/docs/skills/tags.md": "890901d8d19485f49de2ed9c127c7aa03efbb09aae7c6272b92f7555a7e8c304",
     "compiler/test/kms-conformance/cases/c01-dangling-reference/plugins/kms/templates/guardrails/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired.expected.json": "f865ea0904ff07cfcaa8fe830600ad1769d47c3c1286686954c4c88946fbe941",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/docs/decisions/0001-weekly.md": "483cbe46b489887a39e653aee1d7ab267f72a9a9af94beddee97d298b2f96bc1",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/docs/decisions/0002-x.md": "0574d4ef63c02338ac3b317c4aa58270bef4c3012d70335fb06d3d012003da4a",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/docs/facts/0001-cadence.md": "56f6edbc0db228c9705631f1166cf58c914f3e40154409edeef9662b7fe65b33",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/docs/guardrails/changelog.md": "2e8191722d69edf81279d24bb9dd3ca8030f0680880c984d21b6c26540cb5777",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/docs/skills/deploy.md": "b0d83844f5d25af9a1270a1dbce86d7f155f97ed56811c5fc4dcb7c3cb0d0f6d",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/docs/skills/tags.md": "890901d8d19485f49de2ed9c127c7aa03efbb09aae7c6272b92f7555a7e8c304",
+    "compiler/test/kms-conformance/cases/c01-pinned-source-retired/plugins/kms/templates/guardrails/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "compiler/test/kms-conformance/cases/c02-bad-status.expected.json": "542f7970edbfeec42bc701ebc5f1ef36471b395341dc9d8c0c5c19a4a7791ce9",
     "compiler/test/kms-conformance/cases/c02-bad-status/docs/decisions/0001-weekly.md": "cc9db6874d6a08d8c85d6d9ded6e375ce1d1bcf71a571367b9e4a550c65a4e40",
     "compiler/test/kms-conformance/cases/c02-bad-status/docs/facts/0001-cadence.md": "56f6edbc0db228c9705631f1166cf58c914f3e40154409edeef9662b7fe65b33",
@@ -177,8 +185,8 @@
     "compiler/test/kms-conformance/cases/valid/docs/skills/tags.md": "890901d8d19485f49de2ed9c127c7aa03efbb09aae7c6272b92f7555a7e8c304",
     "compiler/test/kms-conformance/cases/valid/plugins/kms/templates/guardrails/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "compiler/test/kms-conformance/test_conformance.py": "5f732b319f3df3d5488a919ea305053f2a5f852b063c84749d5a0ef38f48ccab",
-    "src/shared/artifact-model.md": "a3150b876e679b19a92c756927103c0e2f2948feb0397a094476faa9283e9899",
-    "src/shared/lint_check.py": "6e9ad126c9f84b0b14502b447f192f16ed4f1e6c9ae504978908bc715d29a3b4",
+    "src/shared/artifact-model.md": "20dff18c7d9ac01a1e29c1a528eb2f6e06b77be4e34b650566768e2522ee62a3",
+    "src/shared/lint_check.py": "1a8fade33778b330fef035dd444188d925c6fcc28ac8cd30a4d0c92b54543ee9",
     "src/shared/migrate.py": "f7900ad355f2887c716f0eba762ec687f0ec9abeb5808f0011009e7be34a1436"
   }
 }

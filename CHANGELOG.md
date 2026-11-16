@@ -11,7 +11,7 @@
 
 ### Added
 
-- `go-getter check core-pin` fails when a vendored file differs from the pin; `go-getter core update <ref> --from <kms checkout>` refreshes the copy. The pin currently names a kms commit; the owner creates tag `kms-schema-1.0.0` in kms at release and runs `core update kms-schema-1.0.0 --from <kms>`
+- `go-getter check core-pin` fails when a vendored file differs from the pin; `go-getter core update <ref> --from <kms checkout>` refreshes the copy. The pin names kms tag `kms-schema-1.0.0` (schema 1.0.0, kms 0.16.0); move it with `core update <tag> --from <kms checkout>`
 - `npm test` runs kms's conformance fixtures against the vendored checker
 
 ## [0.5.0] - 2026-11-04
