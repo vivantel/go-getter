@@ -196,3 +196,6 @@ draft-h4-policy-files-and-approvals-store-are-not-agent-writable,"The pre-tool h
 draft-plan-autonomy,"Autonomy is a property of an approved plan, started and stopped with plan commands; go-getter run is a deprecated alias","coordination, hooks, enforcement",active
 draft-release-request-survives-merges,"A release request is bound to the version it asks for, not to the default branch head","hooks, enforcement, security",draft
 draft-verbs-the-verb-system-is-nouns-actions-and-recipes,"The verb system is a closed set of nouns, atomic noun-action verbs, and recipes that compose them","architecture, compiler, enforcement",draft
+draft-wp-closed-unmerged-pr-keeps-its-slot-and-done-work-releases-it,"A pull request closed without merging keeps its slot; work that is done is released at once and never freed on a guess","practice-packs, harness, guardrail, coordination",draft
+draft-wp-pool-is-a-mode-of-worktree-new,"A worktree pool is a mode of `worktree new` and `worktree clean`, switched by the pack answer `isolation: worktree-pool`","practice-packs, harness, coordination, hooks",draft
+draft-wp-pool-state-lives-in-the-main-checkouts-go-getter-dir,"Pool state lives per repository in `<main checkout>/.go-getter/pool/`, git-ignored and shared by every slot","practice-packs, harness, coordination",draft

@@ -1,0 +1,148 @@
+# Worktree pool — plan
+
+**Status legend**: `[ ]` pending | `[~]` in progress | `[x]` done | `[!]` blocked | `[>]` moved to another plan. Update a step's marker in place as you work; re-reading this file alone must tell any session what remains. Step fields as in `docs/plans/archive/v0.2-agent-core-hardening.md` (decision 0069): `Class`, `Effort`, `Tier`, `Needs`, `Human`, `Check`. `‖` marks steps that can run in parallel.
+
+Drafted 2026-11-21 from the termenbox audit `/home/sergei/projects/termenbox/pool-to-go-getter-handoff.md` (a 462-line shell pool, three hooks, a guardrail and a decision, with nine measured failures on 2026-11-21). Goal: pool management becomes a reusable go-getter feature that fixes those failures, and termenbox then deletes its own copy.
+
+## Resume protocol (read first, every session)
+
+This plan is **re-enterable**: any session, human or agent, may stop after any commit and a different one continues. Rules that make that true:
+
+1. **Re-entry procedure.** `go-getter plan status docs/plans/worktree-pool.md` then `go-getter plan next docs/plans/worktree-pool.md`. For a `[~]` step read its `Progress` lines (newest last), run `git worktree list`, then run its `Re-entry` command. The `Check` is the truth, not the marker: a `[x]` whose Check fails is `[~]` again.
+2. **Checkpoint after every commit, not at the end.** After each commit append one `Progress YYYY-MM-DD · <branch> · <worktree> · <sha> · done: … · next: …` line to the step and commit it with the work (or as the next commit). `go-getter checkpoint` before every gated action (push, merge, delete, release). A step with no `Progress` line has not started, whatever else exists.
+3. **Each step is idempotent and small.** One step is one pull request, one branch `<type>/wp<N>-<slug>`, one worktree from `go-getter worktree new`. Redoing a step on an existing branch must be safe: the `Re-entry` line says how to detect partial state (branch, worktree, red test already committed, files present) and what to do next.
+4. **Red first.** Steps that fix a defect commit the failing test first (`test:` commit, recorded as a `Red` line with the failing output's first line), then the fix. Re-entering after the red commit means starting at the fix.
+5. **No step edits a file another unfinished step edits** (the `Scope` line). `go-getter run next` hands out disjoint steps in parallel.
+6. **Never touch a real pool or the real repository from a test.** Every test runs on a throwaway origin under a temp directory (the termenbox approach, kept); a test that needs `gh` uses a fake on `PATH`.
+7. **Human gates are listed, not improvised**: only `Human:` fields below stop a run; everything else defaults and logs (decision 0155).
+8. **Re-entry for the whole plan after a long gap**: run `go-getter:lint`, then `git log --oneline origin/master -- docs/plans/worktree-pool.md` to see what merged, then step 1.
+
+## What the audit says, and what that means here
+
+go-getter already has `go-getter worktree new|list|clean` (`compiler/src/worktree.mjs`, decisions 0040, 0041, 0156): sibling directories, one lock, a concurrency limit, and a `clean` that already detects squash merges with `git cherry` and merged pull requests. So this is **not a port beside it**; the pool is a second mode of the same verb, and several of termenbox's nine failures are already solved here and only need to be shared:
+
+| # | Termenbox failure | Where it is fixed here |
+|---|---|---|
+| 1 | Build output makes a free slot "unmanaged" | WP3: free means no tracked change and untracked files only under ignored or configured scratch patterns; anything else is reported with its reason, never silently freed |
+| 2 | Squash merges and CLOSED-but-landed PRs not reaped | WP4: share `squashMerged` (already in `worktree.mjs`) and add closed-PR patch equivalence |
+| 3 | Dirty merged slots never reaped | WP4: reap archives the dirty files to a backup, then frees |
+| 4 | Lease whose branch ref is gone kept forever | WP4 |
+| 5 | No owner-liveness signal | WP5: reuse the work-claim identity and heartbeat (decision 0166, `compiler/src/work/`), not a second mechanism |
+| 6 | Worktrees outside the pool invisible | WP6 |
+| 7 | Agents denied raw `git worktree remove`, no verb for it | WP6 (and the redirect hook names the verb) |
+| 8 | "free" hides "cold" | WP3: one `available` figure |
+| 9 | Stashes shared across slots | WP6: surfaced per slot, never auto-dropped |
+
+Design points fixed by this plan (recorded as draft decisions in WP0; the owner's three open questions are answered with recommended defaults so no session waits):
+
+- **go-getter owns the hooks, the guardrail text and the verbs**; the project keeps no wrapper. Hosts get the hooks through `apply` and the adapter registry (H2 is done), so neutral source names no host (`neutral-source-has-no-host-specific-language`). A project's only local files are its pack answers.
+- **State lives per repository in `<main checkout>/.go-getter/pool/`** (owner's choice, 2026-11-21), resolved from the main checkout (first entry of `git worktree list`) whatever slot the command runs in, so every slot shares one copy. The directory is git-ignored (`.go-getter/pool/` is added to the ignore rules `apply` writes) and a test fails if it shows up in `git status`. Nothing goes to a user-level data directory. Backups go under `.go-getter/pool/backup/`.
+- **A pull request closed without merging keeps its slot** and is listed as `closed-unmerged` in `status` and the daily digest, until the owner releases it or its commits are patch-equivalent to the base. Work is never freed on a guess.
+- **Release when the work is done is required, not hoped for** (owner's request, 2026-11-21). The verbs that end work release the slot themselves: `ship` and `pr` release after a confirmed merge; `end-session` frees a finished slot; a slot whose owner ended with the work pushed and clean is released by `reap`. A guardrail `release-the-slot-when-work-is-done` states it and a hook check flags a session that ends holding a named slot that is merged or has nothing unpushed. A slot is kept only for the reasons `status` can name (open PR, unpushed or dirty work, `closed-unmerged`).
+- **Pool mode is a pack answer** (`isolation: worktree-pool`), not a new verb family: `worktree new` becomes `acquire` when it is on, `worktree clean` becomes `reap`. Pool size, warm count, warm command, base branch, claim grace, session TTL, scratch patterns and branch pattern are answers, not constants. The default stays today's per-task worktree, so existing projects change nothing (`owned-files-never-clobbered`).
+- **No runtime dependency and no shell script.** Node only (`no-runtime-dependencies`). `flock` is not available to Node, so the existing `mkdir` lock (`withLock`) is kept and hardened with a pid-plus-start-stamp owner so a dead holder is detected, not waited out.
+- **The isolation gate is opt-in** by the pack answer `pool-only`, as in termenbox (`TERMENBOX_POOL_ONLY`).
+- **A lease is the existing worker identity plus slot data**, written `pending` then `held` by rename (kept from termenbox): one line per field is replaced by a small JSON record with a `version`.
+
+**Owner's answers, 2026-11-21** (all eight design points confirmed; WP0 files them as decisions): state in `.go-getter/pool/`; hooks and guardrail generated by go-getter; pool mode is a pack answer; closed-unmerged keeps its slot and finished work must be released at once; free means ignored or listed scratch only; merged-but-dirty is archived then freed; liveness reuses work-claim heartbeats; the isolation gate is the opt-in answer `pool-only`.
+
+Pool states: **cold** (no directory), **free** (detached, clean, on the base, no lease), **claimed** (lease), **unmanaged** (directory that is none of those; always carries a reason). `available` = free + cold.
+
+Rules the design fixes (do not re-decide): release refuses unsaved or unique work unless forced, and `--backup` archives before forcing; no command deletes a directory outside a slot (it moves it aside); an agent never needs raw `git worktree remove`; the branch-name rule is project configuration with termenbox's pattern as the shipped default; `reap` and `release` never touch a slot holding uncommitted work without a backup.
+
+## Phase 1 — Pool in go-getter
+
+### WP0 Record the design — [x]
+Class: plan · Effort: medium · Needs: none · Scope: `docs/decisions/`, `docs/facts/` · Human: the owner accepts the draft decisions (state location `.go-getter/pool`, hooks owned by go-getter, closed-PR policy, pool mode as an answer) · Check: `npm run check:plans && node compiler/bin/go-getter.mjs check indexes`
+Re-entry: `ls docs/decisions docs/facts | grep draft-wp`; files already present are edited, not recreated.
+Context: the handoff above is the source. Decision 0156 (10 agents each in a worktree) and 0041 (sibling location) stay active; the new decision extends 0040, it does not supersede it. Use `go-getter:capture` for drafting; `go-getter artifacts assign` numbers drafts.
+Do: file `draft-wp-pool-is-a-mode-of-worktree-new`, `draft-wp-pool-state-lives-in-the-main-checkouts-go-getter-dir`, `draft-wp-closed-unmerged-pr-keeps-its-slot-and-done-work-releases-it`, and a fact `draft-wp-termenbox-pool-failure-modes` carrying the nine measured failures (counts and dates, not slot names) as the reproduction fixtures for WP1.
+Done-when: the drafts exist with tags from `docs/skills/tags.md`, `check indexes` passes after `go-getter artifacts index`, and the owner's acceptance is recorded in the step's `Result` line (until then WP2 onward may proceed on the drafts, as 0155 allows).
+Progress 2026-11-21 · feat/team-ee-sharing-gaps · go-getter-wt/team-ee-sharing-gaps · WP0 commit · done: four drafts filed (the state-location decision is named `...-in-the-main-checkouts-go-getter-dir`, since state is in `.go-getter/pool/`, not the git dir); checks pass · next: WP1 (and WP2)
+Result: drafts filed, owner acceptance of the drafts still to be recorded here; WP2 onward proceeds on the drafts (0155).
+
+### WP1 Throwaway-origin harness and red tests for the nine failures — [ ] ‖
+Class: implement · Effort: high · Needs: none · Scope: `compiler/test/helpers/pool-fixture.mjs`, `compiler/test/pool-*.test.mjs` · Check: `node --test compiler/test/pool-failures.test.mjs` (red until WP3 to WP6 land; each failing case names its WP)
+Re-entry: if `pool-fixture.mjs` exists, extend it; run the check and list which of the nine cases already pass.
+Context: termenbox's `scripts/pool.test.sh` (375 lines) is the model: a bare origin, a clone as the main checkout, slots beside it, a fake `gh` on `PATH`; nothing touches the real repository. Reuse `compiler/test/` helpers for git and fake `gh` (see `worktree.test.mjs`, `ship.test.mjs`).
+Do: build the fixture (origin, main clone, N slots, fake `gh` returning merged/closed/open PR JSON, controllable clock through `GO_GETTER_TEST_MODE=1`), then one test per failure: an untracked `dist/` on a free slot; a squash-merged branch with a different hash; a closed PR whose patch is in the base; a dirty slot that is an ancestor of the base; a lease whose branch ref is gone; a claim whose owner ended; a worktree outside the pool; releasing three slots then reading one `available` figure; a stash visible from every slot. Mark each `todo` with its WP until that step lands, so CI stays green and the red record is in the file.
+Done-when: the harness runs in under 20 s, refuses to run if the working directory is inside a real repository's pool, and the nine cases exist, each failing for the stated reason when its `todo` is removed.
+
+### WP2 Pool core: config, state, lock, lease, acquire and release — [ ]
+Class: implement · Effort: high · Needs: none · Scope: `compiler/src/pool/` (`config.mjs`, `lease.mjs`, `lock.mjs`, `slots.mjs`), `compiler/src/commands/pool.mjs`, `compiler/test/pool-core.test.mjs` · Check: `node --test compiler/test/pool-core.test.mjs`
+Re-entry: `ls compiler/src/pool`; modules present with a passing `pool-core` test are done, continue with the first missing verb.
+Context: `worktree.mjs` has `withLock`, `listWorktrees`, `worktreeConfig`; extract the lock to `pool/lock.mjs` and import it back so `worktree new` keeps working unchanged. Termenbox's model: slots `pool-01..pool-N` under `<main>-wt/`, lease `pending` then `held` by rename, base commit recorded, branch pattern checked on acquire.
+Do: add `go-getter pool acquire [--branch B | --session ID]`, `release [--force] [--backup]`, `status [--json]`, with lease JSON `{version, branch, claimedAt, base, session, worker, state}`; config read from the orchestration answers with the defaults above (size 20 is termenbox's, the shipped default is 10 to match 0156); one lock around every mutation; the lock owner is pid plus start stamp, and a dead owner's lock is taken over at once. A crash between `pending` and `held` leaves nothing or a record `doctor` can finish (WP6). Never calls the network inside the lock. State root is the main checkout's `.go-getter/pool/`, found from any slot.
+Done-when: tests show two concurrent `acquire` calls getting different slots, the 11th refused at size 10, a crash simulated between `pending` and `held` leaving a recoverable record, a bad branch name refused with the pattern, `release` refusing unsaved or unique work without `--force`, and `--backup` writing the files and a patch bundle under `.go-getter/pool/backup/` before forcing.
+
+### WP3 Slot states, free definition, warm slots and one available figure — [ ] ‖
+Class: implement · Effort: medium · Needs: WP2 · Scope: `compiler/src/pool/state.mjs`, `compiler/src/pool/warm.mjs`, `compiler/test/pool-state.test.mjs` · Check: `node --test compiler/test/pool-state.test.mjs compiler/test/pool-failures.test.mjs`
+Re-entry: remove the `todo` of the cases for failures 1 and 8 in `pool-failures.test.mjs` and run them; make them green.
+Do: classify every slot as cold, free, claimed or unmanaged with a reason (`dirty-tracked`, `untracked-unknown`, `no-lease-has-commits`, `branch-checked-out-elsewhere`); a slot is free when it is detached on the base, has no tracked change and every untracked file is ignored or matches the `scratch` answer (pack default empty; the project lists its build-output directories, e.g. termenbox lists `dist-tenon/`). An untracked file that is neither ignored nor scratch makes the slot `unmanaged` and is shown, never freed. `warm` keeps `warm` free slots refreshed to the base and runs `warm-command` after create or refresh; `POOL_NO_BG`-style synchronous top-up is `--sync`. `status` prints one `available` figure (free plus cold) and the counts of each state.
+Done-when: failures 1 and 8 turn green; a test shows an untracked source file keeps a slot unmanaged with its path in the reason; the warm command runs once per create, not per acquire.
+
+### WP4 Merged-ness and reap — [ ] ‖
+Class: implement · Effort: high · Needs: WP2 · Scope: `compiler/src/pool/merged.mjs`, `compiler/src/pool/reap.mjs`, `compiler/src/worktree.mjs` (extract only), `compiler/test/pool-reap.test.mjs` · Check: `node --test compiler/test/pool-reap.test.mjs compiler/test/worktree.test.mjs compiler/test/pool-failures.test.mjs`
+Re-entry: `git diff master -- compiler/src/worktree.mjs` shows whether the extraction is done; `worktree.test.mjs` must stay green at every commit.
+Do: move `squashMerged` and `prMerged` out of `worktree.mjs` into a shared module both `clean` and `reap` use (no behaviour change for `clean`). Then `merged(slot)` = claim older than the grace and one of: upstream gone; ancestor of the base after moving off its base commit; patch-equivalent to the base by `git cherry` (squash, different hash); a merged PR with the same head; a **closed** PR whose commits are all patch-equivalent in the base; branch ref gone and commits in the base. A branch still at its creation commit is not merged until the claim is older than the session TTL (kept). `reap` frees a merged slot, archiving a dirty one with `--backup` semantics first and recording what it backed up; it never frees `closed-unmerged` (listed instead). `reap` runs detached with a log, takes the lock, and does one fetch outside it.
+Done-when: failures 2, 3 and 4 turn green; `worktree clean` output and tests are unchanged; a dirty merged slot is freed only with its files in the backup; an open-PR slot and a `closed-unmerged` slot are never freed.
+
+### WP5 Ownership and liveness — [ ] ‖
+Class: implement · Effort: high · Needs: WP2 · Scope: `compiler/src/pool/owner.mjs`, `compiler/src/pool/session.mjs`, `compiler/test/pool-owner.test.mjs` · Check: `node --test compiler/test/pool-owner.test.mjs compiler/test/work-claim.test.mjs compiler/test/pool-failures.test.mjs`
+Re-entry: `pool status --json` already shows `owner` per claimed slot once the lease change lands; continue from the first missing field.
+Context: work claims already give every worker an id, a heartbeat that renews on every verb, and a liveness rule (`compiler/src/work/claim.mjs`, `ops.mjs`, decision 0166). Do not invent a second liveness. The termenbox lease pid was the short-lived script itself, so it was always dead (failure 5).
+Do: the lease records the session id and worker id (from `identity()`); `owner` is `live` when the worker's last heartbeat is inside its lease, else `lapsed` with the age. `session <id>` gives an unnamed session slot; `name <branch>` names it; `end-session` frees a slot that is unnamed and clean, or named, pushed and clean (the extension failure 5 asks for); named but unpushed or dirty stays claimed and is listed as `orphaned: owner ended`. A claim whose owner is lapsed past the session TTL is reaped under WP4's rules. Where the host gives no session id the lease records none and only the TTL applies; say so in `status`.
+Done-when: failure 5 turns green; tests show a live owner's slot untouched at any age, a lapsed owner's pushed clean slot freed after the grace, an ended session's dirty named slot kept and flagged, and no network call when the claims ledger is local-only.
+
+### WP6 Whole-repository view, adopt, remove, doctor, stashes — [ ] ‖
+Class: implement · Effort: high · Needs: WP3, WP4 · Scope: `compiler/src/pool/doctor.mjs`, `compiler/src/pool/adopt.mjs`, `compiler/src/pool/stash.mjs`, `compiler/test/pool-doctor.test.mjs` · Check: `node --test compiler/test/pool-doctor.test.mjs compiler/test/pool-failures.test.mjs`
+Re-entry: `pool doctor --dry-run` on the fixture lists what is left; each listed action maps to a test.
+Do: `status` also lists every other worktree of the repository (path, branch, dirty, last commit age, merged-ness) as `outside`; `adopt <path|slot>` turns any worktree of the repository, including a detached one (the termenbox `adopt` refused them while `status` told people to run it), into a claimed slot or frees it when merged; `remove <path>` removes a worktree outside the pool by the same refusal rules as `release` (`--backup` first when dirty), so no agent needs raw `git worktree remove`; `doctor` prunes dead worktrees, moves a non-worktree directory to `orphan-NN-<time>` (never deletes), drops leases that point at nothing, finishes or drops `pending` claims, and reports orphan sizes. Stashes: `status` shows the repository's stashes and, where a stash message names a slot's branch, the slot; nothing drops a stash. Slot work uses commits, not stashes: the agent instructions say so.
+Done-when: failures 6, 7 and 9 turn green; an `adopt` of a detached slot works; `remove` refuses a worktree with unique commits without `--force`; `doctor` never deletes a directory and is idempotent (a second run reports nothing to do).
+
+### WP7 Converge `worktree new|clean` and `plan` onto the pool — [ ]
+Class: implement · Effort: medium · Needs: WP2, WP4 · Scope: `compiler/src/worktree.mjs`, `compiler/src/commands/worktree.mjs`, `compiler/src/plan.mjs`, `compiler/test/worktree.test.mjs` · Check: `node --test compiler/test/worktree.test.mjs compiler/test/run-next.test.mjs compiler/test/plan-start.test.mjs`
+Re-entry: `grep -n "pool" compiler/src/worktree.mjs`; with the answer off every existing test must still pass unchanged.
+Context: `plan.mjs` imports `newWorktree`, `cleanWorktrees`, `WORKTREE_LIMIT` for `plan start` and `run next`. The concurrency limit of 0156 becomes the pool size in pool mode, so the two numbers are one.
+Do: with `isolation: worktree-pool`, `worktree new <slug> --branch B` calls `acquire`, `worktree clean` calls `reap`, `worktree list` shows slots; the slug becomes the branch's description in the lease. With the answer off nothing changes. `plan start` and `run next` keep calling the same functions.
+Done-when: the three test files pass in both modes (a test table runs each assertion with the answer on and off); the limit refusal and its retry-after-clean behave the same in pool mode.
+
+### WP8 Hooks: isolation gate, session, reap — [ ]
+Class: implement · Effort: high · Needs: WP5, WP7 · Scope: `compiler/src/pool/gate.mjs`, `compiler/src/hosts/` (capability rows and adapter), `compiler/test/pool-hooks.test.mjs` · Check: `node --test compiler/test/pool-hooks.test.mjs compiler/test/host-conformance.test.mjs`
+Re-entry: the adapter conformance test lists which host rows lack the new hook events.
+Context: termenbox's three hooks: `worktree-only.py` (PreToolUse; blocks edits and non-read-only Bash in a main checkout when opted in), `pool-session.py` (SessionStart gives an unnamed slot, SessionEnd frees it), `pool-reap.py` (SessionStart and after a PR-merge command, runs `reap` detached). H2 (host adapter registry) is done; `compiler/src/hook.mjs` is the entry. `generated-host-files-not-hand-edited`, `neutral-source-has-no-host-specific-language`.
+Do: add the three behaviours as pool hook rules reached through the adapter registry, generated into each host that supports blocking hooks; hosts without one fall back to the git-hook floor and `doctor` says the gate is advisory there (`restricted-data-hosts-rule` wording is the model). The gate is read-only-Bash aware (reuse the redirect hook's command classifier from T4, do not write a second one) and its denial names the verb (`go-getter pool acquire`). The reap hook runs detached and never blocks the tool call. The `raw-commands-redirect-to-verbs` guardrail gains `git worktree remove|add|prune` when pool mode is on, pointing at `pool remove`, `worktree new` and `pool doctor`.
+Also: `ship` and `pr` call `release` after a confirmed merge (a release failure never fails the merge; it prints the reason), and a session-end check flags a held slot that is merged or fully pushed and clean.
+Done-when: tests show `ship` releasing its slot after the merge and a session ending on a releasable slot being flagged; tests show an edit in a main checkout denied only when `pool-only` is set, allowed in a slot, reads allowed everywhere; the session hook acquiring and freeing; the reap hook returning at once; and a hook test per supported host.
+
+### WP9 Pack answers, guardrail, skill and docs — [ ]
+Class: implement · Effort: medium · Needs: WP0, WP8 · Scope: `src/packs/orchestration/pack.json`, `docs/guardrails/`, `docs/skills/working-a-change.md`, `docs/skills/using-the-worktree-pool.md`, generated files · Check: `npm test && npm run check:generated && npm run check:guardrails && npm run check:plans`
+Re-entry: `git diff master --stat -- src/packs/orchestration` shows which answers exist; pack tests list the missing ones.
+Do: orchestration pack bump adds `isolation: worktree-pool` and the answers `pool-size`, `pool-warm`, `pool-warm-command`, `pool-base`, `pool-claim-grace`, `pool-session-ttl`, `pool-scratch`, `pool-branch-pattern`, `pool-only`, each with a recommended default (`pack-questions-have-a-recommended-default`); guardrails `work-happens-in-pool-worktrees` and `release-the-slot-when-work-is-done` derived from the new decisions, enforced at tiers 1 to 3 (instruction, hook, `pool` check) and `draft` until WP10; a skill that is the agent's whole procedure (acquire, work, commit, release, what to do when blocked) so the instruction file stays under its cap (`instruction-file-within-cap`, `procedure-delivery-rule`); update `parallel-tasks-use-worktrees` and `working-a-change.md`; regenerate with `go-getter apply`.
+Done-when: a project that answers `worktree-pool` gets the hooks, guardrail and instruction block from `apply`; one that does not gets byte-identical output to today (golden files); every new question names one recommended option.
+
+### WP10 Self-adoption in this repository — [ ]
+Class: implement · Effort: medium · Needs: WP9 · Scope: this repository's orchestration answers and generated files · Human: the owner accepts the pack answers for this repo · Check: `go-getter doctor && npm test`
+Re-entry: `grep -n "isolation" docs/decisions/*.md | grep pool`; if the answer is recorded, run `go-getter apply --check`.
+Context: `practice-ships-only-after-self-adoption`: the pool pack change must not ship in a release before this repository runs it. This repository already works in `../go-getter-wt/<slug>` (CLAUDE.md), which is the sibling location the pool keeps.
+Do: reconfigure this repo to `worktree-pool` with size 10, warm 2, base `master`, `pool-only` on; run a full plan step through `acquire` and `reap`; fix what the first real use shows as new steps here; flip the guardrail from `draft` to `active`.
+Done-when: a week of this repo's own PRs went through the pool (`go-getter metrics day` shows no raw `git worktree` use), `pool status` shows no `unmanaged` slot with an unexplained reason, and the guardrail is active.
+
+### WP11 Migrate termenbox and retire its copy — [ ]
+Class: plan · Effort: medium · Needs: WP10 · Human: the termenbox repository is the owner's; its session performs the edits, this repo waits for the release · Check: in termenbox, `go-getter apply --check` and its own full check
+Re-entry: in termenbox, `ls scripts/pool.sh .claude/hooks/pool-*.py`: files still present are the remaining work.
+Do: write the termenbox side as a handoff back (a file named like the one this plan came from): set pool answers (size 20, base `develop`, scratch `dist-tenon/`, warm command, `pool-only`), replace `TERMENBOX_POOL_ONLY` with the answer, delete `scripts/pool.sh`, `pool.test.sh`, the three hooks and their `settings.json` entries, point `scripts/land.sh` at `go-getter pool release` after merge, update `AGENTS.md`/`CLAUDE.md` highlights and the `docs/plans/*` mentions, mark decision 0150 `superseded` by the adopted pack decision, and add `dist-tenon/` to the base `.gitignore`. Run the old test scenarios as acceptance against the new verbs.
+Done-when: termenbox has no pool script or pool hook, every scenario of its old `pool.test.sh` has an equivalent passing test here or there, and `pool status` on its repository shows the live slots (the five named in the handoff) adopted with no work lost.
+
+### WP12 Release and close — [ ]
+Class: plan · Needs: WP11 · Human: the release is approved by the owner (`release --batch`, decision 0094) · Check: `npm run check:plans`
+Do: `go-getter:lint`, `go-getter:capture`, `go-getter:changelog`; move this plan to `docs/plans/archive/`; close its issues with `go-getter plan issue`.
+Done-when: the plan is archived, the changelog names the pool, and the roadmap row is removed.
+
+## Order and parallelism
+
+`WP0` and `WP1` start together. `WP2` next. Then `WP3`, `WP4`, `WP5` in parallel (disjoint scopes), `WP6` after `WP3` and `WP4`, `WP7` after `WP2` and `WP4`, `WP8` after `WP5` and `WP7`, `WP9` after `WP8`, then `WP10`, `WP11`, `WP12` in sequence. Never more than the pool or `max-concurrent` agents at once (`max-concurrent-agents-rule`).
+
+## Not in this plan
+
+Pool slots on remote machines, a fleet scheduler (decision 0169), automatic closing of pull requests, and dropping stashes. Issues are created only with `go-getter plan issue create` after the owner approves; none exist yet.
