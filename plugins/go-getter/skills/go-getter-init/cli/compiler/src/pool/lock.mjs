@@ -3,7 +3,7 @@
 // A lock with no readable owner (a holder from before owners were written, or one caught between mkdir and the write) falls back to
 // the age rule: older than STALE_MS belongs to a process that died. The start stamp (Linux /proc) tells a reused pid from the holder.
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { cleanGitEnv } from '../git-env.mjs';
 
@@ -45,6 +45,17 @@ export function lockPath(main) {
   return path.resolve(main, common, 'go-getter-worktree.lock');
 }
 
+// Removes a lock judged dead. The rename is atomic, so of several contenders one wins; the winner checks what it moved, because a
+// contender that judged the same dead lock may have replaced it with a live one in between, which is then put back.
+function takeOver(lock) {
+  const tomb = `${lock}.dead-${process.pid}-${Date.now()}`;
+  renameSync(lock, tomb);
+  if (ownerDead(tomb) === false) {
+    try { renameSync(tomb, lock); return; } catch { /* a third lock took its place: the live holder's work is unguarded; nothing safe is left to do */ }
+  }
+  rmSync(tomb, { recursive: true, force: true });
+}
+
 export function withLock(main, fn, { waitMs = 15000, label = 'go-getter worktree new' } = {}) {
   const lock = lockPath(main);
   const deadline = Date.now() + waitMs;
@@ -59,7 +70,7 @@ export function withLock(main, fn, { waitMs = 15000, label = 'go-getter worktree
       if (err.code !== 'EEXIST') throw err;
       try {
         const dead = ownerDead(lock);
-        if (dead === true || (dead === null && Date.now() - statSync(lock).mtimeMs > STALE_MS)) rmSync(lock, { recursive: true, force: true });
+        if (dead === true || (dead === null && Date.now() - statSync(lock).mtimeMs > STALE_MS)) takeOver(lock);
       } catch { /* released or removed by another process */ }
       if (Date.now() > deadline) throw new Error(`another "${label}" holds the lock`);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);

@@ -111,6 +111,7 @@ test('release --backup writes the files and a patch bundle before forcing', () =
   assert.ok(done.backup.startsWith(path.join(fx.main, '.go-getter', 'pool', 'backup')));
   assert.equal(readFileSync(path.join(done.backup, 'files', 'scratch', 'new.sh'), 'utf8'), 'echo hi\n');
   assert.match(readFileSync(path.join(done.backup, 'work.patch'), 'utf8'), /\+edited/);
+  assert.equal(readFileSync(path.join(done.backup, 'files', 'README.md'), 'utf8'), 'edited\n', 'a tracked change is copied under its full path');
   assert.ok(existsSync(path.join(done.backup, 'commits.bundle')));
   assert.equal(fx.readLease(1), null);
   assert.equal(fx.git(dir, 'status', '--porcelain'), '');

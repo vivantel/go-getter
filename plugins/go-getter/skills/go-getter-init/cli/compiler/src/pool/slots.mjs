@@ -11,6 +11,8 @@ import { backupDir, dropLease, ensurePoolRoot, hasPending, pendingSlots, readLea
 import { poolConfig } from './config.mjs';
 
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) }).trim();
+// Untrimmed: `status --porcelain` lines start with a space that trimming would eat, shifting every path by one.
+const runRaw = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) });
 const tryRun = (cwd, ...args) => { try { return run(cwd, ...args); } catch { return null; } };
 const real = (p) => { try { return realpathSync(p); } catch { return p; } };
 export const slotName = (n) => `pool-${String(n).padStart(2, '0')}`;
@@ -78,7 +80,7 @@ export function acquire(cwd, { branch, session } = {}) {
 
 // Work in a slot that exists nowhere else: uncommitted changes, or commits neither in the base nor on any remote branch.
 export function unsaved(dir, baseSha) {
-  const dirty = run(dir, 'status', '--porcelain').split('\n').filter(Boolean);
+  const dirty = runRaw(dir, 'status', '--porcelain', '-uall').split('\n').filter(Boolean);
   const unpushed = run(dir, 'rev-list', 'HEAD', '--not', baseSha, '--remotes').split('\n').filter(Boolean);
   return { dirty, unpushed };
 }
