@@ -1,14 +1,15 @@
 ---
 id: draft-wp-pool-state-lives-in-the-main-checkouts-go-getter-dir
 title: Pool state lives per repository in `<main checkout>/.go-getter/pool/`, git-ignored and shared by every slot
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-21
 tags: [practice-packs, harness, coordination]
 ---
 
 ## Decision
 
-Drafted from the owner's answers of 2026-11-21 in `docs/plans/worktree-pool.md`; the owner accepts it with the plan step WP0.
+Drafted from the owner's answers of 2026-11-21 in `docs/plans/worktree-pool.md`; accepted by the owner 2026-11-21.
 
 1. **Location.** Leases, the lock, logs and backups live under `<main checkout>/.go-getter/pool/` (`backup/` for archives). The main checkout is the first entry of `git worktree list`, whatever slot a command runs in, so every slot reads and writes one copy.
 2. **Not tracked.** `apply` adds `.go-getter/pool/` to the ignore rules it writes, and a test fails if the directory appears in `git status`.

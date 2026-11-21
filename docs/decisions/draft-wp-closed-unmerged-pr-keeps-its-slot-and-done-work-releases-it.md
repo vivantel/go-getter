@@ -1,14 +1,15 @@
 ---
 id: draft-wp-closed-unmerged-pr-keeps-its-slot-and-done-work-releases-it
 title: A pull request closed without merging keeps its slot; work that is done is released at once and never freed on a guess
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-21
 tags: [practice-packs, harness, guardrail, coordination]
 ---
 
 ## Decision
 
-Drafted from the owner's answers of 2026-11-21 in `docs/plans/worktree-pool.md`; the owner accepts it with the plan step WP0.
+Drafted from the owner's answers of 2026-11-21 in `docs/plans/worktree-pool.md`; accepted by the owner 2026-11-21.
 
 1. **Closed-unmerged keeps the slot.** A slot whose pull request was closed without merging is listed as `closed-unmerged` in `status` and the daily digest until the owner releases it or its commits are patch-equivalent to the base (`git cherry`). `reap` never frees it.
 2. **Merged-ness is decided by content.** A slot is merged only when its claim is older than the grace and one of these holds: upstream gone; ancestor of the base after moving off its base commit; patch-equivalent to the base; a merged pull request with the same head; a closed pull request whose commits are all patch-equivalent in the base; branch ref gone and its commits in the base.

@@ -1,7 +1,7 @@
 ---
 id: draft-wp-termenbox-pool-failure-modes
 title: Termenbox's shell worktree pool failed nine measured ways on 2026-11-21, which are the reproduction fixtures for go-getter's pool
-status: draft
+status: active
 date: 2026-11-21
 tags: [practice-packs, harness, verification]
 last-verified: 2026-11-21

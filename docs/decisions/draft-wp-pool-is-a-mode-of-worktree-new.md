@@ -1,14 +1,15 @@
 ---
 id: draft-wp-pool-is-a-mode-of-worktree-new
 title: A worktree pool is a mode of `worktree new` and `worktree clean`, switched by the pack answer `isolation: worktree-pool`
-status: draft
+status: active
+accepted-by: sergemso
 date: 2026-11-21
 tags: [practice-packs, harness, coordination, hooks]
 ---
 
 ## Decision
 
-Drafted from the owner's answers of 2026-11-21 in `docs/plans/worktree-pool.md`; the owner accepts it with the plan step WP0.
+Drafted from the owner's answers of 2026-11-21 in `docs/plans/worktree-pool.md`; accepted by the owner 2026-11-21.
 
 1. **A mode, not a second verb family.** With the orchestration answer `isolation: worktree-pool`, `go-getter worktree new` acquires a slot and `worktree clean` reaps. The per-task worktree of 0040 stays the default, so a project that does not answer changes nothing. This extends 0040, 0041 and 0156; it supersedes none of them. In pool mode the pool size is the concurrency limit of 0156.
 2. **go-getter owns the hooks, the guardrail text and the verbs.** A project keeps no wrapper script; its only local files are its pack answers. Hooks reach each host through `apply` and the adapter registry, so neutral source names no host.

@@ -59,7 +59,7 @@ Context: the handoff above is the source. Decision 0156 (10 agents each in a wor
 Do: file `draft-wp-pool-is-a-mode-of-worktree-new`, `draft-wp-pool-state-lives-in-the-main-checkouts-go-getter-dir`, `draft-wp-closed-unmerged-pr-keeps-its-slot-and-done-work-releases-it`, and a fact `draft-wp-termenbox-pool-failure-modes` carrying the nine measured failures (counts and dates, not slot names) as the reproduction fixtures for WP1.
 Done-when: the drafts exist with tags from `docs/skills/tags.md`, `check indexes` passes after `go-getter artifacts index`, and the owner's acceptance is recorded in the step's `Result` line (until then WP2 onward may proceed on the drafts, as 0155 allows).
 Progress 2026-11-21 · feat/team-ee-sharing-gaps · go-getter-wt/team-ee-sharing-gaps · WP0 commit · done: four drafts filed (the state-location decision is named `...-in-the-main-checkouts-go-getter-dir`, since state is in `.go-getter/pool/`, not the git dir); checks pass · next: WP1 (and WP2)
-Result: drafts filed, owner acceptance of the drafts still to be recorded here; WP2 onward proceeds on the drafts (0155).
+Result: the owner accepted all four drafts on 2026-11-21; they are `active` with `accepted-by` and keep their `draft-` ids until `go-getter artifacts assign` numbers them (it numbers every pending draft in the repo, so run it once, deliberately).
 
 ### WP1 Throwaway-origin harness and red tests for the nine failures — [x] ‖
 Class: implement · Effort: high · Needs: none · Scope: `compiler/test/helpers/pool-fixture.mjs`, `compiler/test/pool-*.test.mjs` · Check: `node --test compiler/test/pool-failures.test.mjs` (red until WP3 to WP6 land; each failing case names its WP)
