@@ -2,9 +2,10 @@
 // isolation, location and concurrency decisions (decision 0028). Defaults to the recommended answers when the pack is not adopted.
 import { cleanGitEnv, defaultBranch as remoteDefaultBranch } from './git-env.mjs';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, realpathSync, rmdirSync, statSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
+import { withLock } from './pool/lock.mjs';
 
 // A stray GIT_DIR or GIT_WORK_TREE (set by a git hook) must not redirect a removal to another repository.
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) }).trim();
@@ -26,32 +27,6 @@ export function fetchOrigin(main) {
   } catch {
     console.error('worktree: could not fetch origin; using what is known');
     return 'failed';
-  }
-}
-
-// Serialises the check-then-create of `worktree new` across processes: agents started together would otherwise all pass the
-// concurrency check. `mkdir` is atomic; a lock older than STALE_MS belongs to a process that died.
-const STALE_MS = 60000;
-function withLock(main, fn) {
-  const lock = path.resolve(main, tryGit(main, 'rev-parse', '--git-common-dir'), 'go-getter-worktree.lock');
-  const deadline = Date.now() + 15000;
-  for (;;) {
-    try {
-      mkdirSync(lock);
-      break;
-    } catch (err) {
-      if (err.code !== 'EEXIST') throw err;
-      try {
-        if (Date.now() - statSync(lock).mtimeMs > STALE_MS) rmdirSync(lock);
-      } catch { /* released or removed by another process */ }
-      if (Date.now() > deadline) throw new Error('another "go-getter worktree new" holds the lock');
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
-    }
-  }
-  try {
-    return fn();
-  } finally {
-    rmdirSync(lock, { recursive: false });
   }
 }
 
