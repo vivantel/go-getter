@@ -40,3 +40,13 @@ export function writeLease(main, slot, record, { env = process.env } = {}) {
 }
 
 export const dropLease = (main, slot) => rmSync(held(main, slot), { force: true });
+
+// Changes fields of a held lease in place (tmp file and rename, so a reader never sees half a record); false when there is no lease.
+export function updateLease(main, slot, patch) {
+  const current = readLease(main, slot);
+  if (!current) return false;
+  const tmp = `${held(main, slot)}.upd-${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify({ ...current, ...patch }, null, 2));
+  renameSync(tmp, held(main, slot));
+  return true;
+}

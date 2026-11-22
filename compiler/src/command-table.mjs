@@ -19,7 +19,7 @@ export const COMMANDS = [
   { name: 'work', usage: 'work accept|accept-check|escape|next|approve|scope-check|request|park|asks|answer|grant|spend|grant-check|claim|heartbeat|release' },
   { name: 'act', usage: 'act <action> --unit <unit> [--amount <n> --currency <c>] [--zone <z>] [--contract <k> --counterparty <p>] [-- <tool args>]' },
   { name: 'worktree', usage: 'worktree new|list|clean' },
-  { name: 'pool', usage: 'pool acquire|release|status|warm|reap' },
+  { name: 'pool', usage: 'pool acquire|release|status|warm|reap|session|name|end-session' },
   { name: 'checkpoint', usage: 'checkpoint create|list|restore|prune' },
   { name: 'core', usage: 'core update <ref> --from <kms checkout> | status' },
   { name: 'artifacts', usage: 'artifacts index | assign [--base <ref>]' },

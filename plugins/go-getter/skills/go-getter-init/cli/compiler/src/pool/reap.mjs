@@ -13,6 +13,7 @@ import { ensurePoolRoot, poolRoot, readLease } from './lease.mjs';
 import { withLock } from './lock.mjs';
 import { decide } from './merged.mjs';
 import { backup, free, unsaved } from './slots.mjs';
+import { ownerOf } from './owner.mjs';
 import { baseRef, mainCheckout, poolStatus, slotDir } from './state.mjs';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) }).trim();
@@ -26,7 +27,7 @@ export function reap(cwd, { dryRun = false, prs, log = () => {} } = {}) {
   const now = clockNow();
   const plan = poolStatus(main).slots
     .filter((s) => s.state === 'claimed')
-    .map((s) => ({ slot: s.slot, dir: s.dir, lease: s.lease, ...decide(main, { lease: s.lease, dir: s.dir, target, now, graceSeconds: config.claimGraceSeconds, ttlSeconds: config.sessionTtlSeconds, ...(prs && { prs }) }) }));
+    .map((s) => ({ slot: s.slot, dir: s.dir, lease: s.lease, ...endedOwner(main, target, s, decide(main, { lease: s.lease, dir: s.dir, target, now, graceSeconds: config.claimGraceSeconds, ttlSeconds: config.sessionTtlSeconds, ...(prs && { prs }) })) }));
   const results = [];
   for (const p of plan) {
     if (!p.merged || dryRun) {
@@ -52,6 +53,18 @@ export function reap(cwd, { dryRun = false, prs, log = () => {} } = {}) {
     }
   }
   return results;
+}
+
+// A lapsed owner (no sign of life past its lease and the claim grace) frees a slot that holds nothing unsaved, unless a pull request still
+// needs it: open and closed-unmerged slots keep their reason. With unsaved work the slot stays, listed as orphaned.
+function endedOwner(main, target, s, d) {
+  if (d.merged || !['not-merged', 'idle'].includes(d.keep)) return d;
+  const config = poolConfig(main);
+  const owner = ownerOf(main, s.lease);
+  if (owner.state !== 'lapsed' || owner.ageSeconds < config.claimGraceSeconds) return d;
+  const found = unsaved(s.dir, git(main, 'rev-parse', `${target}^{commit}`));
+  if (found.dirty.length || found.unpushed.length) return { merged: false, keep: 'orphaned', reason: `owner ended ${Math.round(owner.ageSeconds / 60)} min ago; ${found.dirty.length} changed files and ${found.unpushed.length} unpushed commits stay` };
+  return { merged: true, reason: `owner ended ${Math.round(owner.ageSeconds / 60)} min ago; work is pushed and clean` };
 }
 
 // Starts a reap that outlives this process, logging to <pool>/reap.log; returns at once.

@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { cleanGitEnv } from '../git-env.mjs';
-import { identity } from '../work/ops.mjs';
+import { clockNow, identity } from '../work/ops.mjs';
 import { fetchOrigin } from '../worktree.mjs';
 import { withLock } from './lock.mjs';
 import { backupDir, dropLease, ensurePoolRoot, readLease, writeLease } from './lease.mjs';
@@ -37,8 +37,10 @@ export function acquire(cwd, { branch, session } = {}) {
     else run(target.dir, 'checkout', '-q', '--detach', baseSha);
     if (branch) run(target.dir, 'switch', '-q', '-c', branch, baseSha);
     let worker = null;
-    try { worker = identity(target.dir).id; } catch { /* no identity: the lease records none */ }
-    const record = { branch: branch ?? null, claimedAt: new Date().toISOString(), base: baseSha, session: session ?? null, worker };
+    let workerKind = null;
+    try { ({ id: worker, kind: workerKind } = identity(target.dir)); } catch { /* no identity: the lease records none */ }
+    const claimedAt = clockNow().toISOString();
+    const record = { branch: branch ?? null, claimedAt, heartbeatAt: claimedAt, base: baseSha, session: session ?? null, worker, workerKind };
     writeLease(main, target.slot, record);
     return { slot: target.slot, path: target.dir, ...record };
   });

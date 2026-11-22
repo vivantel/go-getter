@@ -86,7 +86,8 @@ test('squash-merged work whose local commits exist nowhere else is bundled befor
 
 test('a young claim is kept, and a branch at its creation commit waits for the session ttl', () => {
   fx = poolFixture({ config: { claimGraceSeconds: 600, sessionTtlSeconds: 43200 } });
-  claimed(1, 'feat/young');
+  const young = claimed(1, 'feat/young');
+  fx.write(young, 'wip.txt', 'unsaved\n');
   fx.writeLease(1, { branch: 'feat/young', claimedAt: new Date().toISOString() });
   const idle = fx.freeSlot(2);
   fx.git(idle, 'switch', '-qc', 'feat/idle');
@@ -96,7 +97,8 @@ test('a young claim is kept, and a branch at its creation commit waits for the s
   assert.equal(by(first, 2).keep, 'idle');
   const later = fx.run(['pool', 'reap', '--sync', '--json'], { env: { GO_GETTER_CLOCK_OFFSET_MS: String(13 * 3600e3) } }).json();
   assert.equal(by(later, 2).action, 'freed');
-  assert.equal(by(later, 1).action, 'keep', 'a branch that has work and is not merged is never freed by time alone');
+  assert.equal(by(later, 1).action, 'keep', 'unsaved work is never freed by time alone');
+  assert.equal(by(later, 1).keep, 'orphaned');
 });
 
 test('--dry-run changes nothing, and an unnamed session slot is left to end-session', () => {

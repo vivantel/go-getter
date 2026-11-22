@@ -56,4 +56,10 @@ if (command && command !== 'work' && isCommand(command)) {
   } catch {
     // renewal is best effort
   }
+  // A verb run inside a pool slot is a sign of life of the slot's owner (cheap check first: only paths of a slot load the pool code).
+  try {
+    if (/\/pool-\d+(\/|$)/.test(process.cwd())) (await import('../src/pool/session.mjs')).touch(process.cwd());
+  } catch {
+    // the heartbeat is best effort
+  }
 }
