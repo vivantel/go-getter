@@ -119,6 +119,7 @@ test('the hook lets a safe state-dependent command through and stops an unsafe o
   assert.equal(denied.deny, true);
   assert.match(denied.reason, /uncommitted changes/);
   assert.equal(call('cd /tmp && git reset --hard', 'codex').deny, true, 'a changed directory cannot be read');
+  assert.match(call('cd /tmp && git reset --hard', 'codex').reason ?? '', /start the command with `cd <worktree> &&`/, 'the prompt says how to get the command judged');
   assert.equal(call('git push --force', 'codex').deny, true, 'a command that does not depend on state still stops');
   // A first `cd` into a worktree of this repository reads the state there; any other directory change cannot be read.
   const wt = path.join(path.dirname(work), `${path.basename(work)}-wt-cd`);
