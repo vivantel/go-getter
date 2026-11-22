@@ -44,7 +44,7 @@ export function reap(cwd, { dryRun = false, prs, log = () => {} } = {}) {
         const found = unsaved(dir, baseSha);
         let saved = null;
         if (found.dirty.length || found.unpushed.length) saved = backup(main, p.slot, dir, baseSha, found);
-        free(main, p.slot, lease, baseSha);
+        free(main, p.slot, lease, baseSha, { merged: true });
         return { slot: p.slot, action: 'freed', reason: p.reason, ...(saved && { backup: saved, saved: { files: found.dirty.length, commits: found.unpushed.length } }) };
       }));
     } catch (err) {
