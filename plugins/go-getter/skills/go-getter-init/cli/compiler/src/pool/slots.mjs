@@ -1,55 +1,21 @@
 // Pool slots: `<main>-wt/pool-NN` (the sibling location of decision 0041). A slot is cold (no directory), free (detached on the base,
 // clean, no lease), claimed (a lease) or unmanaged (anything else, with a reason). WP3 refines the free test and the reasons.
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { cleanGitEnv } from '../git-env.mjs';
 import { identity } from '../work/ops.mjs';
-import { fetchOrigin, listWorktrees } from '../worktree.mjs';
+import { fetchOrigin } from '../worktree.mjs';
 import { withLock } from './lock.mjs';
-import { backupDir, dropLease, ensurePoolRoot, hasPending, pendingSlots, readLease, writeLease } from './lease.mjs';
+import { backupDir, dropLease, ensurePoolRoot, readLease, writeLease } from './lease.mjs';
+import { baseRef, mainCheckout, poolStatus, slotDir, slotsRoot } from './state.mjs';
 import { poolConfig } from './config.mjs';
 
 const run = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) }).trim();
 // Untrimmed: `status --porcelain` lines start with a space that trimming would eat, shifting every path by one.
 const runRaw = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) });
 const tryRun = (cwd, ...args) => { try { return run(cwd, ...args); } catch { return null; } };
-const real = (p) => { try { return realpathSync(p); } catch { return p; } };
-export const slotName = (n) => `pool-${String(n).padStart(2, '0')}`;
-
-export const mainCheckout = (cwd) => listWorktrees(cwd)[0].path;
-export const slotsRoot = (main) => path.join(path.dirname(main), `${path.basename(main)}-wt`);
-export const slotDir = (main, slot) => path.join(slotsRoot(main), slot);
-
-// The ref a slot starts from: the configured base on origin, else origin's default branch, else a local main or master.
-export function baseRef(main, config) {
-  const candidates = [config.base && `origin/${config.base}`, config.base, tryRun(main, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD'), 'origin/main', 'origin/master', 'main', 'master'].filter(Boolean);
-  const found = candidates.find((r) => tryRun(main, 'rev-parse', '--verify', '--quiet', `${r}^{commit}`));
-  if (!found) throw new Error('pool: no base branch found; set the pool base answer');
-  return found;
-}
-
-export function inspect(main, config, n) {
-  const slot = slotName(n);
-  const dir = slotDir(main, slot);
-  const lease = readLease(main, slot);
-  const tree = listWorktrees(main).find((t) => real(t.path) === real(dir));
-  if (lease) return { slot, dir, state: 'claimed', lease, branch: lease.branch ?? null };
-  if (hasPending(main, slot)) return { slot, dir, state: 'unmanaged', reason: 'pending-lease' };
-  if (!existsSync(dir)) return { slot, dir, state: 'cold' };
-  if (!tree) return { slot, dir, state: 'unmanaged', reason: 'not-a-worktree' };
-  if (tree.branch) return { slot, dir, state: 'unmanaged', reason: 'no-lease-has-branch' };
-  if (run(dir, 'status', '--porcelain')) return { slot, dir, state: 'unmanaged', reason: 'dirty' };
-  return { slot, dir, state: 'free' };
-}
-
-export function poolStatus(cwd) {
-  const main = mainCheckout(cwd);
-  const config = poolConfig(main);
-  const slots = Array.from({ length: config.size }, (_, i) => inspect(main, config, i + 1));
-  const counts = Object.fromEntries(['cold', 'free', 'claimed', 'unmanaged'].map((s) => [s, slots.filter((x) => x.state === s).length]));
-  return { main, config, slots, counts, available: counts.free + counts.cold };
-}
+export { slotName, slotsRoot, slotDir, mainCheckout, baseRef, poolStatus } from './state.mjs';
 
 // Claims the lowest usable slot for `branch` (named) or `session` (unnamed).
 export function acquire(cwd, { branch, session } = {}) {

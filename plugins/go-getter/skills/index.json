@@ -248,6 +248,8 @@
         "cli/compiler/src/pool/lease.mjs",
         "cli/compiler/src/pool/lock.mjs",
         "cli/compiler/src/pool/slots.mjs",
+        "cli/compiler/src/pool/state.mjs",
+        "cli/compiler/src/pool/warm.mjs",
         "cli/compiler/src/reconcile.mjs",
         "cli/compiler/src/reconfigure.mjs",
         "cli/compiler/src/refs.mjs",
