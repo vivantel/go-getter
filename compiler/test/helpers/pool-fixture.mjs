@@ -89,9 +89,9 @@ export function poolFixture({ config = {}, base = 'main' } = {}) {
     },
     readLease: (n) => (existsSync(fx.leaseFile(n)) ? JSON.parse(readFileSync(fx.leaseFile(n), 'utf8')) : null),
     // Runs `go-getter <args>` in `cwd` (default: the main checkout) with the fake gh, test mode and the pool settings forced.
-    run(args, { cwd = main, env = {} } = {}) {
+    run(args, { cwd = main, env = {}, input } = {}) {
       const r = spawnSync(process.execPath, [cli, ...args], {
-        cwd, encoding: 'utf8',
+        cwd, encoding: 'utf8', ...(input !== undefined && { input }),
         env: { ...process.env, ...ident, PATH: `${bin}${path.delimiter}${process.env.PATH}`, GH_FAKE_STATE: ghState, GO_GETTER_TEST_MODE: '1', GO_GETTER_POOL_CONFIG: JSON.stringify({ size: 3, base, claimGraceSeconds: 600, sessionTtlSeconds: 43200, ...config }), ...env },
       });
       return { code: r.status, out: r.stdout, err: r.stderr, json: () => JSON.parse(r.stdout) };

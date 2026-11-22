@@ -8,8 +8,8 @@ import { readArtifacts } from './artifacts.mjs';
 import { withLock } from './pool/lock.mjs';
 import { prMerged, squashMerged } from './pool/merged.mjs';
 import { poolConfig } from './pool/config.mjs';
-import { acquire } from './pool/slots.mjs';
-import { poolStatus } from './pool/state.mjs';
+import { acquire, release as releaseSlot, unsaved } from './pool/slots.mjs';
+import { baseRef, poolStatus } from './pool/state.mjs';
 import { updateLease } from './pool/lease.mjs';
 import { reap } from './pool/reap.mjs';
 
@@ -195,6 +195,18 @@ export function cleanWorktrees(cwd, { dryRun = false, only, keepBranch = false }
 // After a merge: removes the linked worktree `cwd` is in, by the safe criteria of `cleanWorktrees` (remote branch gone or
 // merged, no uncommitted changes), from the main checkout. The local branch stays. { main, released, reason } or null when
 // `cwd` is not a linked worktree.
+// Pool mode: the merge is confirmed, so the slot's commits are in the base (a squash has other hashes); only uncommitted files can still be lost.
+// A slot with any is kept. A pool failure never fails the merge: the caller prints the reason.
+function releasePoolSlot(main, self) {
+  const slot = poolStatus(main).slots.find((s) => s.dir === self.path || s.dir === realpathSync(self.path));
+  if (!slot || slot.state !== 'claimed') return { main, path: self.path, branch: self.branch, released: false, reason: 'not a claimed pool slot' };
+  const base = tryGit(main, 'rev-parse', `${baseRef(main, poolConfig(main))}^{commit}`);
+  const dirty = unsaved(slot.dir, base).dirty;
+  if (dirty.length) return { main, path: self.path, branch: self.branch, released: false, reason: `${dirty.length} uncommitted files stay in ${slot.slot}` };
+  releaseSlot(main, slot.slot, { force: true });
+  return { main, path: self.path, branch: self.branch, released: true, slot: slot.slot };
+}
+
 export function releaseWorktree(cwd) {
   const trees = listWorktrees(cwd);
   const main = trees[0].path;
@@ -202,6 +214,7 @@ export function releaseWorktree(cwd) {
   const real = (p) => { try { return realpathSync(p); } catch { return p; } };
   const self = top && trees.find((t) => !t.main && real(t.path) === real(top));
   if (!self) return null;
+  if (poolMode(main)) return releasePoolSlot(main, self);
   // Plan from the main checkout, where the worktree is not "current" and can be removed.
   const item = cleanWorktrees(main, { only: self.path, keepBranch: true }).find((t) => t.path === self.path);
   const released = item?.removed === true;

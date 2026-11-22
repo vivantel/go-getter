@@ -22,6 +22,7 @@ import { goGetterCommand, goGetterCall } from './invocation.mjs';
 import { shellOperands, commandWords, unwrapWords } from './shell.mjs';
 import { parseRunArgs, sharedApproved } from './secrets/use.mjs';
 import { approved as personallyApproved, addPending, storeDir, relativeSecretPath, addPendingShape, takePendingShape, addShape, shapeApproved, addSessionGrant, revokeSessionGrant } from './secrets/approvals.mjs';
+import { isolationRefusal, writePaths, refusalReason } from './pool/gate.mjs';
 import { shapeAllowance, trackerWriteInRun } from './runs/shapes.mjs';
 
 import { MAX_MESSAGE_CHARS } from './grant-intent.mjs';
@@ -795,6 +796,18 @@ function decidePreTool(project, payload, host) {
       if (gated) return { deny: true, guardrail: e.guardrail, stopClass: gated.class, reason: `blocked by guardrail ${e.guardrail}: ${stopReason({ command: gated.command, id: gated.class, lost: `it is ${gated.class}: nothing in this checkout undoes it`, canAsk: false, grant: gateArgs(e.parsed.args).grantable.includes(gated.id) ? gated.id : undefined })}` };
       const byIdentity = identityGate(project, e, payload, host);
       if (byIdentity) return byIdentity;
+      continue;
+    }
+    if (e.parsed.id === 'pool-isolation') {
+      const kind = TOOLS[toolName(payload)?.toLowerCase()];
+      if (kind !== 'file' && kind !== 'shell') continue;
+      let refusal = null;
+      try {
+        refusal = isolationRefusal({ cwd: payload.cwd ? path.resolve(payload.cwd) : project, kind, tool: toolName(payload), command: shellCommand(payload), paths: kind === 'file' ? writePaths(toolInput(payload)) : [] });
+      } catch {
+        // an unreadable checkout leaves the call to the other guardrails
+      }
+      if (refusal) return { deny: true, guardrail: e.guardrail, stopClass: 'pool-isolation', reason: refusalReason(e.guardrail, refusal) };
       continue;
     }
     if (e.parsed.id === 'deny-effect-tools') {
