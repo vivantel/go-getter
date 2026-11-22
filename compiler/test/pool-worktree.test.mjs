@@ -1,6 +1,8 @@
 // WP7: with the pool on, `worktree new|list|clean` are `acquire`, a slot list and `reap`; off, the other worktree tests run unchanged.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { poolFixture } from './helpers/pool-fixture.mjs';
 
 let fx;
@@ -28,3 +30,19 @@ test('worktree new refuses at the pool size with the limit message, and clean pl
   assert.match(full.err, /pool is full/);
   assert.match(wt('clean', '--dry-run').out, /pool-01/);
 });
+
+// The on/off table: `plan start --worktree` behaves the same with the pool on and off (a worktree, the marker set in its copy of the plan).
+for (const mode of ['on', 'off']) {
+  test(`plan start --worktree makes a worktree and marks the step in its copy (pool ${mode})`, () => {
+    fx = poolFixture({ config: { size: 2, warm: 0 } });
+    fx.commit(fx.main, 'docs/plans/p.md', '# P\n\n## Phase 1\n\n### 1 First — [ ]\nClass: implement · Needs: none · Check: `true`\nDone-when: done.\n', 'docs: plan');
+    fx.git(fx.main, 'push', '-q', 'origin', fx.base);
+    const env = mode === 'off' ? { GO_GETTER_POOL_CONFIG: '' } : {};
+    const r = fx.run(['plan', 'start', '1', 'docs/plans/p.md', '--worktree', 'first'], { env });
+    assert.equal(r.code, 0, r.err);
+    const made = r.out.split('\n')[0].replace(/ \(.*\)$/, '');
+    assert.match(readFileSync(path.join(made, 'docs/plans/p.md'), 'utf8'), /### 1 First — \[~\]/);
+    if (mode === 'on') assert.match(made, /pool-01$/);
+    else assert.doesNotMatch(path.basename(made), /^pool-/);
+  });
+}

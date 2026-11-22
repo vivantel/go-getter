@@ -4,7 +4,7 @@
 import path from 'node:path';
 import { allowSuggestions, formatSuggestions } from '../allow-rules.mjs';
 import { HOSTS } from '../capabilities.mjs';
-import { enforcementProblems } from '../doctor-checks.mjs';
+import { enforcementProblems, enforcementNotes } from '../doctor-checks.mjs';
 
 export default function doctorCommand({ root, args }) {
   let project = process.cwd();
@@ -18,6 +18,7 @@ export default function doctorCommand({ root, args }) {
   console.log(lines.length ? lines.join('\n') : 'doctor: no command is freed or approved that a host permission layer needs a rule for');
   // Ways enforcement is silently off (plan enforcement-hardening H3): each is a failure with the one command that fixes it.
   const problems = enforcementProblems(project, { root, hosts, nodeVersion: process.env.GO_GETTER_DOCTOR_NODE });
+  for (const n of enforcementNotes(project, { hosts })) console.log(`doctor: note: ${n}`);
   for (const p of problems) console.error(`doctor: ${p.what}\n  fix: ${p.fix}`);
   return problems.length ? 1 : 0;
 }
