@@ -5,7 +5,8 @@ import { readArtifacts } from '../artifacts.mjs';
 export const BRANCH_PATTERN = '^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$';
 
 const num = (v, d) => (v == null || v === '' || !Number.isFinite(Number(v)) ? d : Number(v));
-const list = (v) => (Array.isArray(v) ? v : String(v ?? '').split(',').map((x) => x.trim()).filter(Boolean));
+const list = (v) => (Array.isArray(v) ? v : String(v ?? '').split(',').map((x) => x.trim()).filter((x) => x && x !== 'none'));
+const unset = (v) => (v == null || v === 'none' || v === 'default' ? null : v);
 
 export function poolConfig(main, env = process.env) {
   const data = Object.assign(
@@ -21,12 +22,12 @@ export function poolConfig(main, env = process.env) {
     enabled: data.isolation === 'worktree-pool' || forced.size != null,
     size: num(pick('size', 'pool-size'), num(data['max-concurrent'], 10)),
     warm: num(pick('warm', 'pool-warm'), 2),
-    warmCommand: pick('warmCommand', 'pool-warm-command') ?? '',
-    base: pick('base', 'pool-base') ?? null,
+    warmCommand: unset(pick('warmCommand', 'pool-warm-command')) ?? '',
+    base: unset(pick('base', 'pool-base')),
     claimGraceSeconds: num(pick('claimGraceSeconds', 'pool-claim-grace'), 600),
     sessionTtlSeconds: num(pick('sessionTtlSeconds', 'pool-session-ttl'), 43200),
     scratch: list(pick('scratch', 'pool-scratch')),
     branchPattern: pick('branchPattern', 'pool-branch-pattern') ?? BRANCH_PATTERN,
-    only: String(pick('only', 'pool-only')) === 'true',
+    only: ['on', 'true'].includes(String(pick('only', 'pool-only'))),
   };
 }

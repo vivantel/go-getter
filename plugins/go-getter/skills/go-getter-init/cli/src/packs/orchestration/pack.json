@@ -1,7 +1,7 @@
 {
   "$schema": "../../../compiler/schemas/pack.schema.json",
   "id": "orchestration",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "family": "harness",
   "components": [
     10
@@ -69,6 +69,11 @@
           "label": "A git worktree per task",
           "tradeoff": "Agents cannot overwrite each other; one checkout and one cold build per task.",
           "recommended": true
+        },
+        {
+          "id": "worktree-pool",
+          "label": "A pool of reusable worktree slots",
+          "tradeoff": "Slots are reused, warm and reaped when work lands, and the main checkout can be kept clean; the pool needs sizing and a few answers."
         },
         {
           "id": "branches-in-one-tree",
@@ -260,6 +265,96 @@
       "default": "off",
       "since": "0.1.5",
       "prompt": "Does ship hand a green change to the merge queue (on) instead of merging it itself (off)? The queue batches changes whose scopes are disjoint, reruns the step Check and CI on the batch and merges on green."
+    },
+    {
+      "id": "pool-size",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "10",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "How many slots does the worktree pool hold (the most worktrees and agents at once)?"
+    },
+    {
+      "id": "pool-warm",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^[0-9]+$",
+      "default": "2",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "How many free slots does the pool keep refreshed to the base and warmed?"
+    },
+    {
+      "id": "pool-warm-command",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^.+$",
+      "default": "none",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "Which command warms a slot after it is created or refreshed (`none` for no command)?"
+    },
+    {
+      "id": "pool-base",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^.+$",
+      "default": "default",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "Which branch do pool slots start from (`default` for the repository default branch)?"
+    },
+    {
+      "id": "pool-claim-grace",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^[0-9]+$",
+      "default": "600",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "For how many seconds is a new claim safe from reaping?"
+    },
+    {
+      "id": "pool-session-ttl",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^[1-9][0-9]*$",
+      "default": "43200",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "After how many seconds without a heartbeat is a session's claim treated as lapsed?"
+    },
+    {
+      "id": "pool-scratch",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^.+$",
+      "default": "none",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "Which untracked build-output paths do not make a slot unclean (comma-separated patterns, `none` for none)?"
+    },
+    {
+      "id": "pool-branch-pattern",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^.+$",
+      "default": "^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "Which pattern must a branch name match when a slot is claimed?"
+    },
+    {
+      "id": "pool-only",
+      "type": "text",
+      "tier": "advanced",
+      "pattern": "^(on|off)$",
+      "default": "off",
+      "since": "0.1.6",
+      "when": { "question": "isolation", "in": ["worktree-pool"] },
+      "prompt": "Does the pool gate refuse edits and changing commands in the main checkout (on) or only advise (off)?"
     }
   ],
   "profiles": [
@@ -570,6 +665,57 @@
               }
             ],
             "body": "## Guardrail\n\nGive each parallel task its own worktree (`go-getter worktree new <slug>`). Advisory (tier 1).\n"
+          }
+        ]
+      },
+      "worktree-pool": {
+        "decisions": [
+          {
+            "slug": "parallel-isolation",
+            "title": "Parallel tasks run in slots of a worktree pool",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "isolation": "worktree-pool" } },
+            "body": "## Decision\n\nRun every task in a slot of a per-repository worktree pool: `go-getter pool acquire` claims one, `go-getter pool release` frees it, `worktree new` and `worktree clean` use the pool, and finished work is released at once (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nSlots are reused and warm, merged and abandoned work is reaped without guessing, and no agent needs raw `git worktree` commands.\n"
+          }
+        ],
+        "guardrails": [
+          {
+            "slug": "work-happens-in-pool-worktrees",
+            "title": "Work happens in a pool slot, not in the main checkout",
+            "tags": ["practice-packs", "agent-roles", "guardrail"],
+            "frontmatter": {
+              "governed-by": "{{id.decision.isolation}}",
+              "grounded-in": ["{{id.decision.isolation}}"],
+              "derivation-note": "Given a pool of slots, an edit in the main checkout is work the pool cannot see, protect or free."
+            },
+            "enforcement": [
+              { "tier": 1, "check": "Instruction: acquire a slot (go-getter pool acquire) before editing" },
+              { "tier": 2, "check": "With the answer pool-only on, the pre-tool hook denies an edit or a changing command in the main checkout naming go-getter pool acquire, and a raw git worktree add, remove or prune naming the pool verb", "run": "builtin:pool-isolation" }
+            ],
+            "body": "## Guardrail\n\nWork in a slot from `go-getter pool acquire`. With `pool-only` on, hosts with a blocking pre-tool hook deny edits and changing commands in the main checkout and raw `git worktree add|remove|prune`; reads are always allowed. Hosts without one rely on the instruction and the git hooks, so the gate is advisory there.\n"
+          },
+          {
+            "slug": "release-the-slot-when-work-is-done",
+            "title": "A slot is released as soon as its work is done",
+            "tags": ["practice-packs", "agent-roles", "guardrail"],
+            "frontmatter": {
+              "governed-by": "{{id.decision.isolation}}",
+              "grounded-in": ["{{id.decision.isolation}}"],
+              "derivation-note": "Given a bounded pool, a finished slot that stays claimed takes a place from the next task."
+            },
+            "enforcement": [
+              { "tier": 1, "check": "Instruction: release the slot after the merge; ship and pr do it, the session-end hook frees a finished slot and reap frees merged ones" }
+            ],
+            "body": "## Guardrail\n\nRelease a slot when its work is merged or has nothing unpushed (`go-getter pool release`; `ship` and `pr` release after a confirmed merge, `end-session` frees a finished slot). Keep a slot only for a reason `go-getter pool status` names: an open pull request, unpushed or dirty work, or a pull request closed without merging. Advisory (tier 1).\n"
+          }
+        ],
+        "procedures": [
+          {
+            "slug": "using-the-worktree-pool",
+            "title": "Work in a worktree pool slot from claim to release",
+            "tags": ["practice-packs", "agent-roles", "procedural"],
+            "frontmatter": { "operationalizes": ["work-happens-in-pool-worktrees", "release-the-slot-when-work-is-done"] },
+            "body": "## Procedure\n\n1. Claim a slot before editing: `go-getter pool acquire --branch <type>/<slug>` (or `worktree new <slug> --branch <type>/<slug>`, which does the same in a pool project). It prints the slot path; work only there. A session that starts with `pool-only` on is given an unnamed slot; name it with `go-getter pool name <branch>`.\n2. Work and commit in the slot. Use commits, never `git stash`: stashes are shared by every slot and nothing drops them.\n3. Never run raw `git worktree add|remove|prune|move`. Use `pool remove <path>` for a worktree outside the pool, `pool adopt <path>` to bring one in and `pool doctor` for dead or orphaned directories.\n4. Push and merge as in working-a-change. `go-getter ship` and `go-getter pr` release the slot after a confirmed merge.\n5. Release the slot as soon as the work is done: `go-getter pool release`. It refuses unsaved or unique work; `--backup` archives it under `.go-getter/pool/backup/` before `--force`.\n6. A slot is kept only for a reason `go-getter pool status` names: an open pull request, unpushed or dirty work, or a pull request closed without merging (`closed-unmerged`, kept until a person releases it).\n7. When blocked (a full pool, an `unmanaged` slot, a refused release) run `go-getter pool status`, then `pool reap` and `pool doctor --dry-run`, and hand over to a person with what they print. Never delete a slot directory by hand.\n"
           }
         ]
       },
@@ -905,6 +1051,123 @@
               }
             ],
             "body": "## Guardrail\n\nEach worker runs at most {{answer.max-concurrent}} agents at once; the limit is per worker, not per project (decision 0169 item 2). `go-getter worktree new` refuses more than that many worktrees. Advisory (tier 1) otherwise.\n"
+          }
+        ]
+      }
+    },
+    "pool-size": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-size",
+            "title": "The pool holds {{answer.pool-size}} slots",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-size": "{{answer.pool-size}}" } },
+            "body": "## Decision\n\nThe pool has at most {{answer.pool-size}} slots; `go-getter pool acquire` and `worktree new` refuse more. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nEach slot is a full checkout and a cold build, so the size is a cost cap as much as a concurrency cap.\n"
+          }
+        ]
+      }
+    },
+    "pool-warm": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-warm",
+            "title": "The pool keeps {{answer.pool-warm}} free slots warm",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-warm": "{{answer.pool-warm}}" } },
+            "body": "## Decision\n\n`go-getter pool warm` keeps {{answer.pool-warm}} free slots on the base and runs the warm command after a create or refresh. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA warm slot saves the first build of a task.\n"
+          }
+        ]
+      }
+    },
+    "pool-warm-command": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-warm-command",
+            "title": "The pool warms a slot with `{{answer.pool-warm-command}}`",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-warm-command": "{{answer.pool-warm-command}}" } },
+            "body": "## Decision\n\nAfter a slot is created or refreshed the pool runs `{{answer.pool-warm-command}}` in it (`none` means nothing runs). (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe warm command is project specific (an install or a first build), so it is an answer and not a constant.\n"
+          }
+        ]
+      }
+    },
+    "pool-base": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-base",
+            "title": "Pool slots start from `{{answer.pool-base}}`",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-base": "{{answer.pool-base}}" } },
+            "body": "## Decision\n\nA free slot sits detached on `{{answer.pool-base}}` (`default` is the repository default branch) and a branch is merged when its work is in it. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA project that integrates on a branch other than the default needs slots to track that branch.\n"
+          }
+        ]
+      }
+    },
+    "pool-claim-grace": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-claim-grace",
+            "title": "A claim is safe from reaping for {{answer.pool-claim-grace}} seconds",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-claim-grace": "{{answer.pool-claim-grace}}" } },
+            "body": "## Decision\n\nReap never frees a claim younger than {{answer.pool-claim-grace}} seconds. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA slot claimed a moment ago has no commits yet, so it looks merged until the claim has had time to start.\n"
+          }
+        ]
+      }
+    },
+    "pool-session-ttl": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-session-ttl",
+            "title": "A session claim lapses after {{answer.pool-session-ttl}} seconds",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-session-ttl": "{{answer.pool-session-ttl}}" } },
+            "body": "## Decision\n\nA branch still at its creation commit, or a claim whose owner has not beaten for {{answer.pool-session-ttl}} seconds, may be reaped. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nWork is never freed on a guess: only unsaved-work-free slots lapse.\n"
+          }
+        ]
+      }
+    },
+    "pool-scratch": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-scratch",
+            "title": "Untracked files matching `{{answer.pool-scratch}}` do not make a slot unclean",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-scratch": "{{answer.pool-scratch}}" } },
+            "body": "## Decision\n\nA slot is free when every untracked file is git-ignored or matches `{{answer.pool-scratch}}` (`none` means only git-ignored files); any other untracked file is reported, never freed. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA build leaves output in a free slot; treating it as unsaved work leaves the pool full of slots that cannot be reused.\n"
+          }
+        ]
+      }
+    },
+    "pool-branch-pattern": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-branch-pattern",
+            "title": "Pool branches match `{{answer.pool-branch-pattern}}`",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-branch-pattern": "{{answer.pool-branch-pattern}}" } },
+            "body": "## Decision\n\n`go-getter pool acquire --branch` refuses a name that does not match `{{answer.pool-branch-pattern}}`. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nA fixed pattern keeps branch names readable and lets merged-ness be decided from them.\n"
+          }
+        ]
+      }
+    },
+    "pool-only": {
+      "*": {
+        "decisions": [
+          {
+            "slug": "pool-only",
+            "title": "The main checkout is {{answer.pool-only}} for edits under the pool",
+            "tags": ["practice-packs", "agent-roles", "harness"],
+            "frontmatter": { "track": "process", "go-getter": { "pool-only": "{{answer.pool-only}}" } },
+            "body": "## Decision\n\nWith `on`, an edit or a changing command in the main checkout is denied by the pre-tool hook and names `go-getter pool acquire`; with `off` the pool is advice only. (pack {{pack.id}}@{{pack.version}}).\n\n## Why\n\nThe gate is opt-in because a project must have slots ready before it can refuse work in its main checkout.\n"
           }
         ]
       }
