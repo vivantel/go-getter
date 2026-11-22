@@ -42,7 +42,7 @@ test('reads, go-getter verbs, a slot and places outside the repository stay allo
   for (const d of [
     call('Read', { file_path: path.join(fx.main, 'README.md') }),
     bash('git status && git log --oneline | head -3'), bash('ls docs | grep guardrails'), bash('gh pr view 5'),
-    bash('go-getter pool acquire --session s1'), bash('git branch --show-current'),
+    bash('npx go-getter pool acquire --session s1'), bash('git branch --show-current'),
     call('Edit', { file_path: path.join(slot, 'README.md'), old_string: 'a', new_string: 'b' }),
     call('Write', { file_path: path.join(fx.parent, 'scratch.txt'), content: 'x' }),
     bash(`cd ${slot} && npm test`), bash(`git -C ${slot} commit -am x`), bash('npm test', slot),
