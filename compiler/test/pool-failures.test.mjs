@@ -31,7 +31,7 @@ function claimed(n, branch, file = 'feature.txt') {
   return dir;
 }
 
-pending('WP3', '1: an untracked build directory listed as scratch does not make a free slot unmanaged', () => {
+test('failure 1: an untracked build directory listed as scratch does not make a free slot unmanaged', () => {
   fx = poolFixture({ config: { scratch: ['dist/'] } });
   const dir = fx.freeSlot(1);
   fx.write(dir, 'dist/out.js');
@@ -109,7 +109,7 @@ pending('WP6', '7: a worktree outside the pool is removed by a verb, and one wit
   assert.ok(existsSync(unique), 'the worktree with unique commits is still there');
 });
 
-pending('WP3', '8: releasing slots shows one available figure that counts cold slots', () => {
+test('failure 8: releasing slots shows one available figure that counts cold slots', () => {
   fx = poolFixture({ config: { size: 5, warm: 0 } });
   const names = ['feat/a-one', 'feat/b-two', 'feat/c-three'];
   for (const b of names) assert.equal(fx.pool('acquire', '--branch', b).code, 0);
