@@ -25,8 +25,10 @@ export function acquire(cwd, { branch, session } = {}) {
   if (branch && !new RegExp(config.branchPattern).test(branch)) throw new Error(`branch "${branch}" does not match the pool's branch pattern ${config.branchPattern}`);
   fetchOrigin(main); // outside the lock: the network is never called while holding it
   return withLock(main, () => {
-    if (branch && tryRun(main, 'rev-parse', '--verify', '--quiet', `refs/heads/${branch}`)) throw new Error(`branch "${branch}" already exists; release or reuse its slot`);
     const status = poolStatus(main);
+    // A branch a slot still holds is refused; one left behind by a released slot is resumed (release never deletes branches).
+    const exists = branch && tryRun(main, 'rev-parse', '--verify', '--quiet', `refs/heads/${branch}`);
+    if (exists && status.slots.some((s) => s.branch === branch)) throw new Error(`branch "${branch}" already exists; release or reuse its slot`);
     const target = status.slots.find((s) => s.state === 'cold' || s.state === 'free');
     if (!target) throw new Error(`the pool is full: ${status.counts.claimed} of ${config.size} slots are claimed${status.counts.unmanaged ? ` and ${status.counts.unmanaged} are unmanaged (run "go-getter pool status")` : ''}`);
     const ref = baseRef(main, config);
@@ -35,7 +37,7 @@ export function acquire(cwd, { branch, session } = {}) {
     mkdirSync(slotsRoot(main), { recursive: true });
     if (target.state === 'cold') run(main, 'worktree', 'add', '--detach', target.dir, baseSha);
     else run(target.dir, 'checkout', '-q', '--detach', baseSha);
-    if (branch) run(target.dir, 'switch', '-q', '-c', branch, baseSha);
+    if (branch) run(target.dir, 'switch', '-q', ...(exists ? [branch] : ['-c', branch, baseSha]));
     let worker = null;
     let workerKind = null;
     try { ({ id: worker, kind: workerKind } = identity(target.dir)); } catch { /* no identity: the lease records none */ }
@@ -69,15 +71,16 @@ export function backup(main, slot, dir, baseSha, { dirty, unpushed }) {
   return out;
 }
 
-// Frees a slot whose work is saved or finished: detaches it at the base, deletes its branch and drops the lease. No lock here: callers hold it.
-export function free(main, slot, lease, baseSha) {
+// Frees a slot whose work is saved or finished: detaches it at the base and drops the lease. The branch is the user's: it is deleted only
+// when the caller has proved it merged (`merged`, by `reap`), never by `release` or a session end. No lock here: callers hold it.
+export function free(main, slot, lease, baseSha, { merged = false } = {}) {
   const dir = slotDir(main, slot);
   if (existsSync(dir)) {
     run(dir, 'reset', '-q', '--hard');
     run(dir, 'clean', '-qfd');
     run(dir, 'checkout', '-q', '--detach', baseSha);
   }
-  if (lease.branch) tryRun(main, 'branch', '-D', lease.branch);
+  if (merged && lease.branch) tryRun(main, 'branch', '-D', lease.branch);
   dropLease(main, slot);
 }
 

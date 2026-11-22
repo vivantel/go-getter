@@ -68,6 +68,7 @@ test('a merged slot with unpushed commits and dirty files is freed only with bot
   const r = by(reap(), 1);
   assert.equal(r.action, 'freed');
   assert.equal(r.saved.files, 1);
+  assert.equal(fx.git(fx.main, 'branch', '--list', 'feat/merged-dirty'), '', 'reap deletes a branch it proved merged');
   assert.ok(existsSync(path.join(r.backup, 'files', 'notes', 'todo.txt')));
   assert.equal(fx.readLease(1), null);
 });

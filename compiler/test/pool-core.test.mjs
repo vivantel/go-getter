@@ -99,7 +99,11 @@ test('release refuses unsaved or unique work without --force', () => {
   assert.equal(fx.readLease(1), null);
   assert.equal(fx.git(dir, 'branch', '--show-current'), '', 'the slot is detached again');
   assert.equal(fx.pool('status', '--json').json().slots[0].state, 'free');
-  assert.match(fx.git(fx.main, 'ls-remote', '--heads', 'origin', 'feat/work'), /refs\/heads\/feat\/work/, 'the work survives on the remote: release deletes only the local branch, and only once the commits are pushed or backed up');
+  assert.match(fx.git(fx.main, 'ls-remote', '--heads', 'origin', 'feat/work'), /refs\/heads\/feat\/work/, 'the pushed work is on the remote');
+  assert.match(fx.git(fx.main, 'branch', '--list', 'feat/work'), /feat\/work/, 'release returns the slot and leaves the branch alone');
+  const again = ok(fx.pool('acquire', '--branch', 'feat/work', '--json')).json();
+  assert.equal(fx.git(again.path, 'branch', '--show-current'), 'feat/work', 'a branch left behind by a released slot is resumed');
+  assert.notEqual(fx.pool('acquire', '--branch', 'feat/work').code, 0, 'a branch a slot holds is still refused');
 });
 
 test('release --backup writes the files and a patch bundle before forcing', () => {
