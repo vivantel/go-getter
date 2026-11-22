@@ -8,6 +8,7 @@ import { cleanGitEnv } from '../git-env.mjs';
 import { listWorktrees } from '../worktree.mjs';
 import { poolConfig } from './config.mjs';
 import { hasPending, readLease } from './lease.mjs';
+import { ownerOf } from './owner.mjs';
 
 const raw = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) });
 const tryRun = (cwd, ...args) => { try { return raw(cwd, ...args).trim(); } catch { return null; } };
@@ -53,7 +54,7 @@ export function classify(main, config, n, { trees = listWorktrees(main), base = 
   const slot = slotName(n);
   const dir = slotDir(main, slot);
   const lease = readLease(main, slot);
-  if (lease) return { slot, dir, state: 'claimed', lease, branch: lease.branch ?? null };
+  if (lease) return { slot, dir, state: 'claimed', lease, branch: lease.branch ?? null, owner: ownerOf(main, lease), ...(lease.ended && { orphaned: 'owner ended' }) };
   if (hasPending(main, slot)) return { slot, dir, state: 'unmanaged', reason: 'pending-lease' };
   if (!existsSync(dir)) return { slot, dir, state: 'cold' };
   const tree = trees.find((t) => real(t.path) === real(dir));

@@ -2,9 +2,10 @@
 import { fileURLToPath } from 'node:url';
 import { acquire, poolStatus, release } from '../pool/slots.mjs';
 import { reap, reapInBackground } from '../pool/reap.mjs';
+import { endSession, name } from '../pool/session.mjs';
 import { warm, warmInBackground } from '../pool/warm.mjs';
 
-const USAGE = 'usage: go-getter pool acquire (--branch <name> | --session <id>) [--json] | release <slot> [--force] [--backup] | status [--json] | warm [--sync] | reap [--sync] [--dry-run] [--json]';
+const USAGE = 'usage: go-getter pool acquire (--branch <name> | --session <id>) [--json] | release <slot> [--force] [--backup] | status [--json] | warm [--sync] | reap [--sync] [--dry-run] [--json] | session <id> | name <branch> [--slot <pool-NN>] | end-session <id> [--backup]';
 
 export default function poolCommand({ args }) {
   const [sub, ...rest] = args;
@@ -21,6 +22,24 @@ export default function poolCommand({ args }) {
       if (!target) throw Object.assign(new Error(USAGE), { usage: true });
       const done = release(process.cwd(), target, { force: rest.includes('--force'), backup: rest.includes('--backup') });
       console.log(json ? JSON.stringify(done, null, 2) : `released ${done.slot}${done.backup ? `; work saved in ${done.backup}` : ''}`);
+      return 0;
+    }
+    if (sub === 'session') {
+      if (!rest[0]) throw Object.assign(new Error(USAGE), { usage: true });
+      const got = acquire(process.cwd(), { session: rest[0] });
+      console.log(json ? JSON.stringify(got, null, 2) : `${got.path} (session ${got.session})`);
+      return 0;
+    }
+    if (sub === 'name') {
+      if (!rest[0] || rest[0].startsWith('--')) throw Object.assign(new Error(USAGE), { usage: true });
+      const got = name(process.cwd(), rest[0], { slot: flag('--slot') });
+      console.log(json ? JSON.stringify(got, null, 2) : `${got.path} (${got.branch})`);
+      return 0;
+    }
+    if (sub === 'end-session') {
+      if (!rest[0] || rest[0].startsWith('--')) throw Object.assign(new Error(USAGE), { usage: true });
+      const got = endSession(process.cwd(), rest[0], { backup: rest.includes('--backup') });
+      console.log(json ? JSON.stringify(got, null, 2) : `${got.action}${got.slot ? ` ${got.slot}` : ''}: ${got.reason ?? `work saved in ${got.backup}`}`);
       return 0;
     }
     if (sub === 'reap') {
@@ -50,11 +69,11 @@ export default function poolCommand({ args }) {
     }
     if (sub === 'status') {
       const s = poolStatus(process.cwd());
-      const slots = s.slots.map((x) => ({ slot: x.slot, state: x.state, ...(x.reason && { reason: x.reason }), ...(x.files && { files: x.files }), ...(x.branch && { branch: x.branch }) }));
+      const slots = s.slots.map((x) => ({ slot: x.slot, state: x.state, ...(x.reason && { reason: x.reason }), ...(x.files && { files: x.files }), ...(x.owner && { owner: x.owner }), ...(x.orphaned && { orphaned: x.orphaned }), ...(x.branch && { branch: x.branch }) }));
       if (json) console.log(JSON.stringify({ available: s.available, counts: s.counts, slots }, null, 2));
       else {
         console.log(`available ${s.available} of ${s.config.size} (free ${s.counts.free}, cold ${s.counts.cold}, claimed ${s.counts.claimed}, unmanaged ${s.counts.unmanaged})`);
-        for (const x of slots) console.log(`${x.slot}\t${x.state}${x.branch ? `\t${x.branch}` : ''}${x.reason ? `\t${x.reason}` : ''}${x.files ? ` (${x.files.join(', ')})` : ''}`);
+        for (const x of slots) console.log(`${x.slot}\t${x.state}${x.branch ? `\t${x.branch}` : ''}${x.reason ? `\t${x.reason}` : ''}${x.files ? ` (${x.files.join(', ')})` : ''}${x.owner ? `\towner ${x.owner.state} ${Math.round(x.owner.ageSeconds / 60)}m${x.owner.note ? ` (${x.owner.note})` : ''}` : ''}${x.orphaned ? `\torphaned: ${x.orphaned}` : ''}`);
       }
       return 0;
     }

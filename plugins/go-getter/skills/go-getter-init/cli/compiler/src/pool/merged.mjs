@@ -53,7 +53,8 @@ export function decide(main, { lease, dir, target, now, graceSeconds, ttlSeconds
   if (!(age >= graceSeconds)) return { merged: false, keep: 'young', reason: `claimed less than ${graceSeconds}s ago` };
   const tip = tryGit(main, 'rev-parse', '--verify', '--quiet', `refs/heads/${branch}^{commit}`);
   const gone = tryGit(main, 'for-each-ref', '--format=%(upstream:track)', `refs/heads/${branch}`) === '[gone]';
-  const list = prs(main, branch) ?? [];
+  const asked = prs(main, branch);
+  const list = asked ?? [];
   const open = list.find((p) => p.state === 'OPEN');
   if (open) return { merged: false, keep: 'open-pr', reason: `pull request #${open.number} is open` };
   if (list.some((p) => p.state === 'MERGED' && tip && p.headRefOid === tip)) return { merged: true, reason: 'pull request merged' };
@@ -71,6 +72,8 @@ export function decide(main, { lease, dir, target, now, graceSeconds, ttlSeconds
     if (tryGit(main, 'merge-base', '--is-ancestor', tip, target) !== null) return { merged: true, reason: `ancestor of ${target}` };
     if (squashMerged(main, branch, target)) return { merged: true, reason: closed ? `closed pull request #${closed.number}; its patch is in ${target}` : `patch-equivalent to ${target} (squash)` };
     if (closed) return { merged: false, keep: 'closed-unmerged', reason: `pull request #${closed.number} was closed without merging` };
+    // A deleted remote branch says the work was merged or abandoned; only the pull request tells which. Without it, keep.
+    if (gone && asked === null) return { merged: false, keep: 'unknown-pr', reason: 'remote branch deleted, but the pull request could not be read (gh unavailable)' };
     if (gone) return { merged: true, reason: 'remote branch deleted' };
     return { merged: false, keep: 'not-merged', reason: `not merged into ${target}` };
   }

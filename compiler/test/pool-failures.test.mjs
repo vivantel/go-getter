@@ -75,7 +75,7 @@ test('failure 4: a lease whose branch ref is gone and whose commits are in the b
   assert.equal(fx.readLease(1), null);
 });
 
-pending('WP5', '5: a pushed, clean slot whose owner has ended is shown lapsed and freed after the grace', () => {
+test('failure 5: a pushed, clean slot whose owner has ended is shown lapsed and freed after the grace', () => {
   fx = poolFixture();
   claimed(1, 'feat/owner-gone');
   fx.writeLease(1, { branch: 'feat/owner-gone', session: 's-ended', worker: 'w-ended' });
