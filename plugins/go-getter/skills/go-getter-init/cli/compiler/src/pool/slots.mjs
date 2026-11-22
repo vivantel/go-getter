@@ -67,6 +67,18 @@ export function backup(main, slot, dir, baseSha, { dirty, unpushed }) {
   return out;
 }
 
+// Frees a slot whose work is saved or finished: detaches it at the base, deletes its branch and drops the lease. No lock here: callers hold it.
+export function free(main, slot, lease, baseSha) {
+  const dir = slotDir(main, slot);
+  if (existsSync(dir)) {
+    run(dir, 'reset', '-q', '--hard');
+    run(dir, 'clean', '-qfd');
+    run(dir, 'checkout', '-q', '--detach', baseSha);
+  }
+  if (lease.branch) tryRun(main, 'branch', '-D', lease.branch);
+  dropLease(main, slot);
+}
+
 // Frees a claimed slot: refuses unsaved or unique work unless forced; `backup` archives it first (and implies force).
 export function release(cwd, target, { force = false, backup: doBackup = false } = {}) {
   const main = mainCheckout(cwd);
@@ -84,13 +96,7 @@ export function release(cwd, target, { force = false, backup: doBackup = false }
     let saved = null;
     if (lost && !force && !doBackup) throw new Error(`${slot} holds work that exists nowhere else (${found.dirty.length} changed files, ${found.unpushed.length} unpushed commits); commit and push it, or use --backup or --force`);
     if (lost && doBackup) saved = backup(main, slot, dir, lease.base ?? baseSha, found);
-    if (existsSync(dir)) {
-      run(dir, 'reset', '-q', '--hard');
-      run(dir, 'clean', '-qfd');
-      run(dir, 'checkout', '-q', '--detach', baseSha);
-    }
-    if (lease.branch) tryRun(main, 'branch', '-D', lease.branch);
-    dropLease(main, slot);
+    free(main, slot, lease, baseSha);
     return { slot, path: dir, branch: lease.branch ?? null, backup: saved };
   });
 }

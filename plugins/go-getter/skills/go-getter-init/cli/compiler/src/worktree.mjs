@@ -6,6 +6,7 @@ import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
 import { withLock } from './pool/lock.mjs';
+import { prMerged, squashMerged } from './pool/merged.mjs';
 
 // A stray GIT_DIR or GIT_WORK_TREE (set by a git hook) must not redirect a removal to another repository.
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) }).trim();
@@ -92,27 +93,6 @@ export function newWorktree(cwd, slug, { branch, from } = {}) {
     git(main, 'worktree', 'add', '-b', name, dir, from ?? defaultBranch(main));
     return { path: dir, branch: name };
   });
-}
-
-// A squash merge leaves the branch tip outside the target's history, so ancestry misses it. Collapse the branch into one
-// commit on its merge base and ask `git cherry` whether the target already holds an equivalent patch.
-function squashMerged(main, branch, target) {
-  const base = tryGit(main, 'merge-base', target, branch);
-  if (!base) return false;
-  const synthetic = tryGit(main, '-c', 'user.name=go-getter', '-c', 'user.email=go-getter@localhost', 'commit-tree', `${branch}^{tree}`, '-p', base, '-m', 'squash');
-  return synthetic !== null && (tryGit(main, 'cherry', target, synthetic) ?? '').startsWith('-');
-}
-
-// The branch's pull request was merged with this very tip: a squash merge whose patch `git cherry` cannot match (an edited
-// squash, a resolved conflict) and whose remote branch is still there. Needs `gh`; false when it cannot be asked.
-function prMerged(main, branch) {
-  try {
-    const tip = git(main, 'rev-parse', '--verify', '--quiet', `refs/heads/${branch}^{commit}`);
-    const out = execFileSync('gh', ['pr', 'list', '--head', branch, '--state', 'merged', '--json', 'headRefOid', '--jq', '.[].headRefOid'], { cwd: main, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10000, env: cleanGitEnv(process.env) });
-    return out.split(/\s+/).includes(tip);
-  } catch {
-    return false;
-  }
 }
 
 // Linked worktrees in the managed location, with what `clean` would do about each.

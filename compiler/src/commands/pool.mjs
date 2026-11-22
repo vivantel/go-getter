@@ -1,9 +1,10 @@
 // go-getter pool acquire [--branch <b> | --session <id>] [--json] | release <slot> [--force] [--backup] | status [--json]
 import { fileURLToPath } from 'node:url';
 import { acquire, poolStatus, release } from '../pool/slots.mjs';
+import { reap, reapInBackground } from '../pool/reap.mjs';
 import { warm, warmInBackground } from '../pool/warm.mjs';
 
-const USAGE = 'usage: go-getter pool acquire (--branch <name> | --session <id>) [--json] | release <slot> [--force] [--backup] | status [--json] | warm [--sync]';
+const USAGE = 'usage: go-getter pool acquire (--branch <name> | --session <id>) [--json] | release <slot> [--force] [--backup] | status [--json] | warm [--sync] | reap [--sync] [--dry-run] [--json]';
 
 export default function poolCommand({ args }) {
   const [sub, ...rest] = args;
@@ -20,6 +21,21 @@ export default function poolCommand({ args }) {
       if (!target) throw Object.assign(new Error(USAGE), { usage: true });
       const done = release(process.cwd(), target, { force: rest.includes('--force'), backup: rest.includes('--backup') });
       console.log(json ? JSON.stringify(done, null, 2) : `released ${done.slot}${done.backup ? `; work saved in ${done.backup}` : ''}`);
+      return 0;
+    }
+    if (sub === 'reap') {
+      const cli = fileURLToPath(new URL('../../bin/go-getter.mjs', import.meta.url));
+      if (!rest.includes('--sync') && !rest.includes('--dry-run')) {
+        reapInBackground(process.cwd(), cli);
+        console.log('reap: started in the background (log: .go-getter/pool/reap.log)');
+        return 0;
+      }
+      const results = reap(process.cwd(), { dryRun: rest.includes('--dry-run'), log: (m) => console.error(`pool: ${m}`) });
+      if (json) console.log(JSON.stringify(results, null, 2));
+      else {
+        for (const r of results) console.log(`${r.action}\t${r.slot}\t${r.keep ? `${r.keep}: ` : ''}${r.reason}${r.backup ? `; saved ${r.saved.files} files, ${r.saved.commits} commits in ${r.backup}` : ''}`);
+        if (!results.length) console.log('no claimed slots');
+      }
       return 0;
     }
     if (sub === 'warm') {
