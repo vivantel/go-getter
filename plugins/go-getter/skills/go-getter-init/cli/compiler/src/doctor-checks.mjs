@@ -7,6 +7,8 @@ import { readManifest } from './manifest.mjs';
 import { hostOp } from './hosts/registry.mjs';
 import { hasPreToolHook } from './hosts/hook-events.mjs';
 import { installedPluginVersion } from './plugin-pin.mjs';
+import { collectEnforcement } from './enforce.mjs';
+import { packageCapabilities } from './governance.mjs';
 
 // The floor is package.json's engines.node (guardrail node-floor-is-oldest-supported-lts), never a second hard-coded number.
 const nodeFloor = (root) => Number(/(\d+)/.exec(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).engines.node)[1]);
@@ -35,4 +37,13 @@ export function enforcementProblems(project, { root, hosts, nodeVersion = proces
   const drift = diffApply(project, plan);
   if (drift.length) add(`${drift.length} generated file(s) out of date: ${drift.slice(0, 5).join('; ')}${drift.length > 5 ? '; ...' : ''}`, 'go-getter apply');
   return problems;
+}
+
+// Notes that are not failures: where a guardrail is advice only. The pool's isolation gate (guardrail work-happens-in-pool-worktrees) is a
+// blocking pre-tool hook, so a host without one relies on the instruction and the git hooks.
+export function enforcementNotes(project, { hosts, caps = packageCapabilities() } = {}) {
+  const adopted = collectEnforcement(project).some((e) => e.tier === 2 && e.parsed?.kind === 'builtin' && e.parsed.id === 'pool-isolation');
+  if (!adopted) return [];
+  const advisory = (hosts ?? planApply(project, {}).hosts).filter((h) => caps[h]?.hooks?.blockPreTool !== true);
+  return advisory.length ? [`the pool isolation gate is advisory on ${advisory.join(', ')} (no blocking pre-tool hook); the instruction and the git hooks apply there`] : [];
 }

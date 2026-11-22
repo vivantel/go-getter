@@ -7,6 +7,11 @@ import path from 'node:path';
 import { readArtifacts } from './artifacts.mjs';
 import { withLock } from './pool/lock.mjs';
 import { prMerged, squashMerged } from './pool/merged.mjs';
+import { poolConfig } from './pool/config.mjs';
+import { acquire, release as releaseSlot, unsaved } from './pool/slots.mjs';
+import { baseRef, poolStatus } from './pool/state.mjs';
+import { updateLease } from './pool/lease.mjs';
+import { reap } from './pool/reap.mjs';
 
 // A stray GIT_DIR or GIT_WORK_TREE (set by a git hook) must not redirect a removal to another repository.
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: cleanGitEnv(process.env) }).trim();
@@ -74,9 +79,35 @@ export function worktreeDir(main, location, slug) {
 // Marks the refusal at the concurrency limit, so a caller can clean and retry once.
 export const WORKTREE_LIMIT = 'WORKTREE_LIMIT';
 
+// Pool mode (isolation `worktree-pool`): `new` is `pool acquire`, `clean` is `pool reap`, `list` shows slots. Off, nothing changes.
+export function poolMode(main) {
+  try {
+    return poolConfig(main).enabled;
+  } catch {
+    return false;
+  }
+}
+
+function newPoolWorktree(main, slug, branch, from) {
+  if (from) throw new Error('pool slots start from the pool base; --from is not available in pool mode');
+  const name = branch ?? `feat/${slug}`;
+  const held = poolStatus(main).slots.find((s) => s.state === 'claimed' && s.branch === name);
+  if (held) return { path: held.dir, branch: name, slot: held.slot, existing: true };
+  let got;
+  try {
+    got = acquire(main, { branch: name });
+  } catch (err) {
+    if (/pool is full/.test(err.message)) throw Object.assign(new Error(`${err.message} (run "go-getter worktree clean" or finish a task)`), { code: WORKTREE_LIMIT });
+    throw err;
+  }
+  updateLease(main, got.slot, { description: slug });
+  return { path: got.path, branch: name, slot: got.slot };
+}
+
 export function newWorktree(cwd, slug, { branch, from } = {}) {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug ?? '')) throw new Error('slug must be lowercase words joined by hyphens');
   const main = listWorktrees(cwd)[0].path;
+  if (poolMode(main)) return newPoolWorktree(main, slug, branch, from);
   if (!from) fetchOrigin(main);
   return withLock(main, () => {
     const trees = listWorktrees(cwd);
@@ -133,6 +164,12 @@ export function planClean(cwd, { only } = {}) {
 // `keepBranch` leaves the local branches alone. `only` limits the removal to one worktree path; the others keep their planned action but are left alone.
 export function cleanWorktrees(cwd, { dryRun = false, only, keepBranch = false } = {}) {
   const main = listWorktrees(cwd)[0].path;
+  if (poolMode(main)) {
+    // Pool mode: reap decides (never freeing open or closed-unmerged work) and reports in the shape `clean` prints.
+    return reap(main, { dryRun }).filter((r) => !only || poolStatus(main).slots.some((s) => s.slot === r.slot && s.dir === only)).map((r) => ({
+      action: r.action === 'keep' ? 'keep' : 'remove', removed: r.action === 'freed', branchDeleted: r.action === 'freed', path: r.slot, branch: r.slot, reason: r.keep ? `${r.keep}: ${r.reason}` : r.reason,
+    }));
+  }
   // Registrations whose directory was deleted by hand would otherwise make git fail on them.
   if (!dryRun) tryGit(main, 'worktree', 'prune');
   const plan = planClean(cwd, { only });
@@ -158,6 +195,18 @@ export function cleanWorktrees(cwd, { dryRun = false, only, keepBranch = false }
 // After a merge: removes the linked worktree `cwd` is in, by the safe criteria of `cleanWorktrees` (remote branch gone or
 // merged, no uncommitted changes), from the main checkout. The local branch stays. { main, released, reason } or null when
 // `cwd` is not a linked worktree.
+// Pool mode: the merge is confirmed, so the slot's commits are in the base (a squash has other hashes); only uncommitted files can still be lost.
+// A slot with any is kept. A pool failure never fails the merge: the caller prints the reason.
+function releasePoolSlot(main, self) {
+  const slot = poolStatus(main).slots.find((s) => s.dir === self.path || s.dir === realpathSync(self.path));
+  if (!slot || slot.state !== 'claimed') return { main, path: self.path, branch: self.branch, released: false, reason: 'not a claimed pool slot' };
+  const base = tryGit(main, 'rev-parse', `${baseRef(main, poolConfig(main))}^{commit}`);
+  const dirty = unsaved(slot.dir, base).dirty;
+  if (dirty.length) return { main, path: self.path, branch: self.branch, released: false, reason: `${dirty.length} uncommitted files stay in ${slot.slot}` };
+  releaseSlot(main, slot.slot, { force: true });
+  return { main, path: self.path, branch: self.branch, released: true, slot: slot.slot };
+}
+
 export function releaseWorktree(cwd) {
   const trees = listWorktrees(cwd);
   const main = trees[0].path;
@@ -165,6 +214,7 @@ export function releaseWorktree(cwd) {
   const real = (p) => { try { return realpathSync(p); } catch { return p; } };
   const self = top && trees.find((t) => !t.main && real(t.path) === real(top));
   if (!self) return null;
+  if (poolMode(main)) return releasePoolSlot(main, self);
   // Plan from the main checkout, where the worktree is not "current" and can be removed.
   const item = cleanWorktrees(main, { only: self.path, keepBranch: true }).find((t) => t.path === self.path);
   const released = item?.removed === true;

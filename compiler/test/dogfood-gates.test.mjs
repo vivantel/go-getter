@@ -17,7 +17,15 @@ for (const item of ['docs', 'AGENTS.md', 'CLAUDE.md', 'package.json', '.go-gette
   if (existsSync(path.join(source, item))) cpSync(path.join(source, item), path.join(repo, item), { recursive: true });
 }
 execFileSync('git', ['init', '-q', '-b', 'feat/dogfood'], { cwd: repo });
-after(() => rmSync(repo, { recursive: true, force: true }));
+// These tests are about the tracker and pull-request gates; the pool gate (answer `pool-only`) would refuse a changing command in this temp checkout.
+const saved = [process.env.GO_GETTER_TEST_MODE, process.env.GO_GETTER_POOL_CONFIG];
+process.env.GO_GETTER_TEST_MODE = '1';
+process.env.GO_GETTER_POOL_CONFIG = JSON.stringify({ only: false });
+after(() => {
+  [process.env.GO_GETTER_TEST_MODE, process.env.GO_GETTER_POOL_CONFIG] = saved;
+  for (const [k, v] of [['GO_GETTER_TEST_MODE', saved[0]], ['GO_GETTER_POOL_CONFIG', saved[1]]]) if (v === undefined) delete process.env[k];
+  rmSync(repo, { recursive: true, force: true });
+});
 const bash = (command) => ({ tool_name: 'Bash', tool_input: { command } });
 
 test('the tracker answer is "allow": plan issue create, comment and close run without a stop', () => {

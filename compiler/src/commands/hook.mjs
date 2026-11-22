@@ -14,6 +14,7 @@ import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
 import { wrapWatch } from '../watch.mjs';
 import { recordHostSpend } from '../spend/index.mjs';
+import { poolSessionStart, poolSessionEnd } from '../pool/hooks.mjs';
 
 // Without --project: the nearest ancestor of `from` that holds the project's go-getter state, else `from` itself.
 function projectRootFrom(from) {
@@ -64,6 +65,12 @@ export default async function hookCommand({ root, args }) {
     recordQuietly(project, hookRecord('session-start', host, payload));
     const text = sessionNudges(root, project);
     if (text) process.stdout.write(`${text}\n`);
+    try {
+      const pool = poolSessionStart(payload.cwd ? path.resolve(payload.cwd) : project, payload);
+      if (pool) process.stdout.write(`${pool}\n`);
+    } catch {
+      // the pool never blocks a session from starting
+    }
     return 0;
   }
   if (!['pre-tool', 'post-tool', 'stop', 'session-end', 'user-prompt'].includes(event) || !host) {
@@ -95,6 +102,8 @@ export default async function hookCommand({ root, args }) {
     recordHostSpend(dir, host, payload);
     try {
       evaluateSessionEnd(dir, payload);
+      const ended = poolSessionEnd(payload.cwd ? path.resolve(payload.cwd) : dir, payload);
+      if (ended) process.stderr.write(`${ended.line}\n`);
     } catch {
       // cleanup is best effort: the 24-hour sweep catches what this misses
     }

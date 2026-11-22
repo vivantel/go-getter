@@ -33,8 +33,8 @@ id,title,tags,status
 0037-compaction-timing,"Context is compacted at task boundaries","practice-packs, harness, cost",active
 0038-agent-roster,"Work is delegated to planner, explorer, implementer, reviewer and tester agents","practice-packs, agent-roles, harness",active
 0039-reviewer-access,"The reviewer reports findings and changes nothing","practice-packs, agent-roles, harness",active
-0040-parallel-isolation,"Each parallel task runs in its own git worktree","practice-packs, agent-roles, harness",active
-0041-worktree-location,"Task worktrees live next to the repository","practice-packs, agent-roles, harness",active
+0040-parallel-isolation,"Each parallel task runs in its own git worktree","practice-packs, agent-roles, harness",superseded
+0041-worktree-location,"Task worktrees live next to the repository","practice-packs, agent-roles, harness",deprecated
 0043-human-escalation,"Agents hand over to a human when blocked, before irreversible or outward-facing actions, and on a guardrail denial","practice-packs, agent-roles, harness",active
 0044-handoff-contract,"Handoffs are a brief in, then a result and evidence out","practice-packs, agent-roles, harness",active
 0045-restricted-paths,"Restricted data lives at a declared list of paths","practice-packs, governance, security",active
@@ -189,6 +189,16 @@ id,title,tags,status
 0212-vendor-the-core-by-pin,"Vendor the core at a kms release tag, checked by check core-pin and updated by core update","knowledge-base, vendoring, packaging",active
 0213-skill-moves-from-kms,"go-getter keeps roadmap, refactor-plan, brainstorm, clarify and changelog unchanged; kms deprecates its copies","knowledge-base, packaging",active
 0214-core-skill-evals-live-in-kms,"Core skill evals stay in kms; go-getter runs the conformance fixtures and its own harness evals","eval, knowledge-base",active
+0215-parallel-isolation,"Parallel tasks run in slots of a worktree pool","practice-packs, agent-roles, harness",active
+0216-pool-size,"The pool holds 10 slots","practice-packs, agent-roles, harness",active
+0217-pool-warm,"The pool keeps 2 free slots warm","practice-packs, agent-roles, harness",active
+0218-pool-warm-command,"The pool warms a slot with `none`","practice-packs, agent-roles, harness",active
+0219-pool-base,"Pool slots start from `master`","practice-packs, agent-roles, harness",active
+0220-pool-claim-grace,"A claim is safe from reaping for 600 seconds","practice-packs, agent-roles, harness",active
+0221-pool-session-ttl,"A session claim lapses after 43200 seconds","practice-packs, agent-roles, harness",active
+0222-pool-scratch,"Untracked files matching `none` do not make a slot unclean","practice-packs, agent-roles, harness",active
+0223-pool-branch-pattern,"Pool branches match `^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$`","practice-packs, agent-roles, harness",active
+0224-pool-only,"The main checkout is on for edits under the pool","practice-packs, agent-roles, harness",active
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
 draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft

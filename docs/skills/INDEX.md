@@ -14,4 +14,5 @@ install-smoke-test,"Procedure for the install smoke test of a host agent","packa
 restoring-a-checkpoint,"Restore work from a checkpoint","practice-packs, hooks, procedural",active
 reviewing-the-daily-digest,"Review the day's autonomous work in one sitting","roadmap, dogfooding, procedural",active
 tags,"Canonical tag vocabulary","knowledge-management, configuration",active
+using-the-worktree-pool,"Work in a worktree pool slot from claim to release","practice-packs, agent-roles, procedural",active
 working-a-change,"Work a change from branch to merge","practice-packs, git-hooks, procedural",active

@@ -20,6 +20,7 @@ const advancedOf = (id) => load(id).questions.filter((q) => q.tier === 'advanced
 test('the advanced questions of the shipped packs are the reviewed set', () => {
   const shipped = Object.fromEntries(readdirSync(path.join(root, 'src/packs')).map((id) => [id, advancedOf(id)]).filter(([, ids]) => ids.length));
   assert.deepEqual(shipped, {
+    orchestration: ['pool-size', 'pool-warm', 'pool-warm-command', 'pool-base', 'pool-claim-grace', 'pool-session-ttl', 'pool-scratch', 'pool-branch-pattern', 'pool-only'],
     'verification-gate': ['format-command', 'static-analysis-command', 'build-command', 'unit-command', 'integration-command', 'coverage-threshold', 'affected-command'],
     tracker: ['jira-issue-type'],
   });

@@ -14,7 +14,6 @@ import { poolFixture } from './helpers/pool-fixture.mjs';
 
 let fx;
 afterEach(() => fx?.cleanup());
-const pending = (wp, name, fn) => test(`failure ${name}`, { todo: wp }, fn);
 const status = () => {
   const r = fx.pool('status', '--json');
   assert.equal(r.code, 0, r.err);
@@ -86,7 +85,7 @@ test('failure 5: a pushed, clean slot whose owner has ended is shown lapsed and 
   assert.equal(fx.readLease(1), null);
 });
 
-pending('WP6', '6: worktrees outside the pool are listed with their state', () => {
+test('failure 6: worktrees outside the pool are listed with their state', () => {
   fx = poolFixture();
   fx.git(fx.main, 'worktree', 'add', '-q', '-b', 'fix/ci-flakes', path.join(fx.slots, 'ci-flakes'), 'origin/main');
   const outside = status().outside ?? [];
@@ -95,7 +94,7 @@ pending('WP6', '6: worktrees outside the pool are listed with their state', () =
   assert.equal(found.branch, 'fix/ci-flakes');
 });
 
-pending('WP6', '7: a worktree outside the pool is removed by a verb, and one with unique commits is refused without --force', () => {
+test('failure 7: a worktree outside the pool is removed by a verb, and one with unique commits is refused without --force', () => {
   fx = poolFixture();
   const clean = path.join(fx.slots, 'clean-one');
   const unique = path.join(fx.slots, 'unique-one');
@@ -118,7 +117,7 @@ test('failure 8: releasing slots shows one available figure that counts cold slo
   assert.equal(status().available, 5);
 });
 
-pending('WP6', '9: stashes are listed in status, tied to a slot when the message names its branch, and never dropped', () => {
+test('failure 9: stashes are listed in status, tied to a slot when the message names its branch, and never dropped', () => {
   fx = poolFixture();
   const dir = claimed(1, 'feat/has-stash');
   fx.write(dir, 'wip.txt', 'wip\n');

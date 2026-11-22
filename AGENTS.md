@@ -83,6 +83,7 @@ Blocked by host hooks where the host supports it:
 - Writes to the plan tracker follow the project's answer (`tracker-writes-follow-the-answer`)
 - A step is not done while its verification checks fail (`verification-gate-blocks-done`)
 - Watches start through go-getter watch, --until done for CI runs and long commands (`watches-use-the-wrapper`)
+- Work happens in a pool slot, not in the main checkout (`work-happens-in-pool-worktrees`)
 
 Advisory:
 
@@ -95,8 +96,8 @@ Advisory:
 - Noisy work is delegated only when the cost model says the handoff is cheaper (`noisy-work-rule`)
 - A fact, guardrail or derivation-note states one thing (`one-statement-one-job`)
 - Every figure in the paper cites a command that reproduces it and the side of an intervention it comes from (`paper-numbers-are-reproducible`)
-- Parallel tasks must each use their own worktree (`parallel-tasks-use-worktrees`)
 - Detailed procedures live in skills loaded on demand (`procedure-delivery-rule`)
+- A slot is released as soon as its work is done (`release-the-slot-when-work-is-done`)
 - Facts, guardrails and procedures use the shortest phrasing that preserves meaning (`token-economy`)
 
 <!-- go-getter:end -->
