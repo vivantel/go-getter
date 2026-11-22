@@ -1,7 +1,7 @@
 ---
 id: parallel-tasks-use-worktrees
 title: Parallel tasks must each use their own worktree
-status: active
+status: deprecated
 date: 2026-10-05
 tags: [practice-packs, agent-roles, guardrail]
 governed-by: [0040-parallel-isolation]

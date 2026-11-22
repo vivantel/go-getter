@@ -532,7 +532,8 @@ export function planApply(project, { hosts, skills, force = false, bootstrap = f
   }
   // Sibling worktrees sit outside the session's directory, so a host asks before every `cd` into one: list the root as a
   // workspace directory, relative so the committed file holds no machine path.
-  if (adoptedData(project, 'worktree-location') === 'sibling') {
+  // Pool slots sit in the same sibling directory (decision: the pool keeps the sibling location of 0041).
+  if (adoptedData(project, 'worktree-location') === 'sibling' || adoptedData(project, 'isolation') === 'worktree-pool') {
     const main = mainTree(project);
     const root = path.relative(main, worktreeRoot(main, 'sibling'));
     for (const host of targetHosts) {

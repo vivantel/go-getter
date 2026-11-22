@@ -1,7 +1,7 @@
 ---
 id: 0041-worktree-location
 title: Task worktrees live next to the repository
-status: active
+status: deprecated
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
 accepted-by: sergemso

@@ -68,7 +68,7 @@ How each rule ends up enforced, per component and host agent, once all eight pac
 | 7 Guardrails & DLP | `data-policy`, `restricted-data`, `sanitization` | hook+ci | hook+ci (deferred) | hook+ci | hook+ci | hook+ci (deferred) | hook+ci (deferred) | ci (deferred) |
 | 8 Human-in-the-loop | `hitl` | hook | hook (deferred) | hook | hook | hook (deferred) | hook (deferred) | advisory (deferred) |
 | 9 Checkpointing | `checkpointing` | hook | hook (deferred, unconfirmed) | hook | hook | hook (deferred) | hook (deferred) | advisory (deferred) |
-| 10 Multi-agent orchestration | `orchestration` | ci | ci (deferred) | ci | ci | ci (deferred) | ci (deferred) | ci (deferred) |
+| 10 Multi-agent orchestration | `orchestration` | hook+ci | hook+ci (deferred) | hook+ci | hook+ci | hook+ci (deferred) | hook+ci (deferred) | hook+ci (deferred) |
 | 11 Cost & model routing | `cost-routing` | hook | hook (deferred) | hook | hook | hook (deferred) | hook (deferred) | advisory (deferred) |
 | 12 Observability | `telemetry` | - | - | - | - | - | - | - |
 

@@ -1,10 +1,14 @@
 ---
 id: using-the-worktree-pool
 title: Work in a worktree pool slot from claim to release
-status: draft
+status: active
 date: 2026-11-22
 tags: [practice-packs, agent-roles, procedural]
 operationalizes: [work-happens-in-pool-worktrees, release-the-slot-when-work-is-done]
+go-getter:
+  generated-by: orchestration@0.1.6
+  pack-answer: isolation
+  pack-option: worktree-pool
 ---
 
 ## Procedure

@@ -1,7 +1,8 @@
 ---
 id: 0040-parallel-isolation
 title: Each parallel task runs in its own git worktree
-status: active
+status: superseded
+superseded-by: 0215-parallel-isolation
 date: 2026-10-05
 tags: [practice-packs, agent-roles, harness]
 accepted-by: sergemso
