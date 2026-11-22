@@ -85,6 +85,8 @@ test('reading a guardrail, writing a draft or superseded file, a fact or source,
       bash('git diff -- docs/guardrails/no-secrets.md'),
       bash('git commit -m "docs: edit docs/guardrails/no-secrets.md"'),
       bash('echo x > src/out.txt'),
+      bash('sed -n 1,5p docs/guardrails/no-secrets.md 2>/dev/null'),
+      bash('grep -n x docs/guardrails/no-secrets.md &>/dev/null; cat docs/guardrails/no-secrets.md > /dev/null'),
     ]) assert.equal(stops(s.ask(payload)), false, JSON.stringify(payload));
   } finally {
     s.cleanup();

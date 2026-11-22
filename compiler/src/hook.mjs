@@ -717,7 +717,8 @@ function policyWriteRefusal(project, payload, host) {
   if (typeof command === 'string') {
     const commands = effectiveCommands(command);
     if (commands === null) return null; // approvalsStoreRefusal already stops a body that cannot be read
-    const redirect = /(?:^|[^<>=&|-])>>?(?![&(])/.test(command);
+    // a redirect to /dev/null writes nothing (`2>/dev/null` on a read must not make its operands look written)
+    const redirect = /(?:^|[^<>=&|-])>>?(?![&(])/.test(command.replace(/(?:\d|&)?>>?\s*\/dev\/null\b/g, ' '));
     const resolve = (w, cwd) => path.resolve(cwd, w.startsWith('~/') ? path.join(os.homedir(), w.slice(2)) : w);
     for (const { words, cwd } of walkCwd(commands, project)) {
       const base = path.basename(words[0]);
