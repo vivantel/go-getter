@@ -12,6 +12,7 @@ state.calls.push(args);
 writeFileSync(file, JSON.stringify(state, null, 2));
 const flag = (name) => args[args.indexOf(name) + 1];
 const prs = state.prs ?? [];
+if (process.env.GH_FAKE_FAIL === '1' && args[0] !== '--version') { console.error('gh: network unreachable'); process.exit(1); }
 if (args[0] === '--version') console.log('gh version fake');
 else if (args[0] === 'pr' && args[1] === 'list') {
   const head = flag('--head');

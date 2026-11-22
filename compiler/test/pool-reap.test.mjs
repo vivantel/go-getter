@@ -121,3 +121,15 @@ test('reap without --sync returns at once and writes a log', async () => {
   await new Promise((resolve) => setTimeout(resolve, 1500)); // let the detached run finish before the fixture is removed
   assert.ok(readdirSync(path.join(fx.main, '.go-getter', 'pool')).includes('reap.log'));
 });
+
+test('with gh unavailable, a deleted remote branch alone does not free a slot whose patch is not in the base', () => {
+  fx = poolFixture();
+  const dir = claimed(1, 'feat/maybe-abandoned');
+  fx.git(dir, 'branch', '--set-upstream-to=origin/feat/maybe-abandoned');
+  fx.git(fx.main, 'push', '-q', 'origin', '--delete', 'feat/maybe-abandoned');
+  const r = by(JSON.parse(fx.run(['pool', 'reap', '--sync', '--json'], { env: { GH_FAKE_FAIL: '1' } }).out), 1);
+  assert.equal(r.action, 'keep');
+  assert.equal(r.keep, 'unknown-pr');
+  assert.ok(fx.readLease(1));
+  assert.equal(by(reap(), 1).action, 'freed', 'once gh answers and no pull request is closed-unmerged or open, it is freed');
+});
