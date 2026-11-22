@@ -17,6 +17,21 @@ This plan is **re-enterable**: any session, human or agent, may stop after any c
 7. **Human gates are listed, not improvised**: only `Human:` fields below stop a run; everything else defaults and logs (decision 0155).
 8. **Re-entry for the whole plan after a long gap**: run `go-getter:lint`, then `git log --oneline origin/master -- docs/plans/worktree-pool.md` to see what merged, then step 1.
 
+## Status after WP5 (2026-11-22) and where the next session starts
+
+WP0 to WP5 are merged (pull requests 384 to 387). Remaining: WP6 and WP7 (independent of each other; WP6 needs WP3 and WP4, WP7 needs WP2 and WP4), then WP8, WP9, WP10, WP11, WP12. Start with `go-getter plan next docs/plans/worktree-pool.md` from the main checkout after `git pull`; the three `todo` cases left in `compiler/test/pool-failures.test.mjs` are failures 6, 7 and 9 (WP6).
+
+Carry-overs found by reviews, each owned by the step that touches the code:
+- **WP6, first commit:** `endedOwner` in `compiler/src/pool/reap.mjs` and `unsaved` in `slots.mjs` assume a claimed slot's directory exists; guard a missing one (report `missing-directory`, never crash the slot loop) and add a test.
+- **WP6:** `isScratch` in `state.mjs` misses a root-level file for a pattern starting with `**/` (for example `**/*.log` and `a.log`); make `**/` match zero segments.
+- **WP8 or WP9 (decide there):** an idle live session that runs no go-getter verb for longer than the lease (agent 60 min plus 5 min margin) looks `lapsed`; its pushed, clean slot is then freed by `reap`. Nothing unsaved is ever lost, but consider a longer session lease or a heartbeat from the session hook.
+- **WP9, skill and docs:** pull-request knowledge needs `gh` (GitHub only). Without it `decide` keeps a slot as `unknown-pr` when only the remote branch is gone; `ancestor`, `patch-equivalent`, backups, owners and states work from git alone. `decide()` takes the lookup as `prs`, so another forge is one function. State the limit.
+- **WP8:** the pre-tool denial and the agent instructions name the verbs (`ship`, `worktree clean`, `pool remove`, `pool release`), because a host's own worktree-exit tool does nothing for a worktree go-getter made (observed: `ExitWorktree` returns "no active EnterWorktree session").
+- **WP8 or WP9:** the daily digest does not list `closed-unmerged` slots yet; `acquire` does not start a warm top-up (the session hook calls `pool warm`).
+- **Drafts:** the four WP0 records are `active` but keep their `draft-wp-` ids. `go-getter artifacts assign` numbers every pending draft in the repo, so run it once, deliberately, in its own change.
+
+Practice notes that cost time: end every step that touches `compiler/src/` with `npm run build`; pool tests must pin anything that reads the environment (`identity()` reports `ci` when `CI` is set, so run the pool tests once with `CI=true`); `go-getter ship` opens the pull request, waits for CI, merges and removes the worktree, so the shell's directory disappears (continue from the main checkout) and a run can pass ten minutes (run it in the background and wait for its notice); `go-getter pr` pushes and opens a pull request without merging.
+
 ## What the audit says, and what that means here
 
 go-getter already has `go-getter worktree new|list|clean` (`compiler/src/worktree.mjs`, decisions 0040, 0041, 0156): sibling directories, one lock, a concurrency limit, and a `clean` that already detects squash merges with `git cherry` and merged pull requests. So this is **not a port beside it**; the pool is a second mode of the same verb, and several of termenbox's nine failures are already solved here and only need to be shared:
