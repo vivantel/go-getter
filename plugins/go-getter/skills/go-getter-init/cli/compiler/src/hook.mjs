@@ -261,7 +261,7 @@ function gatedCommand(entry, payload, host, project) {
     const dir = worktreeCd(command, project);
     const moved = !dir && /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command);
     for (const h of hits) {
-      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read' } : stateCheck(h.id, h.segment, dir ?? project)) : null;
+      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read (start the command with `cd <worktree> &&`, or send the stateful step as its own command, to have it judged)' } : stateCheck(h.id, h.segment, dir ?? project)) : null;
       if (state?.safe) continue;
       hit = { ...h, why: state?.why };
       break;
@@ -697,6 +697,18 @@ const POLICY_FILES = [{ dir: 'docs/guardrails', status: /^(?:active)$/ }, { dir:
 const WRITE_TOOLS = new Set(['write', 'edit', 'multiedit', 'notebookedit', 'write_file', 'replace', 'create', 'str_replace_editor', 'delete', 'apply_patch']);
 const WRITER_COMMANDS = new Set(['rm', 'mv', 'cp', 'tee', 'install', 'truncate', 'dd', 'ln', 'touch', 'chmod', 'chown', 'patch', 'ed', 'rsync', 'unlink', 'shred']);
 
+// Copy-like commands write only their destination: the last operand, or the `-t`/`--target-directory` one. Their sources are read.
+const COPIERS = new Set(['cp', 'install', 'rsync', 'ln']);
+function writtenOperands(base, args) {
+  if (!COPIERS.has(base)) return args;
+  const t = args.findIndex((a) => /^(?:-t|--target-directory)$/.test(a));
+  if (t >= 0 && args[t + 1] !== undefined) return [args[t + 1]];
+  const eq = args.find((a) => a.startsWith('--target-directory='));
+  if (eq) return [eq.slice('--target-directory='.length)];
+  const operands = args.filter((a) => !a.startsWith('-'));
+  return operands.length ? [operands.at(-1)] : [];
+}
+
 function policyFile(project, abs) {
   const rel = path.relative(project, abs).split(path.sep).join('/');
   const hit = POLICY_FILES.find((p) => path.dirname(rel) === p.dir && rel.endsWith('.md') && !rel.endsWith('INDEX.md'));
@@ -724,8 +736,9 @@ function policyWriteRefusal(project, payload, host) {
       const base = path.basename(words[0]);
       const writes = redirect || WRITER_COMMANDS.has(base) || ((base === 'sed' || base === 'perl') && words.some((w) => /^(?:-[A-Za-z]*i|--in-place)/.test(w))) || (INTERPRETERS.has(base) && words.some((w) => /^-[A-Za-z]*[ec]$/.test(w)));
       if (!writes) continue;
-      const text = words.slice(1).join(' ');
-      for (const w of [...words.slice(1), ...(INTERPRETERS.has(base) ? text.split(/[\s"'`;|&<>()=,]+/) : [])]) {
+      const args = writtenOperands(base, words.slice(1));
+      const text = args.join(' ');
+      for (const w of [...args, ...(INTERPRETERS.has(base) ? text.split(/[\s"'`;|&<>()=,]+/) : [])]) {
         if (w && !w.startsWith('-') && (hit = policyFile(project, resolve(w, cwd)))) break;
       }
       if (hit) break;

@@ -49,6 +49,13 @@ test('reads, go-getter verbs, a slot and places outside the repository stay allo
   ]) assert.equal(d.denied, false, d.reason);
 });
 
+test('a bare go-getter verb is allowed in the main checkout even when the hook PATH cannot find the program', () => {
+  setup({ only: true });
+  const input = JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Bash', cwd: fx.main, tool_input: { command: 'go-getter pool acquire --branch x 2>&1 | tail -5; go-getter plan status p.md' } });
+  const r = fx.run(['hook', 'pre-tool', '--host', 'claude-code', '--project', fx.main], { input, env: { PATH: '/usr/bin:/bin' } });
+  assert.equal(r.code, 0, r.err);
+});
+
 test('without pool-only an edit in the main checkout is allowed, and raw worktree add, remove and prune are denied in pool mode', () => {
   setup({});
   assert.equal(call('Edit', { file_path: path.join(fx.main, 'README.md'), old_string: 'a', new_string: 'b' }).denied, false);

@@ -127,3 +127,17 @@ test('a policy file whose status is quoted or carries a comment is still a polic
     s.cleanup();
   }
 });
+
+test('a copy reads its sources and writes only its destination, so copying a policy file out is allowed and copying over one is not', () => {
+  const s = setup();
+  try {
+    for (const cmd of ['cp docs/guardrails/no-secrets.md /tmp/copy.md', 'cp -r docs/decisions/0001-accepted.md src/', 'rsync docs/facts/0001-fact.md src/', 'cp -t src docs/guardrails/no-secrets.md']) {
+      assert.equal(stops(s.ask(bash(cmd))), false, cmd);
+    }
+    for (const cmd of ['cp src/a.md docs/guardrails/no-secrets.md', 'mv docs/guardrails/no-secrets.md /tmp/x.md', 'rm docs/decisions/0001-accepted.md']) {
+      assert.equal(stops(s.ask(bash(cmd))), true, cmd);
+    }
+  } finally {
+    s.cleanup();
+  }
+});
