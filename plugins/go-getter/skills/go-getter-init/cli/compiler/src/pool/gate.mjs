@@ -142,7 +142,9 @@ export function isolationRefusal({ cwd, kind, tool, command, paths = [] }) {
         if (i > 0 && eff[i + 1]) at = real(path.resolve(here, eff[i + 1]));
       }
       if (!inside(at, places.main) || inside(at, places.slots)) continue;
-      if (goGetterCommand(eff.join(' '), { cwd: at })) continue; // go-getter's own verbs guard themselves, and `pool acquire` must run here
+      // go-getter's own verbs guard themselves, and `pool acquire` must run here. A bare `go-getter` counts by name: the hook's PATH
+      // may not hold the plugin's bin directory, and then the lookup fails for the very command the refusal tells the agent to run.
+      if (eff[0] === 'go-getter' || goGetterCommand(eff.join(' '), { cwd: at })) continue;
       if (!readOnlyWords(eff)) return { verb: 'go-getter pool acquire', what: `\`${eff.slice(0, 3).join(' ')}\` changes the main checkout` };
     }
     if (commands.length && redirectsToFile(command) && refusedPlace(here, places)) return { verb: 'go-getter pool acquire', what: 'the command writes a file in the main checkout' };

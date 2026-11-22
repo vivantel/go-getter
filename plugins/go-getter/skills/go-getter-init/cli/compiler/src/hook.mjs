@@ -261,7 +261,7 @@ function gatedCommand(entry, payload, host, project) {
     const dir = worktreeCd(command, project);
     const moved = !dir && /(?:^|[;&|(]\s*)(?:cd|pushd)\s/.test(command);
     for (const h of hits) {
-      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read' } : stateCheck(h.id, h.segment, dir ?? project)) : null;
+      const state = h.stateful ? (moved ? { safe: false, why: 'the command changes directory first, so the state it acts on cannot be read (start the command with `cd <worktree> &&`, or send the stateful step as its own command, to have it judged)' } : stateCheck(h.id, h.segment, dir ?? project)) : null;
       if (state?.safe) continue;
       hit = { ...h, why: state?.why };
       break;
