@@ -64,7 +64,8 @@ test('a go-getter verb run inside a slot is a sign of life', () => {
 
 test('acquire records the worker identity, its kind and a first beat', () => {
   fx = poolFixture();
-  const lease = (ok(fx.pool('acquire', '--branch', 'feat/id')), fx.readLease(1));
+  // identity() says `ci` under CI; the kind is pinned so the test reads the same on a laptop and on a runner.
+  const lease = (ok(fx.run(['pool', 'acquire', '--branch', 'feat/id'], { env: { CI: '', GITHUB_RUN_ID: '', GO_GETTER_WORKER_KIND: 'agent' } })), fx.readLease(1));
   assert.match(lease.worker, /^w-[0-9a-f]{12}$/);
   assert.equal(lease.workerKind, 'agent');
   assert.equal(lease.heartbeatAt, lease.claimedAt);
