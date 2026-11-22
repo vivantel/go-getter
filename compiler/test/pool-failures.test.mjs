@@ -38,7 +38,7 @@ test('failure 1: an untracked build directory listed as scratch does not make a 
   assert.equal(slotState(status(), 1), 'free');
 });
 
-pending('WP4', '2: a squash-merged branch and a closed-but-landed pull request are reaped', () => {
+test('failure 2: a squash-merged branch and a closed-but-landed pull request are reaped', () => {
   fx = poolFixture();
   claimed(1, 'feat/squashed');
   const b = claimed(2, 'feat/closed-landed', 'landed.txt');
@@ -53,7 +53,7 @@ pending('WP4', '2: a squash-merged branch and a closed-but-landed pull request a
   assert.equal(fx.readLease(2), null);
 });
 
-pending('WP4', '3: a dirty slot whose branch is merged is archived to a backup, then freed', () => {
+test('failure 3: a dirty slot whose branch is merged is archived to a backup, then freed', () => {
   fx = poolFixture();
   const dir = claimed(1, 'fix/merged-but-dirty');
   fx.git(dir, 'push', '-q', 'origin', 'HEAD:main');
@@ -64,7 +64,7 @@ pending('WP4', '3: a dirty slot whose branch is merged is archived to a backup, 
   assert.ok(existsSync(backup) && readdirSync(backup, { recursive: true }).some((f) => String(f).endsWith('.h-run.sh')), 'the untracked file is in the backup');
 });
 
-pending('WP4', '4: a lease whose branch ref is gone and whose commits are in the base is freed', () => {
+test('failure 4: a lease whose branch ref is gone and whose commits are in the base is freed', () => {
   fx = poolFixture();
   const dir = claimed(1, 'chore/pr-sweep');
   fx.git(dir, 'push', '-q', 'origin', 'HEAD:main');
