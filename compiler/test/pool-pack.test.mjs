@@ -47,7 +47,7 @@ test('answering worktree-pool renders the decisions, both guardrails and the pro
   const g = readFileSync(path.join(dir, 'docs/guardrails', list('guardrails').find((f) => f.includes('work-happens-in-pool-worktrees'))), 'utf8');
   assert.match(g, /run: builtin:pool-isolation/);
   assert.deepEqual(poolConfig(dir, {}), {
-    enabled: true, size: 4, warm: 1, warmCommand: 'npm ci', base: 'develop', claimGraceSeconds: 120, sessionTtlSeconds: 3600,
+    enabled: true, size: 4, warm: 1, warmCommand: 'npm ci', base: 'develop', claimGraceSeconds: 120, pushedFreeSeconds: 86400, sessionTtlSeconds: 3600,
     scratch: ['dist/', 'build/'], branchPattern: '^(feat|fix)/[a-z0-9-]+$', only: true,
   });
   rmSync(dir, { recursive: true, force: true });

@@ -25,6 +25,7 @@ export function poolConfig(main, env = process.env) {
     warmCommand: unset(pick('warmCommand', 'pool-warm-command')) ?? '',
     base: unset(pick('base', 'pool-base')),
     claimGraceSeconds: num(pick('claimGraceSeconds', 'pool-claim-grace'), 600),
+    pushedFreeSeconds: num(pick('pushedFreeSeconds', 'pool-pushed-free-delay'), 86400),
     sessionTtlSeconds: num(pick('sessionTtlSeconds', 'pool-session-ttl'), 43200),
     scratch: list(pick('scratch', 'pool-scratch')),
     branchPattern: pick('branchPattern', 'pool-branch-pattern') ?? BRANCH_PATTERN,

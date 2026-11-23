@@ -199,6 +199,7 @@ id,title,tags,status
 0222-pool-scratch,"Untracked files matching `none` do not make a slot unclean","practice-packs, agent-roles, harness",active
 0223-pool-branch-pattern,"Pool branches match `^(feat|fix|docs|chore|ci|test|refactor|perf|build|style|revert)/[a-z0-9][a-z0-9._-]*$`","practice-packs, agent-roles, harness",active
 0224-pool-only,"The main checkout is on for edits under the pool","practice-packs, agent-roles, harness",active
+0225-free-pushed-slot,"A slot whose branch is pushed with an open pull request is freed after 24 hours","harness",active
 draft-a7-five-advisory-guardrails-get-derived-checks,"Five advisory-only guardrails get checks derived from their own text, and the rest stay advisory","enforcement, guardrail, research",draft
 draft-agents-do-their-own-prep,"An agent does a change's preparation itself and hands a person only gated actions, as questions","coordination, agent-roles, procedural",draft
 draft-h14-one-intent-reader-resolves-approvals-against-the-last-proposal,"One small-model reader turns what the user typed into release, grant, revoke or approve, and resolves ""go ahead"" against the agent's last proposal","hooks, enforcement, security",draft

@@ -42,13 +42,16 @@ test('a lapsed owner with unsaved work keeps the slot, and status lists it as or
   assert.ok(fx.readLease(1));
 });
 
-test('a lapsed owner never frees a slot whose pull request is open or closed-unmerged', () => {
+test('a lapsed owner frees an open pull request\'s pushed slot only after the delay, and never a closed-unmerged one', () => {
   fx = poolFixture();
   claimed(1, 'feat/open-pr');
   claimed(2, 'feat/closed-pr');
   fx.setPrs([{ number: 1, head: 'feat/open-pr', state: 'OPEN' }, { number: 2, head: 'feat/closed-pr', state: 'CLOSED', mergedAt: null }]);
+  const early = ok(fx.run(['pool', 'reap', '--sync', '--json'], { env: HOURS(10) })).json();
+  assert.deepEqual(early.map((x) => x.keep), ['open-pr', 'closed-unmerged']);
   const r = ok(fx.run(['pool', 'reap', '--sync', '--json'], { env: HOURS(48) })).json();
-  assert.deepEqual(r.map((x) => x.keep), ['open-pr', 'closed-unmerged']);
+  assert.deepEqual(r.map((x) => x.action), ['freed', 'keep']);
+  assert.equal(r[1].keep, 'closed-unmerged');
 });
 
 test('a go-getter verb run inside a slot is a sign of life', () => {

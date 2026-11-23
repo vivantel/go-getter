@@ -136,3 +136,35 @@ test('with gh unavailable, a deleted remote branch alone does not free a slot wh
   assert.ok(fx.readLease(1));
   assert.equal(by(reap(), 1).action, 'freed', 'once gh answers and no pull request is closed-unmerged or open, it is freed');
 });
+
+test('a pushed branch with an open pull request frees its slot only after the owner has been gone for the pushed-free delay', () => {
+  fx = poolFixture({ config: { claimGraceSeconds: 600, pushedFreeSeconds: 86400 } });
+  claimed(1, 'feat/pushed-open');
+  fx.setPrs([{ number: 11, head: 'feat/pushed-open', state: 'OPEN' }]);
+  const soon = fx.run(['pool', 'reap', '--sync', '--json'], { env: { GO_GETTER_CLOCK_OFFSET_MS: String(2 * 3600e3) } }).json();
+  assert.equal(by(soon, 1).keep, 'open-pr', 'before the delay the slot stays');
+  const later = fx.run(['pool', 'reap', '--sync', '--json'], { env: { GO_GETTER_CLOCK_OFFSET_MS: String(25 * 3600e3) } }).json();
+  assert.equal(by(later, 1).action, 'freed');
+  assert.equal(fx.readLease(1), null, 'the lease is dropped');
+  assert.match(by(later, 1).reason, /pull request #11 is open/);
+  assert.equal(fx.git(fx.main, 'branch', '--list', 'feat/pushed-open').includes('feat/pushed-open'), true, 'the branch stays');
+});
+
+test('an open pull request keeps its slot past the delay when the work is not pushed', () => {
+  fx = poolFixture({ config: { claimGraceSeconds: 600, pushedFreeSeconds: 86400 } });
+  const dir = claimed(1, 'feat/unpushed-open');
+  fx.write(dir, 'wip.txt', 'unsaved\n');
+  fx.setPrs([{ number: 12, head: 'feat/unpushed-open', state: 'OPEN' }]);
+  const later = fx.run(['pool', 'reap', '--sync', '--json'], { env: { GO_GETTER_CLOCK_OFFSET_MS: String(25 * 3600e3) } }).json();
+  assert.equal(by(later, 1).action, 'keep');
+});
+
+test('an open pull request keeps its slot past the delay when a commit is not pushed', () => {
+  fx = poolFixture({ config: { claimGraceSeconds: 600, pushedFreeSeconds: 86400 } });
+  const dir = claimed(1, 'feat/local-commit');
+  fx.commit(dir, 'later.txt', 'later\n', 'feat: later, not pushed');
+  fx.setPrs([{ number: 13, head: 'feat/local-commit', state: 'OPEN' }]);
+  const later = fx.run(['pool', 'reap', '--sync', '--json'], { env: { GO_GETTER_CLOCK_OFFSET_MS: String(25 * 3600e3) } }).json();
+  assert.equal(by(later, 1).action, 'keep');
+  assert.ok(fx.readLease(1), 'the lease stays');
+});
