@@ -1,6 +1,6 @@
 // Is a claimed slot's work finished? Shared by `worktree clean` (squashMerged, prMerged: unchanged behaviour) and `pool reap`
 // (decide). Work is never freed on a guess: a pull request closed without merging keeps its slot (`closed-unmerged`), and an open one
-// keeps it too.
+// keeps it too (reap frees it after the owner has been gone `pushedFreeSeconds` with nothing unsaved).
 import { execFileSync } from 'node:child_process';
 import { cleanGitEnv } from '../git-env.mjs';
 

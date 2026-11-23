@@ -1,4 +1,4 @@
-// `pool reap`: frees claimed slots whose work is finished (merged.mjs decides). It never frees an open or closed-unmerged slot, and a
+// `pool reap`: frees claimed slots whose work is finished (merged.mjs decides). It never frees a closed-unmerged slot, and frees an open-pull-request slot only after the owner has been gone `pushedFreeSeconds` with nothing unsaved, and a
 // merged slot holding uncommitted or unpushed work is archived to <pool>/backup/ first, with what was saved recorded in the result.
 // Decisions (which may call `gh`) are made outside the lock; under it each slot is re-checked and then freed, so the lock is never held
 // across the network. One fetch happens first.
@@ -42,6 +42,8 @@ export function reap(cwd, { dryRun = false, prs, log = () => {} } = {}) {
         const baseSha = git(main, 'rev-parse', `${target}^{commit}`);
         const dir = slotDir(main, p.slot);
         const found = unsaved(dir, baseSha);
+        // A lapsed owner's slot is freed only while it still holds nothing unsaved: the owner may have woken since the decision.
+        if (p.keepBranch && (found.dirty.length || found.unpushed.length)) return { slot: p.slot, action: 'keep', keep: 'orphaned', reason: 'the owner returned or added work since the decision' };
         let saved = null;
         if (found.dirty.length || found.unpushed.length) saved = backup(main, p.slot, dir, baseSha, found);
         free(main, p.slot, lease, baseSha, { merged: !p.keepBranch });
