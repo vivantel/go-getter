@@ -198,9 +198,11 @@ test('A2.1 a read-only compound command and a gh api GET are not "changes the ma
     const d = bash(c);
     assert.equal(d.denied, false, `${c}: ${d.reason}`);
   }
-  for (const c of ['for f in a b; do rm $f; done', 'if true; then npm test; fi', 'gh api -X POST repos/o/r/issues', 'gh api repos/o/r/issues -f title=x']) {
+  for (const c of ['for f in a b; do rm $f; done', 'if true; then npm test; fi', 'gh api -X POST repos/o/r/issues', 'gh api repos/o/r/issues -f title=x',
+    'gh api -XPOST repos/o/r/issues', 'gh api repos/o/r/issues -ftitle=x', 'gh api repos/o/r/issues -Ftitle=x', 'gh api repos/o/r/issues -XDELETE']) {
     assert.equal(bash(c).denied, true, c);
   }
+  assert.equal(bash('gh api -XGET repos/o/r/pulls/1').denied, false, 'attached -XGET is still a read');
 });
 
 test('A2.2 a raw git worktree command is judged against the repository it targets', () => {
