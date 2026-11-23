@@ -142,7 +142,8 @@ test('go-getter watch --until done prints one result and keeps the exit code', (
     assert.ok(lines.includes('  boom'));
     const shell = spawnSync(process.execPath, [cli, 'watch', '--', 'echo one; echo two'], { cwd: dir, encoding: 'utf8' });
     assert.equal(shell.status, 0);
-    assert.deepEqual(shell.stdout.trimEnd().split('\n'), ['one', 'watch: ok in 0s (exit 0; 2 lines, 2 states, 1 notified): echo one; echo two', '  last: two']);
+    // elapsed seconds are rounded, so a loaded run may print 1s or more; do not pin them
+    assert.deepEqual(shell.stdout.trimEnd().split('\n').map((l) => l.replace(/ in \d+s /, ' in Ns ')), ['one', 'watch: ok in Ns (exit 0; 2 lines, 2 states, 1 notified): echo one; echo two', '  last: two']);
     assert.equal(spawnSync(process.execPath, [cli, 'watch', 'echo'], { encoding: 'utf8' }).status, 2);
     assert.equal(spawnSync(process.execPath, [cli, 'watch', '--noise', 'loud', '--', 'true'], { cwd: dir, encoding: 'utf8' }).status, 2);
   } finally {
