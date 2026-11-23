@@ -6,7 +6,7 @@
       "source": {
         "source": "github",
         "repo": "vivantel/go-getter",
-        "ref": "v0.6.0"
+        "ref": "v0.7.0"
       }
     }
   },
