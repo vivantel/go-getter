@@ -190,3 +190,41 @@ test('a refusal keeps the bare verb when the go-getter on PATH knows pool', () =
     assert.match(r.err, /`go-getter pool acquire`/);
   } finally { rmSync(ok, { recursive: true, force: true }); }
 });
+
+// A2: known false positives and dead ends of the isolation gate.
+test('A2.1 a read-only compound command and a gh api GET are not "changes the main checkout"', () => {
+  setup({ only: true });
+  for (const c of ['for f in a b; do echo $f; done', 'if [ -f README.md ]; then ls; fi', 'while read l; do echo $l; done < README.md', 'gh api repos/o/r/pulls', 'gh api -X GET repos/o/r/pulls/1']) {
+    const d = bash(c);
+    assert.equal(d.denied, false, `${c}: ${d.reason}`);
+  }
+  for (const c of ['for f in a b; do rm $f; done', 'if true; then npm test; fi', 'gh api -X POST repos/o/r/issues', 'gh api repos/o/r/issues -f title=x']) {
+    assert.equal(bash(c).denied, true, c);
+  }
+});
+
+test('A2.2 a raw git worktree command is judged against the repository it targets', () => {
+  setup({});
+  const other = poolFixture({ config: {} });
+  try {
+    for (const c of [`git -C ${other.main} worktree add ../zz -b zz`, `cd ${other.main} && git worktree remove ../zz`]) {
+      assert.equal(bash(c).denied, false, c);
+    }
+    assert.equal(bash(`git -C ${fx.main} worktree add ../yy -b yy`).denied, true);
+    assert.equal(bash('git worktree add ../yy -b yy').denied, true);
+  } finally { other.cleanup(); }
+});
+
+test('A2.3 node <checkout>/compiler/bin/go-getter.mjs is a go-getter verb in the main checkout even if the path does not resolve', () => {
+  setup({ only: true });
+  assert.equal(bash('node /nowhere/at/all/compiler/bin/go-getter.mjs pool acquire --branch x').denied, false);
+  assert.equal(bash('node /nowhere/script.mjs').denied, true);
+});
+
+test('A2.4 a refusal says where a free slot is', () => {
+  setup({ only: true });
+  const slot = fx.freeSlot(1);
+  const d = bash('npm test');
+  assert.equal(d.denied, true);
+  assert.ok(d.reason.includes(`A free slot is ready at ${slot}`), d.reason);
+});
