@@ -44,7 +44,7 @@ export function reap(cwd, { dryRun = false, prs, log = () => {} } = {}) {
         const found = unsaved(dir, baseSha);
         let saved = null;
         if (found.dirty.length || found.unpushed.length) saved = backup(main, p.slot, dir, baseSha, found);
-        free(main, p.slot, lease, baseSha, { merged: true });
+        free(main, p.slot, lease, baseSha, { merged: !p.keepBranch });
         return { slot: p.slot, action: 'freed', reason: p.reason, ...(saved && { backup: saved, saved: { files: found.dirty.length, commits: found.unpushed.length } }) };
       }));
     } catch (err) {
@@ -56,15 +56,17 @@ export function reap(cwd, { dryRun = false, prs, log = () => {} } = {}) {
 }
 
 // A lapsed owner (no sign of life past its lease and the claim grace) frees a slot that holds nothing unsaved, unless a pull request still
-// needs it: open and closed-unmerged slots keep their reason. With unsaved work the slot stays, listed as orphaned.
+// needs it: closed-unmerged slots keep their reason, and an open pull request's slot is freed only after `pushedFreeSeconds` (the commits are pushed). With unsaved work the slot stays, listed as orphaned.
 function endedOwner(main, target, s, d) {
-  if (d.merged || !['not-merged', 'idle'].includes(d.keep)) return d;
+  if (d.merged || !['not-merged', 'idle', 'open-pr'].includes(d.keep)) return d;
   const config = poolConfig(main);
   const owner = ownerOf(main, s.lease);
-  if (owner.state !== 'lapsed' || owner.ageSeconds < config.claimGraceSeconds) return d;
+  // A pushed branch with an open pull request has its commits on the remote, so its slot is freed after a delay (a setting, 24h).
+  const wait = d.keep === 'open-pr' ? config.pushedFreeSeconds : config.claimGraceSeconds;
+  if (owner.state !== 'lapsed' || owner.ageSeconds < wait) return d;
   const found = unsaved(s.dir, git(main, 'rev-parse', `${target}^{commit}`));
   if (found.dirty.length || found.unpushed.length) return { merged: false, keep: 'orphaned', reason: `owner ended ${Math.round(owner.ageSeconds / 60)} min ago; ${found.dirty.length} changed files and ${found.unpushed.length} unpushed commits stay` };
-  return { merged: true, reason: `owner ended ${Math.round(owner.ageSeconds / 60)} min ago; work is pushed and clean` };
+  return { merged: true, keepBranch: true, reason: `owner ended ${Math.round(owner.ageSeconds / 60)} min ago; work is pushed and clean${d.keep === 'open-pr' ? ` (${d.reason}; acquire resumes the branch)` : ''}` };
 }
 
 // Starts a reap that outlives this process, logging to <pool>/reap.log; returns at once.
