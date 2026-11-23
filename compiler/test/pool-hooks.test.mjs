@@ -230,3 +230,17 @@ test('A2.4 a refusal says where a free slot is', () => {
   assert.equal(d.denied, true);
   assert.ok(d.reason.includes(`A free slot is ready at ${slot}`), d.reason);
 });
+
+test('0226: every pool-gate denial names a runnable pool verb, never a dead end', () => {
+  setup({ only: true });
+  const denials = [
+    call('Edit', { file_path: path.join(fx.main, 'README.md'), old_string: 'a', new_string: 'b' }),
+    call('Write', { file_path: 'x.txt', content: 'x' }),
+    bash('npm test'), bash('git commit -am x'),
+    bash('git worktree add ../y -b feat/y'), bash('git worktree remove ../x'), bash('git worktree prune'),
+  ];
+  for (const d of denials) {
+    assert.equal(d.denied, true, d.reason);
+    assert.match(d.reason, /pool (acquire|remove|doctor|release|status)\b/, `no named fix: ${d.reason}`);
+  }
+});
