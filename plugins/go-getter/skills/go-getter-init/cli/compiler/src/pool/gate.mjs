@@ -41,7 +41,9 @@ function ghApiIsGet(args) {
     const a = rest[i];
     if (/^(?:-X|--method)$/.test(a)) return /^GET$/i.test(rest[i + 1] ?? '');
     if (/^--method=/.test(a)) return /^--method=GET$/i.test(a);
+    if (/^-X./.test(a)) return /^-XGET$/i.test(a);
     if (/^(?:-f|-F|--field|--raw-field|--input)(?:=|$)/.test(a)) return false;
+    if (/^-[fF]./.test(a)) return false;
   }
   return rest[0] !== 'graphql';
 }
