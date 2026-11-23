@@ -1,7 +1,7 @@
 ---
-id: draft-a5-free-pushed-slot
+id: 0225-free-pushed-slot
 title: A slot whose branch is pushed with an open pull request is freed after 24 hours
-status: proposed
+status: active
 date: 2026-11-23
 tags: [harness]
 track: process
