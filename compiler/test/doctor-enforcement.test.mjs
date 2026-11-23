@@ -27,7 +27,9 @@ function adopted() {
   assert.equal(a.status, 0, a.stderr);
   return dir;
 }
-const doctor = (dir, env = {}) => spawnSync(process.execPath, [cli, 'doctor', '--project', dir, '--hosts', 'claude-code'], { encoding: 'utf8', env: { ...process.env, HOME: path.join(dir, 'nohome'), ...env } });
+// The host's own PATH may hold an old go-getter; a healthy project is judged without one unless a test puts one there.
+const cleanPath = (process.env.PATH ?? '').split(path.delimiter).filter((d) => !existsSync(path.join(d, 'go-getter'))).join(path.delimiter);
+const doctor = (dir, env = {}) => spawnSync(process.execPath, [cli, 'doctor', '--project', dir, '--hosts', 'claude-code'], { encoding: 'utf8', env: { ...process.env, PATH: cleanPath, HOME: path.join(dir, 'nohome'), ...env } });
 const withProject = (fn) => () => { const dir = adopted(); try { fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); } };
 
 test('a healthy adopted project passes doctor', withProject((dir) => {
@@ -75,6 +77,17 @@ test('(e) a plugin version that differs from the CLI fails doctor', withProject(
   const r = doctor(dir, { HOME: home });
   assert.equal(r.status, 1);
   assert.match(r.stdout + r.stderr, /plugin is 0\.0\.1 but the CLI is/);
+}));
+
+test('(f) a go-getter on PATH older than the CLI fails doctor and names the fix', withProject((dir) => {
+  const old = path.join(dir, 'oldinstall');
+  mkdirSync(path.join(old, 'bin'), { recursive: true });
+  writeFileSync(path.join(old, 'plugin.json'), JSON.stringify({ name: 'go-getter', version: '0.0.1' }));
+  writeFileSync(path.join(old, 'bin/go-getter'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  const r = doctor(dir, { PATH: `${path.join(old, 'bin')}${path.delimiter}${cleanPath}` });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout + r.stderr, /go-getter on PATH .* is 0\.0\.1 but the CLI is/);
+  assert.match(r.stdout + r.stderr, /fix: /);
 }));
 
 test('a project that never adopted go-getter is not failed for missing enforcement', () => {

@@ -1,6 +1,6 @@
 // What `go-getter doctor` verifies about enforcement itself (plan enforcement-hardening H3): each problem names its fix.
 // A hook that cannot run lets every call through, so each of these is a way enforcement is silently off.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { planApply, diffApply, packageVersion, RUNNER, VENDORED_CLI } from './apply.mjs';
 import { readManifest } from './manifest.mjs';
@@ -13,7 +13,31 @@ import { packageCapabilities } from './governance.mjs';
 // The floor is package.json's engines.node (guardrail node-floor-is-oldest-supported-lts), never a second hard-coded number.
 const nodeFloor = (root) => Number(/(\d+)/.exec(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).engines.node)[1]);
 
-export function enforcementProblems(project, { root, hosts, nodeVersion = process.versions.node, home } = {}) {
+const semver = (v) => String(v).split('.').map((n) => parseInt(n, 10) || 0);
+const olderThan = (a, b) => { const x = semver(a), y = semver(b); for (let i = 0; i < 3; i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) < (y[i] ?? 0); return false; };
+
+// The go-getter a hook's bare `go-getter` resolves to (A3): the first executable on PATH, its version read from the package or plugin
+// manifest above it. Returns undefined when none is on PATH or its version cannot be read.
+export function pathGoGetter(env = process.env) {
+  for (const dir of (env.PATH ?? '').split(path.delimiter).filter(Boolean)) {
+    const bin = path.join(dir, 'go-getter');
+    if (!existsSync(bin)) continue;
+    let real;
+    try { real = realpathSync(bin); } catch { continue; }
+    for (let d = path.dirname(real); d !== path.dirname(d); d = path.dirname(d)) {
+      for (const f of ['package.json', 'plugin.json']) {
+        try {
+          const m = JSON.parse(readFileSync(path.join(d, f), 'utf8'));
+          if (m.version && (f === 'plugin.json' || m.name === 'go-getter')) return { bin, version: m.version };
+        } catch { /* keep walking up */ }
+      }
+    }
+    return { bin, version: undefined };
+  }
+  return undefined;
+}
+
+export function enforcementProblems(project, { root, hosts, nodeVersion = process.versions.node, home, env = process.env } = {}) {
   const problems = [];
   const NODE_FLOOR = nodeFloor(root);
   const add = (what, fix) => problems.push({ what, fix });
@@ -23,6 +47,8 @@ export function enforcementProblems(project, { root, hosts, nodeVersion = proces
   if (plugin && plugin !== cli) add(`the installed go-getter plugin is ${plugin} but the CLI is ${cli}; the skills run older instructions`, 'claude plugin update go-getter@go-getter, then restart the host');
   // A project that never ran apply has no enforcement to be missing.
   if (!readManifest(project)) return problems;
+  const onPath = pathGoGetter(env);
+  if (onPath?.version && cli && olderThan(onPath.version, cli)) add(`the go-getter on PATH (${onPath.bin}) is ${onPath.version} but the CLI is ${cli}; a hook or a refusal that says \`go-getter <verb>\` may name a verb this install lacks`, 'claude plugin update go-getter@go-getter, or run the project runner .go-getter/bin/go-getter');
   const plan = planApply(project, { hosts });
   if (plan.tier2) {
     const vendored = Object.keys(plan.outputs).some((rel) => rel.startsWith(`${VENDORED_CLI}/`));
