@@ -229,16 +229,17 @@ test('output streams a line at a time while the command runs, scrubbed', async (
   try {
     writeFileSync(path.join(dir, 'stream.js'), "console.log('first ' + process.env.DB_PASSWORD); setTimeout(() => console.log('second'), 1500); setTimeout(() => {}, 1600);");
     const child = spawn(process.execPath, [cli, 'secret', 'run', '--from', '.env.local', '--', 'node', 'stream.js'], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'] });
-    let first = null;
-    const t0 = Date.now();
+    const arrivals = [];
     let all = '';
     child.stdout.on('data', (d) => {
       all += d;
-      if (first === null) first = Date.now() - t0;
+      arrivals.push({ at: Date.now(), n: all.split('\n').length - 1 });
     });
     await new Promise((resolve) => child.on('close', resolve));
     assert.equal(all, 'first [redacted by go-getter]\nsecond\n');
-    assert.ok(first < 1300, `the first line arrived before the command ended (${first} ms)`);
+    // Streaming means the first line is delivered in its own chunk before the second exists. No absolute
+    // deadline: node's start-up time varies with load, the command's own 1500 ms gap does not.
+    assert.ok(arrivals.length >= 2 && arrivals[0].n === 1, 'the first line arrived before the second was written');
   } finally {
     cleanup(dir);
   }
