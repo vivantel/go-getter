@@ -1,7 +1,8 @@
 ---
-id: draft-a-block-is-never-a-dead-end
+id: 0226-block-is-never-a-dead-end
 title: A block or a prompt names a fix an agent can run; auto-resolve runs only reversible fixes and never weakens a deny
-status: proposed
+status: active
+accepted-by: sergemso
 date: 2026-11-23
 tags: [harness, coordination, guardrail]
 ---
