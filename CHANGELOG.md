@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.0] - 2026-11-23
+
+### Added
+
+- pool: free a pushed slot with an open pull request after a delay (#394)
+- pool: release returns the slot and leaves the branch; only reap deletes one it proved merged (#391)
+- pool: whole-repository view, worktree convergence, hooks, pack answers and self-adoption (WP6-WP10) (#389)
+- pool: owner liveness, sessions and end-session on the work-claim machinery (WP5) (#387)
+- pool: decide merged-ness by content and add reap that never frees on a guess (WP4) (#386)
+- pool: classify slots by content, add warm slots and one available figure (WP3) (#385)
+- pool: worktree pool core, harness and design records (WP0-WP2) (#384)
+
+### Fixed
+
+- test: the secret-run streaming test no longer races node start-up (#395)
+- gate false positives and dead ends, stale-PATH doctor, flaky watch test, artifacts assign by path (#393)
+- pool: let go-getter verbs through the isolation gate and stop flagging a copied-out policy file (#390)
+
 ## [0.6.0] - 2026-11-16
 
 ### Changed
