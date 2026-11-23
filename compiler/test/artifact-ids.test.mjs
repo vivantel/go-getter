@@ -116,10 +116,32 @@ test('assign through the CLI honours a number already taken on the base ref', ()
     git('-c', 'user.email=a@b.c', '-c', 'user.name=t', 'commit', '-q', '-m', 'base');
     rmSync(path.join(dir, 'docs/facts/0009-elsewhere.md'));
     writeFileSync(path.join(dir, 'docs/facts/draft-u1-mine.md'), doc('draft-u1-mine', 'Mine'));
-    const r = cli(dir, 'artifacts', 'assign', '--base', 'main');
+    const r = cli(dir, 'artifacts', 'assign', '--all', '--base', 'main');
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /draft-u1-mine -> 0010-mine/);
     assert.equal(cli(dir, 'artifacts', 'bogus').status, 2);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('assign with a path numbers only that draft; with no path it previews and needs --all', () => {
+  const dir = project();
+  try {
+    writeFileSync(path.join(dir, 'docs/decisions/draft-k3-overlap.md'), doc('draft-k3-overlap', 'Overlap'));
+    writeFileSync(path.join(dir, 'docs/decisions/draft-k7-other.md'), doc('draft-k7-other', 'Other', 'See draft-k3-overlap and draft-k7-other.'));
+    const preview = cli(dir, 'artifacts', 'assign');
+    assert.equal(preview.status, 0, preview.stderr);
+    assert.match(preview.stdout, /would assign draft-k3-overlap -> /);
+    assert.ok(existsSync(path.join(dir, 'docs/decisions/draft-k3-overlap.md')), 'a preview changes nothing');
+    assert.ok(existsSync(path.join(dir, 'docs/decisions/draft-k7-other.md')));
+    const one = cli(dir, 'artifacts', 'assign', 'docs/decisions/draft-k3-overlap.md');
+    assert.equal(one.status, 0, one.stderr);
+    assert.ok(!existsSync(path.join(dir, 'docs/decisions/draft-k3-overlap.md')));
+    const other = readFileSync(path.join(dir, 'docs/decisions/draft-k7-other.md'), 'utf8');
+    assert.match(other, /^id: draft-k7-other$/m, 'the other draft keeps its id');
+    assert.match(other, /See \d{4}-overlap and draft-k7-other\./, 'only references to the assigned draft are rewritten');
+    assert.equal(cli(dir, 'artifacts', 'assign', '--all', 'docs/decisions/draft-k7-other.md').status, 2);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
