@@ -31,7 +31,7 @@ test('with pool-only, an edit and a changing command in the main checkout are de
   setup({ only: true });
   for (const d of [call('Edit', { file_path: path.join(fx.main, 'README.md'), old_string: 'a', new_string: 'b' }), call('Write', { file_path: 'x.txt', content: 'x' }), bash('npm test'), bash('echo hi > out.txt'), bash('git commit -am x')]) {
     assert.equal(d.denied, true, d.reason);
-    assert.match(d.reason, /go-getter pool acquire/);
+    assert.match(d.reason, /pool acquire/);
     assert.match(d.reason, /work-happens-in-pool-worktrees/);
   }
 });
@@ -144,9 +144,89 @@ test('every host with a blocking pre-tool hook gets the same denial', async () =
       const d = evaluatePreTool(fx.main, { tool_name: host === 'copilot' ? 'bash' : 'Bash', tool_input: { command: 'npm test' }, cwd: fx.main }, host);
       assert.equal(d.deny, true, host);
       const out = respond(host, d);
-      assert.match(out.stderr + out.stdout, /go-getter pool acquire/, host);
+      assert.match(out.stderr + out.stdout, /pool acquire/, host);
     }
   } finally {
     for (const k of Object.keys(env)) delete process.env[k];
   }
+});
+
+// A3: a refusal names only a command the build that printed it can run.
+import { mkdtempSync, chmodSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+
+function fakeBin(script) {
+  const dir = mkdtempSync(path.join(tmpdir(), 'gg-stale-'));
+  writeFileSync(path.join(dir, 'go-getter'), `#!/bin/sh\n${script}\n`);
+  chmodSync(path.join(dir, 'go-getter'), 0o755);
+  return dir;
+}
+const refuseWith = (envPath) => {
+  setup({ only: true });
+  const input = JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Bash', cwd: fx.main, tool_input: { command: 'npm test' } });
+  return fx.run(['hook', 'pre-tool', '--host', 'claude-code', '--project', fx.main], { input, env: { PATH: envPath } });
+};
+
+test('a refusal does not name a bare go-getter when the one on PATH is old and has no pool', () => {
+  const old = fakeBin('echo \'go-getter: unknown command "pool"\'; echo "usage: go-getter <build|check|detect>"; exit 2');
+  try {
+    const r = refuseWith(`${old}:/usr/bin:/bin`);
+    assert.equal(r.code, 2, r.err);
+    assert.doesNotMatch(r.err, /`go-getter pool acquire`/);
+    assert.match(r.err, /`node '[^']+go-getter\.mjs' pool acquire`/);
+  } finally { rmSync(old, { recursive: true, force: true }); }
+});
+
+test('a refusal names the node entry script when no go-getter is on PATH', () => {
+  const r = refuseWith('/usr/bin:/bin');
+  assert.equal(r.code, 2, r.err);
+  assert.match(r.err, /`node '[^']+go-getter\.mjs' pool acquire`/);
+});
+
+test('a refusal keeps the bare verb when the go-getter on PATH knows pool', () => {
+  const ok = fakeBin('echo "usage: go-getter pool acquire ..."; exit 2');
+  try {
+    const r = refuseWith(`${ok}:/usr/bin:/bin`);
+    assert.match(r.err, /`go-getter pool acquire`/);
+  } finally { rmSync(ok, { recursive: true, force: true }); }
+});
+
+// A2: known false positives and dead ends of the isolation gate.
+test('A2.1 a read-only compound command and a gh api GET are not "changes the main checkout"', () => {
+  setup({ only: true });
+  for (const c of ['for f in a b; do echo $f; done', 'if [ -f README.md ]; then ls; fi', 'while read l; do echo $l; done < README.md', 'gh api repos/o/r/pulls', 'gh api -X GET repos/o/r/pulls/1']) {
+    const d = bash(c);
+    assert.equal(d.denied, false, `${c}: ${d.reason}`);
+  }
+  for (const c of ['for f in a b; do rm $f; done', 'if true; then npm test; fi', 'gh api -X POST repos/o/r/issues', 'gh api repos/o/r/issues -f title=x',
+    'gh api -XPOST repos/o/r/issues', 'gh api repos/o/r/issues -ftitle=x', 'gh api repos/o/r/issues -Ftitle=x', 'gh api repos/o/r/issues -XDELETE']) {
+    assert.equal(bash(c).denied, true, c);
+  }
+  assert.equal(bash('gh api -XGET repos/o/r/pulls/1').denied, false, 'attached -XGET is still a read');
+});
+
+test('A2.2 a raw git worktree command is judged against the repository it targets', () => {
+  setup({});
+  const other = poolFixture({ config: {} });
+  try {
+    for (const c of [`git -C ${other.main} worktree add ../zz -b zz`, `cd ${other.main} && git worktree remove ../zz`]) {
+      assert.equal(bash(c).denied, false, c);
+    }
+    assert.equal(bash(`git -C ${fx.main} worktree add ../yy -b yy`).denied, true);
+    assert.equal(bash('git worktree add ../yy -b yy').denied, true);
+  } finally { other.cleanup(); }
+});
+
+test('A2.3 node <checkout>/compiler/bin/go-getter.mjs is a go-getter verb in the main checkout even if the path does not resolve', () => {
+  setup({ only: true });
+  assert.equal(bash('node /nowhere/at/all/compiler/bin/go-getter.mjs pool acquire --branch x').denied, false);
+  assert.equal(bash('node /nowhere/script.mjs').denied, true);
+});
+
+test('A2.4 a refusal says where a free slot is', () => {
+  setup({ only: true });
+  const slot = fx.freeSlot(1);
+  const d = bash('npm test');
+  assert.equal(d.denied, true);
+  assert.ok(d.reason.includes(`A free slot is ready at ${slot}`), d.reason);
 });

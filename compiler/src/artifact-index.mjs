@@ -85,22 +85,23 @@ export const isDraftId = (id) => DRAFT_ID.test(id);
 // plus one; `floor` is a higher number seen on the default branch). Drafts are taken in id order, so the result is
 // deterministic. Renames the file, sets its `id`, rewrites references to the old id in every .md file under docs/, src/
 // and the root, and regenerates the indexes. Returns [{ type, from, to }].
-export function assignIds(root, { floor = {} } = {}) {
+export function assignIds(root, { floor = {}, only = null, dryRun = false } = {}) {
   const assigned = [];
   for (const type of NUMBERED) {
     const dir = path.join(root, 'docs', type);
     const all = [...entries(dir), ...entries(path.join(dir, 'archive'))];
     let next = Math.max(0, floor[type] ?? 0, ...all.map((e) => Number(/^(\d{4})-/.exec(e.id)?.[1] ?? 0))) + 1;
-    for (const e of entries(dir).filter((x) => isDraftId(x.id))) {
+    for (const e of entries(dir).filter((x) => isDraftId(x.id) && (!only || only.has(path.join(dir, `${x.id}.md`))))) {
       const to = `${String(next++).padStart(4, '0')}-${e.id.replace(/^draft-[a-z0-9]+-/, '')}`;
       const from = path.join(dir, `${e.id}.md`);
+      if (dryRun) { assigned.push({ type, from: e.id, to }); continue; }
       const { data, body } = parseFrontmatter(readFileSync(from, 'utf8'));
       writeFileSync(from, stringifyFrontmatter({ ...data, id: to }, body));
       renameSync(from, path.join(dir, `${to}.md`));
       assigned.push({ type, from: e.id, to });
     }
   }
-  if (assigned.length) {
+  if (assigned.length && !dryRun) {
     rewriteReferences(root, assigned);
     writeIndexes(root);
   }
