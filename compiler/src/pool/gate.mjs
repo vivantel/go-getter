@@ -2,7 +2,9 @@
 // checkout of a pool project an edit, or a shell command that is not read-only, is refused with the verb that gives the agent a slot.
 // Inside a slot, outside the repository, and any read are allowed. In pool mode (with or without `pool-only`) raw `git worktree add|remove|prune`
 // are refused too: the pool owns the worktrees. Pure decisions over a tool call; the hook wires them (hook.mjs).
+import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { goGetterCommand } from '../invocation.mjs';
 import { commandWords, unwrapWords } from '../shell.mjs';
@@ -169,5 +171,23 @@ export function writePaths(input) {
   return out;
 }
 
-export const refusalReason = (guardrail, r) =>
-  `blocked by guardrail ${guardrail}: ${r.what}; work happens in a pool slot. Run \`${r.verb}\` (it gives you an isolated checkout), then continue there. A person may still run the raw command themselves with "! <command>".`;
+// The program a refusal tells the agent to run. A bare `go-getter` is named only when the one on the hook's PATH knows the verb's
+// command; a stale install (no `pool`) or none at all would make the refusal a dead end, so the running build is named by its entry
+// script instead. A3: no refusal points at a verb unknown to the build that printed it.
+const BIN = fileURLToPath(new URL('../../bin/go-getter.mjs', import.meta.url));
+export function spellVerb(verb, { env = process.env } = {}) {
+  if (!verb.startsWith('go-getter ')) return verb;
+  const command = verb.split(' ')[1];
+  let probe;
+  try {
+    probe = spawnSync('go-getter', [command, '--help'], { encoding: 'utf8', env, timeout: 5000 });
+  } catch {
+    probe = null;
+  }
+  const out = probe && !probe.error ? `${probe.stdout}${probe.stderr}` : '';
+  if (out.includes(`usage: go-getter ${command}`)) return verb;
+  return `node '${BIN}' ${verb.slice('go-getter '.length)}`;
+}
+
+export const refusalReason = (guardrail, r, options) =>
+  `blocked by guardrail ${guardrail}: ${r.what}; work happens in a pool slot. Run \`${spellVerb(r.verb, options)}\` (it gives you an isolated checkout), then continue there. A person may still run the raw command themselves with "! <command>".`;
