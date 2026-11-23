@@ -10,7 +10,7 @@ go-getter sets up the **agent harness** (the 12 components around a model: orche
 
 Decisions, facts, guardrails and procedures live in `docs/` in the knowledge-base format:
 
-- `docs/{facts,decisions}/NNNN-slug.md`, `docs/{guardrails,skills}/slug.md`. A new fact or decision may be filed as `draft-<unit>-<slug>`; `go-getter artifacts assign` gives it the next free number and rewrites references (existing `NNNN` files are unchanged).
+- `docs/{facts,decisions}/NNNN-slug.md`, `docs/{guardrails,skills}/slug.md`. A new fact or decision may be filed as `draft-<unit>-<slug>`; `go-getter artifacts assign <path>…` gives only those drafts the next free number and rewrites references to them; with no path it previews what it would number, and `--all` numbers every draft (existing `NNNN` files are unchanged).
 - Frontmatter `id, title, status, date, tags`; tags only from `docs/skills/tags.md`.
 - `INDEX.md` files are generated from frontmatter: run `go-getter artifacts index`, never hand-edit them (`check indexes` fails on drift or a duplicate number).
 - Committed decisions are immutable: supersede to change what they commit to; wording and factual corrections may edit in place (0067).
