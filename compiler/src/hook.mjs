@@ -16,6 +16,7 @@ import { listWorktrees } from './worktree.mjs';
 import { stopKey, stopReason, logStop } from './gate-stop.mjs';
 import { settlePending, addPendingApproval, approvePending } from './telemetry/approval-pending.mjs';
 import { recordApproval } from './telemetry/record.mjs';
+import { namedFix, addPendingBlock, settleBlocks } from './telemetry/block-outcome.mjs';
 import { parseRelease, looksLikeReleaseTalk, promptTexts, recordRequest, claimRequest } from './release-request.mjs';
 import { cleanGitEnv, defaultBranch } from './git-env.mjs';
 import { goGetterCommand, goGetterCall } from './invocation.mjs';
@@ -574,12 +575,16 @@ export function evaluatePreTool(project, payload, host) {
   const command = shellCommand(payload) ?? toolName(payload);
   settlePending(project, { session, command, host }); // what an earlier ask in this session left open is now answered or expired
   const result = decidePreTool(project, payload, host);
+  settleBlocks(project, { session, command, allowed: !result.deny, host }); // what an earlier denial led to
   if (result.deny) recordDenial(project, result);
   if (result.deny || result.ask) {
     const guardrail = decidedBy(result);
-    logStop(project, host, { taskClass: result.stopClass ?? guardrail ?? 'hook', outcome: result.deny ? 'blocked' : 'escalated', trigger: result.deny ? 'deny' : 'ask', guardrail });
+    const { fix, verb } = namedFix(result.reason);
+    logStop(project, host, { taskClass: result.stopClass ?? guardrail ?? 'hook', outcome: result.deny ? 'blocked' : 'escalated', trigger: result.deny ? 'deny' : 'ask', guardrail, hook: 'pre-tool', fix });
+    const block = { guardrail: guardrail ?? 'unknown', hook: 'pre-tool', fix };
     // An ask waits for a person: its answer is recorded as an approval once it is known (telemetry/approval-pending.mjs).
-    if (result.ask) addPendingApproval(project, { session, command, action: result.approvalAction ?? result.stopClass, host });
+    if (result.ask) addPendingApproval(project, { session, command, action: result.approvalAction ?? result.stopClass, host, block });
+    else addPendingBlock(project, { session, command, ...block, verb, host });
   }
   return result;
 }
