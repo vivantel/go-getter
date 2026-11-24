@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { STATE_DIR, recordApproval } from './record.mjs';
+import { resolveAsk } from './block-outcome.mjs';
 
 const FILE = 'approvals-pending.json';
 export const PENDING_TIMEOUT_MS = 15 * 60 * 1000;
@@ -36,16 +37,16 @@ export function settlePending(project, { session, command, host }, now = new Dat
   const same = hash(command);
   const keep = [];
   for (const it of items) {
-    if (now.getTime() - Date.parse(it.at) > PENDING_TIMEOUT_MS) recordApproval(project, { action: it.action, outcome: 'timed-out', host: it.host });
-    else if (it.session === mine && it.command !== same) recordApproval(project, { action: it.action, outcome: 'rejected', host: it.host });
+    if (now.getTime() - Date.parse(it.at) > PENDING_TIMEOUT_MS) { recordApproval(project, { action: it.action, outcome: 'timed-out', host: it.host }); resolveAsk(project, it.block, 'timed-out', it.host); }
+    else if (it.session === mine && it.command !== same) { recordApproval(project, { action: it.action, outcome: 'rejected', host: it.host }); resolveAsk(project, it.block, 'rejected', it.host); }
     else keep.push(it);
   }
   if (keep.length !== items.length) save(project, keep);
 }
 
-export function addPendingApproval(project, { session, command, action, host }, now = new Date()) {
+export function addPendingApproval(project, { session, command, action, host, block }, now = new Date()) {
   const items = load(project).filter((i) => !(i.session === hash(session) && i.command === hash(command)));
-  save(project, [...items, { at: now.toISOString(), session: hash(session), command: hash(command), action, ...(host ? { host } : {}) }]);
+  save(project, [...items, { at: now.toISOString(), session: hash(session), command: hash(command), action, ...(host ? { host } : {}), ...(block ? { block } : {}) }]);
 }
 
 // The asked call ran: its pending approval is approved.
@@ -55,5 +56,6 @@ export function approvePending(project, { session, command }) {
   if (at < 0) return false;
   const [it] = items.splice(at, 1);
   save(project, items);
+  resolveAsk(project, it.block, 'approved', it.host);
   return recordApproval(project, { action: it.action, outcome: 'approved', host: it.host });
 }
