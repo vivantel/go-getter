@@ -13,6 +13,7 @@ export const APPROVAL_OUTCOMES = ['approved', 'rejected', 'timed-out'];
 export const OUTCOMES = ['allowed', 'denied', 'pass', 'fail', 'blocked', 'escalated', ...APPROVAL_OUTCOMES];
 export const TOKEN_FIELDS = ['input', 'cacheRead', 'cacheWrite', 'output'];
 export const COVERAGES = ['lower-bound', 'shared-directory'];
+export const RESOLUTIONS = ['fixed-by-verb', 'allowed-on-retry', 'human-approved', 'human-refused', 'abandoned'];
 export const MASK_KINDS = ['secret', 'email', 'card', 'iban', 'phone', 'national-id'];
 
 export const FIELDS = {
@@ -25,6 +26,11 @@ export const FIELDS = {
   trigger: ident,
   // The guardrail that caused a denied pre-tool call or a gate stop; optional, so older records stay valid.
   guardrail: (v) => typeof v === 'string' && GUARDRAIL_ID.test(v),
+  // The hook that refused (`pre-tool`, `user-prompt`) and the fix its refusal named (a go-getter verb as a slug, `ask-user` or `none`); never reason text.
+  hook: (v) => typeof v === 'string' && GUARDRAIL_ID.test(v),
+  fix: (v) => typeof v === 'string' && GUARDRAIL_ID.test(v),
+  // `block:outcome` events: what the block led to.
+  resolution: (v) => RESOLUTIONS.includes(v),
   // `approval` events: the action's shape (a key of the class table, never command text) and the class the table gives it.
   action: isKnownAction,
   class: (v) => CLASSES.includes(v),
@@ -55,6 +61,9 @@ export function validateRecord(record) {
     for (const k of ['action', 'class']) if (k in record) errors.push(`field "${k}" belongs to approval events only`);
     if (APPROVAL_OUTCOMES.includes(record.outcome)) errors.push(`outcome "${record.outcome}" belongs to approval events only`);
   }
+  if (record.event === 'block:outcome') {
+    for (const k of ['guardrail', 'hook', 'resolution']) if (!(k in record)) errors.push(`field "${k}" is required on a block:outcome`);
+  } else if ('resolution' in record) errors.push('field "resolution" belongs to block:outcome events only');
   for (const k of ['ts', 'event']) if (!(k in record)) errors.push(`field "${k}" is required`);
   return errors;
 }

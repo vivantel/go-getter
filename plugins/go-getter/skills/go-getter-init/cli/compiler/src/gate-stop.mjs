@@ -36,11 +36,13 @@ export function stopReason({ command, id, lost, key, canAsk, grant }) {
 }
 
 // One metadata line per stop: no command, no path, no reason text. `taskClass` is the command class or guardrail id.
-export function logStop(project, host, { taskClass, outcome, trigger, guardrail }) {
+export function logStop(project, host, { taskClass, outcome, trigger, guardrail, hook, fix }) {
   const rec = { event: 'gate:stop', outcome };
   if (FIELDS.taskClass(taskClass)) rec.taskClass = taskClass;
   if (FIELDS.trigger(trigger)) rec.trigger = trigger;
   if (FIELDS.guardrail(guardrail)) rec.guardrail = guardrail;
+  if (FIELDS.hook(hook)) rec.hook = hook;
+  if (FIELDS.fix(fix)) rec.fix = fix;
   if (FIELDS.host(host)) rec.host = host;
   return recordQuietly(project, rec);
 }

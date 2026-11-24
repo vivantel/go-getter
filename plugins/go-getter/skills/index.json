@@ -301,6 +301,7 @@
         "cli/compiler/src/spend/transcript.mjs",
         "cli/compiler/src/telemetry/approval-class.mjs",
         "cli/compiler/src/telemetry/approval-pending.mjs",
+        "cli/compiler/src/telemetry/block-outcome.mjs",
         "cli/compiler/src/telemetry/otel.mjs",
         "cli/compiler/src/telemetry/record.mjs",
         "cli/compiler/src/telemetry/schema.mjs",

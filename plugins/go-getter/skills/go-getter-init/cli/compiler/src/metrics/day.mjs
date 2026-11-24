@@ -4,6 +4,8 @@ import path from 'node:path';
 import os from 'node:os';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { readLog } from '../telemetry/record.mjs';
+import { summarizeBlocks } from '../telemetry/block-outcome.mjs';
 
 const GAP_MS = 10 * 60_000;
 const MIN = 60_000;
@@ -108,5 +110,5 @@ export function mergedPrs(project, date, { exec = defaultExec } = {}) {
 export function dayReport(project, date, { exec, home } = {}) {
   const texts = transcriptFiles(project, home).map((f) => readFileSync(f, 'utf8'));
   const prs = mergedPrs(project, date, { exec });
-  return { ...buildReport({ date, texts, prs: prs ?? [] }), ...(prs === null ? { prsUnavailable: true } : {}), transcripts: texts.length };
+  return { ...buildReport({ date, texts, prs: prs ?? [] }), blocks: summarizeBlocks(readLog(project), date), ...(prs === null ? { prsUnavailable: true } : {}), transcripts: texts.length };
 }
