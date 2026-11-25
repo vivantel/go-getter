@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { readLog } from '../src/telemetry/record.mjs';
 import { validateRecord } from '../src/telemetry/schema.mjs';
-import { namedFix, summarizeBlocks } from '../src/telemetry/block-outcome.mjs';
+import { namedFix, summarizeBlocks, summarizeHookErrors } from '../src/telemetry/block-outcome.mjs';
 import { dayReport } from '../src/metrics/day.mjs';
 
 const cli = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'go-getter.mjs');
@@ -80,4 +80,31 @@ test('summarizeBlocks and metrics day print per guardrail and hook: blocks, fix 
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('a hook that fails is logged with its hook id and a trigger slug, never the error text, and metrics day counts it', () => {
+  const dir = project();
+  try {
+    for (const event of ['pre-tool', 'user-prompt', 'post-tool']) {
+      spawnSync(process.execPath, [cli, 'hook', event, '--host', 'cursor', '--project', dir], { input: 'not json SECRET-TEXT', encoding: 'utf8' });
+    }
+    const errors = readLog(dir).filter((r) => r.event === 'hook:error');
+    assert.deepEqual(errors.map((r) => `${r.hook}/${r.trigger}`).sort(), ['post-tool/unreadable-payload', 'pre-tool/unreadable-payload', 'user-prompt/unreadable-payload']);
+    for (const r of errors) assert.deepEqual(validateRecord(r), []);
+    assert.ok(!readFileSync(path.join(dir, '.go-getter/state/telemetry.jsonl'), 'utf8').includes('SECRET-TEXT'));
+    const day = errors[0].ts.slice(0, 10);
+    assert.deepEqual(summarizeHookErrors(readLog(dir), day), { 'post-tool/unreadable-payload': 1, 'pre-tool/unreadable-payload': 1, 'user-prompt/unreadable-payload': 1 });
+    assert.deepEqual(dayReport(dir, day, { exec: () => '[]', home: dir }).hookErrors, { 'post-tool/unreadable-payload': 1, 'pre-tool/unreadable-payload': 1, 'user-prompt/unreadable-payload': 1 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('summarizeHookErrors counts one day only', () => {
+  const recs = [
+    { ts: '2026-11-24T10:00:00.000Z', event: 'hook:error', hook: 'stop', trigger: 'exception' },
+    { ts: '2026-11-24T11:00:00.000Z', event: 'hook:error', hook: 'stop', trigger: 'exception' },
+    { ts: '2026-11-23T11:00:00.000Z', event: 'hook:error', hook: 'stop', trigger: 'exception' },
+  ];
+  assert.deepEqual(summarizeHookErrors(recs, '2026-11-24'), { 'stop/exception': 2 });
 });

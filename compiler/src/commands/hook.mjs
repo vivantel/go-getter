@@ -13,6 +13,7 @@ import { recordQuietly } from '../telemetry/record.mjs';
 import { evaluateStop, respondStop } from '../verify.mjs';
 import { routeDelegation, routeRecord, respondRewrite } from '../routing/delegate.mjs';
 import { wrapWatch } from '../watch.mjs';
+import { recordHookError } from '../telemetry/block-outcome.mjs';
 import { recordHostSpend } from '../spend/index.mjs';
 import { poolSessionStart, poolSessionEnd } from '../pool/hooks.mjs';
 
@@ -29,6 +30,7 @@ function projectRootFrom(from) {
 function failClosed(host, project, payload, err, trigger) {
   const readOnly = payload && isReadOnlyTool(payload);
   recordQuietly(project, { event: 'pre-tool', host, outcome: 'fail', trigger });
+  recordHookError(project, { hook: 'pre-tool', trigger, host });
   if (readOnly) return 0;
   const what = String(err?.message ?? err ?? 'unknown error').split('\n')[0].replaceAll(project, '.').slice(0, 200);
   const reason = [
@@ -82,6 +84,7 @@ export default async function hookCommand({ root, args }) {
     payload = JSON.parse(readFileSync(0, 'utf8') || '{}');
   } catch (e) {
     if (event === 'user-prompt') recordQuietly(project, { event: 'user-prompt', host, outcome: 'fail', trigger: 'unreadable-payload' });
+    if (event !== 'pre-tool') recordHookError(project, { hook: event, trigger: 'unreadable-payload', host }); // pre-tool records it in failClosed
     if (event === 'pre-tool') return failClosed(host, project, null, new Error('the host sent a payload that is not JSON'), 'unreadable-payload');
     return 0;
   }
@@ -95,6 +98,7 @@ export default async function hookCommand({ root, args }) {
     } catch {
       // never blocks and prints nothing: the typed approval remains
       recordQuietly(dir, { event: 'user-prompt', host, outcome: 'fail', trigger: 'exception' });
+      recordHookError(dir, { hook: 'user-prompt', trigger: 'exception', host });
     }
     return 0;
   }
@@ -114,6 +118,7 @@ export default async function hookCommand({ root, args }) {
     try {
       result = evaluatePostTool(dir, payload);
     } catch {
+      recordHookError(dir, { hook: 'post-tool', trigger: 'exception', host });
       return 0; // a broken hook fails open (decision 0019)
     }
     recordQuietly(dir, hookRecord('post-tool', host, payload, undefined, result.redactions, result.masked));
@@ -128,6 +133,7 @@ export default async function hookCommand({ root, args }) {
     try {
       out = respondStop(host, await evaluateStop(dir, payload, { host }));
     } catch {
+      recordHookError(dir, { hook: 'stop', trigger: 'exception', host });
       return 0; // a broken gate must never trap a session
     }
     if (out.stdout) process.stdout.write(out.stdout);
