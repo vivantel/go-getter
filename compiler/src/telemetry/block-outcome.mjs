@@ -108,3 +108,24 @@ export function summarizeBlocks(records, date) {
   }
   return out;
 }
+
+// A hook that failed (an exception, an unreadable payload) is not a block, but it costs a person time, and the transcript does not say which
+// hook it was. One record per failure: the hook id and a trigger slug, never the error text.
+export function recordHookError(project, { hook, trigger, host }) {
+  const rec = { event: 'hook:error' };
+  if (FIELDS.hook(hook)) rec.hook = hook;
+  if (FIELDS.trigger(trigger)) rec.trigger = trigger;
+  if (FIELDS.host(host)) rec.host = host;
+  return recordQuietly(project, rec);
+}
+
+// Per hook and trigger: how many failures. `date` (UTC) limits it to one day. Counts only.
+export function summarizeHookErrors(records, date) {
+  const out = {};
+  for (const r of records) {
+    if (r.event !== 'hook:error' || (date && String(r.ts).slice(0, 10) !== date)) continue;
+    const key = `${r.hook ?? 'unknown'}/${r.trigger ?? 'unknown'}`;
+    out[key] = (out[key] ?? 0) + 1;
+  }
+  return out;
+}
