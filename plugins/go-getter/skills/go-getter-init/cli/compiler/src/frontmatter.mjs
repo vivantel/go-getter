@@ -19,7 +19,9 @@ export function parseFrontmatter(text) {
     const v = parseYaml((end < 0 ? lines : lines.slice(0, end)).join('\n'));
     if (v !== null && typeof v === 'object' && !Array.isArray(v)) data = v;
   } catch { /* reported as unterminated */ }
-  return { data: data ?? {}, body: '', hasFrontmatter: true, error: 'unterminated frontmatter', unreadable: data === null };
+  // The body is what follows the lines read as data, so a rewrite keeps it (and closes the block).
+  const body = end < 0 ? '' : lines.slice(end).join('\n');
+  return { data: data ?? {}, body, hasFrontmatter: true, error: 'unterminated frontmatter', unreadable: data === null };
 }
 
 function asMapping(value) {

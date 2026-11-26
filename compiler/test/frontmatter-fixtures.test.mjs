@@ -30,3 +30,9 @@ for (const name of cases) {
     assert.deepEqual(read(readFileSync(path.join(dir, `${name}.md`), 'utf8')), exp);
   });
 }
+
+test('an unterminated block keeps the text after its data as the body', () => {
+  const r = parseFrontmatter('---\nid: x\n\nBody text\n');
+  assert.equal(r.error, 'unterminated frontmatter');
+  assert.equal(r.body, '\nBody text\n');
+});
