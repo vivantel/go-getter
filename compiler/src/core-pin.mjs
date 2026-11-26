@@ -15,6 +15,8 @@ export const CORE_MAP = {
   'plugins/kms/shared/migrate.py': 'src/shared/migrate.py',
   'evals/lint/conformance/cases/': 'compiler/test/kms-conformance/cases/',
   'evals/lint/conformance/test_conformance.py': 'compiler/test/kms-conformance/test_conformance.py',
+  'evals/lint/frontmatter/cases/': 'compiler/test/kms-frontmatter/cases/',
+  'evals/lint/lookup/': 'compiler/test/kms-lookup/',
 };
 
 export const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
