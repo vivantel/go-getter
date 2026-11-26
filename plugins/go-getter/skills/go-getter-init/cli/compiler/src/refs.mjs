@@ -20,6 +20,9 @@ const EXPIRY_DAYS = 30;
 // The artifacts a step's `Context` and `Do` text names: `decision 0167`, `decisions 0167 item 1 and 0169`, `0189-0194`, `fact 0042`,
 // `guardrails `a`, `b``, or a `docs/<type>/<file>.md` path. A name matching no artifact is ignored, and a superseded decision is
 // listed only when no other named artifact is.
+// The `type/NNNN` index of numbered artifacts; a later entry (archive is read after live) replaces an earlier one with the same number.
+export const numberIndex = (byId) => new Map([...byId.values()].filter((a) => /^\d{4}-/.test(a.id)).map((a) => [`${a.type}/${a.id.slice(0, 4)}`, a]));
+
 export function namedArtifacts(text, byId, byNumber) {
   const found = new Map();
   const take = (a) => a && found.set(a.id, a);
@@ -41,7 +44,7 @@ export function namedArtifacts(text, byId, byNumber) {
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', env: cleanGitEnv(process.env), stdio: ['ignore', 'pipe', 'pipe'] });
 
 // Every artifact under docs/<type>/ and docs/<type>/archive/, keyed by id.
-function loadArtifacts(root) {
+export function loadArtifacts(root) {
   const byId = new Map();
   for (const type of ARTIFACT_TYPES) {
     for (const dir of [path.join('docs', type), path.join('docs', type, 'archive')]) {
@@ -202,7 +205,7 @@ function touchedIssues(root, file, { staged, base }) {
 export function suggestRefs(root, { staged = false, base, today = new Date().toISOString().slice(0, 10) } = {}) {
   const byId = loadArtifacts(root);
   const artifacts = [...byId.values()];
-  const byNumber = new Map(artifacts.filter((a) => /^\d{4}-/.test(a.id)).map((a) => [`${a.type}/${a.id.slice(0, 4)}`, a]));
+  const byNumber = numberIndex(byId);
   const changes = changedFiles(root, { staged, base }).sort((x, y) => x.path.localeCompare(y.path));
   const must = new Map();
   const nice = new Map();
