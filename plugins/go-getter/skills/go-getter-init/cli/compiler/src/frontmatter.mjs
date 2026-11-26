@@ -3,10 +3,28 @@
 // lists of maps, `>`/`|` block scalars, plain multi-line scalars and `#` comments.
 // Dates and versions stay strings; only plain integers/decimals become numbers.
 
+// Contract (kms evals/lint/frontmatter): an empty block is `{}`; a block that is not a mapping throws "frontmatter is not a
+// mapping"; a block with no closing `---` returns what it read plus `error: 'unterminated frontmatter'`.
 export function parseFrontmatter(text) {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/.exec(text);
-  if (!match) return { data: {}, body: text, hasFrontmatter: false };
-  return { data: parseYaml(match[1]), body: match[2], hasFrontmatter: true };
+  // The closing fence may follow the opening one at once (an empty block).
+  const match = /^---\r?\n(?:([\s\S]*?)\r?\n)?---(?:\r?\n|$)([\s\S]*)$/.exec(text);
+  if (match) return { data: asMapping(parseYaml(match[1] ?? '')), body: match[2], hasFrontmatter: true };
+  const open = /^---\r?\n([\s\S]*)$/.exec(text);
+  if (!open) return { data: {}, body: text, hasFrontmatter: false };
+  // As kms's checker: read up to the first blank line or heading; unreadable or not a mapping gives no data.
+  const lines = open[1].split(/\r?\n/);
+  const end = lines.findIndex((l) => l.trim() === '' || l.startsWith('#'));
+  let data = null;
+  try {
+    const v = parseYaml((end < 0 ? lines : lines.slice(0, end)).join('\n'));
+    if (v !== null && typeof v === 'object' && !Array.isArray(v)) data = v;
+  } catch { /* reported as unterminated */ }
+  return { data: data ?? {}, body: '', hasFrontmatter: true, error: 'unterminated frontmatter', unreadable: data === null };
+}
+
+function asMapping(value) {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new SyntaxError('frontmatter is not a mapping');
+  return value;
 }
 
 export function stringifyFrontmatter(data, body = '') {

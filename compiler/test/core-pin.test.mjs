@@ -16,7 +16,7 @@ test('the vendored core matches src/core-pin.json', () => {
 test('an edited vendored file, a missing pin and a wrong schema version are each reported', () => {
   const tmp = realpathSync(mkdtempSync(path.join(tmpdir(), 'gg-core-')));
   cpSync(path.join(ROOT, 'src'), path.join(tmp, 'src'), { recursive: true });
-  cpSync(path.join(ROOT, 'compiler/test/kms-conformance'), path.join(tmp, 'compiler/test/kms-conformance'), { recursive: true });
+  for (const d of ['kms-conformance', 'kms-frontmatter', 'kms-lookup']) cpSync(path.join(ROOT, 'compiler/test', d), path.join(tmp, 'compiler/test', d), { recursive: true });
   assert.deepEqual(pinProblems(tmp), []);
   appendFileSync(path.join(tmp, 'src/shared/lint_check.py'), '# local edit\n');
   assert.match(pinProblems(tmp)[0], /lint_check\.py differs from kms/);
